@@ -40,6 +40,7 @@
 #include "MessageLog.hpp"
 #include "Events.hpp"
 #include "PrinterStatus.hpp"
+#include "UserInterface.hpp"
 
 #ifdef OEM
 # if DISPLAY_X == 800
@@ -63,16 +64,12 @@ const uint32_t errorBeepLength = 100;
 const uint32_t errorBeepFrequency = 2250;
 const uint32_t longTouchDelay = 250;				// how long we ignore new touches for after pressing Set
 const uint32_t shortTouchDelay = 100;				// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
-const size_t maxUserCommandLength = 40;				// max length of a user gcode command
-const size_t numUserCommandBuffers = 6;				// number of command history buffers plus one
 
 // Variables
 UTFT lcd(DISPLAY_CONTROLLER, TMode16bit, 16, 17, 18, 19);
 
 UTouch touch(23, 24, 22, 21, 20);
 MainWindow mgr;
-
-const char* array null currentFile;					// file whose info is displayed in the file info popup
 
 static uint32_t lastTouchTime;
 static uint32_t ignoreTouchTime;
@@ -88,14 +85,6 @@ static int beepFrequency = 0, beepLength = 0;
 static unsigned int numHeads = 1;
 static unsigned int messageSeq = 0;
 static unsigned int newMessageSeq = 0;
-static int oldIntValue;
-static bool restartNeeded = false;
-
-static ButtonPress currentButton;
-static ButtonPress fieldBeingAdjusted;
-
-static String<maxUserCommandLength> userCommandBuffers[numUserCommandBuffers];
-static size_t currentUserCommandBuffer = 0, currentHistoryBuffer = 0;
 
 const ColourScheme *colours = &colourSchemes[0];
 
@@ -176,10 +165,6 @@ struct ReceiveDataTableEntry
 	const char* varName;
 };
 
-static Event eventToConfirm = evNull;
-
-int heaterStatus[maxHeaters];
-
 RequestTimer fileInfoTimer(FileInfoRequestTimeout, "M36");
 RequestTimer machineConfigTimer(MachineConfigRequestTimeout, "M408 S1");
 
@@ -206,7 +191,7 @@ bool FlashData::operator==(const FlashData& other)
 
 void FlashData::SetDefaults()
 {
-	baudRate = DEFAULT_BAUD_RATE;
+	baudRate = DefaultBaudRate;
 	xmin = 0;
 	xmax = DisplayX - 1;
 	ymin = 0;
@@ -293,7 +278,7 @@ void InitLcd(DisplayOrientation dor, uint32_t language, uint32_t colourScheme)
 {
 	lcd.InitLCD(dor, is24BitLcd);									// set up the LCD
 	colours = &colourSchemes[colourScheme];
-	Fields::CreateFields(language, *colours);						// create all the fields
+	UI::CreateFields(language, *colours);						// create all the fields
 	mgr.Refresh(true);												// redraw everything
 }
 
@@ -388,7 +373,71 @@ void CalibrateTouch()
 
 void CheckSettingsAreSaved()
 {
-	Fields::SettingsAreSaved(nvData == savedNvData, nvData.colourScheme != savedNvData.colourScheme);
+	UI::SettingsAreSaved(nvData == savedNvData, nvData.colourScheme != savedNvData.colourScheme);
+}
+
+bool HasLanguageChanged()
+{
+	return nvData.language != savedNvData.language;
+}
+
+bool HaveSettingsChanged()
+{
+	return nvData != savedNvData;
+}
+
+void MirrorDisplay()
+{
+	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | InvertBitmap));
+	lcd.InitLCD(nvData.lcdOrientation, is24BitLcd);
+}
+
+void InvertDisplay()
+{
+	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | ReverseY | InvertText | InvertBitmap));
+	lcd.InitLCD(nvData.lcdOrientation, is24BitLcd);
+}
+
+void SetBaudRate(uint32_t rate)
+{
+	nvData.baudRate = rate;
+	SerialIo::Init(rate);
+}
+
+void ChangeBrightness(bool up)
+{
+	int adjust = max<int>(1, (int)(nvData.brightness/16));
+	if (!up)
+	{
+		adjust = -adjust;
+	}
+	nvData.brightness = min<int>(Buzzer::MaxBrightness, max<int>(Buzzer::MinBrightness, (int)nvData.brightness + adjust));
+	Buzzer::SetBacklight(nvData.brightness);
+}
+
+void SetVolume(uint32_t newVolume)
+{
+	nvData.touchVolume = newVolume;
+}
+
+void SetColourScheme(uint32_t newColours)
+{
+	nvData.colourScheme = newColours;
+}
+
+void SetLanguage(uint32_t newLanguage)
+{
+	nvData.language = newLanguage;
+}
+
+uint32_t GetBaudRate()
+{
+	return nvData.baudRate;
+}
+
+uint32_t GetVolume()
+{
+	return nvData.touchVolume;
 }
 
 // Factory reset
@@ -411,711 +460,6 @@ void SaveSettings()
 	// To make sure it worked, load the settings again
 	savedNvData.Load();
 	CheckSettingsAreSaved();
-}
-
-void PopupAreYouSure(Event ev, const char* text, const char* query = "Are you sure?")
-{
-	eventToConfirm = ev;
-	areYouSureTextField->SetValue(text);
-	areYouSureQueryField->SetValue(query);
-	mgr.SetPopup(areYouSurePopup, (DisplayX - areYouSurePopupWidth)/2, (DisplayY - areYouSurePopupHeight)/2);
-}
-
-void PopupRestart()
-{
-	PopupAreYouSure(evRestart, "Restart required", "Restart now?");
-}
-
-void Adjusting(ButtonPress bp)
-{
-	fieldBeingAdjusted = bp;
-	if (bp == currentButton)
-	{
-		currentButton.Clear();		// to stop it being released
-	}
-}
-
-void StopAdjusting()
-{
-	if (fieldBeingAdjusted.IsValid())
-	{
-		mgr.Press(fieldBeingAdjusted, false);
-		fieldBeingAdjusted.Clear();
-	}
-}
-
-void CurrentButtonReleased()
-{
-	if (currentButton.IsValid())
-	{
-		mgr.Press(currentButton, false);
-		currentButton.Clear();	
-	}
-}
-
-// Nasty hack to work around bug in RepRapFirmware 1.09k and earlier
-// The M23 and M30 commands don't work if we send the full path, because "0:/gcodes/" gets prepended regardless.
-const char * array StripPrefix(const char * array dir)
-{
-	const size_t len = strlen(dir);
-	if (len >= 8 && memcmp(dir, "/gcodes/", 8) == 0)
-	{
-		dir += 8;
-	}
-	else if (len >= 10 && memcmp(dir, "0:/gcodes/", 10) == 0)
-	{
-		dir += 10;
-	}
-	else if (strcmp(dir, "/gcodes") == 0 || strcmp(dir, "0:/gcodes") == 0)
-	{
-		dir += len;
-	}
-	return dir;
-}
-
-// Process a touch event
-void ProcessTouch(ButtonPress bp)
-{
-	if (bp.IsValid())
-	{
-		ButtonBase *f = bp.GetButton();
-		currentButton = bp;
-		mgr.Press(bp, true);
-		Event ev = (Event)(f->GetEvent());
-		switch(ev)
-		{
-		case evTabControl:
-		case evTabPrint:
-		case evTabMsg:
-		case evTabSetup:
-			if (Fields::ChangePage(f))
-			{
-				currentButton.Clear();						// keep the button highlighted after it is released
-			}
-			break;
-
-		case evAdjustActiveTemp:
-		case evAdjustStandbyTemp:
-			if (static_cast<IntegerButton*>(f)->GetValue() < 0)
-			{
-				static_cast<IntegerButton*>(f)->SetValue(0);
-			}
-			Adjusting(bp);
-			mgr.SetPopup(setTempPopup, tempPopupX, popupY);
-			break;
-
-		case evAdjustSpeed:
-		case evExtrusionFactor:
-		case evAdjustFan:
-			oldIntValue = static_cast<IntegerButton*>(bp.GetButton())->GetValue();
-			Adjusting(bp);
-			mgr.SetPopup(setTempPopup, tempPopupX, popupY);
-			break;
-
-		case evSetInt:
-			if (fieldBeingAdjusted.IsValid())
-			{
-				int val = static_cast<const IntegerButton*>(fieldBeingAdjusted.GetButton())->GetValue();
-				switch(fieldBeingAdjusted.GetEvent())
-				{
-				case evAdjustActiveTemp:
-					{
-						int heater = fieldBeingAdjusted.GetIParam();
-						if (heater == 0)
-						{
-							SerialIo::SendString("M140 S");
-							SerialIo::SendInt(val);
-							SerialIo::SendChar('\n');
-						}
-						else
-						{
-							SerialIo::SendString("G10 P");
-							SerialIo::SendInt(heater - 1);
-							SerialIo::SendString(" S");
-							SerialIo::SendInt(val);
-							SerialIo::SendChar('\n');
-						}
-					}
-					break;
-					
-				case evAdjustStandbyTemp:
-					{
-						int heater = fieldBeingAdjusted.GetIParam();
-						if (heater > 0)
-						{
-							SerialIo::SendString("G10 P");
-							SerialIo::SendInt(heater - 1);
-							SerialIo::SendString(" R");
-							SerialIo::SendInt(val);
-							SerialIo::SendChar('\n');
-						}
-					}
-					break;
-				
-				case evExtrusionFactor:
-					{
-						int heater = fieldBeingAdjusted.GetIParam();
-						SerialIo::SendString("M221 P");
-						SerialIo::SendInt(heater);
-						SerialIo::SendString(" S");
-						SerialIo::SendInt(val);
-						SerialIo::SendChar('\n');
-					}
-					break;
-					
-				case evAdjustFan:
-					SerialIo::SendString("M106 S");
-					SerialIo::SendInt((256 * val)/100);
-					SerialIo::SendChar('\n');
-					break;
-
-				default:
-					{
-						const char* null cmd = fieldBeingAdjusted.GetSParam();
-						if (cmd != nullptr)
-						{
-							SerialIo::SendString(cmd);
-							SerialIo::SendInt(val);
-							SerialIo::SendChar('\n');
-						}
-					}
-					break;
-				}
-				mgr.ClearPopup();
-				StopAdjusting();
-			}
-			break;
-
-		case evAdjustInt:
-			if (fieldBeingAdjusted.IsValid())
-			{
-				IntegerButton *ib = static_cast<IntegerButton*>(fieldBeingAdjusted.GetButton());
-				int newValue = ib->GetValue() + bp.GetIParam();
-				switch(fieldBeingAdjusted.GetEvent())
-				{
-				case evAdjustActiveTemp:
-				case evAdjustStandbyTemp:
-					newValue = max<int>(0, min<int>(300, newValue));
-					break;
-
-				case evAdjustFan:
-					newValue = max<int>(0, min<int>(100, newValue));
-					break;
-
-				default:
-					break;
-				}
-				ib->SetValue(newValue);
-				ShortenTouchDelay();
-			}
-			break;
-
-		case evMovePopup:
-			mgr.SetPopup(movePopup, movePopupX, movePopupY);
-			break;
-
-		case evMoveX:
-		case evMoveY:
-		case evMoveZ:
-		case evMoveU:
-		case evMoveV:
-		case evMoveW:
-			{
-				const uint8_t axis = ev - evMoveX;
-				const char c = (axis < 3) ? 'X' + axis : ('U' - 3) + axis;
-				SerialIo::SendString("G91\nG1 ");
-				SerialIo::SendChar(c);
-				SerialIo::SendString(bp.GetSParam());
-				SerialIo::SendString(" F6000\nG90\n");
-			}
-			break;
-
-		case evExtrudePopup:
-			mgr.SetPopup(extrudePopup, extrudePopupX, extrudePopupY);
-			break;
-
-		case evExtrudeAmount:
-			mgr.Press(currentExtrudeAmountPress, false);
-			mgr.Press(bp, true);
-			currentExtrudeAmountPress = bp;
-			currentButton.Clear();						// stop it being released by the timer
-			break;
-
-		case evExtrudeRate:
-			mgr.Press(currentExtrudeRatePress, false);
-			mgr.Press(bp, true);
-			currentExtrudeRatePress = bp;
-			currentButton.Clear();						// stop it being released by the timer
-			break;
-
-		case evExtrude:
-		case evRetract:
-			if (currentExtrudeAmountPress.IsValid() && currentExtrudeRatePress.IsValid())
-			{
-				SerialIo::SendString("G92 E0\nG1 E");
-				if (ev == evRetract)
-				{
-					SerialIo::SendChar('-');
-				}
-				SerialIo::SendString(currentExtrudeAmountPress.GetSParam());
-				SerialIo::SendString(" F");
-				SerialIo::SendString(currentExtrudeRatePress.GetSParam());
-				SerialIo::SendChar('\n');
-			}
-			break;
-
-		case evListFiles:
-			FileManager::DisplayFilesList();
-			break;
-
-		case evListMacros:
-			FileManager::DisplayMacrosList();
-			break;
-
-		case evCalTouch:
-			CalibrateTouch();
-			CheckSettingsAreSaved();
-			break;
-
-		case evFactoryReset:
-			PopupAreYouSure(ev, "Confirm factory reset");
-			break;
-
-		case evRestart:
-			PopupAreYouSure(ev, "Confirm restart");
-			break;
-
-		case evSaveSettings:
-			SaveSettings();
-			if (restartNeeded)
-			{
-				PopupRestart();
-			}
-			break;
-
-		case evSelectHead:
-			{
-				int head = bp.GetIParam();
-				if (head == 0)
-				{
-					if (heaterStatus[0] == 2)			// if bed is active
-					{
-						SerialIo::SendString("M144\n");
-					}
-					else
-					{
-						SerialIo::SendString("M140 S");
-						SerialIo::SendInt(activeTemps[0]->GetValue());
-						SerialIo::SendChar('\n');
-					}
-				}
-				else if (head < (int)maxHeaters)
-				{
-					if (heaterStatus[head] == 2)		// if head is active
-					{
-						SerialIo::SendString("T-1\n");
-					}
-					else
-					{
-						SerialIo::SendChar('T');
-						SerialIo::SendInt(head - 1);
-						SerialIo::SendChar('\n');
-					}
-				}
-			}
-			break;
-	
-		case evFile:
-			{
-				const char * array fileName = bp.GetSParam();
-				if (fileName != nullptr)
-				{
-					if (fileName[0] == '*')
-					{
-						// It's a directory
-						FileManager::RequestFilesSubdir(fileName + 1);
-						//??? need to pop up a "wait" box here
-					}
-					else
-					{
-						// It's a regular file
-						currentFile = fileName;
-						SerialIo::SendString("M36 ");			// ask for the file info
-						SerialIo::SendFilename(FileManager::GetFilesDir(), currentFile);
-						SerialIo::SendChar('\n');
-						fpNameField->SetValue(currentFile);
-						// Clear out the old field values, they relate to the previous file we looked at until we process the response
-						fpSizeField->SetValue(0);						// would be better to make it blank
-						fpHeightField->SetValue(0.0);					// would be better to make it blank
-						fpLayerHeightField->SetValue(0.0);				// would be better to make it blank
-						fpFilamentField->SetValue(0);					// would be better to make it blank
-						generatedByText.clear();
-						fpGeneratedByField->SetChanged();
-						mgr.SetPopup(filePopup, (DisplayX - fileInfoPopupWidth)/2, (DisplayY - fileInfoPopupHeight)/2);
-					}
-				}
-				else
-				{
-					ErrorBeep();
-				}
-			}
-			break;
-
-		case evFilesUp:
-			FileManager::RequestFilesParentDir();
-			break;
-
-		case evMacrosUp:
-			FileManager::RequestMacrosParentDir();
-			break;
-
-		case evMacro:
-			{
-				const char *fileName = bp.GetSParam();
-				if (fileName != nullptr)
-				{
-					if (fileName[0] == '*')		// if it's a directory
-					{
-						FileManager::RequestMacrosSubdir(fileName + 1);
-						//??? need to pop up a "wait" box here					
-					}
-					else
-					{
-						SerialIo::SendString("M98 P");
-						SerialIo::SendFilename(FileManager::GetMacrosDir(), fileName);
-						SerialIo::SendChar('\n');
-					} 
-				}
-				else
-				{
-					ErrorBeep();
-				}
-			}
-			break;
-
-		case evPrint:
-			mgr.ClearPopup();			// clear the file info popup
-			mgr.ClearPopup();			// clear the file list popup
-			if (currentFile != nullptr)
-			{
-				SerialIo::SendString("M32 ");
-				SerialIo::SendFilename(StripPrefix(FileManager::GetFilesDir()), currentFile);
-				SerialIo::SendChar('\n');
-				Fields::PrintingFilenameChanged(currentFile);
-				currentFile = nullptr;							// allow the file list to be updated
-				CurrentButtonReleased();
-				Fields::PrintStarted();
-			}
-			break;
-
-		case evCancel:
-			eventToConfirm = evNull;
-			currentFile = nullptr;
-			CurrentButtonReleased();
-			Fields::PopupCancelled();
-			mgr.ClearPopup();
-			break;
-
-		case evDeleteFile:
-			CurrentButtonReleased();;
-			PopupAreYouSure(ev, "Confirm file delete");
-			break;
-
-		case evSendCommand:
-		case evPausePrint:
-		case evResumePrint:
-		case evReset:
-			SerialIo::SendString(bp.GetSParam());
-			SerialIo::SendChar('\n');
-			break;
-
-		case evScrollFiles:
-			FileManager::Scroll(bp.GetIParam());
-			ShortenTouchDelay();				
-			break;
-
-		case evChangeCard:
-			FileManager::ChangeCard();
-			break;
-
-		case evKeyboard:
-			Fields::ShowKeyboard();
-			break;
-
-		case evInvertX:
-			nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | InvertBitmap));
-			lcd.InitLCD(nvData.lcdOrientation, is24BitLcd);
-			CalibrateTouch();
-			CheckSettingsAreSaved();
-			break;
-
-		case evInvertY:
-			nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | ReverseY | InvertText | InvertBitmap));
-			lcd.InitLCD(nvData.lcdOrientation, is24BitLcd);
-			CalibrateTouch();
-			CheckSettingsAreSaved();
-			break;
-
-		case evSetBaudRate:
-			Adjusting(bp);
-			mgr.SetPopup(baudPopup, fullWidthPopupX, popupY);
-			break;
-
-		case evAdjustBaudRate:
-			nvData.baudRate = bp.GetIParam();
-			SerialIo::Init(nvData.baudRate);
-			baudRateButton->SetValue(nvData.baudRate);
-			CheckSettingsAreSaved();
-			CurrentButtonReleased();
-			mgr.ClearPopup();
-			StopAdjusting();
-			break;
-
-		case evSetVolume:
-			Adjusting(bp);
-			mgr.SetPopup(volumePopup, fullWidthPopupX, popupY);
-			break;
-
-		case evSetColours:
-			if (coloursPopup != nullptr)
-			{
-				Adjusting(bp);
-				mgr.SetPopup(coloursPopup, fullWidthPopupX, popupY);	
-			}
-			break;
-
-		case evBrighter:
-		case evDimmer:
-			{
-				int adjust = max<int>(1, (int)(nvData.brightness/16));
-				if (ev == evDimmer)
-				{
-					adjust = -adjust;
-				}
-				nvData.brightness = min<int>(Buzzer::MaxBrightness, max<int>(Buzzer::MinBrightness, (int)nvData.brightness + adjust));
-			}
-			Buzzer::SetBacklight(nvData.brightness);
-			CheckSettingsAreSaved();
-			ShortenTouchDelay();
-			break;
-		
-		case evAdjustVolume:
-			nvData.touchVolume = bp.GetIParam();
-			volumeButton->SetValue(nvData.touchVolume);
-			TouchBeep();									// give audible feedback of the touch at the new volume level
-			CheckSettingsAreSaved();
-			break;
-
-		case evAdjustColours:
-			nvData.colourScheme = bp.GetIParam();
-			coloursButton->SetText(colourSchemes[nvData.colourScheme].name);
-			CheckSettingsAreSaved();
-			break;
-
-		case evSetLanguage:
-			Adjusting(bp);
-			mgr.SetPopup(languagePopup, fullWidthPopupX, popupY);
-			break;
-
-		case evAdjustLanguage:
-			nvData.language = bp.GetIParam();
-			languageButton->SetText(longLanguageNames[nvData.language]);
-			CheckSettingsAreSaved();						// not sure we need this because we are going to reset anyway
-			break;
-
-		case evYes:
-			CurrentButtonReleased();
-			mgr.ClearPopup();								// clear the yes/no popup
-			switch (eventToConfirm)
-			{
-			case evFactoryReset:
-				FactoryReset();
-				break;
-
-			case evDeleteFile:
-				if (currentFile != nullptr)
-				{
-					mgr.ClearPopup();						// clear the file info popup
-					SerialIo::SendString("M30 ");
-					SerialIo::SendFilename(StripPrefix(FileManager::GetFilesDir()), currentFile);
-					SerialIo::SendChar('\n');
-					FileManager::RefreshFilesList();
-					currentFile = nullptr;
-				}
-				break;
-
-			case evRestart:
-				if (nvData != savedNvData)
-				{
-					SaveSettings();
-				}
-				Restart();
-				break;
-
-			default:
-				break;
-			}
-			eventToConfirm = evNull;
-			currentFile = nullptr;
-			break;
-
-		case evKey:
-			if (!userCommandBuffers[currentUserCommandBuffer].full())
-			{
-				userCommandBuffers[currentUserCommandBuffer].add((char)bp.GetIParam());
-				userCommandField->SetChanged();
-			}
-			break;
-
-		case evBackspace:
-			if (!userCommandBuffers[currentUserCommandBuffer].isEmpty())
-			{
-				userCommandBuffers[currentUserCommandBuffer].erase(userCommandBuffers[currentUserCommandBuffer].size() - 1);
-				userCommandField->SetChanged();
-				ShortenTouchDelay();
-			}
-			break;
-
-		case evUp:
-			currentHistoryBuffer = (currentHistoryBuffer + numUserCommandBuffers - 1) % numUserCommandBuffers;
-			if (currentHistoryBuffer == currentUserCommandBuffer)
-			{
-				userCommandBuffers[currentUserCommandBuffer].clear();
-			}
-			else
-			{
-				userCommandBuffers[currentUserCommandBuffer].copy(userCommandBuffers[currentHistoryBuffer]);
-			}
-			userCommandField->SetChanged();
-			break;
-
-		case evDown:
-			currentHistoryBuffer = (currentHistoryBuffer + 1) % numUserCommandBuffers;
-			if (currentHistoryBuffer == currentUserCommandBuffer)
-			{
-				userCommandBuffers[currentUserCommandBuffer].clear();
-			}
-			else
-			{
-				userCommandBuffers[currentUserCommandBuffer].copy(userCommandBuffers[currentHistoryBuffer]);
-			}
-			userCommandField->SetChanged();
-			break;
-
-		case evSendKeyboardCommand:
-			if (userCommandBuffers[currentUserCommandBuffer].size() != 0)
-			{
-				SerialIo::SendString(userCommandBuffers[currentUserCommandBuffer].c_str());
-				SerialIo::SendChar('\n');
-				
-				// Add the command to the history if it was different frmo the previous command
-				size_t prevBuffer = (currentUserCommandBuffer + numUserCommandBuffers - 1) % numUserCommandBuffers;
-				if (strcmp(userCommandBuffers[currentUserCommandBuffer].c_str(), userCommandBuffers[prevBuffer].c_str()) != 0)
-				{
-					currentUserCommandBuffer = (currentUserCommandBuffer + 1) % numUserCommandBuffers;
-				}
-				currentHistoryBuffer = currentUserCommandBuffer;					
-				userCommandBuffers[currentUserCommandBuffer].clear();
-				userCommandField->SetLabel(userCommandBuffers[currentUserCommandBuffer].c_str());
-			}
-			break;
-
-		default:
-			break;
-		}
-	}
-}
-
-// Process a touch event outside the popup on the field being adjusted
-void ProcessTouchOutsidePopup(ButtonPress bp)
-pre(bp.IsValid())
-{
-	if (bp == fieldBeingAdjusted)
-	{
-		DelayTouchLong();	// by default, ignore further touches for a long time
-		TouchBeep();
-		switch(fieldBeingAdjusted.GetEvent())
-		{
-		case evAdjustSpeed:
-		case evExtrusionFactor:
-		case evAdjustFan:
-			static_cast<IntegerButton*>(fieldBeingAdjusted.GetButton())->SetValue(oldIntValue);
-			mgr.ClearPopup();
-			StopAdjusting();
-			break;
-
-		case evAdjustActiveTemp:
-		case evAdjustStandbyTemp:
-		case evSetBaudRate:
-		case evSetVolume:
-		case evSetColours:
-			mgr.ClearPopup();
-			StopAdjusting();
-			break;
-
-		case evSetLanguage:
-			mgr.ClearPopup();
-			StopAdjusting();
-			if (nvData.language != savedNvData.language)
-			{
-				restartNeeded = true;
-				PopupRestart();
-			}
-			break;
-		}
-	}
-	else
-	{
-		switch(bp.GetEvent())
-		{
-		case evTabControl:
-		case evTabPrint:
-		case evTabMsg:
-		case evTabSetup:
-			StopAdjusting();
-			DelayTouchLong();	// by default, ignore further touches for a long time
-			TouchBeep();
-			{
-				ButtonBase *btn = bp.GetButton();
-				if (Fields::ChangePage(btn))
-				{
-					currentButton.Clear();						// keep the button highlighted after it is released
-				}
-			}
-			break;
-
-		case evSetBaudRate:
-		case evSetVolume:
-		case evSetColours:
-		case evSetLanguage:
-		case evCalTouch:
-		case evInvertX:
-		case evInvertY:
-		case evSaveSettings:
-		case evFactoryReset:
-		case evRestart:
-			// On the Setup tab, we allow any other button to be pressed to exit the current popup
-			StopAdjusting();
-			DelayTouchLong();	// by default, ignore further touches for a long time
-			TouchBeep();
-			mgr.ClearPopup();
-			ProcessTouch(bp);
-			break;
-
-		default:
-			break;
-		}
-	}
-}
-
-// Update an integer field, provided it isn't the one being adjusted
-// Don't update it if the value hasn't changed, because that makes the display flicker unnecessarily
-void UpdateField(IntegerButton *f, int val)
-{
-	if (f != fieldBeingAdjusted.GetButton() && f->GetValue() != val)
-	{
-		f->SetValue(val);
-	}
 }
 
 // This is called when the status changes
@@ -1164,7 +508,7 @@ void SetStatus(char c)
 	
 	if (newStatus != status)
 	{
-		Fields::ChangeStatus(status, newStatus);
+		UI::ChangeStatus(status, newStatus);
 		
 		if (status == PrinterStatus::configuring || (status == PrinterStatus::connecting && newStatus != PrinterStatus::configuring))
 		{
@@ -1173,7 +517,7 @@ void SetStatus(char c)
 		}
 	
 		status = newStatus;
-		Fields::UpdatePrintingFields();
+		UI::UpdatePrintingFields();
 	}
 }
 
@@ -1279,7 +623,7 @@ void EndReceivedMessage()
 		messageSeq = newMessageSeq;
 		MessageLog::DisplayNewMessage();
 	}	
-	FileManager::EndReceivedMessage(currentFile != nullptr);	
+	FileManager::EndReceivedMessage(UI::IsDisplayingFileInfo());
 	ShowLine;
 }
 
@@ -1297,7 +641,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				int ival;
 				if (GetInteger(data, ival) && index < (int)maxHeaters)
 				{
-					UpdateField(activeTemps[index], ival);
+					UI::UpdateActiveTemperature(index, ival);
 				}
 			}
 			break;
@@ -1308,23 +652,24 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				int ival;
 				if (GetInteger(data, ival) && index < (int)maxHeaters && index != 0)
 				{
-					UpdateField(standbyTemps[index], ival);
+					UI::UpdateStandbyTemperature(index, ival);
 				}
 			}
 			break;
 		
 		case rcvHeaters:
 			ShowLine;
+			if ((size_t)index < maxHeaters)
 			{
 				float fval;
 				if (GetFloat(data, fval))
 				{
 					ShowLine;
-					Fields::UpdateCurrentTemperature(index, fval);
+					UI::UpdateCurrentTemperature(index, fval);
 					if (index == (int)numHeads + 1)
 					{
 						ShowLine;
-						Fields::ShowHeater(index, true);
+						UI::ShowHeater(index, true);
 						++numHeads;
 					}
 				}
@@ -1333,12 +678,12 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 
 		case rcvHstat:
 			ShowLine;
+			if ((size_t)index < maxHeaters)
 			{
 				int ival;
-				if (GetInteger(data, ival) && index < (int)maxHeaters)
+				if (GetInteger(data, ival))
 				{
-					heaterStatus[index] = ival;
-					Fields::ShowHeaterStatus(index, ival);
+					UI::UpdateHeaterStatus(index, ival);
 				}
 			}
 			break;
@@ -1349,7 +694,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				float fval;
 				if (GetFloat(data, fval))
 				{
-					Fields::UpdateAxisPosition(index, fval);
+					UI::UpdateAxisPosition(index, fval);
 				}
 			}
 			break;
@@ -1360,7 +705,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				int ival;
 				if (GetInteger(data, ival) && index + 1 < (int)maxHeaters)
 				{
-					UpdateField(extrusionFactors[index], ival);
+					UI::UpdateExtrusionFactor(index, ival);
 				}
 			}
 			break;
@@ -1386,7 +731,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				if (GetFloat(data, f))
 				{
 					totalFilament += f;
-					fpFilamentField->SetValue((int)totalFilament);
+					UI::UpdateFileFilament((int)totalFilament);
 				}
 			}
 			break;
@@ -1401,7 +746,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 					if (isHomed != axisHomed[index])
 					{
 						axisHomed[index] = isHomed;
-						Fields::UpdateHomedStatus(index, isHomed);
+						UI::UpdateHomedStatus(index, isHomed);
 						bool allHomed = true;
 						for (size_t i = 0; i < numAxes; ++i)
 						{
@@ -1414,7 +759,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 						if (allHomed != allAxesHomed)
 						{
 							allAxesHomed = allHomed;
-							Fields::UpdateHomedStatus(-1, allHomed);
+							UI::UpdateHomedStatus(-1, allHomed);
 						}
 					}
 				}
@@ -1428,7 +773,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				bool b = GetInteger(data, i);
 				if (b && i >= 0 && i < 10 * 24 * 60 * 60 && PrintInProgress())
 				{
-					Fields::UpdateTimesLeft(index, i);
+					UI::UpdateTimesLeft(index, i);
 				}
 			}
 			break;
@@ -1441,7 +786,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				bool b = GetFloat(data, f);
 				if (b && f >= 0.0 && f <= 100.0)
 				{
-					UpdateField(fanSpeed, (int)(f + 0.5));
+					UI::UpdateFanPercent((int)(f + 0.5));
 				}
 			}
 			break;
@@ -1461,19 +806,19 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				int ival;
 				if (GetInteger(data, ival))
 				{
-					UpdateField(spd, ival);
+					UI::UpdateSpeedPercent(ival);
 				}
 			}
 			break;
 
 		case rcvProbe:
-			Fields::UpdateZProbe(data);
+			UI::UpdateZProbe(data);
 			break;
 		
 		case rcvMyName:
 			if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
 			{
-				Fields::UpdateMachineName(data);
+				UI::UpdateMachineName(data);
 				gotMachineName = true;
 				if (gotGeometry)
 				{
@@ -1483,7 +828,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 			break;
 		
 		case rcvFilename:
-			Fields::PrintingFilenameChanged(data);
+			UI::PrintingFilenameChanged(data);
 			fileInfoTimer.Stop();
 			break;
 		
@@ -1492,7 +837,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				int sz;
 				if (GetInteger(data, sz))
 				{
-					fpSizeField->SetValue(sz);
+					UI::UpdateFileSize(sz);
 				}
 			}
 			break;
@@ -1502,7 +847,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				float f;
 				if (GetFloat(data, f))
 				{
-					fpHeightField->SetValue(f);
+					UI::UpdateFileObjectHeight(f);
 				}
 			}
 			break;
@@ -1512,14 +857,13 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				float f;
 				if (GetFloat(data, f))
 				{
-					fpLayerHeightField->SetValue(f);
+					UI::UpdateFileLayerHeight(f);
 				}
 			}
 			break;
 		
 		case rcvGeneratedBy:
-			generatedByText.copy(data);
-			fpGeneratedByField->SetChanged();
+			UI::UpdateFileGeneratedByText(data);
 			break;
 		
 		case rcvFraction:
@@ -1529,7 +873,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				{
 					if (f >= 0.0 && f <= 1.0)
 					{
-						Fields::SetPrintProgressPercent((unsigned int)(100.0 * f) + 0.5);
+						UI::SetPrintProgressPercent((unsigned int)(100.0 * f) + 0.5);
 					}
 				}
 			}
@@ -1556,7 +900,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				{
 					machineConfigTimer.Stop();
 				}
-				Fields::UpdateGeometry(numAxes, isDelta);
+				UI::UpdateGeometry(numAxes, isDelta);
 			}
 			break;
 		
@@ -1565,7 +909,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				unsigned int n = MIN_AXES;
 				GetUnsignedInteger(data, n);
 				numAxes = constrain<unsigned int>(n, MIN_AXES, MAX_AXES);
-				Fields::UpdateGeometry(numAxes, isDelta);
+				UI::UpdateGeometry(numAxes, isDelta);
 			}
 			break;
 
@@ -1582,7 +926,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 			break;
 
 		case rcvMessage:
-			Fields::ProcessAlert(data);
+			UI::ProcessAlert(data);
 			break;
 
 		case rcvErr:
@@ -1709,27 +1053,21 @@ int main(void)
 	
 	// Set up the baud rate
 	SerialIo::Init(nvData.baudRate);
-	baudRateButton->SetValue(nvData.baudRate);
-	volumeButton->SetValue(nvData.touchVolume);
-	coloursButton->SetText(colourSchemes[nvData.colourScheme].name);
 	
 	MessageLog::Init();
 
-	Fields::UpdatePrintingFields();
+	UI::UpdatePrintingFields();
 
 	lastPollTime = SystemTick::GetTickCount() - printerPollInterval;	// allow a poll immediately
 	
 	// Hide the Head 2+ parameters until we know we have a second head
 	for (unsigned int i = 2; i < maxHeaters; ++i)
 	{
-		Fields::ShowHeater(i, false);
+		UI::ShowHeater(i, false);
 	}
 	
-	standbyTemps[0]->Show(false);			// currently, we always hide the bed standby temperature because it doesn't do anything
 	debugField->Show(DEBUG != 0);			// show the debug field only if debugging is enabled
 
-	userCommandField->SetLabel(userCommandBuffers[currentUserCommandBuffer].c_str());	// set up to display the current user command
-	
 #ifdef OEM
 	// Display the splash screen
 	lcd.drawCompressedBitmap(0, 0, DISPLAY_X, DISPLAY_Y, splashScreenImage);
@@ -1738,7 +1076,7 @@ int main(void)
 #endif
 
 	// Display the Control tab. This also refreshes the display.
-	Fields::ShowDefaultPage();
+	UI::ShowDefaultPage();
 	lastResponseTime = SystemTick::GetTickCount();		// pretend we just received a response
 	
 	machineConfigTimer.SetPending();		// we need to fetch the machine name and configuration
@@ -1753,16 +1091,13 @@ int main(void)
 		ShowLine;
 		
 		// 2. if displaying the message log, update the times
-		Fields::Spin();
+		UI::Spin();
 		ShowLine;
 		
 		// 3. Check for a touch on the touch panel.
 		if (SystemTick::GetTickCount() - lastTouchTime >= ignoreTouchTime)
 		{
-			if (currentButton.IsValid())
-			{
-				CurrentButtonReleased();
-			}
+			UI::OnButtonPressTimeout();
 
 			uint16_t x, y;
 			if (touch.read(x, y))
@@ -1779,14 +1114,14 @@ int main(void)
 					{
 						TouchBeep();		// give audible feedback of the touch, unless adjusting the volume	
 					}
-					ProcessTouch(bp);
+					UI::ProcessTouch(bp);
 				}
 				else
 				{
 					bp = mgr.FindEventOutsidePopup(x, y);
 					if (bp.IsValid())
 					{
-						ProcessTouchOutsidePopup(bp);					
+						UI::ProcessTouchOutsidePopup(bp);
 					}
 				}
 			}
@@ -1817,7 +1152,7 @@ int main(void)
 		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
 		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
 		uint32_t now = SystemTick::GetTickCount();
-		if (   Fields::DoPolling()									// don't poll while we are in the Setup page
+		if (   UI::DoPolling()									// don't poll while we are in the Setup page
 		    && now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
 			&& now - lastResponseTime >= printerResponseInterval	// and we haven't had a response too recently
 		   )

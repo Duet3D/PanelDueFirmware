@@ -9,6 +9,8 @@
 #ifndef CONFIGURATION_H_
 #define CONFIGURATION_H_
 
+#include <cstdint>
+
 #define VERSION_TEXT		"1.16alpha"
 
 #define DISPLAY_TYPE_ITDB02_32WD		(0)		// Itead 3.2 inch widescreen display (400x240) - NO LONGER SUPPORTED
@@ -33,6 +35,6 @@
 #define LARGE_FONT		(1)
 #endif
 
-#define DEFAULT_BAUD_RATE	(57600)
+const uint32_t DefaultBaudRate = 57600;
 
 #endif /* CONFIGURATION_H_ */

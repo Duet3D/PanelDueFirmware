@@ -11,6 +11,7 @@
 
 #include "Display.hpp"
 #include "ColourSchemes.hpp"
+#include "Events.hpp"
 #include "PrinterStatus.hpp"
 
 // From the display type, we determine the display controller type and touch screen orientation adjustment
@@ -221,67 +222,49 @@ const PixelNumber fileListPopupHeight = ((numFileRows + 1) * buttonHeight) + (nu
 const PixelNumber fileListPopupX = (DisplayX - fileListPopupWidth)/2;
 const PixelNumber fileListPopupY = (DisplayY - fileListPopupHeight)/2;
 
-const PixelNumber alertPopupWidth = fullPopupWidth - 6 * margin;
-const PixelNumber alertPopupHeight = 3 * rowTextHeight + 2 * popupTopMargin;
-
 const uint32_t numMessageRows = (rowTabs - margin - rowHeight)/rowTextHeight;
 const PixelNumber messageTextX = margin + messageTimeWidth + 2;
 const PixelNumber messageTextWidth = DisplayX - margin - messageTextX;
 
-namespace Fields
-{
-	extern void CreateFields(uint32_t language, const ColourScheme& colours);
-	extern void SettingsAreSaved(bool areSaved, bool needRestart);
-	extern void ShowPauseButton();
-	extern void ShowFilesButton();
-	extern void ShowResumeAndCancelButtons();
-	extern void ShowAxis(size_t axis, bool b);
-	extern void UpdateAxisPosition(size_t axis, float fval);
-	extern void UpdateCurrentTemperature(size_t heater, float fval);
-	extern void ShowHeater(size_t heater, bool show);
-	extern void ShowHeaterStatus(size_t heater, int ival);
-	extern void ChangeStatus(PrinterStatus oldStatus, PrinterStatus newStatus);
-	extern void UpdateTimesLeft(size_t index, unsigned int seconds);
-	extern bool ChangePage(ButtonBase *newTab);
-	extern void ShowKeyboard();
-	extern void PopupCancelled();
-	extern bool DoPolling();
-	extern void Spin();
-	extern void PrintStarted();
-	extern void PrintingFilenameChanged(const char data[]);
-	extern void ShowDefaultPage();
-	extern void UpdatePrintingFields();
-	extern void SetPrintProgressPercent(unsigned int percent);
-	extern void UpdateGeometry(unsigned int numAxes, bool isDelta);
-	extern void UpdateHomedStatus(int axis, bool isHomed);
-	extern void UpdateZProbe(const char data[]);
-	extern void UpdateMachineName(const char data[]);
-	extern void ProcessAlert(const char data[]);
-}
-
-const size_t generatedByTextLength = 50;
-
 const unsigned int numLanguages = 3;
 extern const char* const longLanguageNames[];
 
-extern String<generatedByTextLength> generatedByText;
-
-extern FloatField *fpHeightField, *fpLayerHeightField;
-extern IntegerButton *activeTemps[maxHeaters], *standbyTemps[maxHeaters];
-extern IntegerButton *spd, *fanSpeed, *baudRateButton, *volumeButton;
-extern IntegerButton *extrusionFactors[maxHeaters - 1];
-extern IntegerField *freeMem, *touchX, *touchY, *fpSizeField, *fpFilamentField, *fileListErrorField;
-extern SingleButton *moveButton, *extrudeButton, *macroButton;
-extern TextButton *filenameButtons[numDisplayedFiles], *languageButton, *coloursButton;
+extern IntegerField *freeMem, *touchX, *touchY, *fileListErrorField;
+extern TextButton *filenameButtons[numDisplayedFiles];
 extern SingleButton *scrollFilesLeftButton, *scrollFilesRightButton, *filesUpButton, *changeCardButton;
-extern ButtonPress currentExtrudeRatePress, currentExtrudeAmountPress;
 extern StaticTextField *macroPopupTitleField, *debugField;
 extern IntegerField *filePopupTitleField;
 extern StaticTextField *touchCalibInstruction;
 extern StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
-extern StaticTextField *fwVersionField, *areYouSureTextField, *areYouSureQueryField;
-extern PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *filePopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
-extern TextField *fpNameField, *fpGeneratedByField, *userCommandField;
-extern PopupWindow *alertPopup;
+
+namespace Fields
+{
+	// Create a standard popup window with a title and a close button at the top right
+	PopupWindow *CreatePopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder, Colour textColour,
+									const char * null title, PixelNumber topMargin = popupTopMargin);
+
+	// Add a text button
+	TextButton *AddTextButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* array text, Event evt, const char* param);
+
+	// Add an integer button
+	IntegerButton *AddIntegerButton(PixelNumber row, unsigned int col, unsigned int numCols, const char * array null label, const char * array null units, Event evt);
+
+	// Add an icon button with a string parameter
+	IconButton *AddIconButton(PixelNumber row, unsigned int col, unsigned int numCols, Icon icon, Event evt, const char* param);
+
+	// Create a row of text buttons.
+	// Optionally, set one to 'pressed' and return that one.
+	ButtonPress CreateStringButtonRow(Window * pf, PixelNumber top, PixelNumber left, PixelNumber totalWidth, PixelNumber spacing, unsigned int numButtons,
+										const char* array const text[], const char* array const params[], Event evt, int selected = -1);
+
+	// Create a popup bar with string parameters
+	PopupWindow *CreateStringPopupBar(const ColourScheme& colours, PixelNumber width, unsigned int numEntries,
+										const char* const text[], const char* const params[], Event ev);
+
+	// Create a popup bar with integer parameters
+	// If the 'params' parameter is null then we use 0, 1, 2.. at the parameters
+	PopupWindow *CreateIntPopupBar(const ColourScheme& colours, PixelNumber width, unsigned int numEntries,
+									const char* const text[], const int * null params, Event ev, Event zeroEv);
+}
 
 #endif /* FIELDS_H_ */

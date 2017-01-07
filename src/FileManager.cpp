@@ -7,6 +7,7 @@
 
 #include "FileManager.hpp"
 #include "PanelDue.hpp"
+#include "UserInterface.hpp"
 #include "Hardware/SerialIo.hpp"
 #include <cctype>
 

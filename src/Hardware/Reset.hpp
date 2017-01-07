@@ -10,7 +10,7 @@
 #define RESET_H_
 
 // Restart the hardware
-void Restart()
+inline void Restart()
 {
 	rstc_start_software_reset(RSTC);
 }
