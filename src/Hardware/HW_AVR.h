@@ -2,7 +2,7 @@
 #define HW_AVR_h
 
 // *** Hardware specific functions ***
-void UTFT::LCD_Write_Bus(uint16_t VHL)
+inline void UTFT::LCD_Write_Bus(uint16_t VHL)
 {
 #if 1
 	// inline code for speed

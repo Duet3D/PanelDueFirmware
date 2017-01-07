@@ -72,8 +72,8 @@ public:
 
 private:
 
-	Pio *port;			// PIO address
-	uint32_t mask;		// bit mask
+	Pio * const port;			// PIO address
+	const uint32_t mask;		// bit mask
 };
 
 #endif /* ONEBITPORT_H_ */

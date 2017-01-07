@@ -12,6 +12,7 @@
 #include "Library/Vector.hpp"
 #include "Fields.hpp"
 #include "RequestTimer.hpp"
+#include "Events.hpp"
 
 namespace FileManager
 {

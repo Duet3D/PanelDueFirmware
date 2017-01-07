@@ -38,6 +38,8 @@
 #include "FileManager.hpp"
 #include "RequestTimer.hpp"
 #include "MessageLog.hpp"
+#include "Events.hpp"
+#include "PrinterStatus.hpp"
 
 #ifdef OEM
 # if DISPLAY_X == 800
@@ -87,11 +89,11 @@ static unsigned int numHeads = 1;
 static unsigned int messageSeq = 0;
 static unsigned int newMessageSeq = 0;
 static int oldIntValue;
-static bool keyboardIsDisplayed = false;
 static bool restartNeeded = false;
 
-static int timesLeft[3];
-static String<50> timesLeftText;
+static ButtonPress currentButton;
+static ButtonPress fieldBeingAdjusted;
+
 static String<maxUserCommandLength> userCommandBuffers[numUserCommandBuffers];
 static size_t currentUserCommandBuffer = 0, currentHistoryBuffer = 0;
 
@@ -129,35 +131,6 @@ struct FlashData
 static_assert(sizeof(FlashData) <= FLASH_DATA_LENGTH, "Flash data too large");
 
 FlashData nvData, savedNvData;
-
-enum class PrinterStatus
-{
-	connecting = 0,
-	idle = 1,
-	printing = 2,
-	stopped = 3,
-	configuring = 4,
-	paused = 5,
-	busy = 6,
-	pausing = 7,
-	resuming = 8,
-	flashing = 9
-};
-
-// Map of the above status codes to text. The space at the end improves the appearance.
-const char *statusText[] =
-{
-	"Connecting",
-	"Idle ",
-	"Printing ",
-	"Halted",
-	"Starting up ",
-	"Paused ",
-	"Busy ",
-	"Pausing ",
-	"Resuming ",
-	"Firmware upload"
-};
 
 static PrinterStatus status = PrinterStatus::connecting;
 
@@ -310,49 +283,10 @@ bool OkToSend()
 	return status == PrinterStatus::idle || status == PrinterStatus::printing || status == PrinterStatus::paused;
 }
 
-void ChangeTab(ButtonBase *newTab)
+// Return the printer status
+PrinterStatus GetStatus()
 {
-	if (newTab != currentTab)
-	{
-		if (currentTab != NULL)
-		{
-			currentTab->Press(false, 0);
-		}
-		newTab->Press(true, 0);
-		currentTab = newTab;
-		mgr.ClearAllPopups();
-		switch(newTab->GetEvent())
-		{
-		case evTabControl:
-			mgr.SetRoot(controlRoot);
-			nameField->SetValue(machineName.c_str());
-			break;
-		case evTabPrint:
-			mgr.SetRoot(printRoot);
-			nameField->SetValue(PrintInProgress() ? printingFile.c_str() : machineName.c_str());
-			FileManager::RefreshFilesList();
-			break;
-		case evTabMsg:
-			mgr.SetRoot(messageRoot);
-			if (keyboardIsDisplayed)
-			{
-				mgr.SetPopup(keyboardPopup, margin, (DisplayX - keyboardPopupWidth)/2, false);
-			}
-			break;
-		case evTabSetup:
-			mgr.SetRoot(setupRoot);
-			break;
-		default:
-			mgr.SetRoot(commonRoot);
-			break;
-		}
-
-		if (currentButton.GetButton() == newTab)
-		{
-			currentButton.Clear();									// to prevent it being released
-		}
-		mgr.Refresh(true);
-	}
+	return status;
 }
 
 void InitLcd(DisplayOrientation dor, uint32_t language, uint32_t colourScheme)
@@ -361,8 +295,6 @@ void InitLcd(DisplayOrientation dor, uint32_t language, uint32_t colourScheme)
 	colours = &colourSchemes[colourScheme];
 	Fields::CreateFields(language, *colours);						// create all the fields
 	mgr.Refresh(true);												// redraw everything
-
-	currentTab = NULL;
 }
 
 // Ignore touches for a long time
@@ -556,7 +488,10 @@ void ProcessTouch(ButtonPress bp)
 		case evTabPrint:
 		case evTabMsg:
 		case evTabSetup:
-			ChangeTab(f);
+			if (Fields::ChangePage(f))
+			{
+				currentButton.Clear();						// keep the button highlighted after it is released
+			}
 			break;
 
 		case evAdjustActiveTemp:
@@ -637,7 +572,7 @@ void ProcessTouch(ButtonPress bp)
 				default:
 					{
 						const char* null cmd = fieldBeingAdjusted.GetSParam();
-						if (cmd != NULL)
+						if (cmd != nullptr)
 						{
 							SerialIo::SendString(cmd);
 							SerialIo::SendInt(val);
@@ -866,10 +801,10 @@ void ProcessTouch(ButtonPress bp)
 				SerialIo::SendString("M32 ");
 				SerialIo::SendFilename(StripPrefix(FileManager::GetFilesDir()), currentFile);
 				SerialIo::SendChar('\n');
-				printingFile.copy(currentFile);
+				Fields::PrintingFilenameChanged(currentFile);
 				currentFile = nullptr;							// allow the file list to be updated
 				CurrentButtonReleased();
-				ChangeTab(tabPrint);
+				Fields::PrintStarted();
 			}
 			break;
 
@@ -877,10 +812,7 @@ void ProcessTouch(ButtonPress bp)
 			eventToConfirm = evNull;
 			currentFile = nullptr;
 			CurrentButtonReleased();
-			if (mgr.GetPopup() == keyboardPopup)
-			{
-				keyboardIsDisplayed = false;
-			}
+			Fields::PopupCancelled();
 			mgr.ClearPopup();
 			break;
 
@@ -907,8 +839,7 @@ void ProcessTouch(ButtonPress bp)
 			break;
 
 		case evKeyboard:
-			mgr.SetPopup(keyboardPopup, keyboardPopupX, keyboardPopupY);
-			keyboardIsDisplayed = true;
+			Fields::ShowKeyboard();
 			break;
 
 		case evInvertX:
@@ -1144,7 +1075,13 @@ pre(bp.IsValid())
 			StopAdjusting();
 			DelayTouchLong();	// by default, ignore further touches for a long time
 			TouchBeep();
-			ChangeTab(bp.GetButton());
+			{
+				ButtonBase *btn = bp.GetButton();
+				if (Fields::ChangePage(btn))
+				{
+					currentButton.Clear();						// keep the button highlighted after it is released
+				}
+			}
 			break;
 
 		case evSetBaudRate:
@@ -1179,33 +1116,6 @@ void UpdateField(IntegerButton *f, int val)
 	{
 		f->SetValue(val);
 	}
-}
-
-void UpdatePrintingFields()
-{
-	if (status == PrinterStatus::printing)
-	{
-		Fields::ShowPauseButton();
-	}
-	else if (status == PrinterStatus::paused)
-	{
-		Fields::ShowResumeAndCancelButtons();
-	}
-	else
-	{
-		Fields::ShowFilesButton();
-	}
-	
-	mgr.Show(printProgressBar, PrintInProgress());
-//	mgr.Show(printingField, PrintInProgress());
-
-	// Don't enable the time left field when we start printing, instead this will get enabled when we receive a suitable message
-	if (!PrintInProgress())
-	{
-		mgr.Show(timeLeftField, false);	
-	}
-	
-	statusField->SetValue(statusText[(unsigned int)status]);
 }
 
 // This is called when the status changes
@@ -1244,6 +1154,9 @@ void SetStatus(char c)
 		newStatus = PrinterStatus::stopped;
 		gotGeometry = false;
 		break;
+	case 'T':
+		newStatus = PrinterStatus::toolChange;
+		break;
 	default:
 		newStatus = status;		// leave the status alone if we don't recognize it
 		break;
@@ -1251,43 +1164,7 @@ void SetStatus(char c)
 	
 	if (newStatus != status)
 	{
-		switch (newStatus)
-		{
-		case PrinterStatus::printing:
-			if (status != PrinterStatus::paused && status != PrinterStatus::resuming)
-			{
-				// Starting a new print, so clear the times
-				timesLeft[0] = timesLeft[1] = timesLeft[2] = 0;			
-			}	
-			// no break
-		case PrinterStatus::paused:
-		case PrinterStatus::pausing:
-		case PrinterStatus::resuming:
-			if (status == PrinterStatus::connecting || status == PrinterStatus::idle)
-			{
-				ChangeTab(tabPrint);
-			}
-			else if (currentTab == tabPrint)
-			{
-				nameField->SetValue(printingFile.c_str());
-			}
-			break;
-			
-		case PrinterStatus::idle:
-			printingFile.clear();
-			nameField->SetValue(machineName.c_str());		// if we are on the print tab then it may still be set to the file that was being printed
-			// no break
-		case PrinterStatus::configuring:
-			if (status == PrinterStatus::flashing)
-			{
-				mgr.ClearAllPopups();						// clear the firmware update message
-			}
-			break;
-
-		default:
-			nameField->SetValue(machineName.c_str());
-			break;
-		}
+		Fields::ChangeStatus(status, newStatus);
 		
 		if (status == PrinterStatus::configuring || (status == PrinterStatus::connecting && newStatus != PrinterStatus::configuring))
 		{
@@ -1296,29 +1173,7 @@ void SetStatus(char c)
 		}
 	
 		status = newStatus;
-		UpdatePrintingFields();
-	}
-}
-
-// Append an amount of time to timesLeftText
-void AppendTimeLeft(int t)
-{
-	if (t <= 0)
-	{
-		timesLeftText.catFrom("n/a");
-	}
-	else if (t < 60)
-	{
-		timesLeftText.catf("%ds", t);
-	}
-	else if (t < 60 * 60)
-	{
-		timesLeftText.catf("%dm %02ds", t/60, t%60);
-	}
-	else
-	{
-		t /= 60;
-		timesLeftText.catf("%dh %02dm", t/60, t%60);
+		Fields::UpdatePrintingFields();
 	}
 }
 
@@ -1462,17 +1317,14 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 			ShowLine;
 			{
 				float fval;
-				if (GetFloat(data, fval) && index < (int)maxHeaters)
+				if (GetFloat(data, fval))
 				{
 					ShowLine;
-					currentTemps[index]->SetValue(fval);
+					Fields::UpdateCurrentTemperature(index, fval);
 					if (index == (int)numHeads + 1)
 					{
 						ShowLine;
-						mgr.Show(currentTemps[index], true);
-						mgr.Show(activeTemps[index], true);
-						mgr.Show(standbyTemps[index], true);
-						mgr.Show(extrusionFactors[index - 1], true);
+						Fields::ShowHeater(index, true);
 						++numHeads;
 					}
 				}
@@ -1486,12 +1338,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				if (GetInteger(data, ival) && index < (int)maxHeaters)
 				{
 					heaterStatus[index] = ival;
-					Colour c = (ival == 1) ? colours->standbyBackColour
-								: (ival == 2) ? colours->activeBackColour
-								: (ival == 3) ? colours->errorBackColour
-								: (ival == 4) ? colours->tuningBackColour
-								: colours->defaultBackColour;
-					currentTemps[index]->SetColours((ival == 3) ? colours->errorTextColour : colours->infoTextColour, c);
+					Fields::ShowHeaterStatus(index, ival);
 				}
 			}
 			break;
@@ -1500,9 +1347,9 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 			ShowLine;
 			{
 				float fval;
-				if (GetFloat(data, fval) && index < MAX_AXES)
+				if (GetFloat(data, fval))
 				{
-					axisPos[index]->SetValue(fval);
+					Fields::UpdateAxisPosition(index, fval);
 				}
 			}
 			break;
@@ -1554,7 +1401,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 					if (isHomed != axisHomed[index])
 					{
 						axisHomed[index] = isHomed;
-						homeButtons[index]->SetColours(colours->buttonTextColour, (isHomed) ? colours->homedButtonBackColour : colours->notHomedButtonBackColour);
+						Fields::UpdateHomedStatus(index, isHomed);
 						bool allHomed = true;
 						for (size_t i = 0; i < numAxes; ++i)
 						{
@@ -1567,7 +1414,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 						if (allHomed != allAxesHomed)
 						{
 							allAxesHomed = allHomed;
-							homeAllButton->SetColours(colours->buttonTextColour, (allAxesHomed) ? colours->homedButtonBackColour : colours->notHomedButtonBackColour);
+							Fields::UpdateHomedStatus(-1, allHomed);
 						}
 					}
 				}
@@ -1576,24 +1423,12 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 		
 		case rcvTimesLeft:
 			ShowLine;
-			if (index < (int)ARRAY_SIZE(timesLeft))
 			{
 				int i;
 				bool b = GetInteger(data, i);
 				if (b && i >= 0 && i < 10 * 24 * 60 * 60 && PrintInProgress())
 				{
-					timesLeft[index] = i;
-					timesLeftText.copy("file ");
-					AppendTimeLeft(timesLeft[0]);
-					timesLeftText.catFrom(", filament ");
-					AppendTimeLeft(timesLeft[1]);
-					if (DisplayX >= 800)
-					{
-						timesLeftText.catFrom(", layer ");
-						AppendTimeLeft(timesLeft[2]);
-					}
-					timeLeftField->SetValue(timesLeftText.c_str());
-					mgr.Show(timeLeftField, true);
+					Fields::UpdateTimesLeft(index, i);
 				}
 			}
 			break;
@@ -1632,15 +1467,13 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 			break;
 
 		case rcvProbe:
-			zprobeBuf.copy(data);
-			zProbe->SetChanged();
+			Fields::UpdateZProbe(data);
 			break;
 		
 		case rcvMyName:
 			if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
 			{
-				machineName.copy(data);
-				nameField->SetChanged();
+				Fields::UpdateMachineName(data);
 				gotMachineName = true;
 				if (gotGeometry)
 				{
@@ -1650,14 +1483,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 			break;
 		
 		case rcvFilename:
-			if (!printingFile.similar(data))
-			{
-				printingFile.copy(data);
-				if (currentTab == tabPrint && PrintInProgress())
-				{
-					nameField->SetChanged();
-				}
-			}
+			Fields::PrintingFilenameChanged(data);
 			fileInfoTimer.Stop();
 			break;
 		
@@ -1703,7 +1529,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				{
 					if (f >= 0.0 && f <= 1.0)
 					{
-						printProgressBar->SetPercent((uint8_t)((100.0 * f) + 0.5));
+						Fields::SetPrintProgressPercent((unsigned int)(100.0 * f) + 0.5);
 					}
 				}
 			}
@@ -1730,10 +1556,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				{
 					machineConfigTimer.Stop();
 				}
-				for (size_t i = 0; i < MAX_AXES; ++i)
-				{
-					mgr.Show(homeButtons[i], !isDelta && i < numAxes);
-				}
+				Fields::UpdateGeometry(numAxes, isDelta);
 			}
 			break;
 		
@@ -1742,11 +1565,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 				unsigned int n = MIN_AXES;
 				GetUnsignedInteger(data, n);
 				numAxes = constrain<unsigned int>(n, MIN_AXES, MAX_AXES);
-				for (size_t i = MIN_AXES; i < MAX_AXES; ++i)
-				{
-					mgr.Show(homeButtons[i], !isDelta && i < numAxes);
-					Fields::ShowAxis(i, i < numAxes);
-				}
+				Fields::UpdateGeometry(numAxes, isDelta);
 			}
 			break;
 
@@ -1763,15 +1582,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 			break;
 
 		case rcvMessage:
-			if (data[0] == 0)
-			{
-				mgr.ClearPopup(true, alertPopup);
-			}
-			else
-			{
-				alertText.copy(data);
-				mgr.SetPopup(alertPopup, (DisplayX - alertPopupWidth)/2, (DisplayY - alertPopupHeight)/2);
-			}
+			Fields::ProcessAlert(data);
 			break;
 
 		case rcvErr:
@@ -1892,7 +1703,7 @@ int main(void)
 		nvData.SetDefaults();
 		InitLcd(nvData.lcdOrientation, nvData.language, nvData.colourScheme);
 		Buzzer::SetBacklight(nvData.brightness);	// must be done before touch calibration
-		CalibrateTouch();							// this includes the touch driver initialization
+		CalibrateTouch();							// this includes the touch driver initialisation
 		SaveSettings();
 	}
 	
@@ -1904,17 +1715,14 @@ int main(void)
 	
 	MessageLog::Init();
 
-	UpdatePrintingFields();
+	Fields::UpdatePrintingFields();
 
 	lastPollTime = SystemTick::GetTickCount() - printerPollInterval;	// allow a poll immediately
 	
 	// Hide the Head 2+ parameters until we know we have a second head
 	for (unsigned int i = 2; i < maxHeaters; ++i)
 	{
-		currentTemps[i]->Show(false);
-		activeTemps[i]->Show(false);
-		standbyTemps[i]->Show(false);
-		extrusionFactors[i - 1]->Show(false);
+		Fields::ShowHeater(i, false);
 	}
 	
 	standbyTemps[0]->Show(false);			// currently, we always hide the bed standby temperature because it doesn't do anything
@@ -1930,7 +1738,7 @@ int main(void)
 #endif
 
 	// Display the Control tab. This also refreshes the display.
-	ChangeTab(tabControl);
+	Fields::ShowDefaultPage();
 	lastResponseTime = SystemTick::GetTickCount();		// pretend we just received a response
 	
 	machineConfigTimer.SetPending();		// we need to fetch the machine name and configuration
@@ -1945,10 +1753,7 @@ int main(void)
 		ShowLine;
 		
 		// 2. if displaying the message log, update the times
-		if (currentTab == tabMsg)
-		{
-			MessageLog::UpdateMessages(false);
-		}
+		Fields::Spin();
 		ShowLine;
 		
 		// 3. Check for a touch on the touch panel.
@@ -2012,7 +1817,7 @@ int main(void)
 		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
 		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
 		uint32_t now = SystemTick::GetTickCount();
-		if (   currentTab != tabSetup								// don't poll while we are in the Setup page
+		if (   Fields::DoPolling()									// don't poll while we are in the Setup page
 		    && now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
 			&& now - lastResponseTime >= printerResponseInterval	// and we haven't had a response too recently
 		   )
@@ -2049,5 +1854,8 @@ void PrintDebugText(const char *x)
 {
 	fwVersionField->SetValue(x);
 }
+
+// Pure virtual function call handler, to avoid pulling in large chunks of the standard library
+extern "C" void __cxa_pure_virtual() { while (1); }
 
 // End

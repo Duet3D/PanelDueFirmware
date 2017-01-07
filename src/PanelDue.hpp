@@ -11,15 +11,21 @@
 #include "Hardware/UTFT.hpp"
 #include "Display.hpp"
 #include "RequestTimer.hpp"
+#include "PrinterStatus.hpp"
 
 // Global functions in PanelDue.cpp that are called from elsewhere
 extern void ProcessReceivedValue(const char id[], const char val[], int index);
 extern void ProcessArrayLength(const char id[], int length);
 extern void StartReceivedMessage();
 extern void EndReceivedMessage();
+extern bool PrintInProgress();
+extern PrinterStatus GetStatus();
 
 // Global data in PanelDue.cpp that is used elsewhere
 extern UTFT lcd;
 extern MainWindow mgr;
+
+class ColourScheme;
+extern const ColourScheme *colours;
 
 #endif /* PANELDUE_H_ */

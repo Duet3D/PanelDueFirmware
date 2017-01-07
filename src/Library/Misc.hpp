@@ -11,6 +11,9 @@
 
 #include <cstddef>
 
+#undef min
+#undef max
+
 #define ARRAY_SIZE(_x) (sizeof(_x)/sizeof(_x[0]))
 
 void safeStrncpy(char* array dst, const char* array src, size_t n)

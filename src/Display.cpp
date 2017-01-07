@@ -7,6 +7,7 @@
 
 #include "Display.hpp"
 #include "ColourSchemes.hpp"
+
 #undef array
 #undef result
 #include <algorithm>
@@ -15,13 +16,8 @@
 
 extern UTFT lcd;
 
-extern void WriteCommand(const char* array s);
-extern void WriteCommand(int i);
-extern void WriteCommand(char c);
-
-
 // Static fields of class DisplayField
-LcdFont DisplayField::defaultFont = NULL;
+LcdFont DisplayField::defaultFont = nullptr;
 Colour DisplayField::defaultFcolour = white;
 Colour DisplayField::defaultBcolour = black;
 Colour DisplayField::defaultButtonBorderColour = black;
@@ -31,7 +27,7 @@ Colour DisplayField::defaultPressedGradColour = 0;
 
 DisplayField::DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw)
 	: y(py), x(px), width(pw), fcolour(defaultFcolour), bcolour(defaultBcolour),
-		changed(true), visible(true), next(NULL)
+		changed(true), visible(true), next(nullptr)
 {
 }
 
@@ -66,7 +62,7 @@ ButtonPress DisplayField::FindEvent(PixelNumber x, PixelNumber y, DisplayField *
 	const int maxXerror = 8, maxYerror = 8;		// set these to how close we need to be
 	int bestError = maxXerror + maxYerror;
 	ButtonPress best;;
-	while (p != NULL)
+	while (p != nullptr)
 	{
 		if (p->visible && p->GetEvent() != nullEvent)
 		{
@@ -156,7 +152,7 @@ bool Window::Visible(const DisplayField *p) const
 	return p->IsVisible() && !ObscuredByPopup(p);
 }
 
-// Get the field that has been touched, or null if we can't find one
+// Get the field that has been touched, or nullptr if we can't find one
 ButtonPress Window::FindEvent(PixelNumber x, PixelNumber y)
 {
 	return (x < Xpos() || y < Ypos()) ? ButtonPress()
@@ -275,14 +271,14 @@ void Window::Redraw(DisplayField *f)
 	}
 }
 
-void Window::Show(DisplayField *f, bool v)
+void Window::Show(DisplayField * null f, bool v)
 {
-	if (f->IsVisible() != v)
+	if (f != nullptr && f->IsVisible() != v)
 	{
 		f->Show(v);
 
 		// Check whether the field is currently in the display list, if so then show or hide it
-		for (DisplayField *p = root; p != NULL; p = p->next)
+		for (DisplayField *p = root; p != nullptr; p = p->next)
 		{
 			if (p == f)
 			{
@@ -347,7 +343,7 @@ void MainWindow::Refresh(bool full)
 		ClearAll();
 	}
 
-	for (DisplayField * null pp = root; pp != NULL; pp = pp->next)
+	for (DisplayField * null pp = root; pp != nullptr; pp = pp->next)
 	{
 		if (Visible(pp))
 		{
@@ -362,6 +358,7 @@ void MainWindow::Refresh(bool full)
 
 bool MainWindow::Contains(PixelNumber xmin, PixelNumber ymin, PixelNumber xmax, PixelNumber ymax) const
 {
+	UNUSED(xmin); UNUSED(ymin); UNUSED(xmax); UNUSED(ymax);
 	return true;
 }
 
@@ -392,7 +389,7 @@ void PopupWindow::Refresh(bool full)
 		lcd.drawRoundRect(xPos + 1, yPos + 1, xPos + width - 2, yPos + height - 2);
 	}
 	
-	for (DisplayField * null p = root; p != NULL; p = p->next)
+	for (DisplayField * null p = root; p != nullptr; p = p->next)
 	{
 		if (p->IsVisible() && (full || !ObscuredByPopup(p)))
 		{
@@ -455,11 +452,11 @@ void FieldWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 
 void TextField::PrintText() const
 {
-	if (label != NULL)
+	if (label != nullptr)
 	{
 		lcd.print(label);
 	}
-	if (text != NULL)
+	if (text != nullptr)
 	{
 		lcd.print(text);
 	}
@@ -467,12 +464,12 @@ void TextField::PrintText() const
 
 void FloatField::PrintText() const
 {
-	if (label != NULL)
+	if (label != nullptr)
 	{
 		lcd.print(label);
 	}
 	lcd.print(val, numDecimals);
-	if (units != NULL)
+	if (units != nullptr)
 	{
 		lcd.print(units);
 	}
@@ -480,12 +477,12 @@ void FloatField::PrintText() const
 
 void IntegerField::PrintText() const
 {
-	if (label != NULL)
+	if (label != nullptr)
 	{
 		lcd.print(label);
 	}
 	lcd.print(val);
-	if (units != NULL)
+	if (units != nullptr)
 	{
 		lcd.print(units);
 	}
@@ -608,12 +605,12 @@ void IconButton::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 
 void IntegerButton::PrintText() const
 {
-	if (label != NULL)
+	if (label != nullptr)
 	{
 		lcd.print(label);
 	}
 	lcd.print(val);
-	if (units != NULL)
+	if (units != nullptr)
 	{
 		lcd.print(units);
 	}
@@ -622,7 +619,7 @@ void IntegerButton::PrintText() const
 void FloatButton::PrintText() const
 {
 	lcd.print(val, numDecimals);
-	if (units != NULL)
+	if (units != nullptr)
 	{
 		lcd.print(units);
 	}

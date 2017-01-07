@@ -12,6 +12,10 @@
 #include "ecv.h"
 #include "Hardware/UTFT.hpp"
 
+#ifndef UNUSED
+# define UNUSED(_x)	(void)(_x)
+#endif
+
 // Fonts are held as arrays of 8-bit data in flash.
 typedef const uint8_t * array LcdFont;
 
@@ -74,7 +78,7 @@ protected:
 protected:
 	DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw);
 	
-	virtual PixelNumber GetHeight() const { return 1; }		// would like to make this pure virtual but then we get 50K of library that we don't want
+	virtual PixelNumber GetHeight() const = 0;
 
 public:
 	DisplayField * null next;					// link to next field in list
@@ -82,7 +86,7 @@ public:
 	virtual bool IsButton() const { return false; }
 	bool IsVisible() const { return visible; }
 	void Show(bool v);
-	virtual void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) { }		// would like to make this pure virtual but then we get 50K of library that we don't want
+	virtual void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) = 0;
 	void SetColours(Colour pf, Colour pb);
 	void SetChanged() { changed = true; }
 	PixelNumber GetMinX() const { return x; }
@@ -124,7 +128,7 @@ public:
 	DisplayField * null GetRoot() const { return root; }
 	virtual void Refresh(bool full) = 0;
 	void Redraw(DisplayField *f);
-	void Show(DisplayField *f, bool v);
+	void Show(DisplayField * null f, bool v);
 	void Press(ButtonPress bp, bool v);
 	void SetPopup(PopupWindow * p, PixelNumber px = 0, PixelNumber py = 0, bool redraw = true);
 	PopupWindow * null GetPopup() const { return next; }
@@ -291,9 +295,9 @@ protected:
 
 public:
 	event_t GetEvent() const override { return evt; }
-	virtual const char* null GetSParam(unsigned int index) const { return nullptr; }
-	virtual int GetIParam(unsigned int index) const { return 0; }
-	virtual void Press(bool p, int index) { }
+	virtual const char* null GetSParam(unsigned int index) const { UNUSED(index); return nullptr; }
+	virtual int GetIParam(unsigned int index) const { UNUSED(index); return 0; }
+	virtual void Press(bool p, int index) { UNUSED(p); UNUSED(index); }
 };
 
 class SingleButton : public ButtonBase
@@ -317,12 +321,13 @@ public:
 	void SetEvent(event_t e, int ip ) { evt = e; param.iParam = ip; }
 	//void SetEvent(event_t e, float fp ) { evt = e; param.fParam = fp; }
 
-	const char* null GetSParam(unsigned int index) const override { return param.sParam; }
-	int GetIParam(unsigned int index) const override { return param.iParam; }
+	const char* null GetSParam(unsigned int index) const override { UNUSED(index); return param.sParam; }
+	int GetIParam(unsigned int index) const override { UNUSED(index); return param.iParam; }
 	//float GetFParam() const { return param.fParam; }
 
 	void Press(bool p, int index) override
 	{
+		UNUSED(p); UNUSED(index);
 		if (p != pressed)
 		{
 			pressed = p;

@@ -11,6 +11,7 @@
 
 #include "Display.hpp"
 #include "ColourSchemes.hpp"
+#include "PrinterStatus.hpp"
 
 // From the display type, we determine the display controller type and touch screen orientation adjustment
 #if DISPLAY_TYPE == DISPLAY_TYPE_ITDB02_32WD
@@ -235,101 +236,52 @@ namespace Fields
 	extern void ShowFilesButton();
 	extern void ShowResumeAndCancelButtons();
 	extern void ShowAxis(size_t axis, bool b);
+	extern void UpdateAxisPosition(size_t axis, float fval);
+	extern void UpdateCurrentTemperature(size_t heater, float fval);
+	extern void ShowHeater(size_t heater, bool show);
+	extern void ShowHeaterStatus(size_t heater, int ival);
+	extern void ChangeStatus(PrinterStatus oldStatus, PrinterStatus newStatus);
+	extern void UpdateTimesLeft(size_t index, unsigned int seconds);
+	extern bool ChangePage(ButtonBase *newTab);
+	extern void ShowKeyboard();
+	extern void PopupCancelled();
+	extern bool DoPolling();
+	extern void Spin();
+	extern void PrintStarted();
+	extern void PrintingFilenameChanged(const char data[]);
+	extern void ShowDefaultPage();
+	extern void UpdatePrintingFields();
+	extern void SetPrintProgressPercent(unsigned int percent);
+	extern void UpdateGeometry(unsigned int numAxes, bool isDelta);
+	extern void UpdateHomedStatus(int axis, bool isHomed);
+	extern void UpdateZProbe(const char data[]);
+	extern void UpdateMachineName(const char data[]);
+	extern void ProcessAlert(const char data[]);
 }
 
-const size_t machineNameLength = 30;
-const size_t printingFileLength = 40;
-const size_t zprobeBufLength = 12;
 const size_t generatedByTextLength = 50;
-const size_t alertTextLength = 80;
 
 const unsigned int numLanguages = 3;
 extern const char* const longLanguageNames[];
 
-extern String<machineNameLength> machineName;
-extern String<printingFileLength> printingFile;
-extern String<zprobeBufLength> zprobeBuf;
 extern String<generatedByTextLength> generatedByText;
-extern String<alertTextLength>alertText;
 
-extern FloatField *currentTemps[maxHeaters], *fpHeightField, *fpLayerHeightField;
-extern FloatField *axisPos[MAX_AXES];
+extern FloatField *fpHeightField, *fpLayerHeightField;
 extern IntegerButton *activeTemps[maxHeaters], *standbyTemps[maxHeaters];
 extern IntegerButton *spd, *fanSpeed, *baudRateButton, *volumeButton;
 extern IntegerButton *extrusionFactors[maxHeaters - 1];
 extern IntegerField *freeMem, *touchX, *touchY, *fpSizeField, *fpFilamentField, *fileListErrorField;
-extern ProgressBar *printProgressBar;
-extern SingleButton *tabControl, *tabPrint, *tabFiles, *tabMsg, *tabSetup;
 extern SingleButton *moveButton, *extrudeButton, *macroButton;
 extern TextButton *filenameButtons[numDisplayedFiles], *languageButton, *coloursButton;
 extern SingleButton *scrollFilesLeftButton, *scrollFilesRightButton, *filesUpButton, *changeCardButton;
-extern SingleButton *homeButtons[MAX_AXES], *homeAllButton;
 extern ButtonPress currentExtrudeRatePress, currentExtrudeAmountPress;
-extern StaticTextField *nameField, *statusField, *macroPopupTitleField, *debugField;
+extern StaticTextField *macroPopupTitleField, *debugField;
 extern IntegerField *filePopupTitleField;
-extern SingleButton *heaterStates[maxHeaters];
 extern StaticTextField *touchCalibInstruction;
 extern StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
 extern StaticTextField *fwVersionField, *areYouSureTextField, *areYouSureQueryField;
-extern TextField *timeLeftField;
-extern DisplayField *baseRoot, *commonRoot, *controlRoot, *printRoot, *filesRoot, *messageRoot, *setupRoot;
-extern ButtonBase * null currentTab;
-extern ButtonPress fieldBeingAdjusted;
-extern ButtonPress currentButton;
 extern PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *filePopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
-extern TextField *zProbe, *fpNameField, *fpGeneratedByField, *userCommandField;
+extern TextField *fpNameField, *fpGeneratedByField, *userCommandField;
 extern PopupWindow *alertPopup;
-
-// Event numbers, used to say what we need to do when a field is touched
-// *** MUST leave value 0 free to mean "no event"
-enum Event : uint8_t
-{
-	evNull = 0,						// value must match nullEvent declared in Display.hpp
-
-	// Page selection
-	evTabControl, evTabPrint, evTabMsg, evTabSetup,
-
-	// Heater control
-	evSelectHead, evAdjustActiveTemp, evAdjustStandbyTemp,
-	
-	// Control functions
-	evMovePopup, evExtrudePopup, evFan, evListMacros,
-	evMoveX, evMoveY, evMoveZ, evMoveU, evMoveV, evMoveW,	// these 6 must be contiguous and in this order
-	evExtrudeAmount, evExtrudeRate, evExtrude, evRetract,
-	
-	// Print functions
-	evExtrusionFactor,
-	evAdjustFan,
-	evAdjustInt,
-	evSetInt,
-	evListFiles,
-
-	evFile, evMacro,
-	evPrint,
-	evSendCommand,
-	evFactoryReset,
-	evAdjustSpeed,
-	
-	evScrollFiles, evFilesUp, evMacrosUp, evChangeCard,
-	
-	evKeyboard,
-
-	// Setup functions
-	evCalTouch, evSetBaudRate, evInvertX, evInvertY, evAdjustBaudRate, evSetVolume, evSaveSettings, evAdjustVolume, evReset,
-
-	evYes,
-	evCancel,
-	evDeleteFile,
-	evPausePrint,
-	evResumePrint,
-	
-	evKey, evBackspace, evSendKeyboardCommand, evUp, evDown,
-	
-	evAdjustLanguage, evSetLanguage,
-	evAdjustColours, evSetColours,
-	evBrighter, evDimmer,
-	
-	evRestart
-};
 
 #endif /* FIELDS_H_ */

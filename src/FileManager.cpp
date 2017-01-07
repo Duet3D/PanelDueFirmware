@@ -13,8 +13,10 @@
 #undef min
 #undef max
 #undef array
+#undef result
 #include <algorithm>
 #define array _ecv_array
+#define result _ecv_result
 
 namespace FileManager
 {

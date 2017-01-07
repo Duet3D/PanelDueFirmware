@@ -577,8 +577,8 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit)
 		LCD_Write_COM_DATA16(0x08,0x0000);
 		LCD_Write_COM_DATA16(0x09,0x00DB);
 		delay_ms(20);
-		LCD_Write_COM_DATA16(0x16,0x0008);  //MV MX MY ML SET  0028横屏显示（此时LCD_Write_COM_DATA(0x0005,0x00DB);  LCD_Write_COM_DATA(0x0009,0x00AF);）
-		LCD_Write_COM_DATA16(0x17,0x0005);//COLMOD Control Register (R17h)
+		LCD_Write_COM_DATA16(0x16,0x0008);
+		LCD_Write_COM_DATA16(0x17,0x0005);	//COLMOD Control Register (R17h)
 		LCD_Write_COM(0x21);
 		LCD_Write_COM(0x22);
 		break;
@@ -1284,41 +1284,74 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit)
 	cfont.font=0;
 }
 
-void UTFT::setXY(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
+// setXY is time-critical because we call it when drawing compressed bitmaps
+#pragma GCC optimize ("O3")
+
+void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 {
+	uint16_t x1, x2, y1, y2;
 	if (orient & SwapXY)
 	{
-		swap(x1, y1);
-		swap(x2, y2);
-
 		if (orient & ReverseX)
 		{
-			y1 = disp_y_size - y1;
-			y2 = disp_y_size - y2;
-			swap(y1, y2);
+			y2 = disp_y_size - p_x1;
+			y1 = disp_y_size - p_x2;
+		}
+		else
+		{
+			y1 = p_x1;
+			y2 = p_x2;
 		}
 		if (orient & ReverseY)
 		{
-			x1 = disp_x_size - x1;
-			x2 = disp_x_size - x2;
-			swap(x1, x2);
+			x2 = disp_x_size - p_y1;
+			x1 = disp_x_size - p_y2;
+		}
+		else
+		{
+			x1 = p_y1;
+			x2 = p_y2;
 		}
 	}
 	else
 	{
 		if (orient & ReverseY)
 		{
-			y1 = disp_y_size - y1;
-			y2 = disp_y_size - y2;
-			swap(y1, y2);
+			y2 = disp_y_size - p_y1;
+			y1 = disp_y_size - p_y2;
+		}
+		else
+		{
+			y1 = p_y1;
+			y2 = p_y2;
 		}
 		if (orient & ReverseX)
 		{
-			x1 = disp_x_size - x1;
-			x2 = disp_x_size - x2;
-			swap(x1, x2);
+			x2 = disp_x_size - p_x1;
+			x1 = disp_x_size - p_x2;
+		}
+		else
+		{
+			x1 = p_x1;
+			x2 = p_x2;
 		}
 	}
+
+#if 1
+
+	// Optimised code supporting only the SSD1963
+	// In the following we use LCD_WRITE_BUS to write additional data without having to write RS again.
+	LCD_Write_COM_DATA16(0x2a, y1>>8);
+	LCD_Write_Bus(y1);
+	LCD_Write_Bus(y2>>8);
+	LCD_Write_Bus(y2);
+	LCD_Write_COM_DATA16(0x2b, x1>>8);
+	LCD_Write_Bus(x1);
+	LCD_Write_Bus(x2>>8);
+	LCD_Write_Bus(x2);
+	LCD_Write_COM(0x2c);
+
+#else
 
 	switch(displayModel)
 	{
@@ -1442,6 +1475,7 @@ void UTFT::setXY(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
 	default:
 		break;
 	}
+#endif
 }
 
 void UTFT::clrXY()
@@ -2118,16 +2152,15 @@ void UTFT::drawBitmap(int x, int y, int sx, int sy, uint16_t *data, int deg, int
 // Draw a compressed bitmap. Data comprises alternate (repeat count - 1, data to write) pairs, both as 16-bit values.
 void UTFT::drawCompressedBitmap(int x, int y, int sx, int sy, const uint16_t *data)
 {
-//	int curY = y;
 	uint32_t count = 0;
 	uint16_t col = 0;
+	sx += x;
+	sy += y;
 	assertCS();
-	for (int tx = 0; tx < sx; tx++)
+	for (int tx = x; tx < sx; tx++)
 	{
-//		bool xySet = false;
-		for (int ty = 0; ty < sy; ty++)
+		for (int ty = y; ty < sy; ty++)
 		{
-			//const int actualX = (orient & InvertBitmap) ? sx - tx - 1 : tx;
 			if (count == 0)
 			{
 				count = *data++;
@@ -2137,25 +2170,9 @@ void UTFT::drawCompressedBitmap(int x, int y, int sx, int sy, const uint16_t *da
 			{
 				--count;
 			}
-#if 1
 			setXY(tx, ty, tx, ty);
-#else
-			if (!xySet)
-			{
-				if (orient & InvertBitmap)
-				{
-					setXY(x, curY, x + (sx - tx) - 1, curY);
-				}
-				else
-				{
-					setXY(x + tx, curY, x + sx - 1, curY);
-				}
-				xySet = true;
-			}
-#endif
 			LCD_Write_DATA16(col);
 		}
-//		++curY;
 	}
 	removeCS();
 	clrXY();	

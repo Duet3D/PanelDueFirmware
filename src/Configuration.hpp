@@ -9,7 +9,7 @@
 #ifndef CONFIGURATION_H_
 #define CONFIGURATION_H_
 
-#define VERSION_TEXT		"1.16"
+#define VERSION_TEXT		"1.16alpha"
 
 #define DISPLAY_TYPE_ITDB02_32WD		(0)		// Itead 3.2 inch widescreen display (400x240) - NO LONGER SUPPORTED
 #define DISPLAY_TYPE_ITDB02_43			(1)		// Itead 4.3 inch display (480 x 272) or alternative 4.3 inch display with 24-bit colour

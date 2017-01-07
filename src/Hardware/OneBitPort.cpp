@@ -8,19 +8,8 @@
 #include "OneBitPort.hpp"
 
 OneBitPort::OneBitPort(unsigned int pin)
+	: port((pin < 32) ? PIOA : PIOB), mask(1u << (pin & 31))
 {
-#if defined(SAM3S)
-	// For the SAM3S we use the following pin numbers:
-	// 0-31		PA0-PA31
-	// 32-63	PB0-PB31
-	// 64-95	PC0-PC31
-	mask = 1u << (pin & 31);
-	port = (pin < 32) ? PIOA : PIOB;		// no PORT C on the SAM3S4B
-#else
-	// Use Arduino pin numbers
-	port = portOutputRegister(digitalPinToPort(pin));
-	mask = digitalPinToBitMask(pin);
-#endif
 }
 	
 void OneBitPort::setMode(PortMode mode)

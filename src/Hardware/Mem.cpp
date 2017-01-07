@@ -15,11 +15,11 @@
 
 extern int  _end, __ram_end__;
 
-static unsigned char *heap = NULL;
+static unsigned char *heap = nullptr;
 
 void* operator new(size_t objsize)
 {
-	if (heap == NULL)
+	if (heap == nullptr)
 	{
 		heap = (unsigned char *)&_end;
 	}
@@ -29,11 +29,11 @@ void* operator new(size_t objsize)
 	return prev_heap;
 }
 
-void operator delete(void* obj) { }
+void operator delete(void* obj) { (void)obj; }
 	
 unsigned int getFreeMemory()
 {
-	if (heap == NULL)
+	if (heap == nullptr)
 	{
 		heap = (unsigned char *)&_end;
 	}

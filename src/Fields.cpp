@@ -12,6 +12,9 @@
 #include "Hardware/Buzzer.hpp"
 #include "Fields.hpp"
 #include "Icons/Icons.hpp"
+#include "Events.hpp"
+#include "Library/Misc.hpp"
+#include "MessageLog.hpp"
 
 FloatField *currentTemps[maxHeaters], *fpHeightField, *fpLayerHeightField;
 FloatField *axisPos[MAX_AXES];
@@ -19,13 +22,12 @@ IntegerButton *activeTemps[maxHeaters], *standbyTemps[maxHeaters];
 IntegerButton *spd, *extrusionFactors[maxHeaters - 1], *fanSpeed, *baudRateButton, *volumeButton;
 IntegerField *freeMem, *touchX, *touchY, *fpSizeField, *fpFilamentField, *fileListErrorField;
 ProgressBar *printProgressBar;
-SingleButton *tabControl, *tabPrint, *tabFiles, *tabMsg, *tabSetup;
+SingleButton *tabControl, *tabPrint, *tabMsg, *tabSetup;
 SingleButton *moveButton, *extrudeButton, *macroButton;
 
 TextButton *filenameButtons[numDisplayedFiles], *languageButton, *coloursButton;
 SingleButton *scrollFilesLeftButton, *scrollFilesRightButton, *filesUpButton, *changeCardButton;
 SingleButton *homeButtons[MAX_AXES], *homeAllButton, *bedCompButton;
-SingleButton *heaterStates[maxHeaters];
 ButtonPress currentExtrudeRatePress, currentExtrudeAmountPress;
 StaticTextField *nameField, *statusField, *touchCalibInstruction, *macroPopupTitleField, *debugField;
 IntegerField *filePopupTitleField;
@@ -33,14 +35,17 @@ StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessag
 StaticTextField *fwVersionField, *settingsNotSavedField, *areYouSureTextField, *areYouSureQueryField;
 ButtonBase *filesButton, *pauseButton, *resumeButton, *resetButton;
 TextField *timeLeftField;
-DisplayField *baseRoot, *commonRoot, *controlRoot, *printRoot, *filesRoot, *messageRoot, *setupRoot;
-ButtonBase * null currentTab = NULL;
-ButtonPress fieldBeingAdjusted;
-ButtonPress currentButton;
+DisplayField *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
+ButtonBase * null currentTab = nullptr;
 PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *filePopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup, *brightnessPopup;
 TextField *zProbe, *fpNameField, *fpGeneratedByField, *userCommandField;
 PopupWindow *alertPopup;
 StaticTextField *moveAxisRows[MAX_AXES];
+
+const size_t machineNameLength = 30;
+const size_t printingFileLength = 40;
+const size_t zprobeBufLength = 12;
+const size_t alertTextLength = 80;
 
 String<machineNameLength> machineName;
 String<printingFileLength> printingFile;
@@ -57,6 +62,21 @@ const char* array settingsNotSavedText = "Some settings are not saved!";
 const char*array  restartNeededText = "Touch Save & Restart to use new colour scheme";
 const char* array const axisNames[] = { "X", "Y", "Z", "U", "V", "W" };
 
+// Map of PrinterStatus status codes to text. The space at the end improves the appearance.
+const char * const statusText[] =
+{
+	"Connecting",
+	"Idle ",
+	"Printing ",
+	"Halted",
+	"Starting up ",
+	"Paused ",
+	"Busy ",
+	"Pausing ",
+	"Resuming ",
+	"Firmware upload",
+	"Changing tool"
+};
 
 #if DISPLAY_X == 800
 const Icon heaterIcons[maxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNozzle3, IconNozzle4, IconNozzle5, IconNozzle6 };
@@ -66,6 +86,8 @@ const Icon heaterIcons[maxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNo
 
 namespace Fields
 {
+	static bool keyboardIsDisplayed = false;
+
 	// Create a standard popup window with a title and a close button at the top right
 	PopupWindow *CreatePopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder, Colour textColour, const char * null title, PixelNumber topMargin = popupTopMargin)
 	{
@@ -416,7 +438,7 @@ namespace Fields
 	
 #ifdef OEM_LAYOUT
 
-#include "OemFields.cpp"
+#include "OemFields.inc"
 
 #else
 	// Create the grid of heater icons and temperatures
@@ -742,8 +764,320 @@ namespace Fields
 			f->Show(b);
 			f = f->next;
 		}
-		axisPos[axis]->Show(b)
-;	}
+		axisPos[axis]->Show(b);
+	}
+
+	void UpdateAxisPosition(size_t axis, float fval)
+	{
+		if (axis < MAX_AXES && axisPos[axis] != nullptr)
+		{
+			axisPos[axis]->SetValue(fval);
+		}
+	}
+
+	void UpdateCurrentTemperature(size_t heater, float fval)
+	{
+		if (heater < maxHeaters && currentTemps[heater] != nullptr)
+		{
+			currentTemps[heater]->SetValue(fval);
+		}
+	}
+
+	void ShowHeater(size_t heater, bool show)
+	{
+		if (heater < maxHeaters)
+		{
+			mgr.Show(currentTemps[heater], show);
+			mgr.Show(activeTemps[heater], show);
+			mgr.Show(standbyTemps[heater], show);
+			mgr.Show(extrusionFactors[heater - 1], show);
+		}
+	}
+
+	void ShowHeaterStatus(size_t heater, int ival)
+	{
+		if (heater < maxHeaters && currentTemps[heater] != nullptr)
+		{
+			Colour c = (ival == 1) ? colours->standbyBackColour
+						: (ival == 2) ? colours->activeBackColour
+						: (ival == 3) ? colours->errorBackColour
+						: (ival == 4) ? colours->tuningBackColour
+						: colours->defaultBackColour;
+			currentTemps[heater]->SetColours((ival == 3) ? colours->errorTextColour : colours->infoTextColour, c);
+		}
+	}
+
+	static int timesLeft[3];
+	static String<50> timesLeftText;
+
+	void ChangeStatus(PrinterStatus oldStatus, PrinterStatus newStatus)
+	{
+		switch (newStatus)
+		{
+		case PrinterStatus::printing:
+			if (oldStatus != PrinterStatus::paused && oldStatus != PrinterStatus::resuming)
+			{
+				// Starting a new print, so clear the times
+				timesLeft[0] = timesLeft[1] = timesLeft[2] = 0;
+			}
+			// no break
+		case PrinterStatus::paused:
+		case PrinterStatus::pausing:
+		case PrinterStatus::resuming:
+			if (oldStatus == PrinterStatus::connecting || oldStatus == PrinterStatus::idle)
+			{
+				ChangePage(tabPrint);
+			}
+			else if (currentTab == tabPrint)
+			{
+				nameField->SetValue(printingFile.c_str());
+			}
+			break;
+
+		case PrinterStatus::idle:
+			printingFile.clear();
+			nameField->SetValue(machineName.c_str());		// if we are on the print tab then it may still be set to the file that was being printed
+			// no break
+		case PrinterStatus::configuring:
+			if (oldStatus == PrinterStatus::flashing)
+			{
+				mgr.ClearAllPopups();						// clear the firmware update message
+			}
+			break;
+
+		default:
+			nameField->SetValue(machineName.c_str());
+			break;
+		}
+	}
+
+	// Append an amount of time to timesLeftText
+	static void AppendTimeLeft(int t)
+	{
+		if (t <= 0)
+		{
+			timesLeftText.catFrom("n/a");
+		}
+		else if (t < 60)
+		{
+			timesLeftText.catf("%ds", t);
+		}
+		else if (t < 60 * 60)
+		{
+			timesLeftText.catf("%dm %02ds", t/60, t%60);
+		}
+		else
+		{
+			t /= 60;
+			timesLeftText.catf("%dh %02dm", t/60, t%60);
+		}
+	}
+
+	void UpdateTimesLeft(size_t index, unsigned int seconds)
+	{
+		if (index < (int)ARRAY_SIZE(timesLeft))
+		{
+			timesLeft[index] = seconds;
+			timesLeftText.copy("file ");
+			AppendTimeLeft(timesLeft[0]);
+			timesLeftText.catFrom(", filament ");
+			AppendTimeLeft(timesLeft[1]);
+			if (DisplayX >= 800)
+			{
+				timesLeftText.catFrom(", layer ");
+				AppendTimeLeft(timesLeft[2]);
+			}
+			timeLeftField->SetValue(timesLeftText.c_str());
+			mgr.Show(timeLeftField, true);
+		}
+	}
+
+	// Change to the page indicated. Return true if the page has a permanently-visible button.
+	bool ChangePage(ButtonBase *newTab)
+	{
+		if (newTab != currentTab)
+		{
+			if (currentTab != nullptr)
+			{
+				currentTab->Press(false, 0);			// remove highlighting from the old tab
+			}
+			newTab->Press(true, 0);						// highlight the new tab
+			currentTab = newTab;
+			mgr.ClearAllPopups();
+			switch(newTab->GetEvent())
+			{
+			case evTabControl:
+				mgr.SetRoot(controlRoot);
+				nameField->SetValue(machineName.c_str());
+				break;
+			case evTabPrint:
+				mgr.SetRoot(printRoot);
+				nameField->SetValue(PrintInProgress() ? printingFile.c_str() : machineName.c_str());
+				break;
+			case evTabMsg:
+				mgr.SetRoot(messageRoot);
+				if (keyboardIsDisplayed)
+				{
+					mgr.SetPopup(keyboardPopup, margin, (DisplayX - keyboardPopupWidth)/2, false);
+				}
+				break;
+			case evTabSetup:
+				mgr.SetRoot(setupRoot);
+				break;
+			default:
+				mgr.SetRoot(commonRoot);
+				break;
+			}
+			mgr.Refresh(true);
+		}
+		return true;
+	}
+
+	// Pop up the keyboard
+	void ShowKeyboard()
+	{
+		mgr.SetPopup(keyboardPopup, keyboardPopupX, keyboardPopupY);
+		keyboardIsDisplayed = true;
+	}
+
+	// This is called when the Cancel button on a popup is pressed
+	void PopupCancelled()
+	{
+		if (mgr.GetPopup() == keyboardPopup)
+		{
+			keyboardIsDisplayed = false;
+		}
+	}
+
+	// Return true if polling should be performed
+	bool DoPolling()
+	{
+		return currentTab != tabSetup;			// don't poll while we are on the Setup page
+	}
+
+	// This is called in the main spin loop
+	void Spin()
+	{
+		if (currentTab == tabMsg)
+		{
+			MessageLog::UpdateMessages(false);
+		}
+	}
+
+	// This is called when we have just started a file print
+	void PrintStarted()
+	{
+		ChangePage(tabPrint);
+	}
+
+	// This is called when we have just received the name of the file being printed
+	void PrintingFilenameChanged(const char data[])
+	{
+		if (!printingFile.similar(data))
+		{
+			printingFile.copy(data);
+			if (currentTab == tabPrint && PrintInProgress())
+			{
+				nameField->SetChanged();
+			}
+		}
+	}
+
+	// This is called just before the main polling loop starts. Display the default page.
+	void ShowDefaultPage()
+	{
+		ChangePage(tabControl);
+	}
+
+	// Update the fields that are to do with the printing status
+	void UpdatePrintingFields()
+	{
+		if (GetStatus() == PrinterStatus::printing)
+		{
+			Fields::ShowPauseButton();
+		}
+		else if (GetStatus() == PrinterStatus::paused)
+		{
+			Fields::ShowResumeAndCancelButtons();
+		}
+		else
+		{
+			Fields::ShowFilesButton();
+		}
+
+		mgr.Show(printProgressBar, PrintInProgress());
+	//	mgr.Show(printingField, PrintInProgress());
+
+		// Don't enable the time left field when we start printing, instead this will get enabled when we receive a suitable message
+		if (!PrintInProgress())
+		{
+			mgr.Show(timeLeftField, false);
+		}
+
+		statusField->SetValue(statusText[(unsigned int)GetStatus()]);
+	}
+
+	// Set the percentage of print completed
+	void SetPrintProgressPercent(unsigned int percent)
+	{
+		printProgressBar->SetPercent((uint8_t)percent);
+	}
+
+	// Update the geometry or the number of axes
+	void UpdateGeometry(unsigned int numAxes, bool isDelta)
+	{
+		for (size_t i = 0; i < MAX_AXES; ++i)
+		{
+			mgr.Show(homeButtons[i], !isDelta && i < numAxes);
+			ShowAxis(i, i < numAxes);
+		}
+	}
+
+	// Update the homed status of the specified axis. If the axis is -1 then it represents the "all homed" status.
+	void UpdateHomedStatus(int axis, bool isHomed)
+	{
+		SingleButton *homeButton = nullptr;
+		if (axis < 0)
+		{
+			homeButton = homeAllButton;
+		}
+		else if (axis < MAX_AXES)
+		{
+			homeButton = homeButtons[axis];
+		}
+		if (homeButton != nullptr)
+		{
+			homeButton->SetColours(colours->buttonTextColour, (isHomed) ? colours->homedButtonBackColour : colours->notHomedButtonBackColour);
+		}
+	}
+
+	// UIpdate the Z probe text
+	void UpdateZProbe(const char data[])
+	{
+		zprobeBuf.copy(data);
+		zProbe->SetChanged();
+	}
+
+	// Update the machine name
+	void UpdateMachineName(const char data[])
+	{
+		machineName.copy(data);
+		nameField->SetChanged();
+	}
+
+	// process an alert message. If the data is empty then we should clear any existing alert.
+	void ProcessAlert(const char data[])
+	{
+		if (data[0] == 0)
+		{
+			mgr.ClearPopup(true, alertPopup);
+		}
+		else
+		{
+			alertText.copy(data);
+			mgr.SetPopup(alertPopup, (DisplayX - alertPopupWidth)/2, (DisplayY - alertPopupHeight)/2);
+		}
+	}
 }
 
 // End

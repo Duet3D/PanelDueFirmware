@@ -23,7 +23,7 @@ const Colour
 	darkBlue = UTFT::fromRGB(0, 0, 64);
 
 #ifdef OEM_COLOURS
-#include "OemColourSchemes.cpp"
+#include "OemColourSchemes.inc"
 #else
 
 const size_t NumColourSchemes = 2;
