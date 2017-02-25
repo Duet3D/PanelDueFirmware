@@ -5,24 +5,33 @@
  *  Author: David
  */ 
 
-
 #ifndef COLOURSCHEME_H_
 #define COLOURSCHEME_H_
 
-#include <cstdint>
 #include "Hardware/UTFT.hpp"
 
 const size_t MaxColourSchemes = 5;				// the maximum number supported by firmware
 
 // Some common colours
-const Colour red = UTFT::fromRGB(255,0,0);
-const Colour yellow = UTFT::fromRGB(128,128,0);
-const Colour green = UTFT::fromRGB(0,255,0);
-const Colour turquoise = UTFT::fromRGB(0,128,128);
-const Colour blue = UTFT::fromRGB(0,0,255);
-const Colour magenta = UTFT::fromRGB(128,0,128);
-const Colour white = 0xFFFF;
-const Colour black = 0x0000;
+const Colour
+	white = 0xFFFF,
+	black = 0x0000,
+	red = UTFT::fromRGB(255,0,0),
+	lightRed =  UTFT::fromRGB(255, 128, 128),
+	darkRed = UTFT::fromRGB(128, 0, 0),
+	yellow = UTFT::fromRGB(128,128,0),
+	lightYellow = UTFT::fromRGB(255, 255, 128),
+	lightOrange = UTFT::fromRGB(255, 224, 192),
+	darkOrange = UTFT::fromRGB(128, 64, 0),
+	green = UTFT::fromRGB(0,255,0),
+	lightGreen = UTFT::fromRGB(192, 255, 192),
+	midGreen =  UTFT::fromRGB(0, 160, 0),
+	darkGreen = UTFT::fromRGB(0, 96, 0),
+	turquoise = UTFT::fromRGB(0,128,128),
+	blue = UTFT::fromRGB(0,0,255),
+	magenta = UTFT::fromRGB(128,0,128),
+	lightBlue = UTFT::fromRGB(224, 224, 255),
+	darkBlue = UTFT::fromRGB(0, 0, 64);
 
 // Definition of a colour scheme
 struct ColourScheme

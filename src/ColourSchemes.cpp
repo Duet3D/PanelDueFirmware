@@ -5,26 +5,9 @@
  *  Author: David
  */ 
 
+#ifndef OEM_COLOURS
+
 #include "ColourSchemes.hpp"
-
-const Colour
-	lightRed =  UTFT::fromRGB(255, 128, 128),
-	lightOrange = UTFT::fromRGB(255, 224, 192),
-	lightYellow = UTFT::fromRGB(255, 255, 128),
-	lightGreen = UTFT::fromRGB(192, 255, 192),
-	lightBlue = UTFT::fromRGB(224, 224, 255),
-	
-	midGreen =  UTFT::fromRGB(0, 160, 0),
-	
-	darkRed = UTFT::fromRGB(128, 0, 0),
-	darkOrange = UTFT::fromRGB(128, 64, 0),
-	darkYellow = UTFT::fromRGB(128, 128, 0),
-	darkGreen = UTFT::fromRGB(0, 96, 0),
-	darkBlue = UTFT::fromRGB(0, 0, 64);
-
-#ifdef OEM_COLOURS
-#include "OemColourSchemes.inc"
-#else
 
 const size_t NumColourSchemes = 2;
 
@@ -84,7 +67,7 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 		.infoBackColour = darkBlue,
 		.defaultBackColour = black,
 		.activeBackColour = darkRed,
-		.standbyBackColour = darkYellow,
+		.standbyBackColour = yellow,
 		.tuningBackColour = darkGreen,
 		.errorTextColour = white,
 		.errorBackColour = magenta,
@@ -118,9 +101,9 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 	}
 };
 
-#endif
-
 static_assert(NumColourSchemes <= MaxColourSchemes, "Too many colour schemes");
+
+#endif
 
 // End
 

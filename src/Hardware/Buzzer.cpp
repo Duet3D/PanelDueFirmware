@@ -22,12 +22,42 @@ namespace Buzzer
 	static pwm_channel_t buzzer_pwm_channel_instance =
 	{
 		.channel = 0,
-		.ul_prescaler = PWM_CMR_CPRE_CLKA		
+		.ul_prescaler = PWM_CMR_CPRE_CLKA,
+		.alignment = PWM_ALIGN_LEFT
+//		.b_deadtime_generator = false,
+//		.b_pwmh_output_inverted = false,
+//		.b_pwml_output_inverted = false,
+//		.b_sync_ch = false,
+//		.counter_event = 0,
+//		.fault_id = (pwm_fault_id_t)0,
+//		.output_selection = 0,
+//		.polarity = 0,
+//		.ul_duty = 0,
+//		.ul_fault_output_pwmh = 0,
+//		.ul_fault_output_pwml = 0,
+//		.ul_period = 0,
+//		.us_deadtime_pwml = 0,
+//		.us_deadtime_pwmh = 0
 	};
 	static pwm_channel_t backlight_pwm_channel_instance =
 	{
 		.channel = 1,
 		.ul_prescaler = PWM_CMR_CPRE_CLKA,
+		.alignment = PWM_ALIGN_LEFT
+//		.b_deadtime_generator = false,
+//		.b_pwmh_output_inverted = false,
+//		.b_pwml_output_inverted = false,
+//		.b_sync_ch = false,
+//		.counter_event = 0,
+//		.fault_id = (pwm_fault_id_t)0,
+//		.output_selection = 0,
+//		.polarity = 0,
+//		.ul_duty = 0,
+//		.ul_fault_output_pwmh = 0,
+//		.ul_fault_output_pwml = 0,
+//		.ul_period = 0,
+//		.us_deadtime_pwml = 0,
+//		.us_deadtime_pwmh = 0
 	};
 	static uint32_t beepTicksToGo = 0;
 	static bool inBuzzer = true;
@@ -51,7 +81,7 @@ namespace Buzzer
 		inBuzzer = false;
 	}
 
-	static uint32_t volumeTable[MaxVolume] = { 3, 9, 20, 40, 80 };
+	static const uint32_t volumeTable[MaxVolume] = { 3, 9, 20, 40, 80 };
 		
 	// Generate a beep of the given length and frequency. The volume goes from 0 to MaxVolume.
 	void Beep(uint32_t frequency, uint32_t ms, uint32_t volume)

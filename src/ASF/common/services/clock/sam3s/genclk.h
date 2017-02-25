@@ -113,7 +113,7 @@ struct genclk_config {
 static inline void genclk_config_defaults(struct genclk_config *p_cfg,
 		uint32_t ul_id)
 {
-	ul_id = ul_id;
+	UNUSED(ul_id);
 	p_cfg->ctrl = 0;
 }
 

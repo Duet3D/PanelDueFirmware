@@ -1,67 +1,21 @@
 /*
- * Fields.hpp
+ * UserInterfaceConstants.hpp
  *
- * Created: 04/02/2015 11:43:53
- *  Author: David
- */ 
+ *  Created on: 10 Jan 2017
+ *      Author: David
+ */
 
+#ifndef SRC_USERINTERFACECONSTANTS_HPP_
+#define SRC_USERINTERFACECONSTANTS_HPP_
 
-#ifndef FIELDS_H_
-#define FIELDS_H_
+#include "Configuration.hpp"
+#include "DisplaySize.hpp"
 
-#include "Display.hpp"
-#include "ColourSchemes.hpp"
-#include "Events.hpp"
-#include "PrinterStatus.hpp"
+#ifdef OEM_LAYOUT
 
-// From the display type, we determine the display controller type and touch screen orientation adjustment
-#if DISPLAY_TYPE == DISPLAY_TYPE_ITDB02_32WD
-
-# define DISPLAY_CONTROLLER		HX8352A
-const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseY | InvertBitmap);
-const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation>(ReverseY);
-const bool is24BitLcd = true;
-# define DISPLAY_X				(400)
-# define DISPLAY_Y				(240)
-
-#elif DISPLAY_TYPE == DISPLAY_TYPE_ITDB02_43
-
-# define DISPLAY_CONTROLLER		SSD1963_480
-const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseX | InvertBitmap);
-const DisplayOrientation DefaultTouchOrientAdjust = SwapXY;
-const bool is24BitLcd = true;
-# define DISPLAY_X				(480)
-# define DISPLAY_Y				(272)
-
-#elif DISPLAY_TYPE == DISPLAY_TYPE_ITDB02_50
-
-# define DISPLAY_CONTROLLER		SSD1963_800
-const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseX | InvertBitmap);
-const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseY);
-const bool is24BitLcd = true;
-# define DISPLAY_X				(800)
-# define DISPLAY_Y				(480)
-
-#elif DISPLAY_TYPE == DISPLAY_TYPE_ITDB02_70
-
-# define DISPLAY_CONTROLLER		SSD1963_800
-const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseX | ReverseY | InvertText | InvertBitmap);
-const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseY);
-const bool is24BitLcd = false;
-# define DISPLAY_X				(800)
-# define DISPLAY_Y				(480)
+#include "OemUserInterfaceConstants.hpp"
 
 #else
-# error DISPLAY_TYPE is not defined correctly
-#endif
-
-const PixelNumber DisplayX = DISPLAY_X;
-const PixelNumber DisplayY = DISPLAY_Y;
-
-// Define the row and column positions. Leave a gap of at least 1 pixel from the edges of the screen, so that we can highlight
-// a field by drawing an outline.
-
-#define MIN_AXES	(3)
 
 #if DISPLAY_X == 480
 
@@ -150,7 +104,6 @@ const PixelNumber closeButtonWidth = 66;
 const PixelNumber touchCalibMargin = 22;
 
 extern uint8_t glcd28x32[];				// declare which fonts we will be using
-extern uint8_t glcd28x32[];				// declare which fonts we will be using
 #define DEFAULT_FONT	glcd28x32
 
 #else
@@ -226,45 +179,9 @@ const uint32_t numMessageRows = (rowTabs - margin - rowHeight)/rowTextHeight;
 const PixelNumber messageTextX = margin + messageTimeWidth + 2;
 const PixelNumber messageTextWidth = DisplayX - margin - messageTextX;
 
-const unsigned int numLanguages = 3;
-extern const char* const longLanguageNames[];
+const PixelNumber alertPopupWidth = fullPopupWidth - 6 * margin;
+const PixelNumber alertPopupHeight = 3 * rowTextHeight + 2 * popupTopMargin;
 
-extern IntegerField *freeMem, *touchX, *touchY, *fileListErrorField;
-extern TextButton *filenameButtons[numDisplayedFiles];
-extern SingleButton *scrollFilesLeftButton, *scrollFilesRightButton, *filesUpButton, *changeCardButton;
-extern StaticTextField *macroPopupTitleField, *debugField;
-extern IntegerField *filePopupTitleField;
-extern StaticTextField *touchCalibInstruction;
-extern StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
+#endif
 
-namespace Fields
-{
-	// Create a standard popup window with a title and a close button at the top right
-	PopupWindow *CreatePopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder, Colour textColour,
-									const char * null title, PixelNumber topMargin = popupTopMargin);
-
-	// Add a text button
-	TextButton *AddTextButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* array text, Event evt, const char* param);
-
-	// Add an integer button
-	IntegerButton *AddIntegerButton(PixelNumber row, unsigned int col, unsigned int numCols, const char * array null label, const char * array null units, Event evt);
-
-	// Add an icon button with a string parameter
-	IconButton *AddIconButton(PixelNumber row, unsigned int col, unsigned int numCols, Icon icon, Event evt, const char* param);
-
-	// Create a row of text buttons.
-	// Optionally, set one to 'pressed' and return that one.
-	ButtonPress CreateStringButtonRow(Window * pf, PixelNumber top, PixelNumber left, PixelNumber totalWidth, PixelNumber spacing, unsigned int numButtons,
-										const char* array const text[], const char* array const params[], Event evt, int selected = -1);
-
-	// Create a popup bar with string parameters
-	PopupWindow *CreateStringPopupBar(const ColourScheme& colours, PixelNumber width, unsigned int numEntries,
-										const char* const text[], const char* const params[], Event ev);
-
-	// Create a popup bar with integer parameters
-	// If the 'params' parameter is null then we use 0, 1, 2.. at the parameters
-	PopupWindow *CreateIntPopupBar(const ColourScheme& colours, PixelNumber width, unsigned int numEntries,
-									const char* const text[], const int * null params, Event ev, Event zeroEv);
-}
-
-#endif /* FIELDS_H_ */
+#endif /* SRC_USERINTERFACECONSTANTS_HPP_ */

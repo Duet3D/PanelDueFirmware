@@ -91,7 +91,9 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 	touch_ReadData(command);						// discard the first result and send the same command again
 
 	const size_t numReadings = 8;
-	const uint16_t maxDiff = 25;					// needs to be big enough to handle jitter. 8 was OK for the 4.3 and 5 inch displays but not the 7 inch.
+	const uint16_t maxDiff = 40;					// needs to be big enough to handle jitter.
+													// 8 was OK for the 4.3 and 5 inch displays but not the 7 inch.
+													// 25 is OK for most 7" displays.
 	const unsigned int maxAttempts = 16;
 
 	uint16_t ring[numReadings];
@@ -100,7 +102,7 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 	// Take enough readings to fill the ring buffer
 	for (size_t i = 0; i < numReadings; ++i)
 	{
-		uint16_t val = touch_ReadData(command);
+		const uint16_t val = touch_ReadData(command);
 		ring[i] = val;
 		sum += val;
 	}
@@ -145,7 +147,7 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 // Send the first command in a chain. The chip latches the data bit on the rising edge of the clock. We have already set CS low.
 void UTouch::touch_WriteCommand(uint8_t command)
 {
-	for(uint8_t count=0; count<8; count++)
+	for (uint8_t count = 0; count < 8; count++)
 	{
 		if (command & 0x80)
 		{
@@ -182,7 +184,7 @@ uint16_t UTouch::touch_ReadData(uint8_t command)
 		portCLK.pulseHigh();
 		if (count < 12)
 		{
-			OneBitPort::delay(OneBitPort::delay_200ns);				// need 200ns setup time form clock falling edge to reading data
+			OneBitPort::delay(OneBitPort::delay_200ns);				// need 200ns setup time from clock falling edge to reading data
 			data <<= 1;
 			if (portDOUT.read())
 			{

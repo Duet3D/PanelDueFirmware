@@ -146,8 +146,7 @@ class UTFT : public Print
 public:
 	UTFT(DisplayType model, TransferMode pMode, unsigned int RS, unsigned int WR, unsigned int CS, unsigned int RST, unsigned int SER_LATCH = 0);
 	void InitLCD(DisplayOrientation po, bool is24bit);
-	void clrScr();
-	void fillScr(Colour c);
+	void fillScr(Colour c, uint16_t leftMargin = 0);
 	void drawPixel(int x, int y);
 	void drawLine(int x1, int y1, int x2, int y2);
 	void drawRect(int x1, int y1, int x2, int y2);
@@ -167,7 +166,7 @@ public:
 	// Set up translation for characters. Useful for translating fullstop into decimal point, or changing the width of spaces.
 	// Either the first string passed must be NULL, or the two strings must have equal lengths as returned by strlen().
 	void setTranslation(const char *tFrom, const char *tTo);
-	virtual size_t write(uint8_t c) /*override*/;
+	size_t write(uint8_t c) override;
 	void setTextPos(uint16_t x, uint16_t y, uint16_t rm = 9999);
 	void clearToMargin();
 	size_t print(const char *s, uint16_t x, uint16_t y, uint16_t rm = 9999);
@@ -228,7 +227,6 @@ private:
 	void drawHLine(int x, int y, int len);
 	void drawVLine(int x, int y, int len);
 	void setXY(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
-	void clrXY();
 		
 	bool isParallel() const;
 	

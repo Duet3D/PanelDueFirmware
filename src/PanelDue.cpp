@@ -20,6 +20,7 @@
 #define result _ecv_result
 
 #include <cstring>
+#include <cctype>
 
 #include "Hardware/Mem.hpp"
 #include "Display.hpp"
@@ -34,7 +35,7 @@
 #include "Hardware/FlashStorage.hpp"
 #include "PanelDue.hpp"
 #include "Configuration.hpp"
-#include "Fields.hpp"
+#include "UserInterfaceConstants.hpp"
 #include "FileManager.hpp"
 #include "RequestTimer.hpp"
 #include "MessageLog.hpp"
@@ -65,6 +66,19 @@ const uint32_t errorBeepFrequency = 2250;
 const uint32_t longTouchDelay = 250;				// how long we ignore new touches for after pressing Set
 const uint32_t shortTouchDelay = 100;				// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
 
+struct HostFirmwareType
+{
+	const char* array const name;
+	const FirmwareFeatures features;
+};
+
+const HostFirmwareType firmwareTypes[] =
+{
+	{ "RepRapFirmware", 0 },
+	{ "Smoothie", noGcodesFolder | noStandbyTemps | noG10Temps | noDriveNumber | noM20M36 },
+	{ "Repetier", noGcodesFolder | noStandbyTemps | noG10Temps }
+};
+
 // Variables
 UTFT lcd(DISPLAY_CONTROLLER, TMode16bit, 16, 17, 18, 19);
 
@@ -75,6 +89,7 @@ static uint32_t lastTouchTime;
 static uint32_t ignoreTouchTime;
 static uint32_t lastPollTime;
 static uint32_t lastResponseTime = 0;
+static FirmwareFeatures firmwareFeatures = 0;
 static bool gotMachineName = false;
 static bool isDelta = false;
 static bool gotGeometry = false;
@@ -142,6 +157,7 @@ enum ReceivedDataEvent
 	rcvBeepLength,
 	rcvFanPercent,
 	rcvFilename,
+	rcvFirmwareName,
 	rcvFraction,
 	rcvGeneratedBy,
 	rcvGeometry,
@@ -170,7 +186,7 @@ RequestTimer machineConfigTimer(MachineConfigRequestTimeout, "M408 S1");
 
 bool FlashData::IsValid() const
 {
-	return magic == magicVal && touchVolume <= Buzzer::MaxVolume && brightness <= Buzzer::MaxBrightness && language < numLanguages && colourScheme < NumColourSchemes;
+	return magic == magicVal && touchVolume <= Buzzer::MaxVolume && brightness <= Buzzer::MaxBrightness && language < UI::GetNumLanguages() && colourScheme < NumColourSchemes;
 }
 
 bool FlashData::operator==(const FlashData& other)
@@ -215,6 +231,20 @@ void FlashData::Load()
 void FlashData::Save() const
 {
 	FlashStorage::write(0, &(this->magic), &(this->dummy) - (const char*)(&(this->magic)));
+}
+
+// Return the host firmware features
+FirmwareFeatures GetFirmwareFeatures()
+{
+	return firmwareFeatures;
+}
+
+// Strip the drive letter prefix from a file path if the host firmware doesn't support it
+const char* array CondStripDrive(const char* array arg)
+{
+	return ((firmwareFeatures & noDriveNumber) != 0 && isdigit(arg[0]) && arg[1] == ':')
+			? arg + 2
+			: arg;
 }
 
 #if DEBUG
@@ -339,7 +369,6 @@ void DoTouchCalib(PixelNumber x, PixelNumber y, PixelNumber altX, PixelNumber al
 void CalibrateTouch()
 {
 	DisplayField *oldRoot = mgr.GetRoot();
-	touchCalibInstruction->SetValue("Touch the spot");				// in case the user didn't need to press the reset button last time
 	mgr.SetRoot(touchCalibInstruction);
 	mgr.ClearAll();
 	mgr.Refresh(true);
@@ -371,17 +400,12 @@ void CalibrateTouch()
 	mgr.Refresh(true);
 }
 
-void CheckSettingsAreSaved()
+bool IsSaveAndRestartNeeded()
 {
-	UI::SettingsAreSaved(nvData == savedNvData, nvData.colourScheme != savedNvData.colourScheme);
+	return nvData.language != savedNvData.language || nvData.colourScheme != savedNvData.colourScheme;
 }
 
-bool HasLanguageChanged()
-{
-	return nvData.language != savedNvData.language;
-}
-
-bool HaveSettingsChanged()
+bool IsSaveNeeded()
 {
 	return nvData != savedNvData;
 }
@@ -404,14 +428,9 @@ void SetBaudRate(uint32_t rate)
 	SerialIo::Init(rate);
 }
 
-void ChangeBrightness(bool up)
+extern void SetBrightness (int percent)
 {
-	int adjust = max<int>(1, (int)(nvData.brightness/16));
-	if (!up)
-	{
-		adjust = -adjust;
-	}
-	nvData.brightness = min<int>(Buzzer::MaxBrightness, max<int>(Buzzer::MinBrightness, (int)nvData.brightness + adjust));
+	nvData.brightness = constrain<int>(percent, Buzzer::MinBrightness, Buzzer::MaxBrightness);
 	Buzzer::SetBacklight(nvData.brightness);
 }
 
@@ -440,6 +459,11 @@ uint32_t GetVolume()
 	return nvData.touchVolume;
 }
 
+int GetBrightness()
+{
+	return (int)nvData.brightness;
+}
+
 // Factory reset
 void FactoryReset()
 {
@@ -459,7 +483,7 @@ void SaveSettings()
 	nvData.Save();
 	// To make sure it worked, load the settings again
 	savedNvData.Load();
-	CheckSettingsAreSaved();
+	UI::CheckSettingsAreSaved();
 }
 
 // This is called when the status changes
@@ -588,6 +612,7 @@ const ReceiveDataTableEntry nonArrayDataTable[] =
 	{ rcvDir,			"dir" },
 	{ rcvErr,			"err" },
 	{ rcvFilename,		"fileName" },
+	{ rcvFirmwareName,	"firmwareName" },
 	{ rcvFraction,		"fraction_printed" },
 	{ rcvGeneratedBy,	"generatedBy" },
 	{ rcvGeometry,		"geometry" },
@@ -949,6 +974,23 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 			}
 			break;
 
+		case rcvFirmwareName:
+			for (size_t i = 0; i < ARRAY_SIZE(firmwareTypes); ++i)
+			{
+				if (stringStartsWith(data, firmwareTypes[i].name))
+				{
+					const FirmwareFeatures newFeatures = firmwareTypes[i].features;
+					if (newFeatures != firmwareFeatures)
+					{
+						firmwareFeatures = newFeatures;
+						UI::FirmwareFeaturesChanged(firmwareFeatures);
+						FileManager::FirmwareFeaturesChanged(firmwareFeatures);
+					}
+					break;
+				}
+			}
+			break;
+
 		default:
 			break;
 		}
@@ -1069,10 +1111,13 @@ int main(void)
 	debugField->Show(DEBUG != 0);			// show the debug field only if debugging is enabled
 
 #ifdef OEM
-	// Display the splash screen
-	lcd.drawCompressedBitmap(0, 0, DISPLAY_X, DISPLAY_Y, splashScreenImage);
-	const uint32_t now = SystemTick::GetTickCount();
-	while (SystemTick::GetTickCount() - now < 5000) { }		// hold it there for 5 seconds
+	// Display the splash screen unless it was a software reset (we use software reset to change the language or colour scheme)
+	if (rstc_get_reset_cause(RSTC) != RSTC_SOFTWARE_RESET)
+	{
+		lcd.drawCompressedBitmap(0, 0, DISPLAY_X, DISPLAY_Y, splashScreenImage);
+		const uint32_t now = SystemTick::GetTickCount();
+		while (SystemTick::GetTickCount() - now < 5000) { }		// hold it there for 5 seconds
+	}
 #endif
 
 	// Display the Control tab. This also refreshes the display.

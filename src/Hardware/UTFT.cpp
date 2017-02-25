@@ -136,6 +136,7 @@ inline void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num)
 	LCD_Write_Again(num - 1);
 }
 
+// Write the data num1 * num2 times, where num1 >= 1
 void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num1, uint16_t num2)
 {
 	while (num2 != 0)
@@ -508,7 +509,7 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit)
 		LCD_Write_COM_DATA16(0x26,0x00B8); //PT=10,GON=1, DTE=1, D=1000
 		delay_mslay(40);
 		LCD_Write_COM_DATA16(0x26,0x00BC); //PT=10,GON=1, DTE=1, D=1100
-		delay_ms(20);                           //新增加的延时  080421    
+		delay_ms(20);                           //新增加的延时  080421
 		// LCD_Write_COM_DATA(0x0001,0x0000);     // PTL='1' Enter Partail mode
 
 		//Driving ability Setting
@@ -541,7 +542,7 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit)
 		delay_ms(20);
 
 		//Power Setting
-		LCD_Write_COM_DATA16(0x1F,0x0003); //VRH=4.65V     VREG1（GAMMA） 00~1E  080421    
+		LCD_Write_COM_DATA16(0x1F,0x0003); //VRH=4.65V     VREG1（GAMMA） 00~1E  080421
 		LCD_Write_COM_DATA16(0x20,0x0000); //BT (VGH~15V,VGL~-12V,DDVDH~5V)
 		LCD_Write_COM_DATA16(0x24,0x0024); //VCOMH(VCOM High voltage3.2V)     0024/12    080421    11~40
 		LCD_Write_COM_DATA16(0x25,0x0034); //VCOML(VCOM Low voltage -1.2V)    0034/4A    080421    29~3F 
@@ -1284,9 +1285,6 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit)
 	cfont.font=0;
 }
 
-// setXY is time-critical because we call it when drawing compressed bitmaps
-#pragma GCC optimize ("O3")
-
 void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 {
 	uint16_t x1, x2, y1, y2;
@@ -1478,18 +1476,6 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 #endif
 }
 
-void UTFT::clrXY()
-{
-	if (orient & SwapXY)
-	{
-		setXY(0, 0, disp_y_size, disp_x_size);
-	}
-	else
-	{
-		setXY(0, 0, disp_x_size, disp_y_size);
-	}
-}
-
 void UTFT::drawRect(int x1, int y1, int x2, int y2)
 {
 	if (x1 > x2)
@@ -1670,7 +1656,6 @@ void UTFT::drawCircle(int x, int y, int radius)
 		LCD_Write_DATA16(fcolour);
 	}
 	removeCS();
-	clrXY();
 }
 
 void UTFT::fillCircle(int x, int y, int radius)
@@ -1710,22 +1695,13 @@ void UTFT::fillCircle(int x, int y, int radius)
 		LCD_Write_Repeated_DATA16(fcolour, y1 + y1);
 	}
 	removeCS();
-	clrXY();
 }
 
-void UTFT::clrScr()
+void UTFT::fillScr(Colour c, uint16_t leftMargin)
 {
 	assertCS();
-	clrXY();
-	LCD_Write_Repeated_DATA16(0, disp_x_size+1, disp_y_size+1);
-	removeCS();
-}
-
-void UTFT::fillScr(Colour c)
-{
-	assertCS();
-	clrXY();
-	LCD_Write_Repeated_DATA16(c, disp_x_size+1, disp_y_size+1);
+	setXY(leftMargin, 0, getDisplayXSize() - 1, getDisplayYSize() - 1);
+	LCD_Write_Repeated_DATA16(c, getDisplayXSize() - leftMargin, getDisplayYSize());
 	removeCS();
 }
 
@@ -1735,7 +1711,6 @@ void UTFT::drawPixel(int x, int y)
 	setXY(x, y, x, y);
 	LCD_Write_DATA16(fcolour);
 	removeCS();
-	clrXY();
 }
 
 void UTFT::drawLine(int x1, int y1, int x2, int y2)
@@ -1785,8 +1760,6 @@ void UTFT::drawLine(int x1, int y1, int x2, int y2)
 		}
 		removeCS();
 	}
-
-	clrXY();
 }
 
 void UTFT::drawHLine(int x, int y, int len)
@@ -1795,7 +1768,6 @@ void UTFT::drawHLine(int x, int y, int len)
 	setXY(x, y, x+len, y);
 	LCD_Write_Repeated_DATA16(fcolour, len + 1);
 	removeCS();
-	clrXY();
 }
 
 void UTFT::drawVLine(int x, int y, int len)
@@ -1804,7 +1776,6 @@ void UTFT::drawVLine(int x, int y, int len)
 	setXY(x, y, x, y+len);
 	LCD_Write_Repeated_DATA16(fcolour, len + 1);
 	removeCS();
-	clrXY();
 }
 
 // New print functions
@@ -1812,8 +1783,8 @@ void UTFT::setTextPos(uint16_t x, uint16_t y, uint16_t rm)
 {
 	textXpos = x;
 	textYpos = y;
-	uint16_t xSize = (orient & SwapXY) ? disp_y_size : disp_x_size;
-	textRightMargin = (rm > xSize) ? xSize + 1 : rm;
+	const uint16_t xSize = getDisplayXSize();
+	textRightMargin = (rm > xSize) ? xSize : rm;
     lastCharColData = 0UL;    // flag that we just set the cursor position, so no space before next character
 }
 
@@ -1827,17 +1798,16 @@ void UTFT::clearToMargin()
 {
 	if (textXpos < textRightMargin)
 	{
-		uint8_t ySize = cfont.y_size;
-		if (textYpos + ySize > disp_y_size)
+		uint16_t ySize = (uint16_t)cfont.y_size;
+		if (textYpos + ySize > getDisplayYSize())
 		{
-			ySize = disp_y_size + 1 - textYpos;
+			ySize = getDisplayYSize() - textYpos;
 		}
 
 		assertCS();		
 		setXY(textXpos, textYpos, textRightMargin - 1, textYpos + ySize - 1);
 		LCD_Write_Repeated_DATA16(bcolour, textRightMargin - textXpos, ySize);
 		removeCS();
-		clrXY();
 	}
 }
 
@@ -1855,31 +1825,31 @@ size_t UTFT::write(uint8_t c)
 		{
 			charVal = (uint32_t)(c & 0x1F);
 			numContinuationBytesLeft = 1;
-			return 0;
+			return 1;
 		}
 		else if ((c & 0xF0) == 0xE0)
 		{
 			charVal = (uint32_t)(c & 0x0F);
 			numContinuationBytesLeft = 2;
-			return 0;
+			return 1;
 		}
 		else if ((c & 0xF8) == 0xF0)
 		{
 			charVal = (uint32_t)(c & 0x07);
 			numContinuationBytesLeft = 3;
-			return 0;
+			return 1;
 		}
 		else if ((c & 0xFC) == 0xF8)
 		{
 			charVal = (uint32_t)(c & 0x03);
 			numContinuationBytesLeft = 4;
-			return 0;
+			return 1;
 		}
 		else if ((c & 0xFE) == 0xFC)
 		{
 			charVal = (uint32_t)(c & 0x01);
 			numContinuationBytesLeft = 5;
-			return 0;
+			return 1;
 		}
 		else
 		{
@@ -1896,7 +1866,7 @@ size_t UTFT::write(uint8_t c)
 		}
 		else
 		{
-			return 0;
+			return 1;
 		}
 	}
 	else
@@ -1907,7 +1877,7 @@ size_t UTFT::write(uint8_t c)
 	}
 }
 
-// Write a character.
+// Write a character. Always returns the number of bytes consumed i.e. 1.
 // If textYpos is off the end of the display, then don't write anything, just update textXpos and lastCharColData
 size_t UTFT::writeNative(uint8_t c)
 {
@@ -1922,18 +1892,18 @@ size_t UTFT::writeNative(uint8_t c)
 
     if (c < cfont.firstChar || c > cfont.lastChar)
     {
-		return 0;
+		return 1;
     }
     
 	uint8_t ySize = cfont.y_size;
     const uint8_t bytesPerColumn = (ySize + 7)/8;
-	if (textYpos > disp_y_size)
+	if (textYpos >= getDisplayYSize())
 	{
 		ySize = 0;
 	}
-	else if (textYpos + ySize > disp_y_size)
+	else if (textYpos + ySize > getDisplayYSize())
 	{
-		ySize = disp_y_size + 1 - textYpos;
+		ySize = getDisplayYSize() - textYpos;
 	}
     const uint8_t bytesPerChar = (bytesPerColumn * cfont.x_size) + 1;
     const uint8_t *fontPtr = (const uint8_t*)cfont.font + (bytesPerChar * (c - cfont.firstChar));
@@ -2051,8 +2021,6 @@ size_t UTFT::writeNative(uint8_t c)
 		++textXpos;
     }
  	removeCS();
-	clrXY();
-   
 	return 1;
 }
 
@@ -2113,7 +2081,6 @@ void UTFT::drawBitmap(int x, int y, int sx, int sy, const uint16_t * data, int s
 		}
 	}
 	removeCS();
-	clrXY();
 }
 
 #ifndef DISABLE_BITMAP_ROTATE
@@ -2175,7 +2142,6 @@ void UTFT::drawCompressedBitmap(int x, int y, int sx, int sy, const uint16_t *da
 		}
 	}
 	removeCS();
-	clrXY();	
 }
 
 void UTFT::lcdOff()

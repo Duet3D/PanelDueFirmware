@@ -7,23 +7,24 @@
  */ 
 
 #include "Print.hpp"
+
+#include <cstdint>
 #include <climits>
+#include <cmath>
 
-/* default implementation: may be overridden */
-size_t Print::write(const uint8_t *buffer, size_t size)
-{
-	size_t n = 0;
-	while (size != 0)
-	{
-		n += write(*buffer++);
-		--size;
-	}
-	return n;
-}
-
+// Print a string stopping at null or newline, returning the number of bytes consumed
 size_t Print::print(const char str[])
 {
-	return write(str);
+	size_t w = 0;
+	if (str != nullptr)
+	{
+		while (*str != 0 && *str != '\n')
+		{
+			w += write(*str);
+			++str;
+		}
+	}
+	return w;
 }
 
 size_t Print::print(char c)
@@ -105,7 +106,7 @@ size_t Print::printNumber(uint32_t n, uint8_t base)
 		*--str = (c < 10) ? c + '0' : c + ('A' - 10);
 	} while(n != 0);
 
-	return write(str);
+	return print(str);
 }
 
 size_t Print::printFloat(double number, uint8_t digits)

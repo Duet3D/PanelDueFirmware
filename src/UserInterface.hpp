@@ -11,18 +11,20 @@
 #include "ColourSchemes.hpp"
 #include "PrinterStatus.hpp"
 #include "Display.hpp"
+#include "FirmwareFeatures.hpp"
 
-extern StaticTextField *fwVersionField, *areYouSureTextField, *areYouSureQueryField;
-extern PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *filePopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
-extern TextField *userCommandField;
+extern IntegerField *freeMem;
+extern TextButton *filenameButtons[];
+extern StaticTextField *debugField;
+extern StaticTextField *touchCalibInstruction;
+extern StaticTextField *messageTextFields[], *messageTimeFields[];
+extern TextField *fwVersionField;
 
 namespace UI
 {
+	extern unsigned int GetNumLanguages();
 	extern void CreateFields(uint32_t language, const ColourScheme& colours);
-	extern void SettingsAreSaved(bool areSaved, bool needRestart);
-	extern void ShowPauseButton();
-	extern void ShowFilesButton();
-	extern void ShowResumeAndCancelButtons();
+	extern void CheckSettingsAreSaved();
 	extern void ShowAxis(size_t axis, bool b);
 	extern void UpdateAxisPosition(size_t axis, float fval);
 	extern void UpdateCurrentTemperature(size_t heater, float fval) pre(heater < maxHeaters);
@@ -31,8 +33,6 @@ namespace UI
 	extern void ChangeStatus(PrinterStatus oldStatus, PrinterStatus newStatus);
 	extern void UpdateTimesLeft(size_t index, unsigned int seconds);
 	extern bool ChangePage(ButtonBase *newTab);
-	extern void ShowKeyboard();
-	extern void PopupCancelled();
 	extern bool DoPolling();
 	extern void Spin();
 	extern void PrintStarted();
@@ -45,7 +45,6 @@ namespace UI
 	extern void UpdateZProbe(const char data[]);
 	extern void UpdateMachineName(const char data[]);
 	extern void ProcessAlert(const char data[]);
-	extern void FileSelected(const char * array null fileName);
 	extern void UpdateFileGeneratedByText(const char data[]);
 	extern void UpdateFileObjectHeight(float f);
 	extern void UpdateFileLayerHeight(float f);
@@ -56,11 +55,17 @@ namespace UI
 	extern void UpdateStandbyTemperature(size_t index, int ival) pre(index < maxHeaters);
 	extern void UpdateExtrusionFactor(size_t index, int ival) pre(index + 1 < maxHeaters);
 	extern void UpdateSpeedPercent(int ival);
+	extern void FirmwareFeaturesChanged(FirmwareFeatures newFeatures);
 	extern void ProcessTouch(ButtonPress bp);
 	extern void ProcessTouchOutsidePopup(ButtonPress bp)
 	pre(bp.IsValid());
 	extern void OnButtonPressTimeout();
 	extern bool IsDisplayingFileInfo();
+	extern void UpdateFilesListTitle(int cardNumber, unsigned int numVolumes, bool isFilesList);
+	extern void SetNumVolumes(unsigned int n);
+	extern void FileListLoaded(int errCode);
+	extern void EnableFileNavButtons(bool scrollEarlier, bool scrollLater, bool parentDir);
+	extern unsigned int GetNumScrolledFiles();
 }
 
 #endif /* SRC_USERINTERFACE_HPP_ */

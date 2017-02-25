@@ -8,6 +8,8 @@
 #include "Display.hpp"
 #include "ColourSchemes.hpp"
 
+#undef min
+#undef max
 #undef array
 #undef result
 #include <algorithm>
@@ -27,8 +29,25 @@ Colour DisplayField::defaultPressedGradColour = 0;
 
 DisplayField::DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw)
 	: y(py), x(px), width(pw), fcolour(defaultFcolour), bcolour(defaultBcolour),
-		changed(true), visible(true), next(nullptr)
+		changed(true), visible(true), underlined(false), textRows(1), next(nullptr)
 {
+}
+
+void DisplayField::SetTextRows(const char * array null t)
+{
+	unsigned int rows = 1;
+	if (t != nullptr)
+	{
+		while (*t != 0)
+		{
+			if (*t == '\n')
+			{
+				++rows;
+			}
+			++t;
+		}
+	}
+	textRows = rows;
 }
 
 /*static*/ void DisplayField::SetDefaultColours(Colour pf, Colour pb, Colour pbb, Colour pg, Colour pbp, Colour pgp)
@@ -320,7 +339,7 @@ void Window::Press(ButtonPress bp, bool v)
 	}
 }
 
-MainWindow::MainWindow() : Window(black)
+MainWindow::MainWindow() : Window(black), staticLeftMargin(0)
 {
 }
 
@@ -340,7 +359,7 @@ void MainWindow::Refresh(bool full)
 {
 	if (full)
 	{
-		ClearAll();
+		lcd.fillScr(backgroundColour, staticLeftMargin);
 	}
 
 	for (DisplayField * null pp = root; pp != nullptr; pp = pp->next)
@@ -408,28 +427,80 @@ bool PopupWindow::Contains(PixelNumber xmin, PixelNumber ymin, PixelNumber xmax,
 	return xPos + 2 <= xmin && yPos + 2 <= ymin && xPos + width >= xmax + 3 && yPos + height >= ymax + 3;
 }
 
+PixelNumber FieldWithText::GetHeight() const
+{
+	PixelNumber height = UTFT::GetFontHeight(font) * textRows;
+	height += (textRows - 1) * 2;		// 2px space between lines
+	if (underlined)
+	{
+		height += 2;					// one space and the underline
+	}
+	if (border)
+	{
+		height += 4;					// one space abd border top and bottom
+	}
+	return height;
+}
+
 void FieldWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 {
 	if (full || changed)
 	{
+		xOffset += x;
+		yOffset += y;
+		PixelNumber textWidth = width;
+		if (border)
+		{
+			if (full)
+			{
+				lcd.setColor(fcolour);
+				lcd.drawRect(xOffset, yOffset, xOffset + width - 1, yOffset + GetHeight() - 1);
+			}
+			xOffset += 2;
+			yOffset += 2;
+			textWidth -= 4;
+		}
+
 		lcd.setFont(font);
 		lcd.setColor(fcolour);
 		lcd.setBackColor(bcolour);
-		lcd.setTextPos(x + xOffset, y + yOffset, x + xOffset + width);
+
+		// Do a dummy print to get the text width. Needed for underlining and for centre- or right-aligned text.
+		lcd.setTextPos(0, 9999, textWidth);
+		PrintText();
+		const PixelNumber actualWidth = lcd.getTextX();
+		const PixelNumber underlineY = yOffset + UTFT::GetFontHeight(font) + 1;
+		if (underlined)
+		{
+			// Remove previous underlining
+			lcd.setColor(bcolour);
+			lcd.drawLine(xOffset, underlineY, xOffset + textWidth - 1, underlineY);
+			lcd.setColor(fcolour);
+		}
+
+		lcd.setTextPos(xOffset, yOffset, xOffset + textWidth);
 		if (align == TextAlignment::Left)
 		{
 			PrintText();
 			lcd.clearToMargin();
+			if (underlined)
+			{
+				lcd.drawLine(xOffset, underlineY, xOffset + actualWidth, underlineY);
+			}
 		}
 		else
 		{
 			lcd.clearToMargin();
-			lcd.setTextPos(0, 9999, width);
-			PrintText();    // dummy print to get text width
-			PixelNumber spare = width - lcd.getTextX();
+			PixelNumber spare = textWidth - actualWidth;
 			if (align == TextAlignment::Centre)
 			{
-				lcd.setTextPos(x + xOffset + spare/2, y + yOffset, x + xOffset + width);	
+				const PixelNumber textX = xOffset + spare/2;
+				lcd.setTextPos(textX, yOffset, xOffset + textWidth);
+				PrintText();
+				if (underlined)
+				{
+					lcd.drawLine(textX, underlineY, textX + actualWidth - 1, underlineY);
+				}
 			}
 			else
 			{
@@ -442,9 +513,14 @@ void FieldWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 				{
 					spare -= 3;
 				}
-				lcd.setTextPos(x + xOffset + spare, y + yOffset, x + xOffset + width);
+				const PixelNumber textX = xOffset + spare;
+				lcd.setTextPos(textX, yOffset, xOffset + textWidth);
+				PrintText();
+				if (underlined)
+				{
+					lcd.drawLine(textX, underlineY, textX + actualWidth, underlineY);
+				}
 			}
-			PrintText();
 		}
 		changed = false;
 	}
@@ -529,6 +605,13 @@ void SingleButton::DrawOutline(PixelNumber xOffset, PixelNumber yOffset) const
 
 /*static*/ LcdFont ButtonWithText::font;
 
+PixelNumber ButtonWithText::GetHeight() const
+{
+	PixelNumber ret = (UTFT::GetFontHeight(font) + 2) * textRows - 2;	// height of the text
+	ret += 2 * textMargin + 2;											// add the border height
+	return ret;
+}
+
 void ButtonWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 {
 	if (full || changed)
@@ -537,11 +620,18 @@ void ButtonWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset
 		lcd.setTransparentBackground(true);
 		lcd.setColor(fcolour);
 		lcd.setFont(font);
-		lcd.setTextPos(0, 9999, width - 6);
-		PrintText();							// dummy print to get text width
-		PixelNumber spare = width - 6 - lcd.getTextX();
-		lcd.setTextPos(x + xOffset + 3 + spare/2, y + yOffset + textMargin + 1, x + xOffset + width - 3);	// text is always centre-aligned
-		PrintText();
+		unsigned int rowsLeft = textRows;
+		size_t offset = 0;
+		PixelNumber rowY = y + yOffset + textMargin + 1;
+		do
+		{
+			lcd.setTextPos(0, 9999, width - 6);
+			PrintText(offset);							// dummy print to get text width
+			PixelNumber spare = width - 6 - lcd.getTextX();
+			lcd.setTextPos(x + xOffset + 3 + spare/2, rowY, x + xOffset + width - 3);	// text is always centre-aligned
+			offset += PrintText(offset) + 1;
+			rowY += UTFT::GetFontHeight(font) + 2;
+		} while (--rowsLeft != 0);
 		lcd.setTransparentBackground(false);
 		changed = false;
 	}
@@ -553,14 +643,16 @@ CharButton::CharButton(PixelNumber py, PixelNumber px, PixelNumber pw, char pc, 
 	SetEvent(e, (int)pc);
 }
 
-void CharButton::PrintText() const
+size_t CharButton::PrintText(size_t offset) const
 {
-	lcd.write((char)GetIParam(0));
+	UNUSED(offset);
+	return lcd.write((char)GetIParam(0));
 }
 
 TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, int param)
 	: ButtonWithText(py, px, pw), text(pt)
 {
+	SetTextRows(pt);
 	SetEvent(e, param);
 }
 
@@ -570,12 +662,13 @@ TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const cha
 	SetEvent(e, param);
 }
 
-void TextButton::PrintText() const
+size_t TextButton::PrintText(size_t offset) const
 {
 	if (text != nullptr)
 	{
-		lcd.print(text);
+		return lcd.print(text + offset);
 	}
+	return 0;
 }
 
 IconButton::IconButton(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int param)
@@ -603,26 +696,31 @@ void IconButton::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 	}
 }
 
-void IntegerButton::PrintText() const
+size_t IntegerButton::PrintText(size_t offset) const
 {
+	UNUSED(offset);
+	size_t ret = 0;
 	if (label != nullptr)
 	{
-		lcd.print(label);
+		ret += lcd.print(label);
 	}
-	lcd.print(val);
+	ret += lcd.print(val);
 	if (units != nullptr)
 	{
-		lcd.print(units);
+		ret += lcd.print(units);
 	}
+	return ret;
 }
 
-void FloatButton::PrintText() const
+size_t FloatButton::PrintText(size_t offset) const
 {
-	lcd.print(val, numDecimals);
+	UNUSED(offset);
+	size_t ret = lcd.print(val, numDecimals);
 	if (units != nullptr)
 	{
-		lcd.print(units);
+		ret += lcd.print(units);
 	}
+	return ret;
 }
 
 #if 0	// not used yet

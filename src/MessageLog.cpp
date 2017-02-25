@@ -7,12 +7,12 @@
 
 #include "ecv.h"
 #include "asf.h"
-#include "Configuration.hpp"
-#include "Library/Vector.hpp"
+#include "UserInterfaceConstants.hpp"
 #include "MessageLog.hpp"
-#include "Fields.hpp"
+#include "UserInterface.hpp"
 #include "Hardware/SysTick.hpp"
 #include "Library/Misc.hpp"
+#include "Library/Vector.hpp"
 
 namespace MessageLog
 {

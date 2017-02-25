@@ -10,9 +10,10 @@
 
 #include "Configuration.hpp"
 #include "Library/Vector.hpp"
-#include "Fields.hpp"
+#include "DisplaySize.hpp"
 #include "RequestTimer.hpp"
 #include "Events.hpp"
+#include "FirmwareFeatures.hpp"
 
 namespace FileManager
 {
@@ -27,17 +28,16 @@ namespace FileManager
 		RequestTimer timer;
 		int which;
 		const Event fileEvent;
-		const Event upEvent;
 		int scrollOffset;
 		bool IsInSubdir() const;
 		const bool isFilesList;			// true for a file list, false for a macro list
 		uint8_t cardNumber;
 		
 	public:
-		FileSet(Event fe, Event fu, const char * array rootDir, bool pIsFilesList);
+		FileSet(Event fe, const char * array rootDir, bool pIsFilesList);
 		void Display();
 		void Reload(int whichList, const Path& dir, int errCode);
-		void RefreshPopup();
+		void FileListUpdated();
 		void Scroll(int amount);
 		void SetIndex(int index) { which = index; }
 		int GetIndex() const { return which; }
@@ -46,11 +46,12 @@ namespace FileManager
 		void RequestParentDir()
 			pre(IsInSubdir());
 		void RequestSubdir(const char * array dir);
-		void RequestRootDir();
-		void SetPending() { timer.SetPending(); }
+		void SetPending();
 		void StopTimer() { timer.Stop(); }
 		bool ProcessTimer() { return timer.Process(); }
-		void ChangeCard();
+		bool NextCard();
+		bool SelectCard(unsigned int cardNum);
+		void FirmwareFeaturesChanged(FirmwareFeatures newFeatures);
 	};
 
 	void BeginNewMessage();
@@ -68,15 +69,15 @@ namespace FileManager
 	void RequestMacrosSubdir(const char * array dir);
 	void RequestFilesParentDir();
 	void RequestMacrosParentDir();
-	void RequestFilesRootDir();
-	void RequestMacrosRootDir();
 	const char * array GetFilesDir();
 	const char * array GetMacrosDir();
 
 	void RefreshFilesList();
 	bool ProcessTimers();
-	void ChangeCard();
+	bool NextCard();
+	bool SelectCard(unsigned int cardNum);
 	void SetNumVolumes(size_t n);
+	void FirmwareFeaturesChanged(FirmwareFeatures newFeatures);
 }
 
 #endif /* FILEMANAGER_H_ */

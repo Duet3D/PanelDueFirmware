@@ -7,9 +7,9 @@
 
 #include "FileManager.hpp"
 #include "PanelDue.hpp"
+#include "UserInterfaceConstants.hpp"
 #include "UserInterface.hpp"
 #include "Hardware/SerialIo.hpp"
-#include <cctype>
 
 #undef min
 #undef max
@@ -34,8 +34,8 @@ namespace FileManager
 	static int newFileList = -1;								// which file list we received a new listing into
 	static int errorCode;
 	static Path fileDirectoryName;
-	static FileSet gcodeFilesList(evFile, evFilesUp, filesRoot, true);
-	static FileSet macroFilesList(evMacro, evMacrosUp, macrosRoot, false);
+	static FileSet gcodeFilesList(evFile, filesRoot, true);
+	static FileSet macroFilesList(evMacro, macrosRoot, false);
 	static FileSet * null displayedFileSet = nullptr;
 	static uint8_t numVolumes = 1;								// how many SD card sockets we have (normally 1 or 2)
 
@@ -45,45 +45,37 @@ namespace FileManager
 		return strcasecmp(a, b) > 0;
 	}
 
-	FileSet::FileSet(Event fe, Event fu, const char * array rootDir, bool pIsFilesList)
-		: requestedPath(rootDir), currentPath(), timer(FileListRequestTimeout, "M20 S2 P", requestedPath.c_str()), which(-1), fileEvent(fe), upEvent(fu), scrollOffset(0),
+	FileSet::FileSet(Event fe, const char * array rootDir, bool pIsFilesList)
+		: requestedPath(rootDir), currentPath(), timer(FileListRequestTimeout, "M20 S2 P", requestedPath.c_str()), which(-1), fileEvent(fe), scrollOffset(0),
 		  isFilesList(pIsFilesList), cardNumber(0)
 	{
 	}
 
 	void FileSet::Display()
 	{
-		RefreshPopup();
-		filePopupTitleField->SetValue(cardNumber);
-		filePopupTitleField->Show(isFilesList);
-		macroPopupTitleField->Show(!isFilesList);
-		changeCardButton->Show(isFilesList && numVolumes > 1);
-		filesUpButton->SetEvent(upEvent, nullptr);
-		mgr.SetPopup(fileListPopup, fileListPopupX, fileListPopupY);
-		timer.SetPending();										// refresh the list of files
+		FileListUpdated();
+		UI::UpdateFilesListTitle(cardNumber, numVolumes, isFilesList);
+		timer.SetPending();						// refresh the list of files
 	}
 
 	void FileSet::Reload(int whichList, const Path& dir, int errCode)
 	{
+		UI::FileListLoaded(errCode);			// do this first to show/hide the error message
 		if (errCode == 0)
 		{
 			SetIndex(whichList);
 			SetPath(dir.c_str());
-			mgr.Show(fileListErrorField, false);
-			RefreshPopup();
 		}
 		else
 		{
 			SetIndex(-1);
-			RefreshPopup();
-			fileListErrorField->SetValue(errCode);
-			mgr.Show(fileListErrorField, true);
 		}
+		FileListUpdated();
 		StopTimer();
 	}
 
 	// Refresh the list of files or macros in the Files popup window
-	void FileSet::RefreshPopup()
+	void FileSet::FileListUpdated()
 	{
 		if (which >= 0)
 		{
@@ -93,19 +85,18 @@ namespace FileManager
 			fileIndex.sort(StringGreaterThan);
 
 			// 2. Make sure the scroll position is still sensible
-			if (scrollOffset < 0)
+			if (scrollOffset < 0 || fileIndex.size() == 0)
 			{
 				scrollOffset = 0;
 			}
 			else if ((unsigned int)scrollOffset >= fileIndex.size())
 			{
-				scrollOffset = ((fileIndex.size() - 1)/numFileRows) * numFileRows;
+				const unsigned int scrollAmount = UI::GetNumScrolledFiles();
+				scrollOffset = ((fileIndex.size() - 1)/scrollAmount) * scrollAmount;
 			}
 		
 			// 3. Display the scroll buttons if needed
-			mgr.Show(scrollFilesLeftButton, scrollOffset != 0);
-			mgr.Show(scrollFilesRightButton, scrollOffset + (numFileRows * numFileColumns) < fileIndex.size());
-			mgr.Show(filesUpButton, IsInSubdir());
+			UI::EnableFileNavButtons(scrollOffset != 0, scrollOffset + numDisplayedFiles < fileIndex.size(), IsInSubdir());
 		
 			// 4. Display the file list
 			for (size_t i = 0; i < numDisplayedFiles; ++i)
@@ -128,8 +119,7 @@ namespace FileManager
 		}
 		else
 		{
-			mgr.Show(scrollFilesLeftButton, false);
-			mgr.Show(scrollFilesRightButton, false);
+			UI::EnableFileNavButtons(false, false, false);
 			for (size_t i = 0; i < numDisplayedFiles; ++i)
 			{
 				mgr.Show(filenameButtons[i], false);
@@ -140,7 +130,7 @@ namespace FileManager
 	void FileSet::Scroll(int amount)
 	{
 		scrollOffset += amount;
-		RefreshPopup();
+		FileListUpdated();
 	}
 	
 	void FileSet::SetPath(const char * array pPath)
@@ -177,7 +167,7 @@ namespace FileManager
 	void FileSet::RequestParentDir()
 	{
 		which = -1;
-		RefreshPopup();									// this hides the file list until we receive a new one
+		FileListUpdated();									// this hides the file list until we receive a new one
 
 		size_t end = currentPath.size();
 		// Skip any trailing '/'
@@ -206,7 +196,7 @@ namespace FileManager
 	void FileSet::RequestSubdir(const char * array dir)
 	{
 		which = -1;
-		RefreshPopup();									// this hides the file list until we receive a new one
+		FileListUpdated();									// this hides the file list until we receive a new one
 
 		requestedPath.copy(currentPath);
 		if (requestedPath.size() == 0 || (requestedPath[requestedPath.size() - 1] != '/' && !requestedPath.full()))
@@ -216,20 +206,39 @@ namespace FileManager
 		requestedPath.catFrom(dir);
 		timer.SetPending();
 	}
-	
-	void FileSet::ChangeCard()
+
+	// Use the timer to send a command and repeat it if no response is received
+	void FileSet::SetPending()
+	{
+		timer.SetCommand(((GetFirmwareFeatures() & noM20M36) != 0) ? "M408 S20 P" : "M20 S2 P");
+		timer.SetArgument(CondStripDrive(requestedPath.c_str()));
+		timer.SetPending();
+	}
+
+	// Select the next SD card
+	bool FileSet::NextCard()
 	{
 		if (isFilesList && numVolumes > 1)
 		{
-			++cardNumber;
-			if (cardNumber >= numVolumes)
+			unsigned int cn = cardNumber + 1;
+			if (cn >= numVolumes)
 			{
-				cardNumber = 0;
+				cn = 0;
 			}
+			return SelectCard(cn);
+		}
+		return false;
+	}
 
-			filePopupTitleField->SetValue(cardNumber);		// update the card number on the display
+	// Select a particular SD card
+	bool FileSet::SelectCard(unsigned int cardNum)
+	{
+		if (isFilesList && cardNum < numVolumes)
+		{
+			cardNumber = cardNum;
+			UI::UpdateFilesListTitle(cardNumber, numVolumes, isFilesList);
 			which = -1;
-			RefreshPopup();									// this hides the file list until we receive a new one
+			FileListUpdated();								// this hides the file list until we receive a new one
 
 			if (cardNumber == 0)
 			{
@@ -244,10 +253,18 @@ namespace FileManager
 				requestedPath.printf("%u:", (unsigned int)cardNumber);
 			}
 			timer.SetPending();
-
+			return true;
 		}
+		return false;
 	}
 	
+	// This is called on the gcode files list when the firmware features are changed from the previous values
+	void FileSet::FirmwareFeaturesChanged(FirmwareFeatures newFeatures)
+	{
+		requestedPath.copy((newFeatures & noGcodesFolder) ? "0:/" : filesRoot);
+	}
+
+	// This is called when a new JSON response is received
 	void BeginNewMessage()
 	{
 		fileDirectoryName.clear();
@@ -255,6 +272,7 @@ namespace FileManager
 		newFileList = -1;
 	}
 
+	// This is called at the end of a JSON response
 	void EndReceivedMessage(bool displayingFileInfo)
 	{
 		if (newFileList >= 0)
@@ -294,6 +312,7 @@ namespace FileManager
 		}
 	}
 
+	// This is called when we start receiving a list of files
 	void BeginReceivingFiles()
 	{
 		// Find a free file list and index to receive the filenames into
@@ -308,6 +327,7 @@ namespace FileManager
 		fileIndices[newFileList].clear();
 	}
 
+	// This is called for each filename received
 	void ReceiveFile(const char * array data)
 	{
 		if (newFileList >= 0)
@@ -323,11 +343,13 @@ namespace FileManager
 		}
 	}
 
+	// This is called when we receive the directory name
 	void ReceiveDirectoryName(const char * array data)
 	{
 		fileDirectoryName.copy(data);
 	}
 	
+	// This is called when we receive an error code
 	void ReceiveErrorCode(int err)
 	{
 		if (newFileList >= 0)
@@ -375,16 +397,6 @@ namespace FileManager
 		macroFilesList.RequestParentDir();
 	}
 
-	void RequestFilesRootDir()
-	{
-		gcodeFilesList.RequestRootDir();
-	}
-
-	void RequestMacrosRootDir()
-	{
-		macroFilesList.RequestRootDir();
-	}
-
 	const char * array GetFilesDir()
 	{
 		return gcodeFilesList.GetPath();
@@ -400,6 +412,7 @@ namespace FileManager
 		gcodeFilesList.SetPending();
 	}
 
+	// This is called from the main loop to check for timer events
 	bool ProcessTimers()
 	{
 		bool done = macroFilesList.ProcessTimer();
@@ -410,17 +423,28 @@ namespace FileManager
 		return done;
 	}
 
-	void ChangeCard()
+	bool NextCard()
 	{
-		gcodeFilesList.ChangeCard();
+		return gcodeFilesList.NextCard();
 	}
-	
+
+	bool SelectCard(unsigned int cardNum)
+	{
+		return gcodeFilesList.SelectCard(cardNum);
+	}
+
 	void SetNumVolumes(unsigned int n)
 	{
 		if (n > 0 && n <= 10)
 		{
 			numVolumes = n;
 		}
+	}
+
+	// This is called when the host tells us its firmware type, and it is not the type we were previously assuming
+	void FirmwareFeaturesChanged(FirmwareFeatures newFeatures)
+	{
+		gcodeFilesList.FirmwareFeaturesChanged(newFeatures);
 	}
 }		// end namespace
 

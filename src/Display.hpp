@@ -11,6 +11,7 @@
 
 #include "ecv.h"
 #include "Hardware/UTFT.hpp"
+#include "DisplaySize.hpp"
 
 #ifndef UNUSED
 # define UNUSED(_x)	(void)(_x)
@@ -24,13 +25,12 @@ typedef const uint8_t * array LcdFont;
 typedef const uint16_t * array Icon;
 
 // Unicode strings for special characters in our font
-#define DECIMAL_POINT	"\xC2\xB7"		// Unicode middle-dot
-#define DEGREE_SYMBOL	"\xC2\xB0"		// Unicode degree-symbol
-#define THIN_SPACE		"\xC2\x80"		// Unicode control character, we use it as thin space
+#define DECIMAL_POINT	"\xC2\xB7"		// Unicode middle-dot, code point B7
+#define DEGREE_SYMBOL	"\xC2\xB0"		// Unicode degree-symbol, code point B0
+#define THIN_SPACE		"\xC2\x80"		// Unicode control character, code point 0x80, we use it as thin space
 
 const uint8_t buttonGradStep = 12;
 
-typedef uint16_t PixelNumber;
 typedef uint8_t event_t;
 const event_t nullEvent = 0;
 
@@ -68,8 +68,11 @@ protected:
 	PixelNumber y, x;							// Coordinates of top left pixel, counting from the top left corner
 	PixelNumber width;							// number of pixels occupied in each direction
 	Colour fcolour, bcolour;					// foreground and background colours
-	bool changed;
-	bool visible;
+	uint16_t changed : 1,
+			visible : 1,
+			underlined : 1,						// really belongs in class FieldWithText, but stored here to save space
+			border : 1,							// really belongs in class FieldWithText, but stored here to save space
+			textRows : 2;						// really belongs in class FieldWithText, but stored here to save space
 	
 	static LcdFont defaultFont;
 	static Colour defaultFcolour, defaultBcolour;
@@ -78,6 +81,8 @@ protected:
 protected:
 	DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw);
 	
+	void SetTextRows(const char * array t);
+
 	virtual PixelNumber GetHeight() const = 0;
 
 public:
@@ -140,6 +145,8 @@ public:
 
 class MainWindow : public Window
 {
+	PixelNumber staticLeftMargin;
+
 public:
 	MainWindow();
 	void Init(Colour pb);
@@ -148,6 +155,7 @@ public:
 	void SetRoot(DisplayField * null r) { root = r; }
 	bool Contains(PixelNumber xmin, PixelNumber ymin, PixelNumber xmax, PixelNumber ymax) const override;
 	void ClearAllPopups();
+	void SetLeftMargin(PixelNumber m) { staticLeftMargin = m; }
 };
 
 class PopupWindow : public Window
@@ -175,19 +183,23 @@ class FieldWithText : public DisplayField
 	TextAlignment align;
 	
 protected:
-	PixelNumber GetHeight() const override { return UTFT::GetFontHeight(font); }
+	PixelNumber GetHeight() const override;
 	
-	virtual void PrintText() const {}		// would ideally be pure virtual
+	virtual void PrintText() const = 0;
 
-	FieldWithText(PixelNumber py, PixelNumber px, PixelNumber pw, TextAlignment pa)
+	FieldWithText(PixelNumber py, PixelNumber px, PixelNumber pw, TextAlignment pa, bool withBorder, bool isUnderlined = false)
 		: DisplayField(py, px, pw), font(DisplayField::defaultFont), align(pa)
 	{
+		underlined = isUnderlined;
+		border = withBorder;
+		textRows = 1;
 	}
 		
 public:
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override final;
 };
-	
+
+// Class to display a fixed label and some variable text
 class TextField : public FieldWithText
 {
 	const char* array null label;
@@ -197,8 +209,9 @@ protected:
 	void PrintText() const override;
 
 public:
-	TextField(PixelNumber py, PixelNumber px, PixelNumber pw, TextAlignment pa, const char * array null pl, const char* array null pt = nullptr)
-		: FieldWithText(py, px, pw, pa), label(pl), text(pt)
+	TextField(PixelNumber py, PixelNumber px, PixelNumber pw, TextAlignment pa,
+				const char * array null pl, const char* array null pt = nullptr, bool withBorder = false)
+		: FieldWithText(py, px, pw, pa, withBorder), label(pl), text(pt)
 	{
 	}
 
@@ -215,6 +228,7 @@ public:
 	}
 };
 
+// Class to display an optional label, a floating point value, and an optional units string
 class FloatField : public FieldWithText
 {
 	const char* array null label;
@@ -226,8 +240,9 @@ protected:
 	void PrintText() const override;
 
 public:
-	FloatField(PixelNumber py, PixelNumber px, PixelNumber pw, TextAlignment pa, uint8_t pd, const char * array pl = NULL, const char * array null pu = NULL)
-		: FieldWithText(py, px, pw, pa), label(pl), units(pu), val(0.0), numDecimals(pd)
+	FloatField(PixelNumber py, PixelNumber px, PixelNumber pw, TextAlignment pa, uint8_t pd,
+			const char * array pl = nullptr, const char * array null pu = nullptr, bool withBorder = false)
+		: FieldWithText(py, px, pw, pa, withBorder), label(pl), units(pu), val(0.0), numDecimals(pd)
 	{
 	}
 
@@ -238,6 +253,7 @@ public:
 	}
 };
 
+// Class to display an optional label, an integer value, and an optional units string
 class IntegerField : public FieldWithText
 {
 	const char* array null label;
@@ -248,8 +264,9 @@ protected:
 	void PrintText() const override;
 
 public:
-	IntegerField(PixelNumber py, PixelNumber px, PixelNumber pw, TextAlignment pa, const char *pl = NULL, const char *pu = NULL)
-		: FieldWithText(py, px, pw, pa), label(pl), units(pu), val(0)
+	IntegerField(PixelNumber py, PixelNumber px, PixelNumber pw, TextAlignment pa,
+					const char *pl = nullptr, const char *pu = nullptr, bool withBorder = false)
+		: FieldWithText(py, px, pw, pa, withBorder), label(pl), units(pu), val(0)
 	{
 	}
 
@@ -260,6 +277,7 @@ public:
 	}
 };
 
+// Class to display a text string only
 class StaticTextField : public FieldWithText
 {
 	const char * array null text;
@@ -268,12 +286,17 @@ protected:
 	void PrintText() const override;
 
 public:
-	StaticTextField(PixelNumber py, PixelNumber px, PixelNumber pw, TextAlignment pa, const char * array null pt)
-		: FieldWithText(py, px, pw,pa), text(pt) {}
+	StaticTextField(PixelNumber py, PixelNumber px, PixelNumber pw, TextAlignment pa, const char * array null pt, bool isUnderlined = false)
+		: FieldWithText(py, px, pw, pa, false, isUnderlined), text(pt)
+	{
+		SetTextRows(pt);
+	}
 
+	// Change the value
 	void SetValue(const char* array null pt)
 	{
 		text = pt;
+		SetTextRows(pt);
 		changed = true;
 	}
 };
@@ -285,7 +308,6 @@ protected:
 	event_t evt;								// event number that is triggered by touching this field
 	bool pressed;								// putting this here instead of in SingleButton saves 4 byes per button
 
-	
 	ButtonBase(PixelNumber py, PixelNumber px, PixelNumber pw);
 
 	void DrawOutline(PixelNumber xOffset, PixelNumber yOffset, bool isPressed) const;
@@ -344,9 +366,9 @@ class ButtonWithText : public SingleButton
 	static LcdFont font;
 	
 protected:
-	PixelNumber GetHeight() const override { return UTFT::GetFontHeight(font) + 2 * textMargin + 2; }
+	PixelNumber GetHeight() const override;
 
-	virtual void PrintText() const {}		// ideally would be pure virtual
+	virtual size_t PrintText(size_t offset) const = 0;
 
 public:
 	ButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw)
@@ -361,7 +383,7 @@ public:
 class CharButton : public ButtonWithText
 {
 protected:
-	void PrintText() const override;
+	size_t PrintText(size_t offset) const override;
 
 public:
 	CharButton(PixelNumber py, PixelNumber px, PixelNumber pw, char pc, event_t e);
@@ -409,7 +431,7 @@ class TextButton : public ButtonWithText
 	const char * array null text;
 	
 protected:
-	void PrintText() const override;
+	size_t PrintText(size_t offset) const override;
 
 public:
 	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, int param = 0);
@@ -443,7 +465,7 @@ class IntegerButton : public ButtonWithText
 	int val;
 
 protected:
-	void PrintText() const override;
+	size_t PrintText(size_t offset) const override;
 
 public:
 	IntegerButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array pl = nullptr, const char * array pt = nullptr)
@@ -471,7 +493,7 @@ class FloatButton : public ButtonWithText
 	uint8_t numDecimals;
 
 protected:
-	void PrintText() const override;
+	size_t PrintText(size_t offset) const override;
 
 public:
 	FloatButton(PixelNumber py, PixelNumber px, PixelNumber pw, uint8_t pd, const char * array pt = nullptr)
