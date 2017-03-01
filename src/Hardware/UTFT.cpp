@@ -1516,6 +1516,12 @@ void UTFT::drawRoundRect(int x1, int y1, int x2, int y2)
 	}
 }
 
+// Apply the specified gradient to the foreground colour, but avoid wrap-round
+inline void UTFT::applyGradient(uint16_t grad)
+{
+	fcolour += grad;
+}
+
 void UTFT::fillRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gradChange)
 {
 	if (x1>x2)
@@ -1537,7 +1543,7 @@ void UTFT::fillRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gradCha
 			if (++gradCount == gradChange)
 			{
 				gradCount = 0;
-				fcolour += grad;
+				applyGradient(grad);
 			}
 		}
 	}
@@ -1549,7 +1555,7 @@ void UTFT::fillRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gradCha
 			if (++gradCount == gradChange)
 			{
 				gradCount = 0;
-				fcolour += grad;
+				applyGradient(grad);
 			}
 		}
 	}
@@ -1577,14 +1583,14 @@ void UTFT::fillRoundRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gr
 		if (++gradCount == gradChange)
 		{
 			gradCount = 0;
-			fcolour += grad;
+			applyGradient(grad);
 		}
 		drawHLine(x1+1, y1, x2-x1-2);
 		++y1;
 		if (++gradCount == gradChange)
 		{
 			gradCount = 0;
-			fcolour += grad;
+			applyGradient(grad);
 		}
 		while (y1 + 1 < y2)
 		{
@@ -1593,7 +1599,7 @@ void UTFT::fillRoundRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gr
 			if (++gradCount == gradChange)
 			{
 				gradCount = 0;
-				fcolour += grad;
+				applyGradient(grad);
 			}
 		}
 		drawHLine(x1+1, y1, x2-x1-2);
@@ -1601,7 +1607,7 @@ void UTFT::fillRoundRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gr
 		if (++gradCount == gradChange)
 		{
 			gradCount = 0;
-			fcolour += grad;
+			applyGradient(grad);
 		}
 		drawHLine(x1+2, y1, x2-x1-4);
 		

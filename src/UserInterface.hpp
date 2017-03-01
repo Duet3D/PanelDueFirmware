@@ -62,10 +62,11 @@ namespace UI
 	extern void OnButtonPressTimeout();
 	extern bool IsDisplayingFileInfo();
 	extern void UpdateFilesListTitle(int cardNumber, unsigned int numVolumes, bool isFilesList);
-	extern void SetNumVolumes(unsigned int n);
+	extern void SetNumTools(unsigned int n);
 	extern void FileListLoaded(int errCode);
 	extern void EnableFileNavButtons(bool scrollEarlier, bool scrollLater, bool parentDir);
 	extern unsigned int GetNumScrolledFiles();
+	extern void SetBabystepOffset(float f);
 }
 
 #endif /* SRC_USERINTERFACE_HPP_ */

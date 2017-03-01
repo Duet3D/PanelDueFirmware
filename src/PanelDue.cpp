@@ -172,7 +172,9 @@ enum ReceivedDataEvent
 	rcvSize,
 	rcvStatus,
 	rcvTimesLeft,
-	rcvVolumes
+	rcvVolumes,
+	rcvNumTools,
+	rcvBabystep
 };
 
 struct ReceiveDataTableEntry
@@ -261,6 +263,12 @@ struct FileList
 	size_t scrollOffset;
 	String<100> path;
 };
+
+void Delay(uint32_t milliSeconds)
+{
+	const uint32_t now = SystemTick::GetTickCount();
+	while (SystemTick::GetTickCount() - now < milliSeconds) { }
+}
 
 bool PrintInProgress()
 {
@@ -526,7 +534,7 @@ void SetStatus(char c)
 		newStatus = PrinterStatus::toolChange;
 		break;
 	default:
-		newStatus = status;		// leave the status alone if we don't recognize it
+		newStatus = status;		// leave the status alone if we don't recognise it
 		break;
 	}
 	
@@ -545,6 +553,15 @@ void SetStatus(char c)
 	}
 }
 
+// Set the status back to "Connecting"
+void Reconnect()
+{
+	gotMachineName = gotGeometry = false;
+	UI::ChangeStatus(status, PrinterStatus::connecting);
+	status = PrinterStatus::connecting;
+	UI::UpdatePrintingFields();
+}
+
 // Try to get an integer value from a string. If it is actually a floating point value, round it.
 bool GetInteger(const char s[], int &rslt)
 {
@@ -556,7 +573,7 @@ bool GetInteger(const char s[], int &rslt)
 
 	if (strlen(s) > 10) return false;		// avoid strtod buggy behaviour on long input strings
 
-	double d = strtod(s, &endptr);			// try parsing a floating point number
+	float d = strtof(s, &endptr);			// try parsing a floating point number
 	if (*endptr == 0)
 	{
 		rslt = (int)((d < 0.0) ? d - 0.5 : d + 0.5);
@@ -607,6 +624,7 @@ const ReceiveDataTableEntry arrayDataTable[] =
 const ReceiveDataTableEntry nonArrayDataTable[] =
 {
 	{ rcvAxes,			"axes" },
+	{ rcvBabystep,		"babystep" },
 	{ rcvBeepFreq,		"beep_freq" },
 	{ rcvBeepLength,	"beep_length" },
 	{ rcvDir,			"dir" },
@@ -620,6 +638,7 @@ const ReceiveDataTableEntry nonArrayDataTable[] =
 	{ rcvLayerHeight,	"layerHeight" },
 	{ rcvMessage,		"message" },
 	{ rcvMyName,		"myName" },
+	{ rcvNumTools,		"numTools" },
 	{ rcvProbe,			"probe" },
 	{ rcvResponse,		"resp" },
 	{ rcvSeq,			"seq" },
@@ -974,6 +993,16 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 			}
 			break;
 
+		case rcvNumTools:
+			{
+				unsigned int i;
+				if (GetUnsignedInteger(data, i))
+				{
+					UI::SetNumTools(i);
+				}
+			}
+			break;
+
 		case rcvFirmwareName:
 			for (size_t i = 0; i < ARRAY_SIZE(firmwareTypes); ++i)
 			{
@@ -987,6 +1016,16 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 						FileManager::FirmwareFeaturesChanged(firmwareFeatures);
 					}
 					break;
+				}
+			}
+			break;
+
+		case rcvBabystep:
+			{
+				float f;
+				if (GetFloat(data, f))
+				{
+					UI::SetBabystepOffset(f);
 				}
 			}
 			break;
@@ -1071,7 +1110,6 @@ int main(void)
 	SysTick_Config(SystemCoreClock / 1000);
 	lastTouchTime = SystemTick::GetTickCount();
 
-
 	// Read parameters from flash memory
 	nvData.Load();
 	if (nvData.IsValid())
@@ -1108,7 +1146,7 @@ int main(void)
 		UI::ShowHeater(i, false);
 	}
 	
-	debugField->Show(DEBUG != 0);			// show the debug field only if debugging is enabled
+	debugField->Show(DEBUG != 0);					// show the debug field only if debugging is enabled
 
 #ifdef OEM
 	// Display the splash screen unless it was a software reset (we use software reset to change the language or colour scheme)
@@ -1116,15 +1154,15 @@ int main(void)
 	{
 		lcd.drawCompressedBitmap(0, 0, DISPLAY_X, DISPLAY_Y, splashScreenImage);
 		const uint32_t now = SystemTick::GetTickCount();
-		while (SystemTick::GetTickCount() - now < 5000) { }		// hold it there for 5 seconds
+		Delay(5000);						// hold it there for 5 seconds
 	}
 #endif
 
 	// Display the Control tab. This also refreshes the display.
 	UI::ShowDefaultPage();
-	lastResponseTime = SystemTick::GetTickCount();		// pretend we just received a response
+	lastResponseTime = SystemTick::GetTickCount();	// pretend we just received a response
 	
-	machineConfigTimer.SetPending();		// we need to fetch the machine name and configuration
+	machineConfigTimer.SetPending();				// we need to fetch the machine name and configuration
 
 	for (;;)
 	{

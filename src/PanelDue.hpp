@@ -46,6 +46,8 @@ extern int GetBrightness();
 extern uint32_t GetVolume();
 extern FirmwareFeatures GetFirmwareFeatures();
 extern const char* array CondStripDrive(const char* array arg);
+extern void Reconnect();
+extern void Delay(uint32_t milliSeconds);
 
 // Global data in PanelDue.cpp that is used elsewhere
 extern UTFT lcd;

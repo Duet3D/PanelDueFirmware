@@ -27,65 +27,30 @@ size_t Print::print(const char str[])
 	return w;
 }
 
-size_t Print::print(char c)
-{
-	return write(c);
-}
-
-size_t Print::print(unsigned char b, int base)
-{
-	return print((unsigned long) b, base);
-}
-
-size_t Print::print(int b, int base)
-{
-	return print((long) b, base);
-}
-
-size_t Print::print(unsigned int b, int base)
-{
-	return print((unsigned long) b, base);
-}
-
-size_t Print::print(long n, int base)
+size_t Print::print(long n, unsigned int base)
 {
 	if (base == 0)
 	{
-		return write(n);
+		return write((uint8_t)n);
 	}
 	else if (base == 10)
 	{
 		if (n < 0)
 		{
-			const size_t t = print('-');
-			n = -n;
-			return printNumber(n, 10) + t;
+			const size_t t = write('-');
+			return printNumber(-n, 10) + t;
 		}
 		return printNumber(n, 10);
 	}
 	else
 	{
-		return printNumber(n, base);
+		return printNumber((uint32_t)n, base);
 	}
-}
-
-size_t Print::print(unsigned long n, int base)
-{
-	if (base == 0)
-	{
-		return write(n);
-	}
-	return printNumber(n, base);
-}
-
-size_t Print::print(double n, int digits)
-{
-	return printFloat(n, digits);
 }
 
 // Private Methods /////////////////////////////////////////////////////////////
 
-size_t Print::printNumber(uint32_t n, uint8_t base)
+size_t Print::printNumber(uint32_t n, unsigned int base)
 {
 	char buf[CHAR_BIT * sizeof(long) + 1];			// the largest buffer is needed when base=2
 	char *str = &buf[sizeof(buf) - 1];
@@ -109,7 +74,7 @@ size_t Print::printNumber(uint32_t n, uint8_t base)
 	return print(str);
 }
 
-size_t Print::printFloat(double number, uint8_t digits)
+size_t Print::printFloat(float number, unsigned int digits)
 {
 	if (std::isnan(number)) return print("nan");
 	if (std::isinf(number)) return print("inf");
@@ -128,8 +93,8 @@ size_t Print::printFloat(double number, uint8_t digits)
 		roundVal *= 10;
 	}
 	
-	number += 1.0/(double)roundVal;
-	if (number > (double)UINT32_MAX)
+	number += 1.0/(float)roundVal;
+	if (number > (float)UINT32_MAX)
 	{
 		return print ("ovf");
 	}
@@ -137,13 +102,13 @@ size_t Print::printFloat(double number, uint8_t digits)
 	size_t n = 0;
 	if (neg)
 	{
-		n += print('-');
+		n += write('-');
 	}
 	
 	// Extract the integer part of the number and print it
 	const uint32_t int_part = (uint32_t)number;
-	double remainder = number - (double)int_part;
-	n += print(int_part);
+	float remainder = number - (float)int_part;
+	n += printNumber(int_part, DEC);
 
 	// Print the decimal point, but only if there are digits beyond
 	if (digits != 0)

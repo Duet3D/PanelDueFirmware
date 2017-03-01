@@ -209,6 +209,7 @@ private:
 	uint8_t numContinuationBytesLeft;
 
 	size_t writeNative(uint8_t c);
+	void applyGradient(uint16_t grad);
 
 	// Hardware interface
 	void LCD_Write_Bus(uint16_t VHL);

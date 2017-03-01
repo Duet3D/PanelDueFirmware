@@ -50,6 +50,7 @@ enum Event : uint8_t
 	evDeleteFile,
 	evPausePrint,
 	evResumePrint,
+	evBabyStepPopup, evBabyStepAmount,
 
 	evKey, evBackspace, evSendKeyboardCommand, evUp, evDown,
 
@@ -57,7 +58,7 @@ enum Event : uint8_t
 	evAdjustColours, evSetColours,
 	evBrighter, evDimmer,
 
-	evRestart,
+	evRestart, evEmergencyStop,
 
 #ifdef OEM_LAYOUT
 	evOemJogPage, evOemSetIncrement, evOemAdjustUpDown, evOemDone, evOemSetBrightness, evOemAxisSelect, evOemDistanceSelect, evOemCardSelect

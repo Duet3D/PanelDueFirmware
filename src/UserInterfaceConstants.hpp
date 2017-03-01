@@ -136,14 +136,13 @@ const PixelNumber fanColumn = DISPLAY_X/4 + 20;
 const PixelNumber pauseColumn = DISPLAY_X/2 + 10 + fieldSpacing;
 const PixelNumber resumeColumn = pauseColumn;
 const PixelNumber cancelColumn = pauseColumn + (DISPLAY_X - pauseColumn - fieldSpacing - margin)/2 + fieldSpacing;
+const PixelNumber babystepColumn = cancelColumn;
 
 const PixelNumber fullPopupWidth = DisplayX - (2 * margin);
 const PixelNumber fullPopupHeight = DisplayY - (2 * margin);
-const PixelNumber fullWidthPopupX = (DisplayX - fullPopupWidth)/2;
 const PixelNumber popupBarHeight = buttonHeight + (2 * popupTopMargin);
 
 const PixelNumber tempPopupBarWidth = (3 * fullPopupWidth)/4;
-const PixelNumber tempPopupX = (DisplayX - tempPopupBarWidth)/2;
 const PixelNumber fileInfoPopupWidth = fullPopupWidth - (4 * margin),
 				  fileInfoPopupHeight = (8 * rowTextHeight) + buttonHeight + (2 * popupTopMargin);
 const PixelNumber areYouSurePopupWidth = DisplayX - 80,
@@ -151,13 +150,9 @@ const PixelNumber areYouSurePopupWidth = DisplayX - 80,
 
 const PixelNumber movePopupWidth = fullPopupWidth;
 const PixelNumber movePopupHeight = ((MAX_AXES + 1) * buttonHeight) + (MAX_AXES * moveButtonRowSpacing) + (2 * popupTopMargin);
-const PixelNumber movePopupX = (DisplayX - movePopupWidth)/2;
-const PixelNumber movePopupY = (DisplayY - movePopupHeight)/2;
 
 const PixelNumber extrudePopupWidth = fullPopupWidth;
 const PixelNumber extrudePopupHeight = (5 * buttonHeight) + (4 * extrudeButtonRowSpacing) + (2 * popupTopMargin);
-const PixelNumber extrudePopupX = (DisplayX - extrudePopupWidth)/2;
-const PixelNumber extrudePopupY = (DisplayY - extrudePopupHeight)/2;
 
 const PixelNumber keyboardButtonWidth = DisplayX/5;
 const PixelNumber keyboardPopupWidth = fullPopupWidth;
@@ -165,15 +160,13 @@ const PixelNumber keyButtonWidth = (keyboardPopupWidth - 2 * popupSideMargin)/16
 const PixelNumber keyButtonHStep = (keyboardPopupWidth - 2 * popupSideMargin - keyButtonWidth)/11;
 const PixelNumber keyButtonVStep = buttonHeight + keyboardButtonRowSpacing;
 const PixelNumber keyboardPopupHeight = (5 * keyButtonVStep) + (2 * keyboardTopMargin) + buttonHeight;
-const PixelNumber keyboardPopupX = fullWidthPopupX, keyboardPopupY = margin;
+const PixelNumber keyboardPopupY = margin;
 
 const unsigned int numFileColumns = 2;
 const unsigned int numFileRows = (fullPopupHeight - (2 * popupTopMargin) + fileButtonRowSpacing)/(buttonHeight + fileButtonRowSpacing) - 1;
 const unsigned int numDisplayedFiles = numFileColumns * numFileRows;
 const PixelNumber fileListPopupWidth = fullPopupWidth;
 const PixelNumber fileListPopupHeight = ((numFileRows + 1) * buttonHeight) + (numFileRows * fileButtonRowSpacing) + (2 * popupTopMargin);
-const PixelNumber fileListPopupX = (DisplayX - fileListPopupWidth)/2;
-const PixelNumber fileListPopupY = (DisplayY - fileListPopupHeight)/2;
 
 const uint32_t numMessageRows = (rowTabs - margin - rowHeight)/rowTextHeight;
 const PixelNumber messageTextX = margin + messageTimeWidth + 2;
@@ -181,6 +174,10 @@ const PixelNumber messageTextWidth = DisplayX - margin - messageTextX;
 
 const PixelNumber alertPopupWidth = fullPopupWidth - 6 * margin;
 const PixelNumber alertPopupHeight = 3 * rowTextHeight + 2 * popupTopMargin;
+
+const PixelNumber babystepPopupWidth = (2 * fullPopupWidth)/3;
+const PixelNumber babystepPopupHeight = 3 * rowHeight + 2 * popupTopMargin;
+const PixelNumber babystepRowSpacing = rowHeight;
 
 #endif
 

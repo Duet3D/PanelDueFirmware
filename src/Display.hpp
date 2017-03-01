@@ -30,6 +30,7 @@ typedef const uint16_t * array Icon;
 #define THIN_SPACE		"\xC2\x80"		// Unicode control character, code point 0x80, we use it as thin space
 
 const uint8_t buttonGradStep = 12;
+const PixelNumber AutoPlace = 0xFFFF;
 
 typedef uint8_t event_t;
 const event_t nullEvent = 0;

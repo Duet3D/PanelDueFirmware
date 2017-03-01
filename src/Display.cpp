@@ -190,6 +190,14 @@ ButtonPress Window::FindEventOutsidePopup(PixelNumber x, PixelNumber y)
 
 void Window::SetPopup(PopupWindow * p, PixelNumber px, PixelNumber py, bool redraw)
 {
+	if (px == AutoPlace)
+	{
+		px = (DisplayX - p->GetWidth())/2;
+	}
+	if (py == AutoPlace)
+	{
+		py = (DisplayY - p->GetHeight())/2;
+	}
 	p->SetPos(px, py);
 	Window *pw = this;
 	while (pw->next != nullptr)
