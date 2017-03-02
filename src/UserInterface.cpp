@@ -418,7 +418,7 @@ void CreateBaudRatePopup(const ColourScheme& colours)
 void CreateVolumePopup(const ColourScheme& colours)
 {
 	static_assert(Buzzer::MaxVolume == 5, "MaxVolume assumed to be 5 here");
-	static const char* const volumePopupText[Buzzer::MaxVolume + 1] = { "Off", "1", "2", "3", "4", "5" };
+	static const char* const volumePopupText[Buzzer::MaxVolume + 1] = { "0", "1", "2", "3", "4", "5" };
 	volumePopup = CreateIntPopupBar(colours, fullPopupWidth, Buzzer::MaxVolume + 1, volumePopupText, nullptr, evAdjustVolume, evAdjustVolume);
 }
 
@@ -428,10 +428,10 @@ void CreateColoursPopup(const ColourScheme& colours)
 	if (NumColourSchemes >= 2)
 	{
 		// Put all the colour scheme names in a single array for the call to CreateIntPopupBar
-		const char* coloursPopupText[MaxColourSchemes];
+		const char* coloursPopupText[NumColourSchemes];
 		for (size_t i = 0; i < NumColourSchemes; ++i)
 		{
-			coloursPopupText[i] = colourSchemes[i].name;
+			coloursPopupText[i] = strings->colourSchemeNames[i];
 		}
 		coloursPopup = CreateIntPopupBar(colours, fullPopupWidth, NumColourSchemes, coloursPopupText, nullptr, evAdjustColours, evAdjustColours);
 	}
@@ -545,7 +545,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 {
 	// Add the emergency stop button
 	DisplayField::SetDefaultColours(colours.stopButtonTextColour, colours.stopButtonBackColour);
-	mgr.AddField(new TextButton(row2, margin, bedColumn - fieldSpacing - margin - 20, strings->stop, evEmergencyStop));
+	mgr.AddField(new TextButton(row2, margin, bedColumn - fieldSpacing - margin - 16, strings->stop, evEmergencyStop));
 
 	// Add the labels and the debug field
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
@@ -607,7 +607,7 @@ void CreateControlTabFields(const ColourScheme& colours)
 		column += xyFieldWidth + fieldSpacing;
 	}
 	zprobeBuf[0] = 0;
-	mgr.AddField(zProbe = new TextField(row6p3 + labelRowAdjust, column, DISPLAY_X - column - margin, TextAlignment::Left, "Zp", zprobeBuf.c_str()));
+	mgr.AddField(zProbe = new TextField(row6p3 + labelRowAdjust, column, DISPLAY_X - column - margin, TextAlignment::Left, "P", zprobeBuf.c_str()));
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.notHomedButtonBackColour);
 	homeAllButton = AddIconButton(row7p7, 0, MAX_AXES + 2, IconHomeAll, evSendCommand, "G28");
@@ -746,8 +746,8 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	AddTextButton(row5, 0, 3, strings->calibrateTouch, evCalTouch, nullptr);
 	AddTextButton(row5, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
 	AddTextButton(row5, 2, 3, strings->invertDisplay, evInvertY, nullptr);
-	coloursButton = AddTextButton(row6, 0, 3, colours.name, evSetColours, nullptr);
-	coloursButton->SetText(colours.name);
+	coloursButton = AddTextButton(row6, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
+	coloursButton->SetText(strings->colourSchemeNames[colours.index]);
 	AddTextButton(row6, 1, 3, strings->brightnessDown, evDimmer, nullptr);
 	AddTextButton(row6, 2, 3, strings->brightnessUp, evBrighter, nullptr);
 	AddTextButton(row7, 0, 3, strings->saveSettings, evSaveSettings, nullptr);
@@ -769,6 +769,11 @@ void CreateCommonFields(const ColourScheme& colours)
 
 void CreateMainPages(uint32_t language, const ColourScheme& colours)
 {
+	if (language >= ARRAY_SIZE(LanguageTables))
+	{
+		language = 0;
+	}
+	strings = &LanguageTables[language];
 	CreateCommonFields(colours);
 	baseRoot = mgr.GetRoot();		// save the root of fields that we usually display
 
@@ -1764,7 +1769,7 @@ namespace UI
 				{
 					const int newColours = bp.GetIParam();
 					SetColourScheme(newColours);
-					coloursButton->SetText(colourSchemes[newColours].name);
+					coloursButton->SetText(strings->colourSchemeNames[newColours]);
 				}
 				CheckSettingsAreSaved();
 				break;

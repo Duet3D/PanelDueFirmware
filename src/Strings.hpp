@@ -3,12 +3,15 @@
  *
  *  Created on: 27 Feb 2017
  *      Author: David
+ *
+ * The encoding used for this file must be UTF-8 to ensure that accented characters are displayed correctly.
  */
 
 #ifndef SRC_STRINGS_HPP_
 #define SRC_STRINGS_HPP_
 
 #include "ecv.h"
+#include "UserInterfaceConstants.hpp"
 
 #define CSTRING const char * const array
 #define Newline			"\n"
@@ -58,10 +61,6 @@ struct StringTable
 	CSTRING clearSettings;
 	CSTRING saveAndRestart;
 
-	// Theme names
-	CSTRING lightTheme;
-	CSTRING darkTheme;
-
 	// Misc
 	CSTRING confirmFactoryReset;
 	CSTRING confirmRestart;
@@ -95,6 +94,9 @@ struct StringTable
 
 	// Printer status strings
 	CSTRING statusValues[11];
+
+	// Colour theme names
+	CSTRING colourSchemeNames[NumColourSchemes];
 };
 
 const StringTable LanguageTables[4] =
@@ -143,10 +145,6 @@ const StringTable LanguageTables[4] =
 		"Clear settings",
 		"Save & Restart",
 
-		// Theme names
-		"Light",
-		"Dark",
-
 		// Misc
 		"Confirm factory reset",
 		"Confirm restart",
@@ -191,6 +189,12 @@ const StringTable LanguageTables[4] =
 			"Resuming",
 			"Firmware upload",
 			"Changing tool"
+		},
+
+		// Theme names
+		{
+			"Light",
+			"Dark"
 		}
 	},
 
@@ -238,10 +242,6 @@ const StringTable LanguageTables[4] =
 		"Clear settings",
 		"Save & Restart",
 
-		// Theme names
-		"Light",
-		"Dark",
-
 		// Misc
 		"Confirm factory reset",
 		"Confirm restart",
@@ -286,6 +286,12 @@ const StringTable LanguageTables[4] =
 			"reanudando",
 			"carga del firmware",
 			"herramienta de cambio"
+		},
+
+		// Theme names
+		{
+			"Light",
+			"Dark"
 		}
 	},
 
@@ -295,101 +301,74 @@ const StringTable LanguageTables[4] =
 		"Deutsch",
 
 		// Main page strings
-		"Control",
-		"Print",
-		"Console",
-		"Setup",
-		"Current" THIN_SPACE DEGREE_SYMBOL "C",
-		"Active" THIN_SPACE DEGREE_SYMBOL "C",
+		"Steuerung",
+		"Druck",
+		"Konsole",
+		"Einrichtung",
+		"Aktuell" THIN_SPACE DEGREE_SYMBOL "C",
+		"Aktiv" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
-		"Move",
+		"Bewegung",
 		"Extrusion",
-		"Macro",
-		"HALT",
+		"Makro",
+		"NOT-AUS",
 
 		// Print page
 		"Extruder" THIN_SPACE "%",
-		"Speed ",							// note space at end
-		"Fan ",								// note space at end
-		"Time left: ",
-		"file ",							// note space at end
-		", filament ",						// note space at end
-		", layer ",							// note space at end
-		"n/a",
+		"Geschwindigkeit ",					// note space at end
+		"Lüfter ",							// note space at end
+		"Zeit übrig: ",
+		"Datei ",							// note space at end
+		", Filament ",						// note space at end
+		", Schicht ",						// note space at end
+		"n/v",
 		"Pause",
-		"Baby step",
-		"Resume",
-		"Cancel",
+		"Baby Step",
+		"Fortsetzen",
+		"Abbrechen",
 
 		// Setup page
 		"Lautstärke ",						// note space at end
-		"Calibrate touch",
-		"Mirror display",
-		"Invert display",
-		"Theme",
+		"Touch kalibrieren",
+		"Anzeige spiegeln",
+		"Farben invertieren",
+		"Thema",
 		"Helligkeit -",
 		"Helligkeit +",
-		"Save settings",
-		"Clear settings",
-		"Save & Restart",
-
-		// Theme names
-		"Light",
-		"Dark",
+		"Einstellungen speichern",
+		"Einstellungen löschen",
+		"Speichern & Neustarten",
 
 		// Misc
-		"Confirm factory reset",
-		"Confirm restart",
-		"Confirm file delete",
-		"Are you sure?",
-		"Berühren sie den punkt",
-		"Some settings are not saved!",
-		"Touch Save & Restart to use new settings",
-		"Move head",
-		"Extrusion amount (mm)",
-		"Speed (mm/s)",
-		"Extrude",
-		"Retract",
-		"Baby stepping",
-		"Current Z offset: ",
-		"Message",
-		"Messages",
-		"Panel Due firmware-version ",	// note space at end
+		"Rücksetzen bestätigen",
+		"Neustart bestätigen",
+		"Löschen bestätigen",
+		"Sind sie sicher?",
+		"Berühren sie den Punkt",
+		"Einige Einstellungen sind nicht gespeichert!",
+		"Berühren sie Speichern & Neustarten um die neuen Einstellungen anzuwenden",
+		"Kopf bewegen",
+		"Extrusionsmenge (mm)",
+		"Geschwindigkeit (mm/s)",
+		"Extrudieren",
+		"Zurückziehen",
+		"Babystepping",
+		"Aktueller Z-Versatz: ",
+		"Nachricht",
+		"Nachrichten",
+		"Panel Due Firmwareversion ",	// note space at end
 
 		// File popup
-		"Files on card ",				// note the space on the end
-		"Macros",
-		"Error ",						// note the space at the end
-		" accessing SD card",			// note the space at the start
-		"Filename: ",
-		"Size: ",
-		"Layer height: ",
-		"Object height: ",
-		"Filament needed: ",
-		"Sliced by: ",
-
-#if 0
-		// Main page strings
-		"bettsensor",
-		"druck fortsetzen",
-		"druck pausieren",
-		"druck abbrechen",
-		"lüftergeschwindigkeit (%)",
-		"druckgeschwindigkeit (%)",
-		"extrusion (%)",
-		"fertigstellung (%)",
-		"druckstatus",
-		"aktuell",
-		"gesetzt",
-
-		// Setup page strings
-		"sprache",
-		"firmware-version anzeigen",
-		"werkseinstellungen" newline "wiederherstellen",
-		"rücksetzen auf werkseinstellungen bestätigen",
-		"ja",
-		"nein",
-#endif
+		"Dateien auf Karte ",			// note the space on the end
+		"Makros",
+		"Fehler ",						// note the space at the end
+		" beim Zugriff auf SD-Karte",	// note the space at the start
+		"Dateiname: ",
+		"Größe: ",
+		"Schichthöhe: ",
+		"Objekthöhe: ",
+		"Benötigtes Filament: ",
+		"Erzeugt mit: ",
 
 		// Printer status strings
 		{
@@ -404,6 +383,12 @@ const StringTable LanguageTables[4] =
 			"Fortsetzen",
 			"Firmware-Upload",
 			"Wechsle Tool"
+		},
+
+		// Theme names
+		{
+			"Hell",
+			"Dunkel"
 		}
 	},
 
@@ -451,10 +436,6 @@ const StringTable LanguageTables[4] =
 		"Clear settings",
 		"Save & Restart",
 
-		// Theme names
-		"Light",
-		"Dark",
-
 		// Misc
 		"Confirmer le réinitialisation de l'usine",
 		"Confirm restart",
@@ -499,6 +480,12 @@ const StringTable LanguageTables[4] =
 			"Reprise",
 			"Envoyer le firmware",
 			"Outil de changement"
+		},
+
+		// Theme names
+		{
+			"Light",
+			"Dark"
 		}
 	}
 };

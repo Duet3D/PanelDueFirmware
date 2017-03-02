@@ -11,6 +11,8 @@
 #include "Configuration.hpp"
 #include "DisplaySize.hpp"
 
+const size_t NumColourSchemes = 2;
+
 #ifdef OEM_LAYOUT
 
 #include "OemUserInterfaceConstants.hpp"

@@ -8,14 +8,14 @@
 #ifndef OEM_COLOURS
 
 #include "ColourSchemes.hpp"
-
-const size_t NumColourSchemes = 2;
+#include "UserInterfaceConstants.hpp"
 
 const ColourScheme colourSchemes[NumColourSchemes] =
 {
 	// Light colour schema. As this one comes first, it is the default.
 	{
-		.name = "Light",
+		.index = 0,
+
 		.titleBarTextColour = white,
 		.titleBarBackColour = red,
 		.labelTextColour = black,
@@ -63,7 +63,8 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 	// Dark colour scheme
 
 	{
-		.name = "Dark",
+		.index = 1,
+
 		.titleBarTextColour = white,
 		.titleBarBackColour = darkRed,
 		.labelTextColour = white,
@@ -108,8 +109,6 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 		.stopButtonBackColour = red
 	}
 };
-
-static_assert(NumColourSchemes <= MaxColourSchemes, "Too many colour schemes");
 
 #endif
 

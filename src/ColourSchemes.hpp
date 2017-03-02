@@ -10,8 +10,6 @@
 
 #include "Hardware/UTFT.hpp"
 
-const size_t MaxColourSchemes = 5;				// the maximum number supported by firmware
-
 // Some common colours
 const Colour
 	white = 0xFFFF,
@@ -38,7 +36,8 @@ const Colour
 // Definition of a colour scheme
 struct ColourScheme
 {
-	const char *name;
+	size_t index;
+
 	Colour titleBarTextColour;
 	Colour titleBarBackColour;
 	Colour labelTextColour;
@@ -83,7 +82,6 @@ struct ColourScheme
 	Colour stopButtonBackColour;
 };
 
-extern const size_t NumColourSchemes;
 extern const ColourScheme colourSchemes[];
 
 #endif /* COLOURSCHEME_H_ */
