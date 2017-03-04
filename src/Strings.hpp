@@ -398,26 +398,26 @@ const StringTable LanguageTables[4] =
 		"Français",
 
 		// Main page strings
-		"Control",
-		"Print",
+		"Contrôle",
+		"Imprimer",
 		"Console",
-		"Setup",
+		"Installation",
 		"Actuel" THIN_SPACE DEGREE_SYMBOL "C",
-		"Active" THIN_SPACE DEGREE_SYMBOL "C",
+		"Actif" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
-		"Move",
+		"Mouvement",
 		"Extrusion",
 		"Macro",
 		"ARRÊT",
 
 		// Print page
-		"Extruder" THIN_SPACE "%",
+		"Extrudeuse" THIN_SPACE "%",
 		"Vitesse ",							// note space at end
-		"Fan ",								// note space at end
-		"Time left: ",
-		"file ",							// note space at end
+		"Ventilateur ",								// note space at end
+		"Temps Restant: ",
+		"Fichier ",							// note space at end
 		", filament ",						// note space at end
-		", layer ",							// note space at end
+		", couche ",							// note space at end
 		"n/a",
 		"Pause",
 		"Baby step",
@@ -426,66 +426,66 @@ const StringTable LanguageTables[4] =
 
 		// Setup page
 		"Volume ",							// note space at end
-		"Calibrate touch",
-		"Mirror display",
-		"Invert display",
-		"Theme",
+		"Calibrer touch",
+		"Affichage en négatif",
+		"Inverser affichage",
+		"Théme",
 		"Luminosité -",
 		"Luminosité +",
-		"Save settings",
-		"Clear settings",
-		"Save & Restart",
+		"Sauver paramêtres",
+		"Effacer paramêtres",
+		"Sauvegarde & Redémarrage",
 
 		// Misc
-		"Confirmer le réinitialisation de l'usine",
-		"Confirm restart",
-		"Confirm file delete",
-		"Are you sure?",
-		"Toucher le place",
-		"Some settings are not saved!",
-		"Touch Save & Restart to use new settings",
-		"Move head",
-		"Extrusion amount (mm)",
+		"Confirmer le réinitialisation de l'imprimante",
+		"Confirm Redémarrage",
+		"Confirm suppression fichier",
+		"Vous êtes sûre?",
+		"Appuyer sur le point",
+		"Certains réglages ne sont pas sauvegardés!",
+		"Appuyer sur Sauvegarde et Redémarrage pour utiliser les nouveaux réglages",
+		"Mouvement de la  tête",
+		"Quantité de Matiére extrudée (mm)",
 		"Vitesse (mm/s)",
-		"Extrude",
-		"Retract",
+		"Extruder",
+		"Retracter",
 		"Baby stepping",
-		"Current Z offset: ",
+		"décalage Z courant : ",
 		"Message",
 		"Messages",
-		"Panel Due firmware version ",	// note space at end
+		"Version du firmware du Panel Due ",	// note space at end
 
 		// File popup
-		"Files on card ",				// note the space on the end
+		"Fichier sur carte ",				// note the space on the end
 		"Macros",
-		"Error ",						// note the space at the end
-		" accessing SD card",			// note the space at the start
-		"Filename: ",
-		"Size: ",
-		"Layer height: ",
-		"Object height: ",
-		"Filament needed: ",
-		"Sliced by: ",
+		"Erreur ",						// note the space at the end
+		" accés SD card en cours",			// note the space at the start
+		"Nom du fichier : ",
+		"Taille : ",
+		"Hauteur de couche: ",
+		"Hauteur de l'objet: ",
+		"Filament requis: ",
+		"Sliced par: ",
 
 		// Printer status strings
 		{
-			"De liason",
+			"Connection en cours",
 			"Au repos",
 			"Impression",
-			"Halte",
-			"Démerrage",
+			"Arrêt",
+			"Démarrage",
 			"Pause",
 			"Occupé"
 			"Pause",
 			"Reprise",
-			"Envoyer le firmware",
-			"Outil de changement"
+			"Téleverser le firmware",
+			"Changement d'outil"
 		},
 
 		// Theme names
 		{
-			"Light",
-			"Dark"
+			"Fond Blanc",
+			"Fond Noir"
 		}
 	}
 };
