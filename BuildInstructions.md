@@ -7,14 +7,14 @@ Instructions for building PanelDueFirmware under Windows
 
 3. In Eclipse create new workspace C:/Eclipse/PanelDue. Then exit Eclipse.
 
-4. Download this github project as a zip file and unzip it into C:/Eclipse/PanelDue. Then rename folder PanelDueFirmware-dev in that folder to PanelDueFirmware.
+4. Download this github project as a zip file and unzip it into C:/Eclipse/PanelDue. Then rename folder PanelDueFirmware-dev in that folder to PanelDue.
 
-5. Load Eclipse and tell it to import the PanelDueFirmware project.
+5. Load Eclipse and tell it to import the PanelDue project.
 
 6. If your compiler and tools are in a folder other than C:\Arduino-1.5.8\hardware\tools\gcc-arm-none-eabi-4.8.3-2014q1\bin, configure the path to the tools in both projects. You will find this in the project settings under C/C++ Build -> Settings -> Cross Settings.
 
 7. Ensure there is a copy of make.exe on your PATH. If you installed Arduino 1.5.8 into C:/Arduino-1.5.8 then there will be one in C:\Arduino-1.5.8\hardware\arduino\sam\system\CMSIS\Examples\cmsis_example\gcc_arm.
 
-8. Build PanelDueFirmware.
+8. Build PanelDue.
 
-D Crocker, updated 2017-03-13.
+D Crocker, updated 2017-03-23.
