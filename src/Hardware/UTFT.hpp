@@ -178,6 +178,7 @@ public:
 	void drawBitmap(int x, int y, int sx, int sy, const uint16_t *data, int deg, int rox, int roy);
 #endif
 	void drawCompressedBitmap(int x, int y, int sx, int sy, const uint16_t *data);
+	void drawCompressedBitmapBottomToTop(int x, int y, int sx, int sy, const uint16_t *data);
 	void lcdOff();
 	void lcdOn();
 	void setContrast(uint8_t c);

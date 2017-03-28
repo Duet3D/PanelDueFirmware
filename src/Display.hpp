@@ -151,7 +151,6 @@ class MainWindow : public Window
 public:
 	MainWindow();
 	void Init(Colour pb);
-	void ClearAll();
 	void Refresh(bool full) override;
 	void SetRoot(DisplayField * null r) { root = r; }
 	bool Contains(PixelNumber xmin, PixelNumber ymin, PixelNumber xmax, PixelNumber ymax) const override;

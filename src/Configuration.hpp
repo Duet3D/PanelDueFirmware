@@ -11,7 +11,7 @@
 
 #include <cstdint>
 
-#define VERSION_TEXT		"1.16beta1"
+#define VERSION_TEXT		"1.16beta2"
 
 #define DISPLAY_TYPE_ITDB02_43			(1)		// Itead 4.3 inch display (480 x 272) or alternative 4.3 inch display with 24-bit colour
 #define DISPLAY_TYPE_ITDB02_50			(2)		// Itead 5.0 inch display (800 x 480) or alternative 5 or 7 inch display with 24-bit colour

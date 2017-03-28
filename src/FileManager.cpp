@@ -40,13 +40,13 @@ namespace FileManager
 	static uint8_t numVolumes = 1;								// how many SD card sockets we have (normally 1 or 2)
 
 	// Return true if the second string is alphabetically greater then the first, case insensitive
-	static bool StringGreaterThan(const char* a, const char* b)
+	static inline bool StringGreaterThan(const char* a, const char* b)
 	{
 		return strcasecmp(a, b) > 0;
 	}
 
 	FileSet::FileSet(Event fe, const char * array rootDir, bool pIsFilesList)
-		: requestedPath(rootDir), currentPath(), timer(FileListRequestTimeout, "M20 S2 P", requestedPath.c_str()), which(-1), fileEvent(fe), scrollOffset(0),
+		: requestedPath(rootDir), currentPath(), timer(FileListRequestTimeout, "", requestedPath.c_str()), which(-1), fileEvent(fe), scrollOffset(0),
 		  isFilesList(pIsFilesList), cardNumber(0)
 	{
 	}
@@ -55,7 +55,7 @@ namespace FileManager
 	{
 		FileListUpdated();
 		UI::UpdateFilesListTitle(cardNumber, numVolumes, isFilesList);
-		timer.SetPending();						// refresh the list of files
+		SetPending();							// refresh the list of files
 	}
 
 	void FileSet::Reload(int whichList, const Path& dir, int errCode)
@@ -189,7 +189,7 @@ namespace FileManager
 		{
 			requestedPath.add(currentPath[i]);
 		}
-		timer.SetPending();
+		SetPending();
 	}
 
 	// Build a subdirectory of the current path
@@ -204,7 +204,7 @@ namespace FileManager
 			requestedPath.add('/');
 		}
 		requestedPath.catFrom(dir);
-		timer.SetPending();
+		SetPending();
 	}
 
 	// Use the timer to send a command and repeat it if no response is received
@@ -242,7 +242,7 @@ namespace FileManager
 
 			if (cardNumber == 0)
 			{
-				requestedPath.copy("0:/gcodes");
+				SetupRootPath();
 			}
 			else
 			{
@@ -252,16 +252,21 @@ namespace FileManager
 				SerialIo::SendChar('\n');
 				requestedPath.printf("%u:", (unsigned int)cardNumber);
 			}
-			timer.SetPending();
+			SetPending();
 			return true;
 		}
 		return false;
 	}
 	
-	// This is called on the gcode files list when the firmware features are changed from the previous values
-	void FileSet::FirmwareFeaturesChanged(FirmwareFeatures newFeatures)
+	void FileSet::SetupRootPath()
 	{
-		requestedPath.copy((newFeatures & noGcodesFolder) ? "0:/" : filesRoot);
+		requestedPath.copy((cardNumber == 0 && (GetFirmwareFeatures() & noGcodesFolder) == 0) ? filesRoot : "0:/");
+	}
+
+	// This is called on the gcode files list when the firmware features are changed from the previous values
+	void FileSet::FirmwareFeaturesChanged()
+	{
+		SetupRootPath();
 	}
 
 	// This is called when a new JSON response is received
@@ -442,9 +447,9 @@ namespace FileManager
 	}
 
 	// This is called when the host tells us its firmware type, and it is not the type we were previously assuming
-	void FirmwareFeaturesChanged(FirmwareFeatures newFeatures)
+	void FirmwareFeaturesChanged()
 	{
-		gcodeFilesList.FirmwareFeaturesChanged(newFeatures);
+		gcodeFilesList.FirmwareFeaturesChanged();
 	}
 }		// end namespace
 

@@ -51,7 +51,10 @@ namespace FileManager
 		bool ProcessTimer() { return timer.Process(); }
 		bool NextCard();
 		bool SelectCard(unsigned int cardNum);
-		void FirmwareFeaturesChanged(FirmwareFeatures newFeatures);
+		void FirmwareFeaturesChanged();
+
+	private:
+		void SetupRootPath();
 	};
 
 	void BeginNewMessage();
@@ -77,7 +80,7 @@ namespace FileManager
 	bool NextCard();
 	bool SelectCard(unsigned int cardNum);
 	void SetNumVolumes(size_t n);
-	void FirmwareFeaturesChanged(FirmwareFeatures newFeatures);
+	void FirmwareFeaturesChanged();
 }
 
 #endif /* FILEMANAGER_H_ */

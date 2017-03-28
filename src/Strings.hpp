@@ -99,7 +99,7 @@ struct StringTable
 	CSTRING colourSchemeNames[NumColourSchemes];
 };
 
-const StringTable LanguageTables[4] =
+const StringTable LanguageTables[3] =
 {
 	// English
 	{
@@ -189,103 +189,6 @@ const StringTable LanguageTables[4] =
 			"Resuming",
 			"Firmware upload",
 			"Changing tool"
-		},
-
-		// Theme names
-		{
-			"Light",
-			"Dark"
-		}
-	},
-
-	// Spanish
-	{
-		// Language name
-		"Espanol",
-
-		// Main page strings
-		"Control",
-		"Print",
-		"Console",
-		"Setup",
-		"Current" THIN_SPACE DEGREE_SYMBOL "C",
-		"Active" THIN_SPACE DEGREE_SYMBOL "C",
-		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
-		"Move",
-		"Extrusion",
-		"Macro",
-		"STOP",
-
-		// Print page
-		"Extruder" THIN_SPACE "%",
-		"Speed ",							// note space at end
-		"Fan ",								// note space at end
-		"Time left: ",
-		"file ",							// note space at end
-		", filament ",						// note space at end
-		", layer ",							// note space at end
-		"n/a",
-		"Pause",
-		"Baby step",
-		"Resume",
-		"Cancel",
-
-		// Setup page
-		"Volume ",							// note space at end
-		"Calibrate touch",
-		"Mirror display",
-		"Invert display",
-		"Theme",
-		"Brightness -",
-		"Brightness +",
-		"Save settings",
-		"Clear settings",
-		"Save & Restart",
-
-		// Misc
-		"Confirm factory reset",
-		"Confirm restart",
-		"Confirm file delete",
-		"Are you sure?",
-		"Touch the spot",
-		"Some settings are not saved!",
-		"Touch Save & Restart to use new settings",
-		"Move head",
-		"Extrusion amount (mm)",
-		"Speed (mm/s)",
-		"Extrude",
-		"Retract",
-		"Baby stepping",
-		"Current Z offset: ",
-		"Message",
-		"Messages",
-		"Panel Due firmware version ",	// note space at end
-
-		// File popup
-		"Files on card ",				// note the space on the end
-		"Macros",
-		"Error ",						// note the space at the end
-		" accessing SD card",			// note the space at the start
-		"Filename: ",
-		"Size: ",
-		"Layer height: ",
-		"Object height: ",
-		"Filament needed: ",
-		"Sliced by: ",
-
-		// Printer status strings
-		{
-			"conexión",
-			"ocioso",
-			"imprimiendo",
-			"detuvo",
-			"empezando",
-			"pausado",
-			"ocupado",
-			"pausando",
-			"reanudando",
-			"carga del firmware",
-			"herramienta de cambio"
 		},
 
 		// Theme names
@@ -412,11 +315,11 @@ const StringTable LanguageTables[4] =
 
 		// Print page
 		"Extrudeuse" THIN_SPACE "%",
-		"Vitesse ",							// note space at end
-		"Ventilateur ",								// note space at end
+		"Vitesse ",								// note space at end
+		"Ventilateur ",							// note space at end
 		"Temps Restant: ",
-		"Fichier ",							// note space at end
-		", filament ",						// note space at end
+		"Fichier ",								// note space at end
+		", filament ",							// note space at end
 		", couche ",							// note space at end
 		"n/a",
 		"Pause",
@@ -425,7 +328,7 @@ const StringTable LanguageTables[4] =
 		"Annuler",
 
 		// Setup page
-		"Volume ",							// note space at end
+		"Volume ",								// note space at end
 		"Calibrer touch",
 		"Affichage en négatif",
 		"Inverser affichage",
@@ -456,10 +359,10 @@ const StringTable LanguageTables[4] =
 		"Version du firmware du Panel Due ",	// note space at end
 
 		// File popup
-		"Fichier sur carte ",				// note the space on the end
+		"Fichier sur carte ",					// note the space on the end
 		"Macros",
-		"Erreur ",						// note the space at the end
-		" accés SD card en cours",			// note the space at the start
+		"Erreur ",								// note the space at the end
+		" accés SD card en cours",				// note the space at the start
 		"Nom du fichier : ",
 		"Taille : ",
 		"Hauteur de couche: ",
@@ -487,7 +390,106 @@ const StringTable LanguageTables[4] =
 			"Fond Blanc",
 			"Fond Noir"
 		}
-	}
+	},
+
+#if 0	// Spanish not supported yet
+	// Spanish
+	{
+		// Language name
+		"Espanol",
+
+		// Main page strings
+		"Control",
+		"Print",
+		"Console",
+		"Setup",
+		"Current" THIN_SPACE DEGREE_SYMBOL "C",
+		"Active" THIN_SPACE DEGREE_SYMBOL "C",
+		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
+		"Move",
+		"Extrusion",
+		"Macro",
+		"STOP",
+
+		// Print page
+		"Extruder" THIN_SPACE "%",
+		"Speed ",							// note space at end
+		"Fan ",								// note space at end
+		"Time left: ",
+		"file ",							// note space at end
+		", filament ",						// note space at end
+		", layer ",							// note space at end
+		"n/a",
+		"Pause",
+		"Baby step",
+		"Resume",
+		"Cancel",
+
+		// Setup page
+		"Volume ",							// note space at end
+		"Calibrate touch",
+		"Mirror display",
+		"Invert display",
+		"Theme",
+		"Brightness -",
+		"Brightness +",
+		"Save settings",
+		"Clear settings",
+		"Save & Restart",
+
+		// Misc
+		"Confirm factory reset",
+		"Confirm restart",
+		"Confirm file delete",
+		"Are you sure?",
+		"Touch the spot",
+		"Some settings are not saved!",
+		"Touch Save & Restart to use new settings",
+		"Move head",
+		"Extrusion amount (mm)",
+		"Speed (mm/s)",
+		"Extrude",
+		"Retract",
+		"Baby stepping",
+		"Current Z offset: ",
+		"Message",
+		"Messages",
+		"Panel Due firmware version ",	// note space at end
+
+		// File popup
+		"Files on card ",				// note the space on the end
+		"Macros",
+		"Error ",						// note the space at the end
+		" accessing SD card",			// note the space at the start
+		"Filename: ",
+		"Size: ",
+		"Layer height: ",
+		"Object height: ",
+		"Filament needed: ",
+		"Sliced by: ",
+
+		// Printer status strings
+		{
+			"conexión",
+			"ocioso",
+			"imprimiendo",
+			"detuvo",
+			"empezando",
+			"pausado",
+			"ocupado",
+			"pausando",
+			"reanudando",
+			"carga del firmware",
+			"herramienta de cambio"
+		},
+
+		// Theme names
+		{
+			"Light",
+			"Dark"
+		}
+	},
+#endif
 };
 
 #endif /* SRC_STRINGS_HPP_ */

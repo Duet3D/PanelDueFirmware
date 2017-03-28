@@ -21,7 +21,8 @@
 #include "Hardware/SerialIo.hpp"
 #include "Strings.hpp"
 
-const unsigned int numLanguages = 4;
+const unsigned int numLanguages = 3;
+static_assert(ARRAY_SIZE(LanguageTables) == numLanguages, "Wrong number of languages in LanguageTable");
 static const char* array const axisNames[] = { "X", "Y", "Z", "U", "V", "W" };
 
 #if DISPLAY_X == 800
@@ -459,7 +460,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	static const char* array const keysEN[4] = { "1234567890-+", "QWERTYUIOP", "ASDFGHJKL:", "ZXCVBNM./" };
 	static const char* array const keysDE[4] = { "1234567890-+", "QWERTZUIOP", "ASDFGHJKL:", "YXCVBNM./" };
 	static const char* array const keysFR[4] = { "1234567890-+", "AZERTWUIOP", "QSDFGHJKLM", "YXCVBN.:/" };
-	static const char* array const * const keyboards[numLanguages] = { keysEN, keysEN, keysDE, keysFR };		// Spain keyboard layout is same as English
+	static const char* array const * const keyboards[numLanguages] = { keysEN, keysDE, keysFR /*, keysEN */ };		// Spain keyboard layout is same as English
 
 	keyboardPopup = CreatePopupWindow(keyboardPopupHeight, keyboardPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupInfoTextColour, colours.buttonImageBackColour, nullptr, keyboardTopMargin);
 
@@ -997,7 +998,7 @@ namespace UI
 
 		case PrinterStatus::connecting:
 			printingFile.clear();
-			machineName.clear();
+			// We no longer clear the machine name here
 			mgr.ClearAllPopups();
 			break;
 
@@ -1074,7 +1075,7 @@ namespace UI
 				mgr.SetRoot(messageRoot);
 				if (keyboardIsDisplayed)
 				{
-					mgr.SetPopup(keyboardPopup, margin, AutoPlace, false);
+					mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY, false);
 				}
 				break;
 			case evTabSetup:
@@ -1319,7 +1320,7 @@ namespace UI
 	void FirmwareFeaturesChanged(FirmwareFeatures newFeatures)
 	{
 		// Some firmwares don't support tool standby temperatures
-		for (size_t i = 1; i < maxHeaters; ++i)
+		for (size_t i = 0; i < maxHeaters; ++i)
 		{
 			mgr.Show(standbyTemps[i], (newFeatures & noStandbyTemps) == 0);
 		}

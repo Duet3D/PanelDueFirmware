@@ -183,7 +183,6 @@ struct ReceiveDataTableEntry
 	const char* varName;
 };
 
-RequestTimer fileInfoTimer(FileInfoRequestTimeout, "M36");
 RequestTimer machineConfigTimer(MachineConfigRequestTimeout, "M408 S1");
 
 bool FlashData::IsValid() const
@@ -316,8 +315,10 @@ void InitLcd(DisplayOrientation dor, uint32_t language, uint32_t colourScheme)
 {
 	lcd.InitLCD(dor, is24BitLcd);									// set up the LCD
 	colours = &colourSchemes[colourScheme];
-	UI::CreateFields(language, *colours);						// create all the fields
-	mgr.Refresh(true);												// redraw everything
+	UI::CreateFields(language, *colours);							// create all the fields
+	lcd.fillScr(black);												// make sure the memory is clear
+	Delay(100);														// give the LCD time to update
+	Buzzer::SetBacklight(nvData.brightness);						// turn the display on
 }
 
 // Ignore touches for a long time
@@ -378,7 +379,6 @@ void CalibrateTouch()
 {
 	DisplayField *oldRoot = mgr.GetRoot();
 	mgr.SetRoot(touchCalibInstruction);
-	mgr.ClearAll();
 	mgr.Refresh(true);
 
 	touch.init(DisplayX, DisplayY, DefaultTouchOrientAdjust);				// initialize the driver and clear any existing calibration
@@ -404,7 +404,6 @@ void CalibrateTouch()
 	touch.calibrate(nvData.xmin, nvData.xmax, nvData.ymin, nvData.ymax, touchCalibMargin);
 	
 	mgr.SetRoot(oldRoot);
-	mgr.ClearAll();
 	mgr.Refresh(true);
 }
 
@@ -873,7 +872,6 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 		
 		case rcvFilename:
 			UI::PrintingFilenameChanged(data);
-			fileInfoTimer.Stop();
 			break;
 		
 		case rcvSize:
@@ -1013,7 +1011,7 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 					{
 						firmwareFeatures = newFeatures;
 						UI::FirmwareFeaturesChanged(firmwareFeatures);
-						FileManager::FirmwareFeaturesChanged(firmwareFeatures);
+						FileManager::FirmwareFeaturesChanged();
 					}
 					break;
 				}
@@ -1119,14 +1117,12 @@ int main(void)
 		touch.init(DisplayX, DisplayY, nvData.touchOrientation);
 		touch.calibrate(nvData.xmin, nvData.xmax, nvData.ymin, nvData.ymax, touchCalibMargin);
 		savedNvData = nvData;
-		Buzzer::SetBacklight(nvData.brightness);
 	}
 	else
 	{
 		// The touch panel has not been calibrated, and we do not know which way up it is
 		nvData.SetDefaults();
 		InitLcd(nvData.lcdOrientation, nvData.language, nvData.colourScheme);
-		Buzzer::SetBacklight(nvData.brightness);	// must be done before touch calibration
 		CalibrateTouch();							// this includes the touch driver initialisation
 		SaveSettings();
 	}
@@ -1136,6 +1132,17 @@ int main(void)
 	
 	MessageLog::Init();
 
+#ifdef OEM
+	// Display the splash screen unless it was a software reset (we use software reset to change the language or colour scheme)
+	if (rstc_get_reset_cause(RSTC) != RSTC_SOFTWARE_RESET)
+	{
+		lcd.fillScr(black);
+		lcd.drawCompressedBitmapBottomToTop(0, 0, DISPLAY_X, DISPLAY_Y, splashScreenImage);
+		Delay(5000);								// hold it there for 5 seconds
+	}
+#endif
+
+	mgr.Refresh(true);								// draw the screen for the first time
 	UI::UpdatePrintingFields();
 
 	lastPollTime = SystemTick::GetTickCount() - printerPollInterval;	// allow a poll immediately
@@ -1147,16 +1154,6 @@ int main(void)
 	}
 	
 	debugField->Show(DEBUG != 0);					// show the debug field only if debugging is enabled
-
-#ifdef OEM
-	// Display the splash screen unless it was a software reset (we use software reset to change the language or colour scheme)
-	if (rstc_get_reset_cause(RSTC) != RSTC_SOFTWARE_RESET)
-	{
-		lcd.drawCompressedBitmap(0, 0, DISPLAY_X, DISPLAY_Y, splashScreenImage);
-		const uint32_t now = SystemTick::GetTickCount();
-		Delay(5000);						// hold it there for 5 seconds
-	}
-#endif
 
 	// Display the Control tab. This also refreshes the display.
 	UI::ShowDefaultPage();
@@ -1247,10 +1244,6 @@ int main(void)
 				if (!done)
 				{
 					done = FileManager::ProcessTimers();
-				}
-				if (!done)
-				{
-					done = fileInfoTimer.Process();
 				}
 				
 				// Otherwise just send a normal poll command

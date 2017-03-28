@@ -2150,6 +2150,35 @@ void UTFT::drawCompressedBitmap(int x, int y, int sx, int sy, const uint16_t *da
 	removeCS();
 }
 
+// Draw a compressed bitmap. Data comprises alternate (repeat count - 1, data to write) pairs, both as 16-bit values.
+void UTFT::drawCompressedBitmapBottomToTop(int x, int y, int sx, int sy, const uint16_t *data)
+{
+	uint32_t count = 0;
+	uint16_t col = 0;
+	sx += x;
+	sy += y;
+	assertCS();
+	for (int ty = sy; ty != 0; )
+	{
+		--ty;
+		for (int tx = x; tx < sx; tx++)
+		{
+			if (count == 0)
+			{
+				count = *data++;
+				col = *data++;
+			}
+			else
+			{
+				--count;
+			}
+			setXY(tx, ty, tx, ty);
+			LCD_Write_DATA16(col);
+		}
+	}
+	removeCS();
+}
+
 void UTFT::lcdOff()
 {
 	assertCS();

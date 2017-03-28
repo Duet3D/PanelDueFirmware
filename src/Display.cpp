@@ -354,12 +354,6 @@ MainWindow::MainWindow() : Window(black), staticLeftMargin(0)
 void MainWindow::Init(Colour bc)
 {
 	backgroundColour = bc;
-	ClearAll();
-}
-
-void MainWindow::ClearAll()
-{
-	lcd.fillScr(backgroundColour);
 }
 
 // Refresh all fields. If 'full' is true then we rewrite them all, else we just rewrite those that have changed.
