@@ -114,7 +114,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -233,7 +233,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -355,16 +355,23 @@
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1500098048" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release" unusedChildren="">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.2080341108.776592700" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix.2080341108"/>
 							<option id="cdt.managedbuild.option.gnu.cross.path.1505840407.706678545" name="Path" superClass="cdt.managedbuild.option.gnu.cross.path.1505840407"/>
-							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.1234917068" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler.1872201369"/>
-							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.1468635500" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler.1267462078"/>
+							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.targetPlatform.gnu.cross" isAbstract="false" osList="all" superClass="cdt.managedbuild.targetPlatform.gnu.cross"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.1234917068" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler.1872201369">
+								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.251430730" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.1468635500" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler.1267462078">
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1422462695" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.584669497" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker.551361827"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.177862514" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker.1813218978"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.archiver.945649611" name="Cross GCC Archiver" superClass="cdt.managedbuild.tool.gnu.cross.archiver.1003646227"/>
-							<tool id="cdt.managedbuild.tool.gnu.cross.assembler.690822810" name="Cross GCC Assembler" superClass="cdt.managedbuild.tool.gnu.cross.assembler.1922084274"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.assembler.690822810" name="Cross GCC Assembler" superClass="cdt.managedbuild.tool.gnu.cross.assembler.1922084274">
+								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1704912266" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
+							</tool>
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -485,7 +492,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -606,7 +613,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -727,7 +734,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -848,7 +855,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -969,7 +976,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -1090,7 +1097,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -1211,7 +1218,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -1332,7 +1339,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -1455,7 +1462,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -1578,7 +1585,138 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+					</sourceEntries>
+				</configuration>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+		</cconfiguration>
+		<cconfiguration id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615" moduleId="org.eclipse.cdt.core.settings" name="V3-7.0">
+				<externalSettings/>
+				<extensions>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615" name="V3-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${ProjName}-7.0.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${ProjName}-7.0.bin">
+					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615." name="/" resourcePath="">
+						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1721430850" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
+							<option id="cdt.managedbuild.option.gnu.cross.prefix.526260949" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" useByScannerDiscovery="false" value="arm-none-eabi-" valueType="string"/>
+							<option id="cdt.managedbuild.option.gnu.cross.path.301320367" name="Path" superClass="cdt.managedbuild.option.gnu.cross.path" useByScannerDiscovery="false" value="C:\Arduino-1.5.8\hardware\tools\gcc-arm-none-eabi-4.8.3-2014q1\bin" valueType="string"/>
+							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.targetPlatform.gnu.cross.405861678" isAbstract="false" osList="all" superClass="cdt.managedbuild.targetPlatform.gnu.cross"/>
+							<builder buildPath="${workspace_loc:/PanelDue}/Release" id="cdt.managedbuild.builder.gnu.cross.802670447" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.builder.gnu.cross"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.1727463116" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler">
+								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.option.optimization.level.619006690" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="gnu.c.optimization.level.size" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.debugging.level.1643531627" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.none" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.misc.other.617113325" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c -std=gnu99 -mthumb -MD -MP -mcpu=cortex-m4 -ffunction-sections -fdata-sections -nostdlib --param max-inline-insns-single=500 -mlong-calls" valueType="string"/>
+								<option id="gnu.c.compiler.option.warnings.wconversion.2119796504" name="Implicit conversion warnings (-Wconversion)" superClass="gnu.c.compiler.option.warnings.wconversion" useByScannerDiscovery="false" value="false" valueType="boolean"/>
+								<option id="gnu.c.compiler.option.warnings.extrawarn.102218430" name="Extra warnings (-Wextra)" superClass="gnu.c.compiler.option.warnings.extrawarn" useByScannerDiscovery="false" value="false" valueType="boolean"/>
+								<option id="gnu.c.compiler.option.include.paths.1760115135" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/config}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/thirdparty/CMSIS/Lib/GCC}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/cmsis/sam4s/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/common/utils}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/cmsis/sam4s/source/templates}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/preprocessor}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/common/boards}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/header_files}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/common/boards/user_board}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/thirdparty/CMSIS/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/pio}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/pmc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/common/services/clock}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/common/services/delay}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/wdt}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/pwm}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/uart}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/matrix}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/efc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/rstc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/services/flash_efc}&quot;"/>
+								</option>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1997573681" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="NDEBUG"/>
+									<listOptionValue builtIn="false" value="__SAM4S4B__"/>
+									<listOptionValue builtIn="false" value="BOARD=USER_BOARD"/>
+									<listOptionValue builtIn="false" value="ARM_MATH_CM4=true"/>
+								</option>
+								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1203103075" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.655776708" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
+								<option id="gnu.cpp.compiler.option.optimization.level.1173893611" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.size" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.debugging.level.1330824946" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.other.other.993277851" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -std=gnu++11 -mthumb -MD -MP -mcpu=cortex-m4 -ffunction-sections -fdata-sections -fno-threadsafe-statics -fno-rtti -fno-exceptions -nostdlib --param max-inline-insns-single=500 -mlong-calls" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.include.paths.717600204" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/config}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/thirdparty/CMSIS/Lib/GCC}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/cmsis/sam4s/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/common/utils}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/cmsis/sam4s/source/templates}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/preprocessor}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/common/boards}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/header_files}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/common/boards/user_board}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/thirdparty/CMSIS/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/pio}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/pmc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/common/services/clock}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/common/services/delay}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/wdt}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/pwm}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/uart}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/matrix}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/efc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/services/flash_efc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/ASF/sam/drivers/rstc}&quot;"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.2015743608" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="NDEBUG"/>
+									<listOptionValue builtIn="false" value="__SAM4S4B__"/>
+									<listOptionValue builtIn="false" value="BOARD=USER_BOARD"/>
+									<listOptionValue builtIn="false" value="ARM_MATH_CM4=true"/>
+									<listOptionValue builtIn="false" value="SCREEN_70"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.warnings.extrawarn.97948056" name="Extra warnings (-Wextra)" superClass="gnu.cpp.compiler.option.warnings.extrawarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1547876005" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.174786295" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.1149459574" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
+								<option id="gnu.cpp.link.option.flags.1893310197" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1418484650" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
+									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
+								</inputType>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.cross.archiver.1008394233" name="Cross GCC Archiver" superClass="cdt.managedbuild.tool.gnu.cross.archiver"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.assembler.1817993840" name="Cross GCC Assembler" superClass="cdt.managedbuild.tool.gnu.cross.assembler">
+								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.812132212" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
+							</tool>
+						</toolChain>
+					</folderInfo>
+					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615.1231761247" name="/" resourcePath="src/ASF/common/services/clock/sam4s">
+						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.415964770" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release" unusedChildren="">
+							<option id="cdt.managedbuild.option.gnu.cross.prefix.526260949.1356803250" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix.526260949"/>
+							<option id="cdt.managedbuild.option.gnu.cross.path.301320367.1001840547" name="Path" superClass="cdt.managedbuild.option.gnu.cross.path.301320367"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.197839124" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler.1727463116"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.84634671" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler.655776708"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.148372538" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker.174786295"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.2144536614" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker.1149459574"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.archiver.1628478431" name="Cross GCC Archiver" superClass="cdt.managedbuild.tool.gnu.cross.archiver.1008394233"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.assembler.1429499107" name="Cross GCC Assembler" superClass="cdt.managedbuild.tool.gnu.cross.assembler.1817993840"/>
+						</toolChain>
+					</folderInfo>
+					<sourceEntries>
+						<entry excluding="src/ASF/common/services/clock/sam3s|src/ASF/sam/utils/cmsis/sam3s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -1602,6 +1740,9 @@
 		<configuration configurationName="OEM2-5.0"/>
 		<configuration configurationName="OEM2-7.0"/>
 		<configuration configurationName="OEM4-7.0"/>
+		<configuration configurationName="V3-7.0">
+			<resource resourceType="PROJECT" workspacePath="/PanelDue"/>
+		</configuration>
 		<configuration configurationName="OEM1-7.0"/>
 		<configuration configurationName="OEM1-5.0"/>
 		<configuration configurationName="OEM3-5.0"/>

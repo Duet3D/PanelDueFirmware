@@ -360,7 +360,7 @@ namespace SerialIo
 					}
 					break;
 
-				case jsVal:				// had ':', expecting value
+				case jsVal:				// had ':' or ':[', expecting value
 					switch(c)
 					{
 					case ' ':
@@ -370,24 +370,24 @@ namespace SerialIo
 						state = jsStringVal;
 						break;
 					case '[':
-						if (arrayElems == -1)
+						if (arrayElems == -1)	// if not already readuing an array
 						{
-							arrayElems = 0;
+							arrayElems = 0;		// start an array
 						}
 						else
 						{
-							state = jsError;
+							state = jsError;	// we don't support nested arrays
 						}
 						break;
 					case ']':
 						if (arrayElems == 0)
 						{
-							EndArray();
+							EndArray();			// empty array
 							state = jsEndVal;
 						}
 						else
 						{
-							state = jsError;
+							state = jsError;	// ']' received without a matching '[' first
 						}
 						break;
 					case '-':

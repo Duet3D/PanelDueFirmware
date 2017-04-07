@@ -27,7 +27,11 @@ bool FlashStorage::write(uint32_t address, const void *data, uint32_t dataLength
 	}
 
 	// The flash management code in the ASF is fragile and has a tendency to fail to return. Help it by disabling interrupts.
+#if SAM4S
+	efc_disable_frdy_interrupt(EFC0);								// should not be enabled already, but disable it just in case
+#else
 	efc_disable_frdy_interrupt(EFC);								// should not be enabled already, but disable it just in case
+#endif
 	irqflags_t flags = cpu_irq_save();
 
 	// Unlock page

@@ -593,6 +593,8 @@ __attribute__( ( always_inline ) ) __STATIC_INLINE void __set_FPSCR(uint32_t fps
 {
 #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
   __ASM volatile ("VMSR fpscr, %0" : : "r" (fpscr) );
+#else
+  (void)fpscr;	// DC42 added to suppress compiler warning
 #endif
 }
 

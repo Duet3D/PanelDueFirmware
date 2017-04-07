@@ -93,8 +93,10 @@
 // From module: RSTC - Reset Controller
 #include <rstc.h>
 
+#if SAM3S
 // From module: SAM3S startup code
 #include <exceptions.h>
+#endif
 
 // From module: System Clock Control - SAM3S implementation
 #include <sysclk.h>
