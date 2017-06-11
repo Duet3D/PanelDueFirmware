@@ -46,6 +46,7 @@
  */
 
 #include "sam4s.h"
+#include "sysclk.h"		// DC added
 
 /* @cond 0 */
 /**INDENT-OFF**/
@@ -80,10 +81,14 @@ void SystemInit( void )
 	 * selected at system reset state.
 	 */
 
+#if 1	// DC
+	sysclk_init();			// added by DC
+#else
 	/* Set FWS according to default clock configuration */
 	EFC0->EEFC_FMR = EEFC_FMR_FWS(1)|EEFC_FMR_CLOE;
 #if defined(ID_EFC1)
 	EFC1->EEFC_FMR = EEFC_FMR_FWS(1)|EEFC_FMR_CLOE;
+#endif
 #endif
 }
 

@@ -32,7 +32,13 @@
 #include "Hardware/Reset.hpp"
 #include "Library/Misc.hpp"
 #include "Library/Vector.hpp"
+
+#if SAM4S
+#include "flash_efc.h"
+#else
 #include "Hardware/FlashStorage.hpp"
+#endif
+
 #include "PanelDue.hpp"
 #include "Configuration.hpp"
 #include "UserInterfaceConstants.hpp"
@@ -80,9 +86,21 @@ const HostFirmwareType firmwareTypes[] =
 };
 
 // Variables
-UTFT lcd(DISPLAY_CONTROLLER, TMode16bit, 16, 17, 18, 19);
 
+#if SAM4S
+
+// Version 3.0
+UTFT lcd(DISPLAY_CONTROLLER, 15, 14, 0, 39);
+UTouch touch(8, 7, 6, 4, 1);
+
+#elif SAM3S
+
+// Version 1.0, 1.1, 2.0
+UTFT lcd(DISPLAY_CONTROLLER, 16, 17, 18, 19);
 UTouch touch(23, 24, 22, 21, 20);
+
+#endif
+
 MainWindow mgr;
 
 static uint32_t lastTouchTime;
@@ -132,7 +150,13 @@ struct FlashData
 	void Save() const;
 };
 
+#if SAM4S
+// FlashData must fit in user signature flash area
+static_assert(sizeof(FlashData) <= 512, "Flash data too large");
+#else
+// FlashData must fit in the area we have reserved
 static_assert(sizeof(FlashData) <= FLASH_DATA_LENGTH, "Flash data too large");
+#endif
 
 FlashData nvData, savedNvData;
 
@@ -187,7 +211,12 @@ RequestTimer machineConfigTimer(MachineConfigRequestTimeout, "M408 S1");
 
 bool FlashData::IsValid() const
 {
-	return magic == magicVal && touchVolume <= Buzzer::MaxVolume && brightness <= Buzzer::MaxBrightness && language < UI::GetNumLanguages() && colourScheme < NumColourSchemes;
+	return magic == magicVal
+		&& touchVolume <= Buzzer::MaxVolume
+		&& brightness >= Buzzer::MinBrightness
+		&& brightness <= Buzzer::MaxBrightness
+		&& language < UI::GetNumLanguages()
+		&& colourScheme < NumColourSchemes;
 }
 
 bool FlashData::operator==(const FlashData& other)
@@ -225,13 +254,23 @@ void FlashData::SetDefaults()
 // Load parameters from flash memory
 void FlashData::Load()
 {
-	FlashStorage::read(0, &(this->magic), &(this->dummy) - (char*)(&(this->magic)));
+	magic = 0xFFFFFFFF;				// to make sure we know if the read failed
+#if SAM4S
+	flash_read_user_signature(&(this->magic), (&(this->dummy) - reinterpret_cast<const char*>(&(this->magic)))/sizeof(uint32_t));
+#else
+	FlashStorage::read(0, &(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
+#endif
 }
 
 // Save parameters to flash memory
 void FlashData::Save() const
 {
-	FlashStorage::write(0, &(this->magic), &(this->dummy) - (const char*)(&(this->magic)));
+#if SAM4S
+	flash_erase_user_signature();
+	flash_write_user_signature(&(this->magic), (&(this->dummy) - reinterpret_cast<const char*>(&(this->magic)))/sizeof(uint32_t));
+#else
+	FlashStorage::write(0, &(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
+#endif
 }
 
 // Return the host firmware features
@@ -1100,8 +1139,12 @@ int main(void)
 	pmc_enable_periph_clk(ID_PIOA);		// enable the PIO clock
 	pmc_enable_periph_clk(ID_PIOB);		// enable the PIO clock
 	pmc_enable_periph_clk(ID_PWM);		// enable the PWM clock
+#if SAM4S
+	pmc_enable_periph_clk(ID_UART0);	// enable UART1 clock
+#else
 	pmc_enable_periph_clk(ID_UART1);	// enable UART1 clock
-	
+#endif
+
 	Buzzer::Init();						// init the buzzer, must also call this before the backlight can be used
 
 	wdt_init (WDT, WDT_MR_WDRSTEN, 1000, 1000);
@@ -1182,7 +1225,7 @@ int main(void)
 			uint16_t x, y;
 			if (touch.read(x, y))
 			{
-#if DEBUG
+#if 0
 				touchX->SetValue((int)x);	//debug
 				touchY->SetValue((int)y);	//debug
 #endif
@@ -1231,7 +1274,7 @@ int main(void)
 		// 6. If it is time, poll the printer status.
 		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
 		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
-		uint32_t now = SystemTick::GetTickCount();
+		const uint32_t now = SystemTick::GetTickCount();
 		if (   UI::DoPolling()									// don't poll while we are in the Setup page
 		    && now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
 			&& now - lastResponseTime >= printerResponseInterval	// and we haven't had a response too recently

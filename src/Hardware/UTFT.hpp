@@ -90,42 +90,6 @@ enum DisplayType {
 	ITDB24E = S6D1121,								// S6D1121
 };
 
-enum TransferMode
-{
-	// The serial ones must come first
-	TModeSerial4pin,
-	TModeSerial5pin,
-	
-	// All the rest are parallel
-	TModeLowestParallel,
-	TMode8bit = TModeLowestParallel,
-	TMode9bit,
-	TMode16bit,
-	
-	// Aliased for modes of particular display models
-	ITDB32Mode = TMode16bit,							// HX8347-A (16bit)
-	ITDB32WCMode = TMode16bit,							// ILI9327  (16bit)
-	ITDB32SMode	= TMode16bit,							// SSD1289  (16bit)
-	TFT01_32Mode = TMode16bit,							// SSD1289  (16bit)
-	ITDB24Mode = TMode8bit,								// ILI9325C (8bit)
-	ITDB24DMode = TMode8bit,							// ILI9325D (8bit)
-	ITDB24DWOTMode = TMode8bit,							// ILI9325D (8bit)
-	ITDB28Mode = TMode8bit,								// ILI9325D (8bit)
-	TFT01_24_8Mode = TMode8bit,							// ILI9325D (8bit)
-	TFT01_24_16Mode = TMode16bit,						// ILI9325D (16bit)
-	ITDB22Mode = TMode8bit,								// HX8340-B (8bit)
-	ITDB22SPMode = TModeSerial4pin,						// HX8340-B (Serial)
-	ITDB32WDMode = TMode16bit,							// HX8352-A (16bit)
-	TFT01_32WDMode = TMode16bit,						// HX8352A	(16bit)
-	ITDB18SPMode = TModeSerial5pin,						// ST7735   (Serial)
-	LPH9135Mode = TModeSerial5pin,						// PCF8833	(Serial)
-	ITDB25HMode = TMode16bit,							// S1D19122	(16bit)
-	ITDB43Mode = TMode16bit,							// SSD1963	(16bit) 480x272
-	ITDB50Mode = TMode16bit,							// SSD1963	(16bit) 800x480
-	ITDB24E_8Mode = TMode8bit,							// S6D1121	(8bit)
-	ITDB24E_16Mode = TMode16bit							// S6D1121	(16bit)
-};
-
 // This describes the structure we use to store font information.
 // The first 5 fields are also the layout of the data in the font header.
 struct FontDescriptor
@@ -144,7 +108,10 @@ typedef uint16_t Colour;
 class UTFT : public Print
 {
 public:
-	UTFT(DisplayType model, TransferMode pMode, unsigned int RS, unsigned int WR, unsigned int CS, unsigned int RST, unsigned int SER_LATCH = 0);
+	// Overridden base class virtual functions
+	size_t write(uint8_t c) override;
+
+	UTFT(DisplayType model, unsigned int RS, unsigned int WR, unsigned int CS, unsigned int RST, unsigned int SER_LATCH = 0);
 	void InitLCD(DisplayOrientation po, bool is24bit);
 	void fillScr(Colour c, uint16_t leftMargin = 0);
 	void drawPixel(int x, int y);
@@ -166,7 +133,6 @@ public:
 	// Set up translation for characters. Useful for translating fullstop into decimal point, or changing the width of spaces.
 	// Either the first string passed must be NULL, or the two strings must have equal lengths as returned by strlen().
 	void setTranslation(const char *tFrom, const char *tTo);
-	size_t write(uint8_t c) override;
 	void setTextPos(uint16_t x, uint16_t y, uint16_t rm = 9999);
 	void clearToMargin();
 	size_t print(const char *s, uint16_t x, uint16_t y, uint16_t rm = 9999);
@@ -195,7 +161,6 @@ private:
 	DisplayOrientation orient;
 	uint16_t disp_x_size, disp_y_size;
 	DisplayType displayModel;
-	TransferMode displayTransferMode;
 	
 	// Port descriptors. In 9-bit parallel mode, portSDA is used as the latch port. In 5-bit serial mode, portRS is used as the extra port.
 	OneBitPort portRS, portWR, portCS, portRST, portSDA, portSCL;
@@ -230,8 +195,6 @@ private:
 	void drawVLine(int x, int y, int len);
 	void setXY(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 		
-	bool isParallel() const;
-	
 	void assertCS() const
 	{
 		portCS.setLow();

@@ -3,7 +3,7 @@
  *
  * Created: 06/11/2015 10:52:13
  *  Author: David
- */ 
+ */
 
 #include "FileManager.hpp"
 #include "PanelDue.hpp"
@@ -80,7 +80,7 @@ namespace FileManager
 		if (which >= 0)
 		{
 			FileListIndex& fileIndex = fileIndices[which];
-		
+
 			// 1. Sort the file list
 			fileIndex.sort(StringGreaterThan);
 
@@ -94,10 +94,10 @@ namespace FileManager
 				const unsigned int scrollAmount = UI::GetNumScrolledFiles();
 				scrollOffset = ((fileIndex.size() - 1)/scrollAmount) * scrollAmount;
 			}
-		
+
 			// 3. Display the scroll buttons if needed
 			UI::EnableFileNavButtons(scrollOffset != 0, scrollOffset + numDisplayedFiles < fileIndex.size(), IsInSubdir());
-		
+
 			// 4. Display the file list
 			for (size_t i = 0; i < numDisplayedFiles; ++i)
 			{
@@ -126,18 +126,18 @@ namespace FileManager
 			}
 		}
 	}
-	
+
 	void FileSet::Scroll(int amount)
 	{
 		scrollOffset += amount;
 		FileListUpdated();
 	}
-	
+
 	void FileSet::SetPath(const char * array pPath)
 	{
 		currentPath.copy(pPath);
 	}
-	
+
 	// Return true if the path has more than one directory component on card 0, or at least one directory component on other cards
 	bool FileSet::IsInSubdir() const
 	{
@@ -257,7 +257,7 @@ namespace FileManager
 		}
 		return false;
 	}
-	
+
 	void FileSet::SetupRootPath()
 	{
 		requestedPath.copy((cardNumber == 0 && (GetFirmwareFeatures() & noGcodesFolder) == 0) ? filesRoot : "0:/");
@@ -304,7 +304,7 @@ namespace FileManager
 			{
 				temp.add(fileDirectoryName[i++]);
 			}
-			
+
 			if (card0 && temp.equalsIgnoreCase("macros"))
 			{
 				macroFilesList.Reload(newFileList, fileDirectoryName, errorCode);
@@ -326,7 +326,7 @@ namespace FileManager
 		{
 			++newFileList;
 		}
-					
+
 		_ecv_assert(0 <= newFileList && newFileList < 3);
 		fileLists[newFileList].clear();
 		fileIndices[newFileList].clear();
@@ -353,7 +353,7 @@ namespace FileManager
 	{
 		fileDirectoryName.copy(data);
 	}
-	
+
 	// This is called when we receive an error code
 	void ReceiveErrorCode(int err)
 	{
@@ -372,7 +372,7 @@ namespace FileManager
 	void DisplayMacrosList()
 	{
 		macroFilesList.Display();
-	}		
+	}
 
 	void Scroll(int amount)
 	{
@@ -386,7 +386,7 @@ namespace FileManager
 	{
 		gcodeFilesList.RequestSubdir(dir);
 	}
-	
+
 	void RequestMacrosSubdir(const char * array dir)
 	{
 		macroFilesList.RequestSubdir(dir);

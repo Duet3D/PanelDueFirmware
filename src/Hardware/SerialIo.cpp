@@ -11,6 +11,13 @@
 #include "Library/Vector.hpp"
 #include "PanelDue.hpp"
 
+#if SAM4S
+# define UARTn	UART0
+#else
+# define UARTn	UART1
+#endif
+
+
 namespace SerialIo
 {
 	static unsigned int lineNumber = 0;
@@ -26,16 +33,23 @@ namespace SerialIo
 	// Initialize the serial I/O subsystem, or re-initialize it with a new baud rate
 	void Init(uint32_t baudRate)
 	{
-		uart_disable_interrupt(UART1, 0xFFFFFFFF);
+		uart_disable_interrupt(UARTn, 0xFFFFFFFF);
+#if SAM4S
+		pio_configure(PIOA, PIO_PERIPH_A, PIO_PA9 | PIO_PA10, 0);	// enable UART 0 pins
+#else
 		pio_configure(PIOB, PIO_PERIPH_A, PIO_PB2 | PIO_PB3, 0);	// enable UART 1 pins
-	
+#endif
 		sam_uart_opt uartOptions;
 		uartOptions.ul_mck = sysclk_get_main_hz()/2;	// master clock is PLL clock divided by 2
 		uartOptions.ul_baudrate = baudRate;
 		uartOptions.ul_mode = US_MR_PAR_NO;				// mode = normal, no parity
-		uart_init(UART1, &uartOptions);
+		uart_init(UARTn, &uartOptions);
+#if SAM4S
+		irq_register_handler(UART0_IRQn, 5);
+#else
 		irq_register_handler(UART1_IRQn, 5);
-		uart_enable_interrupt(UART1, UART_IER_RXRDY | UART_IER_OVRE | UART_IER_FRAME);
+#endif
+		uart_enable_interrupt(UARTn, UART_IER_RXRDY | UART_IER_OVRE | UART_IER_FRAME);
 	}
 	
 	uint16_t numChars = 0;
@@ -46,7 +60,7 @@ namespace SerialIo
 	// So there is no particular reason to use interrupts, and by so doing so we avoid having to handle buffer full situations.
 	void RawSendChar(char c)
 	{
-		while(uart_write(UART1, c) != 0) { }
+		while(uart_write(UARTn, c) != 0) { }
 	}
 	
 	void SendCharAndChecksum(char c)
@@ -670,20 +684,24 @@ namespace SerialIo
 
 extern "C" {
 
+#if SAM4S
+	void UART0_Handler()
+#else
 	void UART1_Handler()
+#endif
 	{
-		uint32_t status = UART1->UART_SR;
+		uint32_t status = UARTn->UART_SR;
 
 		// Did we receive data ?
 		if ((status & UART_SR_RXRDY) == UART_SR_RXRDY)
 		{
-			SerialIo::receiveChar(UART1->UART_RHR);
+			SerialIo::receiveChar(UARTn->UART_RHR);
 		}
 
 		// Acknowledge errors
 		if (status & (UART_SR_OVRE | UART_SR_FRAME))
 		{
-			UART1->UART_CR |= UART_CR_RSTSTA;
+			UARTn->UART_CR |= UART_CR_RSTSTA;
 			SerialIo::receiveError();
 		}	
 	}

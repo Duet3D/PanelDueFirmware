@@ -6,9 +6,18 @@ inline void UTFT::LCD_Write_Bus(uint16_t VHL)
 {
 #if 1
 	// inline code for speed
+# if SAM4S
+	PIOA->PIO_ODSR = (uint32_t)VHL << 16;
+# else
 	PIOA->PIO_ODSR = VHL;
+# endif
 #else
+	// original slow code
+# if SAM4S
+	pio_sync_output_write(PIOA, (uint32_t)VHL << 16);
+# else
 	pio_sync_output_write(PIOA, VHL);
+# endif
 #endif
 	portWR.pulseLow();
 }
@@ -26,8 +35,13 @@ void UTFT::LCD_Write_Again(uint16_t num)
 
 void UTFT::_set_direction_registers()
 {
-	pio_configure(PIOA, PIO_OUTPUT_0, (displayTransferMode == TMode16bit) ? 0x0000FFFF : 0x000000FF, 0);
-	pio_enable_output_write(PIOA, (displayTransferMode == TMode16bit) ? 0x0000FFFF : 0x000000FF);
+#if SAM4S
+	pio_configure(PIOA, PIO_OUTPUT_0, 0xFFFF0000, 0);
+	pio_enable_output_write(PIOA, 0xFFFF0000);
+#else
+	pio_configure(PIOA, PIO_OUTPUT_0, 0x0000FFFF, 0);
+	pio_enable_output_write(PIOA, 0x0000FFFF);
+#endif
 }
 
 #endif

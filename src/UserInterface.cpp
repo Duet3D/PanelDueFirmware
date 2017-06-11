@@ -1457,7 +1457,7 @@ namespace UI
 					{
 					case evAdjustActiveTemp:
 					case evAdjustStandbyTemp:
-						newValue = constrain<int>(newValue, 0, 300);
+						newValue = constrain<int>(newValue, 0, 1600);		// some users want to print at high temperatures
 						break;
 
 					case evAdjustFan:

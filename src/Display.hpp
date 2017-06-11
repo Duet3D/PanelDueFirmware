@@ -111,7 +111,7 @@ public:
 	static PixelNumber GetIconWidth(Icon ic) { return ic[0]; }
 	static PixelNumber GetIconHeight(Icon ic) { return ic[1]; }
 	static const uint16_t * array GetIconData(Icon ic) { return ic + 2; }
-		
+
 	static PixelNumber GetTextWidth(const char* array s, PixelNumber maxWidth);		// find out how much width we need to print this text
 };
 

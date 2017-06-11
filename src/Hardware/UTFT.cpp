@@ -59,14 +59,9 @@ template <class T> inline void swap(T& a, T& b)
 	b = temp;
 }
 
-inline bool UTFT::isParallel() const
-{
-	return displayTransferMode >= TModeLowestParallel;
-}
-
-UTFT::UTFT(DisplayType model, TransferMode pmode, unsigned int RS, unsigned int WR, unsigned int CS, unsigned int RST, unsigned int SER_LATCH)
+UTFT::UTFT(DisplayType model, unsigned int RS, unsigned int WR, unsigned int CS, unsigned int RST, unsigned int SER_LATCH)
 	: fcolour(0xFFFF), bcolour(0), transparentBackground(false),
-	  displayModel(model), displayTransferMode(pmode),
+	  displayModel(model),
 	  portRS(RS), portWR(WR), portCS(CS), portRST(RST), portSDA(RS), portSCL(SER_LATCH),
 	  translateFrom(NULL), translateTo(NULL),
 	  numContinuationBytesLeft(0)
