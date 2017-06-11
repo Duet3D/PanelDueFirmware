@@ -7,6 +7,7 @@
 
 #include "Display.hpp"
 #include "ColourSchemes.hpp"
+#include "Icons/Icons.hpp"
 
 #undef min
 #undef max
@@ -26,6 +27,7 @@ Colour DisplayField::defaultButtonBorderColour = black;
 Colour DisplayField::defaultGradColour = 0;
 Colour DisplayField::defaultPressedBackColour = black;
 Colour DisplayField::defaultPressedGradColour = 0;
+Palette DisplayField::defaultIconPalette = IconPaletteLight;
 
 DisplayField::DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw)
 	: y(py), x(px), width(pw), fcolour(defaultFcolour), bcolour(defaultBcolour),
@@ -50,7 +52,7 @@ void DisplayField::SetTextRows(const char * array null t)
 	textRows = rows;
 }
 
-/*static*/ void DisplayField::SetDefaultColours(Colour pf, Colour pb, Colour pbb, Colour pg, Colour pbp, Colour pgp)
+/*static*/ void DisplayField::SetDefaultColours(Colour pf, Colour pb, Colour pbb, Colour pg, Colour pbp, Colour pgp, Palette pal)
 {
 	defaultFcolour = pf;
 	defaultBcolour = pb;
@@ -58,6 +60,7 @@ void DisplayField::SetTextRows(const char * array null t)
 	defaultGradColour = pg;
 	defaultPressedBackColour = pbp;
 	defaultPressedGradColour = pgp;
+	defaultIconPalette = pal;
 }
 
 /*static*/ PixelNumber DisplayField::GetTextWidth(const char* array s, PixelNumber maxWidth)
@@ -692,7 +695,7 @@ void IconButton::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 		DrawOutline(xOffset, yOffset);
 		const uint16_t sx = GetIconWidth(icon), sy = GetIconHeight(icon);
 		lcd.setTransparentBackground(true);
-		lcd.drawBitmap(xOffset + x + (width - sx)/2, yOffset + y + iconMargin + 1, sx, sy, GetIconData(icon));
+		lcd.drawBitmap4(xOffset + x + (width - sx)/2, yOffset + y + iconMargin + 1, sx, sy, GetIconData(icon), defaultIconPalette);
 		lcd.setTransparentBackground(false);
 		changed = false;
 	}

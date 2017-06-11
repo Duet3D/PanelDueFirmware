@@ -164,7 +164,7 @@ const PixelNumber keyButtonVStep = buttonHeight + keyboardButtonRowSpacing;
 const PixelNumber keyboardPopupHeight = (5 * keyButtonVStep) + (2 * keyboardTopMargin) + buttonHeight;
 const PixelNumber keyboardPopupY = margin;
 
-const unsigned int numFileColumns = 2;
+const unsigned int numFileColumns = 1;
 const unsigned int numFileRows = (fullPopupHeight - (2 * popupTopMargin) + fileButtonRowSpacing)/(buttonHeight + fileButtonRowSpacing) - 1;
 const unsigned int numDisplayedFiles = numFileColumns * numFileRows;
 const PixelNumber fileListPopupWidth = fullPopupWidth;

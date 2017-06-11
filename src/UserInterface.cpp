@@ -761,7 +761,7 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 void CreateCommonFields(const ColourScheme& colours)
 {
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour, colours.buttonBorderColour, colours.buttonGradColour,
-									colours.buttonPressedBackColour, colours.buttonPressedGradColour);
+									colours.buttonPressedBackColour, colours.buttonPressedGradColour, colours.pal);
 	tabControl = AddTextButton(rowTabs, 0, 4, strings->control, evTabControl, nullptr);
 	tabPrint = AddTextButton(rowTabs, 1, 4, strings->print, evTabPrint, nullptr);
 	tabMsg = AddTextButton(rowTabs, 2, 4, strings->console, evTabMsg, nullptr);

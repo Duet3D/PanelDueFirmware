@@ -9,12 +9,14 @@
 
 #include "ColourSchemes.hpp"
 #include "UserInterfaceConstants.hpp"
+#include "Icons/Icons.hpp"
 
 const ColourScheme colourSchemes[NumColourSchemes] =
 {
 	// Light colour schema. As this one comes first, it is the default.
 	{
 		.index = 0,
+		.pal = IconPaletteLight,
 
 		.titleBarTextColour = white,
 		.titleBarBackColour = red,
@@ -64,6 +66,7 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 
 	{
 		.index = 1,
+		.pal = IconPaletteDark,
 
 		.titleBarTextColour = white,
 		.titleBarBackColour = darkRed,

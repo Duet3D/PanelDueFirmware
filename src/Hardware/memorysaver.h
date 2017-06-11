@@ -28,6 +28,4 @@
 //#define DISABLE_SSD1963_800		1
 #define DISABLE_S6D1121			1
 
-#define DISABLE_BITMAP_ROTATE	1
-
 // End

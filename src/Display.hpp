@@ -22,7 +22,7 @@ typedef const uint8_t * array LcdFont;
 
 // An icon is stored an array of uint16_t data normally held in flash memory. The first value is the width in pixels, the second is the height in pixels.
 // After that comes the icon data, 16 bits per pixel, one row at a time.
-typedef const uint16_t * array Icon;
+typedef const uint8_t * array Icon;
 
 // Unicode strings for special characters in our font
 #define DECIMAL_POINT	"\xC2\xB7"		// Unicode middle-dot, code point B7
@@ -78,6 +78,7 @@ protected:
 	static LcdFont defaultFont;
 	static Colour defaultFcolour, defaultBcolour;
 	static Colour defaultButtonBorderColour, defaultGradColour, defaultPressedBackColour, defaultPressedGradColour;
+	static Palette defaultIconPalette;
 	
 protected:
 	DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw);
@@ -103,14 +104,14 @@ public:
 	virtual event_t GetEvent() const { return nullEvent; }
 
 	static void SetDefaultColours(Colour pf, Colour pb) { defaultFcolour = pf; defaultBcolour = pb; }
-	static void SetDefaultColours(Colour pf, Colour pb, Colour pbb, Colour pg, Colour pbp, Colour pgp);
+	static void SetDefaultColours(Colour pf, Colour pb, Colour pbb, Colour pg, Colour pbp, Colour pgp, Palette pal);
 	static void SetDefaultFont(LcdFont pf) { defaultFont = pf; }
 	static ButtonPress FindEvent(PixelNumber x, PixelNumber y, DisplayField * null p);
 	
 	// Icon management
 	static PixelNumber GetIconWidth(Icon ic) { return ic[0]; }
 	static PixelNumber GetIconHeight(Icon ic) { return ic[1]; }
-	static const uint16_t * array GetIconData(Icon ic) { return ic + 2; }
+	static const uint8_t * array GetIconData(Icon ic) { return ic + 2; }
 
 	static PixelNumber GetTextWidth(const char* array s, PixelNumber maxWidth);		// find out how much width we need to print this text
 };

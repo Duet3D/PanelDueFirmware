@@ -37,6 +37,7 @@ const Colour
 struct ColourScheme
 {
 	size_t index;
+	Palette pal;
 
 	Colour titleBarTextColour;
 	Colour titleBarBackColour;

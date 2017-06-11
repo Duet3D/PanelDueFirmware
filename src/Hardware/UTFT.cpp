@@ -2044,7 +2044,8 @@ void UTFT::setFont(const uint8_t* font)
 	cfont.font += 5;
 }
 
-void UTFT::drawBitmap(int x, int y, int sx, int sy, const uint16_t * data, int scale, bool byCols)
+// Draw a bitmap using 16-bit colours
+void UTFT::drawBitmap16(int x, int y, int sx, int sy, const uint16_t * data, int scale, bool byCols)
 {
 	int curY = y;
 	assertCS();
@@ -2084,38 +2085,47 @@ void UTFT::drawBitmap(int x, int y, int sx, int sy, const uint16_t * data, int s
 	removeCS();
 }
 
-#ifndef DISABLE_BITMAP_ROTATE
-
-void UTFT::drawBitmap(int x, int y, int sx, int sy, uint16_t *data, int deg, int rox, int roy)
+// Seaw a bitmap using 4-bit colours and a palette
+void UTFT::drawBitmap4(int x, int y, int sx, int sy, const uint8_t * data, Palette palette, int scale, bool byCols)
 {
-	double radian = deg*0.0175;  
-
-	if (deg==0)
+	int curY = y;
+	assertCS();
+	for (int ty = 0; ty < sy; ty++)
 	{
-		drawBitmap(x, y, sx, sy, data);
-	}
-	else
-	{
-		assertCS();
-		for (int ty=0; ty<sy; ty++)
+		for (int i = 0; i < scale; ++i)
 		{
-			for (int tx=0; tx<sx; tx++)
+			bool xySet = false;
+			for (int tx = 0; tx < sx; tx++)
 			{
-				uint16_t col = data[(ty*sx)+tx];
-
-				int newx=x+rox+(((tx-rox)*cos(radian))-((ty-roy)*sin(radian)));
-				int newy=y+roy+(((ty-roy)*cos(radian))+((tx-rox)*sin(radian)));
-
-				setXY(newx, newy, newx, newy);
-				LCD_Write_DATA16(col);
+				const int actualX = (orient & InvertBitmap) ? sx - tx - 1 : tx;
+				const uint16_t idx = (byCols) ? (actualX * sy) + ty : (ty * sx) + actualX;
+				const uint16_t col = (idx & 1) ? palette[data[idx >> 1] & 0x0fu] : palette[data[idx >> 1] >> 4];
+				if (transparentBackground && col == 0xFFFF)
+				{
+					xySet = false;
+				}
+				else
+				{
+					if (!xySet)
+					{
+						if (orient & InvertBitmap)
+						{
+							setXY(x, curY, x + ((sx - tx) * scale) - 1, curY);
+						}
+						else
+						{
+							setXY(x + (tx * scale), curY, x + (sx * scale) - 1, curY);
+						}
+						xySet = true;
+					}
+					LCD_Write_Repeated_DATA16(col, scale);
+				}
 			}
+			++curY;
 		}
-		removeCS();
 	}
-	clrXY();
+	removeCS();
 }
-
-#endif
 
 // Draw a compressed bitmap. Data comprises alternate (repeat count - 1, data to write) pairs, both as 16-bit values.
 void UTFT::drawCompressedBitmap(int x, int y, int sx, int sy, const uint16_t *data)

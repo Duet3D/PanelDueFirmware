@@ -104,6 +104,7 @@ struct FontDescriptor
 
 
 typedef uint16_t Colour;
+typedef const uint16_t *Palette;
 
 class UTFT : public Print
 {
@@ -139,10 +140,8 @@ public:
 	using Print::print;
 		
 	void setFont(const uint8_t* font);
-	void drawBitmap(int x, int y, int sx, int sy, const uint16_t *data, int scale = 1, bool byCols = true);
-#ifndef DISABLE_BITMAP_ROTATE
-	void drawBitmap(int x, int y, int sx, int sy, const uint16_t *data, int deg, int rox, int roy);
-#endif
+	void drawBitmap16(int x, int y, int sx, int sy, const uint16_t *data, int scale = 1, bool byCols = true);
+	void drawBitmap4(int x, int y, int sx, int sy, const uint8_t *data, Palette palette, int scale = 1, bool byCols = true);
 	void drawCompressedBitmap(int x, int y, int sx, int sy, const uint16_t *data);
 	void drawCompressedBitmapBottomToTop(int x, int y, int sx, int sy, const uint16_t *data);
 	void lcdOff();
