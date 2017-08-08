@@ -161,7 +161,7 @@ void UTFT::LCD_Write_COM_DATA8(uint8_t com1, uint8_t dat1)
      LCD_Write_DATA8(dat1);
 }
 
-void UTFT::InitLCD(DisplayOrientation po, bool is24bit)
+void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 {
 	orient = po;
 	textXpos = 0;
@@ -1197,7 +1197,7 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit)
 		LCD_Write_DATA8(0x01);		//GPIO0 normal
 
 		LCD_Write_COM(0x36);		//rotation
-		LCD_Write_DATA8(0x22);
+		LCD_Write_DATA8((isER) ? 0x2A : 0x22);
 
 		LCD_Write_COM(0xF0);		//pixel data interface
 		LCD_Write_DATA8(0x03);

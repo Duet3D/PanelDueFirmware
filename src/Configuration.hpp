@@ -22,17 +22,31 @@
 #ifdef SCREEN_43
 #define DISPLAY_TYPE	DISPLAY_TYPE_ITDB02_43
 #define LARGE_FONT		(0)
+#define IS_24BIT		(true)
+#define IS_ER			(false)
 #endif
 
 #ifdef SCREEN_50
 #define DISPLAY_TYPE	DISPLAY_TYPE_ITDB02_50
 #define LARGE_FONT		(1)
+#define IS_24BIT		(true)
+#define IS_ER			(false)
 #endif
 
 #ifdef SCREEN_70
 #define DISPLAY_TYPE	DISPLAY_TYPE_ITDB02_70
 #define LARGE_FONT		(1)
+#define IS_24BIT		(false)
+#define IS_ER			(false)
 #endif
+
+#ifdef SCREEN_70E
+#define DISPLAY_TYPE	DISPLAY_TYPE_ITDB02_50
+#define LARGE_FONT		(1)
+#define IS_24BIT		(true)
+#define IS_ER			(true)
+#endif
+
 
 const uint32_t DefaultBaudRate = 57600;
 

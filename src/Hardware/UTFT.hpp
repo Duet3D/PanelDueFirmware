@@ -113,7 +113,7 @@ public:
 	size_t write(uint8_t c) override;
 
 	UTFT(DisplayType model, unsigned int RS, unsigned int WR, unsigned int CS, unsigned int RST, unsigned int SER_LATCH = 0);
-	void InitLCD(DisplayOrientation po, bool is24bit);
+	void InitLCD(DisplayOrientation po, bool is24bit, bool isER);
 	void fillScr(Colour c, uint16_t leftMargin = 0);
 	void drawPixel(int x, int y);
 	void drawLine(int x1, int y1, int x2, int y2);

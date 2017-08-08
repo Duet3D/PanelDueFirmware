@@ -19,7 +19,6 @@ typedef uint16_t PixelNumber;
 # define DISPLAY_CONTROLLER		HX8352A
 const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseY | InvertBitmap);
 const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation>(ReverseY);
-const bool is24BitLcd = true;
 # define DISPLAY_X				(400)
 # define DISPLAY_Y				(240)
 
@@ -28,7 +27,6 @@ const bool is24BitLcd = true;
 # define DISPLAY_CONTROLLER		SSD1963_480
 const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseX | InvertBitmap);
 const DisplayOrientation DefaultTouchOrientAdjust = SwapXY;
-const bool is24BitLcd = true;
 # define DISPLAY_X				(480)
 # define DISPLAY_Y				(272)
 
@@ -37,7 +35,6 @@ const bool is24BitLcd = true;
 # define DISPLAY_CONTROLLER		SSD1963_800
 const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseX | InvertBitmap);
 const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseY);
-const bool is24BitLcd = true;
 # define DISPLAY_X				(800)
 # define DISPLAY_Y				(480)
 
@@ -46,7 +43,6 @@ const bool is24BitLcd = true;
 # define DISPLAY_CONTROLLER		SSD1963_800
 const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseX | ReverseY | InvertText | InvertBitmap);
 const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseY);
-const bool is24BitLcd = false;
 # define DISPLAY_X				(800)
 # define DISPLAY_Y				(480)
 

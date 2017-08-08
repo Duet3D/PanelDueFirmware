@@ -188,6 +188,11 @@ enum ReceivedDataEvent
 	rcvHeight,
 	rcvLayerHeight,
 	rcvMessage,
+	rcvMboxMode,
+	rcvMboxMsg,
+	rcvMboxControls,
+	rcvMboxTimeout,
+	rcvMboxTitle,
 	rcvMyName,
 	rcvProbe,
 	rcvResponse,
@@ -352,7 +357,7 @@ PrinterStatus GetStatus()
 
 void InitLcd(DisplayOrientation dor, uint32_t language, uint32_t colourScheme)
 {
-	lcd.InitLCD(dor, is24BitLcd);									// set up the LCD
+	lcd.InitLCD(dor, IS_24BIT, IS_ER);									// set up the LCD
 	colours = &colourSchemes[colourScheme];
 	UI::CreateFields(language, *colours);							// create all the fields
 	lcd.fillScr(black);												// make sure the memory is clear
@@ -459,13 +464,13 @@ bool IsSaveNeeded()
 void MirrorDisplay()
 {
 	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | InvertBitmap));
-	lcd.InitLCD(nvData.lcdOrientation, is24BitLcd);
+	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);
 }
 
 void InvertDisplay()
 {
 	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | ReverseY | InvertText | InvertBitmap));
-	lcd.InitLCD(nvData.lcdOrientation, is24BitLcd);
+	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);
 }
 
 void SetBaudRate(uint32_t rate)
@@ -675,6 +680,11 @@ const ReceiveDataTableEntry nonArrayDataTable[] =
 	{ rcvHeight,		"height" },
 	{ rcvLayerHeight,	"layerHeight" },
 	{ rcvMessage,		"message" },
+	{ rcvMboxMode,		"msgBox.mode" },
+	{ rcvMboxMsg,		"msgBox.msg" },
+	{ rcvMboxControls,	"msgBox.controls" },
+	{ rcvMboxTimeout,	"msgBox.timeout" },
+	{ rcvMboxTitle,		"msgBox.title" },
 	{ rcvMyName,		"myName" },
 	{ rcvNumTools,		"numTools" },
 	{ rcvProbe,			"probe" },
@@ -1008,6 +1018,14 @@ void ProcessReceivedValue(const char id[], const char data[], int index)
 
 		case rcvMessage:
 			UI::ProcessAlert(data);
+			break;
+
+		case rcvMboxMode:
+		case rcvMboxMsg:
+		case rcvMboxControls:
+		case rcvMboxTimeout:
+		case rcvMboxTitle:
+			//TODO
 			break;
 
 		case rcvErr:
