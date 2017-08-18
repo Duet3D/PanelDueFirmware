@@ -51,6 +51,20 @@
 #include "memorysaver.h"
 #include "HW_AVR.h" 
 #include <cstring>			// for strchr
+#undef array
+#include <algorithm>		// for min
+#define array _ecv_array
+
+// Write the previous 16-bit data again the specified number of times.
+// Only supported in 9 and 16 bit modes. Used to speed up setting large blocks of pixels to the same colour.
+void UTFT::LCD_Write_Again(uint32_t num)
+{
+	while (num != 0)
+	{
+		portWR.pulseLow();
+		--num;
+	}
+}
 
 template <class T> inline void swap(T& a, T& b)
 {
@@ -105,47 +119,55 @@ UTFT::UTFT(DisplayType model, unsigned int RS, unsigned int WR, unsigned int CS,
 			break;
 	}
 
-	_set_direction_registers();
+	// Set up parallel output on the 16-bit data bus
+#if SAM4S
+	pio_configure(PIOA, PIO_OUTPUT_0, 0xFFFF0000, 0);
+	pio_enable_output_write(PIOA, 0xFFFF0000);
+#else
+	pio_configure(PIOA, PIO_OUTPUT_0, 0x0000FFFF, 0);
+	pio_enable_output_write(PIOA, 0x0000FFFF);
+#endif
+
 	portRS.setMode(OneBitPort::Output);
 	portWR.setMode(OneBitPort::Output);
 	portCS.setMode(OneBitPort::Output);
 	portRST.setMode(OneBitPort::Output);
 }
 
+inline void UTFT::LCD_Write_Bus(uint16_t VHL)
+{
+# if SAM4S
+	PIOA->PIO_ODSR = (uint32_t)VHL << 16;
+# else
+	PIOA->PIO_ODSR = VHL;
+# endif
+	portWR.pulseLow();
+}
+
 inline void UTFT::LCD_Write_COM(uint8_t VL)  
 {   
-	setRSLow();
+	portRS.setLow();
 	LCD_Write_Bus((uint16_t)VL);
 }
 
 inline void UTFT::LCD_Write_DATA16(uint16_t VHL)
 {
-	setRSHigh();
+	portRS.setHigh();
 	LCD_Write_Bus(VHL);
 }
 
-inline void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num)
+inline void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint32_t num)
 {
-	setRSHigh();
+	portRS.setHigh();
 	LCD_Write_Bus(VHL);
 	LCD_Write_Again(num - 1);
-}
-
-// Write the data num1 * num2 times, where num1 >= 1
-void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num1, uint16_t num2)
-{
-	while (num2 != 0)
-	{
-		LCD_Write_Repeated_DATA16(VHL, num1);
-		--num2;
-	}
 }
 
 // This one is deliberately not inlined to avoid bloating the initialization code.
 // Use LCD_Write_DATA16 instead where high performance is wanted.
 void UTFT::LCD_Write_DATA8(uint8_t VL)
 {
-	setRSHigh();
+	portRS.setHigh();
 	LCD_Write_Bus((uint16_t)VL);
 }
 
@@ -1331,7 +1353,6 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 	}
 
 #if 1
-
 	// Optimised code supporting only the SSD1963
 	// In the following we use LCD_WRITE_BUS to write additional data without having to write RS again.
 	LCD_Write_COM_DATA16(0x2a, y1>>8);
@@ -1702,7 +1723,7 @@ void UTFT::fillScr(Colour c, uint16_t leftMargin)
 {
 	assertCS();
 	setXY(leftMargin, 0, getDisplayXSize() - 1, getDisplayYSize() - 1);
-	LCD_Write_Repeated_DATA16(c, getDisplayXSize() - leftMargin, getDisplayYSize());
+	LCD_Write_Repeated_DATA16(c, (getDisplayXSize() - leftMargin) * getDisplayYSize());
 	removeCS();
 }
 
@@ -1807,7 +1828,7 @@ void UTFT::clearToMargin()
 
 		assertCS();		
 		setXY(textXpos, textYpos, textRightMargin - 1, textYpos + ySize - 1);
-		LCD_Write_Repeated_DATA16(bcolour, textRightMargin - textXpos, ySize);
+		LCD_Write_Repeated_DATA16(bcolour, (textRightMargin - textXpos) * ySize);
 		removeCS();
 	}
 }
@@ -2166,6 +2187,24 @@ void UTFT::drawCompressedBitmapBottomToTop(int x, int y, int sx, int sy, const u
 	for (int ty = sy; ty != 0; )
 	{
 		--ty;
+#if 0
+		// This algorithm is faster but results in a non-uniform speed
+		int tx = x;
+		while (tx < sx)
+		{
+			if (count == 0)
+			{
+				count = (*data++) + 1;
+				col = *data++;
+			}
+			const uint32_t thisCount = std::min<uint32_t>(count, sx - tx);
+			setXY(tx, ty, tx + thisCount - 1, ty);
+			LCD_Write_Repeated_DATA16(col, thisCount);
+			count -= thisCount;
+			tx += thisCount;
+		}
+#else
+		// Original slow-but-steady algorithm
 		for (int tx = x; tx < sx; tx++)
 		{
 			if (count == 0)
@@ -2180,6 +2219,7 @@ void UTFT::drawCompressedBitmapBottomToTop(int x, int y, int sx, int sy, const u
 			setXY(tx, ty, tx, ty);
 			LCD_Write_DATA16(col);
 		}
+#endif
 	}
 	removeCS();
 }

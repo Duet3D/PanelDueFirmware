@@ -178,15 +178,13 @@ private:
 
 	// Hardware interface
 	void LCD_Write_Bus(uint16_t VHL);
-	void LCD_Write_Again(uint16_t num);
-	void _set_direction_registers();
+	void LCD_Write_Again(uint32_t num);
 
 	// Low level interface
 	void LCD_Write_COM(uint8_t VL);
 	void LCD_Write_DATA8(uint8_t VL);
 	void LCD_Write_DATA16(uint16_t VHL);
-	void LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num);
-	void LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num1, uint16_t num2);
+	void LCD_Write_Repeated_DATA16(uint16_t VHL, uint32_t num);
 	void LCD_Write_COM_DATA16(uint8_t com1, uint16_t dat1);
 	void LCD_Write_COM_DATA8(uint8_t com1, uint8_t dat1);
 		
@@ -212,16 +210,6 @@ private:
 	void removeReset() const
 	{
 		portRST.setHigh();
-	}
-		
-	void setRSLow() const
-	{
-		portRS.setLow();
-	}
-
-	void setRSHigh() const
-	{
-		portRS.setHigh();
 	}
 };
 

@@ -26,22 +26,12 @@ public:
 		
 	void setLow() const
 	{
-#if 1
-		// inline for speed
 		port->PIO_CODR = mask;
-#else
-		pio_clear(port, mask);
-#endif
 	}
 		
 	void setHigh() const
 	{
-#if 1
-		// inline for speed
 		port->PIO_SODR = mask;
-#else
-		pio_set(port, mask);
-#endif
 	}
 		
 	// Pulse the pin high

@@ -1,4 +1,4 @@
-// Controller for Ormerod to run on SAM3S2B
+// TFT panel controller to run on SAM3S2B/SAM3S4B/SAM4S4B
 // Coding rules:
 //
 // 1. Must compile with no g++ warnings, when all warning are enabled.
