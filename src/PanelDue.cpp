@@ -123,7 +123,8 @@ const ColourScheme *colours = &colourSchemes[0];
 
 struct FlashData
 {
-	static const uint32_t magicVal = 0x3AB629D1;
+	// We now use a different magic value for each display size, to force the "touch the spot" screen to be displayed when you change the display size
+	static const uint32_t magicVal = 0x3AB629E0 + DISPLAY_TYPE;
 	static const uint32_t muggleVal = 0xFFFFFFFF;
 
 	uint32_t magic;
