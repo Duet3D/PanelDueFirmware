@@ -47,13 +47,13 @@
 
 /* Initialize segments */
 extern uint32_t _sfixed;
-extern uint32_t _efixed;
+//extern uint32_t _efixed;
 extern uint32_t _etext;
 extern uint32_t _srelocate;
 extern uint32_t _erelocate;
 extern uint32_t _szero;
 extern uint32_t _ezero;
-extern uint32_t _sstack;
+//extern uint32_t _sstack;
 extern uint32_t _estack;
 
 /** \cond DOXYGEN_SHOULD_SKIP_THIS */

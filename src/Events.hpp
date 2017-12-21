@@ -33,7 +33,7 @@ enum Event : uint8_t
 	evListFiles,
 
 	evFile, evMacro,
-	evPrint,
+	evPrintFile,
 	evSendCommand,
 	evFactoryReset,
 	evAdjustSpeed,
@@ -48,6 +48,7 @@ enum Event : uint8_t
 	evYes,
 	evCancel,
 	evDeleteFile,
+	evSimulateFile,
 	evPausePrint,
 	evResumePrint,
 	evBabyStepPopup, evBabyStepAmount,

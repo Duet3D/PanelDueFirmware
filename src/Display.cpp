@@ -19,6 +19,8 @@
 
 extern UTFT lcd;
 
+const int maxXerror = 8, maxYerror = 8;		// how close (in pixels) the X and Y coordinates of a touch event need to be to the outline of the button for us to allow it
+
 // Static fields of class DisplayField
 LcdFont DisplayField::defaultFont = nullptr;
 Colour DisplayField::defaultFcolour = white;
@@ -81,28 +83,11 @@ void DisplayField::Show(bool v)
 // Find the best match to a touch event in a list of fields
 ButtonPress DisplayField::FindEvent(PixelNumber x, PixelNumber y, DisplayField * null p)
 {	
-	const int maxXerror = 8, maxYerror = 8;		// set these to how close we need to be
 	int bestError = maxXerror + maxYerror;
-	ButtonPress best;;
+	ButtonPress best;
 	while (p != nullptr)
 	{
-		if (p->visible && p->GetEvent() != nullEvent)
-		{
-			int xError = (x < p->GetMinX()) ? p->GetMinX() - x
-									: (x > p->GetMaxX()) ? x - p->GetMaxX()
-										: 0;
-			if (xError < maxXerror)
-			{
-				int yError = (y < p->GetMinY()) ? p->GetMinY() - y
-										: (y > p->GetMaxY()) ? y - p->GetMaxY()
-											: 0;
-				if (yError < maxYerror && xError + yError < bestError)
-				{
-					bestError = xError + yError;
-					best = ButtonPress(static_cast<ButtonBase*>(p), 0);
-				}
-			}
-		}
+		p->CheckEvent(x, y, bestError, best);
 		p = p->next;
 	}
 	return best;
@@ -122,6 +107,12 @@ void DisplayField::SetColours(Colour pf, Colour pb)
 ButtonPress::ButtonPress() : button(nullptr), index(0) { }
 
 ButtonPress::ButtonPress(ButtonBase *b, unsigned int pi) : button(b), index(pi) { }
+
+void ButtonPress::Set(ButtonBase *b, unsigned int pi)
+{
+	button = b;
+	index = pi;
+}
 
 void ButtonPress::Clear()
 {
@@ -597,6 +588,27 @@ void ButtonBase::DrawOutline(PixelNumber xOffset, PixelNumber yOffset, bool isPr
 	lcd.drawRoundRect(x + xOffset, y + yOffset, x + xOffset + width - 1, y + yOffset + GetHeight() - 1);
 }
 
+void ButtonBase::CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) /*override*/
+{
+	if (visible && GetEvent() != nullEvent)
+	{
+		const int xError = (x < GetMinX()) ? GetMinX() - x
+								: (x > GetMaxX()) ? x - GetMaxX()
+									: 0;
+		if (xError < maxXerror)
+		{
+			const int yError = (y < GetMinY()) ? GetMinY() - y
+									: (y > GetMaxY()) ? y - GetMaxY()
+										: 0;
+			if (yError < maxYerror && xError + yError < bestError)
+			{
+				bestError = xError + yError;
+				best.Set(this, 0);
+			}
+		}
+	}
+}
+
 SingleButton::SingleButton(PixelNumber py, PixelNumber px, PixelNumber pw)
 	: ButtonBase(py, px, pw)
 {
@@ -728,16 +740,24 @@ size_t FloatButton::PrintText(size_t offset) const
 	return ret;
 }
 
-#if 0	// not used yet
 ButtonRow::ButtonRow(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ps, unsigned int nb, event_t e)
 	: ButtonBase(py, px, pw), numButtons(nb), whichPressed(-1), step(ps)
 {
 	evt = e;
 }
 
+/*static*/ LcdFont ButtonRowWithText::font;
+
 ButtonRowWithText::ButtonRowWithText(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ps, unsigned int nb, event_t e)
 	: ButtonRow(py, px, pw, ps, nb, e)
 {
+}
+
+PixelNumber ButtonRowWithText::GetHeight() const
+{
+	PixelNumber ret = (UTFT::GetFontHeight(font) + 2) * textRows - 2;	// height of the text
+	ret += 2 * textMargin + 2;											// add the border height
+	return ret;
 }
 
 void ButtonRowWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
@@ -754,7 +774,7 @@ void ButtonRowWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOff
 			lcd.setTextPos(0, 9999, width - 6);
 			PrintText(i);							// dummy print to get text width
 			PixelNumber spare = width - 6 - lcd.getTextX();
-			lcd.setTextPos(x + buttonXoffset + 3 + spare/2, y + yOffset + textMargin + 1, x + xOffset + width - 3);	// text is always centre-aligned
+			lcd.setTextPos(x + buttonXoffset + 3 + spare/2, y + yOffset + textMargin + 1, x + buttonXoffset + width - 3);	// text is always centre-aligned
 			PrintText(i);
 			lcd.setTransparentBackground(false);
 		}
@@ -771,7 +791,34 @@ CharButtonRow::CharButtonRow(PixelNumber py, PixelNumber px, PixelNumber pw, Pix
 	: ButtonRowWithText(py, px, pw, ps, strlen(s), e), text(s)
 {
 }
-#endif
+
+void CharButtonRow::CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) /*override*/
+{
+	if (visible && GetEvent() != nullEvent)
+	{
+		const int yError = (y < GetMinY()) ? GetMinY() - y
+								: (y > GetMaxY()) ? y - GetMaxY()
+									: 0;
+		if (yError < maxYerror && yError < bestError)
+		{
+			PixelNumber minX = GetMinX();
+			PixelNumber maxX = GetMaxX();
+			for (size_t i = 0; i < numButtons; ++i)
+			{
+				const int xError = (x < minX) ? minX - x
+										: (x > maxX) ? x - maxX
+											: 0;
+				if (xError < maxXerror && xError + yError < bestError)
+				{
+					bestError = xError + yError;
+					best.Set(this, i);
+				}
+				minX += step;
+				maxX += step;
+			}
+		}
+	}
+}
 
 void ProgressBar::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 {

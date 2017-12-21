@@ -204,7 +204,7 @@ namespace FileManager
 		{
 			requestedPath.add('/');
 		}
-		requestedPath.catFrom(dir);
+		requestedPath.cat(dir);
 		SetPending();
 	}
 

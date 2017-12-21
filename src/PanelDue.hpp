@@ -15,8 +15,8 @@
 #include "FirmwareFeatures.hpp"
 
 // Functions called from the serial I/O module
-extern void ProcessReceivedValue(const char id[], const char val[], int index);
-extern void ProcessArrayLength(const char id[], int length);
+extern void ProcessReceivedValue(const char id[], const char val[], const size_t indices[]);
+extern void ProcessArrayEnd(const char id[], const size_t indices[]);
 extern void StartReceivedMessage();
 extern void EndReceivedMessage();
 

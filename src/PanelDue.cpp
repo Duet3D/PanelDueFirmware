@@ -108,9 +108,7 @@ static uint32_t ignoreTouchTime;
 static uint32_t lastPollTime;
 static uint32_t lastResponseTime = 0;
 static FirmwareFeatures firmwareFeatures = 0;
-static bool gotMachineName = false;
 static bool isDelta = false;
-static bool gotGeometry = false;
 static bool axisHomed[MAX_AXES] = {false, false, false};
 static bool allAxesHomed = false;
 static size_t numAxes = MIN_AXES;
@@ -552,14 +550,12 @@ void SetStatus(char c)
 		break;
 	case 'C':
 		newStatus = PrinterStatus::configuring;
-		gotGeometry = false;
 		break;
 	case 'D':
 		newStatus = PrinterStatus::pausing;
 		break;
 	case 'F':
 		newStatus = PrinterStatus::flashing;
-		gotGeometry = false;
 		break;
 	case 'I':
 		newStatus = PrinterStatus::idle;
@@ -572,7 +568,6 @@ void SetStatus(char c)
 		break;
 	case 'S':
 		newStatus = PrinterStatus::stopped;
-		gotGeometry = false;
 		break;
 	case 'T':
 		newStatus = PrinterStatus::toolChange;
@@ -600,7 +595,6 @@ void SetStatus(char c)
 // Set the status back to "Connecting"
 void Reconnect()
 {
-	gotMachineName = gotGeometry = false;
 	UI::ChangeStatus(status, PrinterStatus::connecting);
 	status = PrinterStatus::connecting;
 	UI::UpdatePrintingFields();
@@ -617,7 +611,7 @@ bool GetInteger(const char s[], int &rslt)
 
 	if (strlen(s) > 10) return false;		// avoid strtod buggy behaviour on long input strings
 
-	float d = strtof(s, &endptr);			// try parsing a floating point number
+	const float d = strtof(s, &endptr);		// try parsing a floating point number
 	if (*endptr == 0)
 	{
 		rslt = (int)((d < 0.0) ? d - 0.5 : d + 0.5);
@@ -649,51 +643,48 @@ bool GetFloat(const char s[], float &rslt)
 	return *endptr == 0;					// we parsed a float
 }
 
-// These tables must be kept in alphabetical order of the search string
-const ReceiveDataTableEntry arrayDataTable[] =
+// This table must be kept in case-insensitive alphabetical order of the search string.
+// A '^' character indicates the position of an array index, and a ':' character indicates the start of a sub-field name
+const ReceiveDataTableEntry fieldTable[] =
 {
-	{ rcvActive,		"active" },
-	{ rcvEfactor,		"efactor" },
-	{ rcvFanPercent,	"fanPercent" },
-	{ rcvFilament,		"filament" },
-	{ rcvFiles,			"files" },
-	{ rcvHeaters,		"heaters" },
-	{ rcvHomed,			"homed" },
-	{ rcvHstat,			"hstat" },
-	{ rcvPos,			"pos" },
-	{ rcvStandby,		"standby" },
-	{ rcvTimesLeft,		"timesLeft" }
-};
-
-const ReceiveDataTableEntry nonArrayDataTable[] =
-{
+	{ rcvActive,		"active^" },
 	{ rcvAxes,			"axes" },
 	{ rcvBabystep,		"babystep" },
 	{ rcvBeepFreq,		"beep_freq" },
 	{ rcvBeepLength,	"beep_length" },
 	{ rcvDir,			"dir" },
+	{ rcvEfactor,		"efactor^" },
 	{ rcvErr,			"err" },
+	{ rcvFanPercent,	"fanPercent^" },
+	{ rcvFilament,		"filament^" },
 	{ rcvFilename,		"fileName" },
+	{ rcvFiles,			"files^" },
 	{ rcvFirmwareName,	"firmwareName" },
 	{ rcvFraction,		"fraction_printed" },
 	{ rcvGeneratedBy,	"generatedBy" },
 	{ rcvGeometry,		"geometry" },
+	{ rcvHeaters,		"heaters^" },
 	{ rcvHeight,		"height" },
+	{ rcvHomed,			"homed^" },
+	{ rcvHstat,			"hstat^" },
 	{ rcvLayerHeight,	"layerHeight" },
 	{ rcvMessage,		"message" },
+	{ rcvMboxControls,	"msgBox.controls" },
 	{ rcvMboxMode,		"msgBox.mode" },
 	{ rcvMboxMsg,		"msgBox.msg" },
-	{ rcvMboxControls,	"msgBox.controls" },
 	{ rcvMboxTimeout,	"msgBox.timeout" },
 	{ rcvMboxTitle,		"msgBox.title" },
 	{ rcvMyName,		"myName" },
 	{ rcvNumTools,		"numTools" },
+	{ rcvPos,			"pos^" },
 	{ rcvProbe,			"probe" },
 	{ rcvResponse,		"resp" },
 	{ rcvSeq,			"seq" },
 	{ rcvSfactor,		"sfactor" },
 	{ rcvSize,			"size" },
+	{ rcvStandby,		"standby^" },
 	{ rcvStatus,		"status" },
+	{ rcvTimesLeft,		"timesLeft^" },
 	{ rcvVolumes,		"volumes" }
 };
 
@@ -721,382 +712,359 @@ void EndReceivedMessage()
 }
 
 // Public functions called by the SerialIo module
-void ProcessReceivedValue(const char id[], const char data[], int index)
+void ProcessReceivedValue(const char id[], const char data[], const size_t indices[])
 {
-	if (index >= 0)			// if this is an element of an array
+	ShowLine;
+	switch(bsearch(fieldTable, sizeof(fieldTable)/sizeof(fieldTable[0]), id))
 	{
+	case rcvActive:
 		ShowLine;
-		switch(bsearch(arrayDataTable, sizeof(arrayDataTable)/sizeof(arrayDataTable[0]), id))
 		{
-		case rcvActive:
-			ShowLine;
+			int ival;
+			if (GetInteger(data, ival) && indices[0] < maxHeaters)
 			{
-				int ival;
-				if (GetInteger(data, ival) && index < (int)maxHeaters)
-				{
-					UI::UpdateActiveTemperature(index, ival);
-				}
+				UI::UpdateActiveTemperature(indices[0], ival);
 			}
-			break;
+		}
+		break;
 
-		case rcvStandby:
-			ShowLine;
+	case rcvStandby:
+		ShowLine;
+		{
+			int ival;
+			if (GetInteger(data, ival) && indices[0] < (int)maxHeaters && indices[0] != 0)
 			{
-				int ival;
-				if (GetInteger(data, ival) && index < (int)maxHeaters && index != 0)
-				{
-					UI::UpdateStandbyTemperature(index, ival);
-				}
+				UI::UpdateStandbyTemperature(indices[0], ival);
 			}
-			break;
-		
-		case rcvHeaters:
-			ShowLine;
-			if ((size_t)index < maxHeaters)
+		}
+		break;
+
+	case rcvHeaters:
+		ShowLine;
+		if (indices[0] < maxHeaters)
+		{
+			float fval;
+			if (GetFloat(data, fval))
 			{
-				float fval;
-				if (GetFloat(data, fval))
+				ShowLine;
+				UI::UpdateCurrentTemperature(indices[0], fval);
+				if (indices[0] == numHeads + 1)
 				{
 					ShowLine;
-					UI::UpdateCurrentTemperature(index, fval);
-					if (index == (int)numHeads + 1)
-					{
-						ShowLine;
-						UI::ShowHeater(index, true);
-						++numHeads;
-					}
+					UI::ShowHeater(indices[0], true);
+					++numHeads;
 				}
 			}
-			break;
-
-		case rcvHstat:
-			ShowLine;
-			if ((size_t)index < maxHeaters)
-			{
-				int ival;
-				if (GetInteger(data, ival))
-				{
-					UI::UpdateHeaterStatus(index, ival);
-				}
-			}
-			break;
-			
-		case rcvPos:
-			ShowLine;
-			{
-				float fval;
-				if (GetFloat(data, fval))
-				{
-					UI::UpdateAxisPosition(index, fval);
-				}
-			}
-			break;
-		
-		case rcvEfactor:
-			ShowLine;
-			{
-				int ival;
-				if (GetInteger(data, ival) && index + 1 < (int)maxHeaters)
-				{
-					UI::UpdateExtrusionFactor(index, ival);
-				}
-			}
-			break;
-		
-		case rcvFiles:
-			ShowLine;
-			if (index == 0)
-			{
-				FileManager::BeginReceivingFiles();
-			}
-			FileManager::ReceiveFile(data);
-			break;
-		
-		case rcvFilament:
-			ShowLine;
-			{
-				static float totalFilament = 0.0;
-				if (index == 0)
-				{
-					totalFilament = 0.0;
-				}
-				float f;
-				if (GetFloat(data, f))
-				{
-					totalFilament += f;
-					UI::UpdateFileFilament((int)totalFilament);
-				}
-			}
-			break;
-		
-		case rcvHomed:
-			ShowLine;
-			{
-				int ival;
-				if (index < MAX_AXES && GetInteger(data, ival) && ival >= 0 && ival < 2)
-				{
-					bool isHomed = (ival == 1);
-					if (isHomed != axisHomed[index])
-					{
-						axisHomed[index] = isHomed;
-						UI::UpdateHomedStatus(index, isHomed);
-						bool allHomed = true;
-						for (size_t i = 0; i < numAxes; ++i)
-						{
-							if (!axisHomed[i])
-							{
-								allHomed = false;
-								break;
-							}
-						}
-						if (allHomed != allAxesHomed)
-						{
-							allAxesHomed = allHomed;
-							UI::UpdateHomedStatus(-1, allHomed);
-						}
-					}
-				}
-			}
-			break;
-		
-		case rcvTimesLeft:
-			ShowLine;
-			{
-				int i;
-				bool b = GetInteger(data, i);
-				if (b && i >= 0 && i < 10 * 24 * 60 * 60 && PrintInProgress())
-				{
-					UI::UpdateTimesLeft(index, i);
-				}
-			}
-			break;
-
-		case rcvFanPercent:
-			ShowLine;
-			if (index == 0)			// currently we only handle one fan
-			{
-				float f;
-				bool b = GetFloat(data, f);
-				if (b && f >= 0.0 && f <= 100.0)
-				{
-					UI::UpdateFanPercent((int)(f + 0.5));
-				}
-			}
-			break;
-
-		default:
-			break;
 		}
-	}
-	else
-	{
+		break;
+
+	case rcvHstat:
 		ShowLine;
-		// Non-array values follow
-		switch(bsearch(nonArrayDataTable, sizeof(nonArrayDataTable)/sizeof(nonArrayDataTable[0]), id))
+		if (indices[0] < maxHeaters)
 		{
-		case rcvSfactor:
+			int ival;
+			if (GetInteger(data, ival))
 			{
-				int ival;
-				if (GetInteger(data, ival))
-				{
-					UI::UpdateSpeedPercent(ival);
-				}
+				UI::UpdateHeaterStatus(indices[0], ival);
 			}
-			break;
-
-		case rcvProbe:
-			UI::UpdateZProbe(data);
-			break;
-		
-		case rcvMyName:
-			if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
-			{
-				UI::UpdateMachineName(data);
-				gotMachineName = true;
-				if (gotGeometry)
-				{
-					machineConfigTimer.Stop();
-				}
-			}
-			break;
-		
-		case rcvFilename:
-			UI::PrintingFilenameChanged(data);
-			break;
-		
-		case rcvSize:
-			{
-				int sz;
-				if (GetInteger(data, sz))
-				{
-					UI::UpdateFileSize(sz);
-				}
-			}
-			break;
-		
-		case rcvHeight:
-			{
-				float f;
-				if (GetFloat(data, f))
-				{
-					UI::UpdateFileObjectHeight(f);
-				}
-			}
-			break;
-		
-		case rcvLayerHeight:
-			{
-				float f;
-				if (GetFloat(data, f))
-				{
-					UI::UpdateFileLayerHeight(f);
-				}
-			}
-			break;
-		
-		case rcvGeneratedBy:
-			UI::UpdateFileGeneratedByText(data);
-			break;
-		
-		case rcvFraction:
-			{
-				float f;
-				if (GetFloat(data, f))
-				{
-					if (f >= 0.0 && f <= 1.0)
-					{
-						UI::SetPrintProgressPercent((unsigned int)(100.0 * f) + 0.5);
-					}
-				}
-			}
-			break;
-		
-		case rcvStatus:
-			SetStatus(data[0]);
-			break;
-		
-		case rcvBeepFreq:
-			GetInteger(data, beepFrequency);
-			break;
-		
-		case rcvBeepLength:
-			GetInteger(data, beepLength);
-			break;
-		
-		case rcvGeometry:
-			if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
-			{
-				isDelta = (strcasecmp(data, "delta") == 0);
-				gotGeometry = true;
-				if (gotMachineName)
-				{
-					machineConfigTimer.Stop();
-				}
-				UI::UpdateGeometry(numAxes, isDelta);
-			}
-			break;
-		
-		case rcvAxes:
-			{
-				unsigned int n = MIN_AXES;
-				GetUnsignedInteger(data, n);
-				numAxes = constrain<unsigned int>(n, MIN_AXES, MAX_AXES);
-				UI::UpdateGeometry(numAxes, isDelta);
-			}
-			break;
-
-		case rcvSeq:
-			GetUnsignedInteger(data, newMessageSeq);
-			break;
-		
-		case rcvResponse:
-			MessageLog::AppendMessage(data);
-			break;
-		
-		case rcvDir:
-			FileManager::ReceiveDirectoryName(data);
-			break;
-
-		case rcvMessage:
-			UI::ProcessAlert(data);
-			break;
-
-		case rcvMboxMode:
-		case rcvMboxMsg:
-		case rcvMboxControls:
-		case rcvMboxTimeout:
-		case rcvMboxTitle:
-			//TODO
-			break;
-
-		case rcvErr:
-			{
-				int i;
-				if (GetInteger(data, i))
-				{
-					FileManager::ReceiveErrorCode(i);
-				}
-			}
-			break;
-
-		case rcvVolumes:
-			{
-				unsigned int i;
-				if (GetUnsignedInteger(data, i))
-				{
-					FileManager::SetNumVolumes(i);
-				}
-			}
-			break;
-
-		case rcvNumTools:
-			{
-				unsigned int i;
-				if (GetUnsignedInteger(data, i))
-				{
-					UI::SetNumTools(i);
-				}
-			}
-			break;
-
-		case rcvFirmwareName:
-			for (size_t i = 0; i < ARRAY_SIZE(firmwareTypes); ++i)
-			{
-				if (stringStartsWith(data, firmwareTypes[i].name))
-				{
-					const FirmwareFeatures newFeatures = firmwareTypes[i].features;
-					if (newFeatures != firmwareFeatures)
-					{
-						firmwareFeatures = newFeatures;
-						UI::FirmwareFeaturesChanged(firmwareFeatures);
-						FileManager::FirmwareFeaturesChanged();
-					}
-					break;
-				}
-			}
-			break;
-
-		case rcvBabystep:
-			{
-				float f;
-				if (GetFloat(data, f))
-				{
-					UI::SetBabystepOffset(f);
-				}
-			}
-			break;
-
-		default:
-			break;
 		}
+		break;
+
+	case rcvPos:
+		ShowLine;
+		{
+			float fval;
+			if (GetFloat(data, fval))
+			{
+				UI::UpdateAxisPosition(indices[0], fval);
+			}
+		}
+		break;
+
+	case rcvEfactor:
+		ShowLine;
+		{
+			int ival;
+			if (GetInteger(data, ival) && indices[0] + 1 < (int)maxHeaters)
+			{
+				UI::UpdateExtrusionFactor(indices[0], ival);
+			}
+		}
+		break;
+
+	case rcvFiles:
+		ShowLine;
+		if (indices[0] == 0)
+		{
+			FileManager::BeginReceivingFiles();
+		}
+		FileManager::ReceiveFile(data);
+		break;
+
+	case rcvFilament:
+		ShowLine;
+		{
+			static float totalFilament = 0.0;
+			if (indices[0] == 0)
+			{
+				totalFilament = 0.0;
+			}
+			float f;
+			if (GetFloat(data, f))
+			{
+				totalFilament += f;
+				UI::UpdateFileFilament((int)totalFilament);
+			}
+		}
+		break;
+
+	case rcvHomed:
+		ShowLine;
+		{
+			int ival;
+			if (indices[0] < MAX_AXES && GetInteger(data, ival) && ival >= 0 && ival < 2)
+			{
+				bool isHomed = (ival == 1);
+				if (isHomed != axisHomed[indices[0]])
+				{
+					axisHomed[indices[0]] = isHomed;
+					UI::UpdateHomedStatus(indices[0], isHomed);
+					bool allHomed = true;
+					for (size_t i = 0; i < numAxes; ++i)
+					{
+						if (!axisHomed[i])
+						{
+							allHomed = false;
+							break;
+						}
+					}
+					if (allHomed != allAxesHomed)
+					{
+						allAxesHomed = allHomed;
+						UI::UpdateHomedStatus(-1, allHomed);
+					}
+				}
+			}
+		}
+		break;
+
+	case rcvTimesLeft:
+		ShowLine;
+		{
+			int i;
+			bool b = GetInteger(data, i);
+			if (b && i >= 0 && i < 10 * 24 * 60 * 60 && PrintInProgress())
+			{
+				UI::UpdateTimesLeft(indices[0], i);
+			}
+		}
+		break;
+
+	case rcvFanPercent:
+		ShowLine;
+		if (indices[0] == 0)			// currently we only handle one fan
+		{
+			float f;
+			bool b = GetFloat(data, f);
+			if (b && f >= 0.0 && f <= 100.0)
+			{
+				UI::UpdateFanPercent((int)(f + 0.5));
+			}
+		}
+		break;
+
+	case rcvSfactor:
+		{
+			int ival;
+			if (GetInteger(data, ival))
+			{
+				UI::UpdateSpeedPercent(ival);
+			}
+		}
+		break;
+
+	case rcvProbe:
+		UI::UpdateZProbe(data);
+		break;
+
+	case rcvMyName:
+		if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
+		{
+			UI::UpdateMachineName(data);
+		}
+		break;
+
+	case rcvFilename:
+		UI::PrintingFilenameChanged(data);
+		break;
+
+	case rcvSize:
+		{
+			int sz;
+			if (GetInteger(data, sz))
+			{
+				UI::UpdateFileSize(sz);
+			}
+		}
+		break;
+
+	case rcvHeight:
+		{
+			float f;
+			if (GetFloat(data, f))
+			{
+				UI::UpdateFileObjectHeight(f);
+			}
+		}
+		break;
+
+	case rcvLayerHeight:
+		{
+			float f;
+			if (GetFloat(data, f))
+			{
+				UI::UpdateFileLayerHeight(f);
+			}
+		}
+		break;
+
+	case rcvGeneratedBy:
+		UI::UpdateFileGeneratedByText(data);
+		break;
+
+	case rcvFraction:
+		{
+			float f;
+			if (GetFloat(data, f))
+			{
+				if (f >= 0.0 && f <= 1.0)
+				{
+					UI::SetPrintProgressPercent((unsigned int)(100.0 * f) + 0.5);
+				}
+			}
+		}
+		break;
+
+	case rcvStatus:
+		SetStatus(data[0]);
+		break;
+
+	case rcvBeepFreq:
+		GetInteger(data, beepFrequency);
+		break;
+
+	case rcvBeepLength:
+		GetInteger(data, beepLength);
+		break;
+
+	case rcvGeometry:
+		if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
+		{
+			isDelta = (strcasecmp(data, "delta") == 0);
+			UI::UpdateGeometry(numAxes, isDelta);
+		}
+		break;
+
+	case rcvAxes:
+		{
+			unsigned int n = MIN_AXES;
+			GetUnsignedInteger(data, n);
+			numAxes = constrain<unsigned int>(n, MIN_AXES, MAX_AXES);
+			UI::UpdateGeometry(numAxes, isDelta);
+		}
+		break;
+
+	case rcvSeq:
+		GetUnsignedInteger(data, newMessageSeq);
+		break;
+
+	case rcvResponse:
+		MessageLog::AppendMessage(data);
+		break;
+
+	case rcvDir:
+		FileManager::ReceiveDirectoryName(data);
+		break;
+
+	case rcvMessage:
+		UI::ProcessAlert(data);
+		break;
+
+	case rcvMboxMode:
+	case rcvMboxMsg:
+	case rcvMboxControls:
+	case rcvMboxTimeout:
+	case rcvMboxTitle:
+		//TODO
+		break;
+
+	case rcvErr:
+		{
+			int i;
+			if (GetInteger(data, i))
+			{
+				FileManager::ReceiveErrorCode(i);
+			}
+		}
+		break;
+
+	case rcvVolumes:
+		{
+			unsigned int i;
+			if (GetUnsignedInteger(data, i))
+			{
+				FileManager::SetNumVolumes(i);
+			}
+		}
+		break;
+
+	case rcvNumTools:
+		{
+			unsigned int i;
+			if (GetUnsignedInteger(data, i))
+			{
+				UI::SetNumTools(i);
+			}
+		}
+		break;
+
+	case rcvFirmwareName:
+		for (size_t i = 0; i < ARRAY_SIZE(firmwareTypes); ++i)
+		{
+			if (stringStartsWith(data, firmwareTypes[i].name))
+			{
+				const FirmwareFeatures newFeatures = firmwareTypes[i].features;
+				if (newFeatures != firmwareFeatures)
+				{
+					firmwareFeatures = newFeatures;
+					UI::FirmwareFeaturesChanged(firmwareFeatures);
+					FileManager::FirmwareFeaturesChanged();
+				}
+				break;
+			}
+		}
+		break;
+
+	case rcvBabystep:
+		{
+			float f;
+			if (GetFloat(data, f))
+			{
+				UI::SetBabystepOffset(f);
+			}
+		}
+		break;
+
+	default:
+		break;
 	}
 	ShowLine;
 }
 
 // Public function called when the serial I/O module finishes receiving an array of values
-void ProcessArrayLength(const char id[], int length)
+void ProcessArrayEnd(const char id[], const size_t indices[])
 {
-	if (length == 0 && strcmp(id, "files") == 0)
+	if (indices[0] == 0 && strcmp(id, "files^") == 0)
 	{
 		FileManager::BeginReceivingFiles();				// received an empty file list - need to tell the file manager about it
 	}
@@ -1133,17 +1101,6 @@ void SelfTest()
 	extrusionFactors[1]->SetValue(169);
 }
 #endif
-
-void SendRequest(const char *s, bool includeSeq = false)
-{
-	SerialIo::SendString(s);
-	if (includeSeq)
-	{
-		SerialIo::SendInt(messageSeq);
-	}
-	SerialIo::SendChar('\n');
-	lastPollTime = SystemTick::GetTickCount();
-}
 
 /**
  * \brief Application entry point.
@@ -1294,7 +1251,7 @@ int main(void)
 		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
 		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
 		const uint32_t now = SystemTick::GetTickCount();
-		if (   UI::DoPolling()									// don't poll while we are in the Setup page
+		if (   UI::DoPolling()										// don't poll while we are in the Setup page
 		    && now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
 			&& now - lastResponseTime >= printerResponseInterval	// and we haven't had a response too recently
 		   )
@@ -1311,12 +1268,16 @@ int main(void)
 				// Otherwise just send a normal poll command
 				if (!done)
 				{
-					SendRequest("M408 S0 R", true);					// normal poll response
+					SerialIo::SendString("M408 S0 R");
+					SerialIo::SendInt(messageSeq);
+					SerialIo::SendChar('\n');
 				}
+				lastPollTime = SystemTick::GetTickCount();
 			}
 			else if (now - lastPollTime >= printerPollTimeout)		// if we're giving up on getting a response to the last poll
 			{
-				SendRequest("M408 S0");								// just send a normal poll message, don't ask for the last response
+				SerialIo::SendString("M408 S0\n");
+				lastPollTime = SystemTick::GetTickCount();
 			}
 		}
 		ShowLine;

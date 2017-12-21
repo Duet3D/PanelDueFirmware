@@ -48,6 +48,7 @@ class ButtonPress
 public:
 	ButtonPress();
 	ButtonPress(ButtonBase *b, unsigned int pi);	
+	void Set(ButtonBase *b, unsigned int pi);
 	void Clear();
 	
 	bool IsValid() const { return button != nullptr; }
@@ -84,8 +85,8 @@ protected:
 	DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw);
 	
 	void SetTextRows(const char * array t);
-
 	virtual PixelNumber GetHeight() const = 0;
+	virtual void CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) { UNUSED(x); UNUSED(y); UNUSED(bestError); UNUSED(best); }
 
 public:
 	DisplayField * null next;					// link to next field in list
@@ -310,9 +311,9 @@ protected:
 	bool pressed;								// putting this here instead of in SingleButton saves 4 byes per button
 
 	ButtonBase(PixelNumber py, PixelNumber px, PixelNumber pw);
-
 	void DrawOutline(PixelNumber xOffset, PixelNumber yOffset, bool isPressed) const;
-	
+	void CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) override;
+
 	static PixelNumber textMargin;
 	static PixelNumber iconMargin;
 
@@ -390,7 +391,7 @@ public:
 	CharButton(PixelNumber py, PixelNumber px, PixelNumber pw, char pc, event_t e);
 };
 
-#if 0	// not used yet
+// Base class for a row of related buttons with the same event
 class ButtonRow : public ButtonBase
 {
 protected:
@@ -404,28 +405,33 @@ public:
 
 class ButtonRowWithText : public ButtonRow
 {
-	LcdFont font;
+	static LcdFont font;
 
 protected:
-	virtual void PrintText(unsigned int n) const { }
+	PixelNumber GetHeight() const override;
+	virtual void PrintText(unsigned int n) const = 0;
 
 public:
 	ButtonRowWithText(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ps, unsigned int nb, event_t e);
 
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override final;
+
+	static void SetFont(LcdFont f) { font = f; }
 };
 
+// Row of character buttons, used to build a keyboard
 class CharButtonRow : public ButtonRowWithText
 {
 	const char * array text;
 
 protected:
 	void PrintText(unsigned int n) const override;
+	void CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) override;
 
 public:
 	CharButtonRow(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ps, const char * array s, event_t e);
+	int GetIParam(unsigned int index) const override { return (int)text[index]; }
 };
-#endif
 
 class TextButton : public ButtonWithText
 {

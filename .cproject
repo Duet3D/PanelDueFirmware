@@ -17,7 +17,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109" name="Release-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109" name="Release-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.426866823" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.1257102879" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -104,7 +104,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.1422351758" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.618446710" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.1595514451" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s2/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.1595514451" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s2/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1018841422" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -139,7 +139,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1143428698" name="Release-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1143428698" name="Release-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1143428698." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1292393510" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.151748676" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -226,7 +226,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.1265708582" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.509917773" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.1199583237" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s2/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.1199583237" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s2/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1051912590" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -261,7 +261,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-4.3" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.373042016" name="Release-4.3" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-4.3" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.373042016" name="Release-4.3" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.373042016." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.323410223" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.2080341108" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -348,7 +348,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.551361827" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.1813218978" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.2113070207" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s2/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.2113070207" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s2/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.901529725" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -383,7 +383,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1171289756" name="OEM1-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1171289756" name="OEM1-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1171289756." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1765675211" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.1687395163" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -472,7 +472,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.1787073246" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.955702352" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.301044289" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.301044289" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.812156194" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -507,7 +507,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.878644905" name="OEM1-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.878644905" name="OEM1-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.878644905." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1034644844" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.828113258" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" useByScannerDiscovery="false" value="arm-none-eabi-" valueType="string"/>
@@ -596,7 +596,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.886250466" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.69928266" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.842646177" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.842646177" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1278574217" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -631,7 +631,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1662261271" name="OEM2-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1662261271" name="OEM2-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1662261271." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1041287944" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.458856481" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -720,7 +720,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.132601470" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.1692550272" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.1299096771" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.1299096771" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1146701746" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -755,7 +755,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.736560732" name="OEM2-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.736560732" name="OEM2-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.736560732." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.272220901" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.1896981149" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -844,7 +844,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.45122722" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.1769022485" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.169346077" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.169346077" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1923208277" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -879,7 +879,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.464760135" name="OEM3-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.464760135" name="OEM3-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.464760135." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1315989464" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.816825623" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -968,7 +968,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.578132354" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.2076603329" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.1252927269" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.1252927269" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1530525529" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -1003,7 +1003,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.878644905.872663844" name="OEM3-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.878644905.872663844" name="OEM3-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.878644905.872663844." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1652761886" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.1385708378" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -1092,7 +1092,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.1196326975" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.195351982" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.1349331749" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.1349331749" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.609142440" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -1127,7 +1127,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-4.3" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.373042016.1948053745" name="OEM3-4.3" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-4.3" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.373042016.1948053745" name="OEM3-4.3" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.373042016.1948053745." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1499020668" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.287666673" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -1216,7 +1216,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.414549091" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.971256251" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.916543469" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.916543469" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1330982862" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -1251,7 +1251,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1171289756.123921580" name="OEM4-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1171289756.123921580" name="OEM4-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1171289756.123921580." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1828938376" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.555573937" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -1340,7 +1340,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.251714231" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.231433049" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.305983347" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.305983347" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1695304852" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -1375,7 +1375,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1171289756.227672048" name="OEM5-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1171289756.227672048" name="OEM5-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1171289756.227672048." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.893226977" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.1908208755" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -1466,7 +1466,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.1132630970" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.1183954688" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.292359646" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.292359646" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.2094284957" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -1501,7 +1501,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1171289756.227672048.479748057" name="OEM5-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1171289756.227672048.479748057" name="OEM5-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1171289756.227672048.479748057." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.2129568699" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.819874340" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -1592,7 +1592,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.1820660047" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.2138862448" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.1201030161" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.1201030161" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.823095711" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -1627,7 +1627,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615" name="Release-v3-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615" name="Release-v3-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1721430850" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.526260949" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" useByScannerDiscovery="false" value="arm-none-eabi-" valueType="string"/>
@@ -1714,7 +1714,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.174786295" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.1149459574" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.1893310197" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.1893310197" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1418484650" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -1749,7 +1749,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-4.3" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.373042016.44514639" name="Release-v3-4.3" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-4.3" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.373042016.44514639" name="Release-v3-4.3" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.373042016.44514639." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1418140448" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.639021415" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -1836,7 +1836,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.378148029" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.2032179604" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.1809513917" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.1809513917" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1107180651" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -1871,7 +1871,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.685339758" name="Release-v3-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.685339758" name="Release-v3-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.685339758." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1974946340" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.1905228414" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -1958,7 +1958,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.1192740703" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.1629739956" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.890249925" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.890249925" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.353401880" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -1993,7 +1993,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-7.0E" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.410709849" name="Release-v3-7.0E" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-7.0E" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.410709849" name="Release-v3-7.0E" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.410709849." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1997335772" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.913753218" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" useByScannerDiscovery="false" value="arm-none-eabi-" valueType="string"/>
@@ -2080,7 +2080,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.782114573" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.1654225783" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.698633803" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.698633803" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1609531650" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -2115,7 +2115,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.685339758.1630787506" name="OEM2-v3-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.685339758.1630787506" name="OEM2-v3-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.685339758.1630787506." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.2052620976" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.1845255944" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -2204,7 +2204,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.710499518" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.633873516" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.105927145" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.105927145" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.774000423" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -2239,7 +2239,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615.596415421" name="OEM2-v3-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615.596415421" name="OEM2-v3-7.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615.596415421." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1746563978" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.94009770" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" useByScannerDiscovery="false" value="arm-none-eabi-" valueType="string"/>
@@ -2328,7 +2328,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.1757022938" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.2087336846" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.324232998" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.324232998" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1968310401" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -2363,7 +2363,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.685339758.1630787506.1472780070" name="OEM4-v3-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-5.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.685339758.1630787506.1472780070" name="OEM4-v3-5.0" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.685339758.1630787506.1472780070." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1879761081" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.630335552" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -2452,7 +2452,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.191302683" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.74896843" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.1052114151" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.1052114151" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1059115504" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -2487,7 +2487,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1740933996" name="Release-7.0CPLD" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v2-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1740933996" name="Release-7.0CPLD" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.1740933996." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.307338048" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.625415162" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="arm-none-eabi-" valueType="string"/>
@@ -2574,7 +2574,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.1042910652" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.1772006764" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.326918323" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s2/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.326918323" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mthumb -static -mcpu=cortex-m3 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam3s/sam3s2/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1620824940" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -2609,7 +2609,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615.639876779" name="Release-v3-7.0CPLD" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf ${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin">
+				<configuration artifactExtension="elf" artifactName="${ProjName}-v3-7.0" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615.639876779" name="Release-v3-7.0CPLD" parent="cdt.managedbuild.config.gnu.cross.exe.release" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.elf&quot; &quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.bin&quot;">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1006567109.965246615.639876779." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.release.1337319957" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.release">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.863596689" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" useByScannerDiscovery="false" value="arm-none-eabi-" valueType="string"/>
@@ -2696,7 +2696,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.91301049" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.1709537187" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-								<option id="gnu.cpp.link.option.flags.834561055" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld} -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.834561055" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-mthumb -static -mcpu=cortex-m4 --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -T&quot;${workspace_loc:/${ProjName}/src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld}&quot; -Wl,--defsym,__stack_size__=0x1000 -Wl,-Map,&quot;${workspace_loc:/${ProjName}/${ConfigName}}/${BuildArtifactFileBaseName}.map&quot;" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.966839615" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -2730,28 +2730,28 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="Release-4.3"/>
-		<configuration configurationName="Release-5.0"/>
-		<configuration configurationName="Release-7.0"/>
+		<configuration configurationName="OEM2-5.0"/>
 		<configuration configurationName="Release-7.0CPLD"/>
-		<configuration configurationName="Release-v3-4.3"/>
+		<configuration configurationName="OEM2-7.0"/>
 		<configuration configurationName="Release-v3-5.0"/>
 		<configuration configurationName="Release-v3-7.0"/>
-		<configuration configurationName="Release-v3-7.0E"/>
+		<configuration configurationName="Release-v3-4.3"/>
 		<configuration configurationName="Release-v3-7.0CPLD"/>
-		<configuration configurationName="OEM1-5.0"/>
-		<configuration configurationName="OEM1-7.0"/>
-		<configuration configurationName="OEM2-5.0"/>
-		<configuration configurationName="OEM2-7.0"/>
-		<configuration configurationName="OEM3-4.3"/>
-		<configuration configurationName="OEM3-5.0"/>
-		<configuration configurationName="OEM3-7.0"/>
 		<configuration configurationName="OEM4-7.0"/>
+		<configuration configurationName="Release-v3-7.0E"/>
+		<configuration configurationName="OEM1-7.0"/>
+		<configuration configurationName="OEM1-5.0"/>
+		<configuration configurationName="OEM3-5.0"/>
 		<configuration configurationName="OEM5-5.0"/>
 		<configuration configurationName="OEM5-7.0"/>
+		<configuration configurationName="OEM3-7.0"/>
+		<configuration configurationName="OEM3-4.3"/>
 		<configuration configurationName="OEM2-v3-7.0"/>
+		<configuration configurationName="Release-7.0"/>
+		<configuration configurationName="Release-4.3"/>
 		<configuration configurationName="OEM2-v3-5.0"/>
 		<configuration configurationName="OEM4-v3-5.0"/>
+		<configuration configurationName="Release-5.0"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>

@@ -11,6 +11,8 @@
 #include "Library/Vector.hpp"
 #include "PanelDue.hpp"
 
+const size_t MaxArrayNesting = 4;
+
 #if SAM4S
 # define UARTn	UART0
 #else
@@ -178,21 +180,50 @@ namespace SerialIo
 	};
 	
 	JsonState state = jsBegin;
-	
-	String<20> fieldId;
+
+	// fieldId is the name of the field being received. A '^' character indicates the position of an array index, and a ':' character indicates a field separator.
+	String<50> fieldId;
 	String<100> fieldVal;
-	int arrayElems = -1;
+	size_t arrayIndices[MaxArrayNesting];
+	size_t arrayDepth = 0;
 	
+	static void RemoveLastId()
+	{
+		size_t index = fieldId.size();
+		while (index != 0 && fieldId[index - 1] != '^' && fieldId[index - 1] != ':')
+		{
+			--index;
+		}
+		fieldId.truncate(index);
+	}
+
+	static void RemoveLastIdChar()
+	{
+		if (fieldId.size() != 0)
+		{
+			fieldId.truncate(fieldId.size() - 1);
+		}
+	}
+
+	static bool InArray()
+	{
+		return fieldId.size() > 0 && fieldId[fieldId.size() - 1] == '^';
+	}
+
 	static void ProcessField()
 	{
-		ProcessReceivedValue(fieldId.c_str(), fieldVal.c_str(), arrayElems);
+		ProcessReceivedValue(fieldId.c_str(), fieldVal.c_str(), arrayIndices);
 		fieldVal.clear();
 	}
 	
 	static void EndArray()
 	{
-		ProcessArrayLength(fieldId.c_str(), arrayElems);
-		arrayElems = -1;
+		ProcessArrayEnd(fieldId.c_str(), arrayIndices);
+		if (arrayDepth != 0)			// should always be true
+		{
+			--arrayDepth;
+			RemoveLastIdChar();
+		}
 	}
 	
 	// Look for combining characters in the string value and convert them if possible
@@ -261,7 +292,7 @@ namespace SerialIo
 					case 0x030A:	// small circle
 						trtab = trCircle;
 						break;
-					case 0x327:		// cedilla
+					case 0x0327:	// cedilla
 						trtab = trCedilla;
 						break;
 					default:
@@ -297,7 +328,7 @@ namespace SerialIo
 			}
 		}
 	}
-	
+
 	void CheckInput()
 	{
 		while (nextIn != nextOut)
@@ -318,6 +349,8 @@ namespace SerialIo
 						StartReceivedMessage();
 						state = jsExpectId;
 						fieldVal.clear();
+						fieldId.clear();
+						arrayDepth = 0;
 					}
 					break;
 
@@ -327,12 +360,20 @@ namespace SerialIo
 					case ' ':
 						break;
 					case '"':
-						fieldId.clear();
 						state = jsId;
 						break;
-					case '}':
-						EndReceivedMessage();
-						state = jsBegin;
+					case '}':			// empty object, or extra comma at end of field list
+						RemoveLastId();
+						if (fieldId.size() == 0)
+						{
+							EndReceivedMessage();
+							state = jsBegin;
+						}
+						else
+						{
+							RemoveLastIdChar();
+							state = jsEndVal;
+						}
 						break;
 					default:
 						state = jsError;
@@ -347,9 +388,19 @@ namespace SerialIo
 						state = jsHadId;
 						break;
 					default:
-						if (c >= ' ' && !fieldId.full())
+						if (c >= ' ')
 						{
-							fieldId.add(c);
+							if (c != ':' && c != '^')
+							{
+								if (fieldId.full())
+								{
+									state = jsError;
+								}
+								else
+								{
+									fieldId.add(c);
+								}
+							}
 						}
 						else
 						{
@@ -363,7 +414,6 @@ namespace SerialIo
 					switch(c)
 					{
 					case ':':
-						arrayElems = -1;
 						state = jsVal;
 						break;
 					case ' ':
@@ -384,19 +434,22 @@ namespace SerialIo
 						state = jsStringVal;
 						break;
 					case '[':
-						if (arrayElems == -1)	// if not already readuing an array
+						if (fieldId.full() || arrayDepth == MaxArrayNesting)
 						{
-							arrayElems = 0;		// start an array
+							state = jsError;
 						}
 						else
 						{
-							state = jsError;	// we don't support nested arrays
+							fieldId.add('^');
+							arrayIndices[arrayDepth] = 0;		// start an array
+							++arrayDepth;
 						}
 						break;
 					case ']':
-						if (arrayElems == 0)
+						if (InArray())
 						{
 							EndArray();			// empty array
+							RemoveLastIdChar();
 							state = jsEndVal;
 						}
 						else
@@ -408,6 +461,17 @@ namespace SerialIo
 						fieldVal.clear();
 						fieldVal.add(c);
 						state = jsNegIntVal;
+						break;
+					case '{':					// start of a nested object
+						if (fieldId.full())
+						{
+							state = jsError;
+						}
+						else
+						{
+							fieldId.add(':');
+							state = jsExpectId;
+						}
 						break;
 					default:
 						if (c >= '0' && c <= '9')
@@ -500,22 +564,25 @@ namespace SerialIo
 						break;
 					case ',':
 						ProcessField();
-						if (arrayElems >= 0)
+						if (InArray())
 						{
-							++arrayElems;
+							++arrayIndices[arrayDepth - 1];
+							fieldVal.clear();
 							state = jsVal;
 						}
 						else
 						{
+							RemoveLastId();
 							state = jsExpectId;
 						}
-						break;					
+						break;
 					case ']':
-						if (arrayElems >= 0)
+						if (InArray())
 						{
 							ProcessField();
-							++arrayElems;
+							++arrayIndices[arrayDepth - 1];
 							EndArray();
+							RemoveLastIdChar();
 							state = jsEndVal;
 						}
 						else
@@ -524,15 +591,24 @@ namespace SerialIo
 						}
 						break;
 					case '}':
-						if (arrayElems == -1)
+						if (InArray())
 						{
-							ProcessField();
-							EndReceivedMessage();
-							state = jsBegin;
+							state = jsError;
 						}
 						else
 						{
-							state = jsError;
+							ProcessField();
+							RemoveLastId();
+							if (fieldId.size() == 0)
+							{
+								EndReceivedMessage();
+								state = jsBegin;
+							}
+							else
+							{
+								RemoveLastIdChar();
+								state = jsEndVal;
+							}
 						}
 						break;
 					default:
@@ -553,9 +629,9 @@ namespace SerialIo
 					{
 					case ',':
 						ProcessField();
-						if (arrayElems >= 0)
+						if (InArray())
 						{
-							++arrayElems;
+							++arrayIndices[arrayDepth - 1];
 							state = jsVal;
 						}
 						else
@@ -564,10 +640,10 @@ namespace SerialIo
 						}
 						break;
 					case ']':
-						if (arrayElems >= 0)
+						if (InArray())
 						{
 							ProcessField();
-							++arrayElems;
+							++arrayIndices[arrayDepth - 1];
 							EndArray();
 							state = jsEndVal;
 						}
@@ -577,15 +653,24 @@ namespace SerialIo
 						}
 						break;
 					case '}':
-						if (arrayElems == -1)
+						if (InArray())
 						{
-							ProcessField();
-							EndReceivedMessage();
-							state = jsBegin;
+							state = jsError;
 						}
 						else
 						{
-							state = jsError;
+							ProcessField();
+							RemoveLastId();
+							if (fieldId.size() == 0)
+							{
+								EndReceivedMessage();
+								state = jsBegin;
+							}
+							else
+							{
+								RemoveLastIdChar();
+								state = jsEndVal;
+							}
 						}
 						break;
 					default:
@@ -605,23 +690,23 @@ namespace SerialIo
 					switch (c)
 					{
 					case ',':
-						if (arrayElems >= 0)
+						if (InArray())
 						{
-							++arrayElems;
+							++arrayIndices[arrayDepth - 1];
 							fieldVal.clear();
 							state = jsVal;
 						}
 						else
 						{
+							RemoveLastId();
 							state = jsExpectId;
 						}
 						break;
 					case ']':
-						if (arrayElems >= 0)
+						if (InArray())
 						{
-							++arrayElems;
+							++arrayIndices[arrayDepth - 1];
 							EndArray();
-							state = jsEndVal;
 						}
 						else
 						{
@@ -629,14 +714,23 @@ namespace SerialIo
 						}
 						break;
 					case '}':
-						if (arrayElems == -1)
+						if (InArray())
 						{
-							EndReceivedMessage();
-							state = jsBegin;
+							state = jsError;
 						}
 						else
 						{
-							state = jsError;
+							RemoveLastId();
+							if (fieldId.size() == 0)
+							{
+								EndReceivedMessage();
+								state = jsBegin;
+							}
+							else
+							{
+								RemoveLastIdChar();
+								//state = jsEndVal;			// not needed, state == jsEndVal already
+							}
 						}
 						break;
 					default:

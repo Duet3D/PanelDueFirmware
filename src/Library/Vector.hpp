@@ -37,11 +37,13 @@ public:
 
 	T& operator[](size_t index) pre(index < N) { return storage[index]; }
 
-	void add(const T& x) pre(filled < N) { storage[filled++] = x; }
+	void add(const T& x);
 
-	void add(const T* array p, size_t n) pre(filled + n <= N);
+	void add(const T* array p, size_t n);
 	
 	void erase(size_t pos, size_t count = 1);
+
+	void truncate(size_t pos) pre(pos <= filled);
 
 	void clear() { filled = 0; }
 
@@ -53,6 +55,14 @@ protected:
 	T storage[N];
 	size_t filled;	
 };
+
+template<class T, size_t N> void Vector<T, N>::add(const T& x)
+{
+	if (filled < N)
+	{
+		storage[filled++] = x;
+	}
+}
 
 template<class T, size_t N> void Vector<T, N>::add(const T* array p, size_t n)
 {
@@ -96,6 +106,14 @@ template<class T, size_t N> void Vector<T, N>::erase(size_t pos, size_t count)
 	}
 }
 
+template<class T, size_t N> void Vector<T, N>::truncate(size_t pos)
+{
+	if (pos < filled)
+	{
+		filled = pos;
+	}
+}
+
 // String class. This is like the vector class except that we always keep a null terminator so that we can call c_str() on it.
 template<size_t N> class String : public Vector<char, N + 1>
 {
@@ -117,17 +135,31 @@ public:
 	// Redefine 'add' to add a null terminator
 	void add(char x) pre(this->filled < N)
 	{
-		this->storage[this->filled++] = x; 
+		this->Vector<char, N + 1>::add(x);
 		this->storage[this->filled] = '\0';
 	}
-	
+
+	// Redefine 'add' to add a null terminator
+	void add(const char* array p, size_t n)
+	{
+		this->Vector<char, N + 1>::add(p, n);
+		this->storage[this->filled] = '\0';
+	}
+
 	// Redefine 'erase' to preserve the null terminator
 	void erase(size_t pos, size_t count = 1)
 	{
-		static_cast<Vector<char, N + 1>*>(this)->erase(pos, count);
+		this->Vector<char, N + 1>::erase(pos, count);
 		this->storage[this->filled] = '\0';
 	}
 		
+	// Redefine 'truncate' to preserve the null terminator
+	void truncate(size_t pos)
+	{
+		this->Vector<char, N + 1>::truncate(pos);
+		this->storage[this->filled] = '\0';
+	}
+
 	const char* array c_str() const { return this->storage; }
 		
 	void clear()
@@ -136,7 +168,7 @@ public:
 		this->storage[0] = '\0'; 
 	}
 	
-	void catFrom(const char* s)
+	void cat(const char* s)
 	{
 		while (*s != '\0' && this->filled < N)
 		{
@@ -148,7 +180,7 @@ public:
 	void copy(const char* s)
 	{
 		this->clear();
-		this->catFrom(s);
+		this->cat(s);
 	}
 	
 	template<size_t M> void copy(String<M> s)

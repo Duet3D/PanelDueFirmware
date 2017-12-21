@@ -91,6 +91,7 @@ struct StringTable
 	CSTRING objectHeight;
 	CSTRING filamentNeeded;
 	CSTRING generatedBy;
+	CSTRING simulate;
 
 	// Printer status strings
 	CSTRING statusValues[11];
@@ -175,6 +176,7 @@ const StringTable LanguageTables[3] =
 		"Object height: ",
 		"Filament needed: ",
 		"Sliced by: ",
+		"Simulate",
 
 		// Printer status strings
 		{
@@ -272,6 +274,7 @@ const StringTable LanguageTables[3] =
 		"Objekthöhe: ",
 		"Benötigtes Filament: ",
 		"Erzeugt mit: ",
+		"Simulieren",
 
 		// Printer status strings
 		{
@@ -369,6 +372,7 @@ const StringTable LanguageTables[3] =
 		"Hauteur de l'objet: ",
 		"Filament requis: ",
 		"Sliced par: ",
+		"Simuler",
 
 		// Printer status strings
 		{
@@ -467,6 +471,7 @@ const StringTable LanguageTables[3] =
 		"Object height: ",
 		"Filament needed: ",
 		"Sliced by: ",
+		"Simulate",
 
 		// Printer status strings
 		{

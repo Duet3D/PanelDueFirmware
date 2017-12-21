@@ -49,13 +49,13 @@
 
 /* Initialize segments */
 extern uint32_t _sfixed;
-extern uint32_t _efixed;
+//extern uint32_t _efixed;
 extern uint32_t _etext;
 extern uint32_t _srelocate;
 extern uint32_t _erelocate;
 extern uint32_t _szero;
 extern uint32_t _ezero;
-extern uint32_t _sstack;
+//extern uint32_t _sstack;
 extern uint32_t _estack;
 
 /** \cond DOXYGEN_SHOULD_SKIP_THIS */
@@ -233,19 +233,11 @@ void Reset_Handler(void)
 	pSrc = &_etext;
 	pDest = &_srelocate;
 
-	if (pSrc > pDest) {
+	if (pSrc != pDest) {
 		for (; pDest < &_erelocate;) {
 			*pDest++ = *pSrc++;
 		}
-	} else if (pSrc < pDest) {
-		uint32_t nb_bytes = (uint32_t)&_erelocate - (uint32_t)&_srelocate;
-		pSrc = (uint32_t*)((uint32_t)pSrc + nb_bytes) - 1;
-		pDest = (uint32_t*)((uint32_t)pDest + nb_bytes) - 1;
-		for (;nb_bytes;nb_bytes -= 4) {
-			*pDest-- = *pSrc--;
-		}
 	}
-	__NOP();
 
 	/* Clear the zero segment */
 	for (pDest = &_szero; pDest < &_ezero;) {

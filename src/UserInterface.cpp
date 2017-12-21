@@ -390,7 +390,8 @@ void CreateFileActionPopup(const ColourScheme& colours)
 
 	// Add the buttons
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	filePopup->AddField(new TextButton(popupTopMargin + 8 * rowTextHeight, popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->print, evPrint));
+	filePopup->AddField(new TextButton(popupTopMargin + 8 * rowTextHeight, popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->print, evPrintFile));
+	filePopup->AddField(new TextButton(popupTopMargin + 8 * rowTextHeight, fileInfoPopupWidth/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->simulate, evSimulateFile));
 	filePopup->AddField(new IconButton(popupTopMargin + 8 * rowTextHeight, (2 * fileInfoPopupWidth)/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, IconTrash, evDeleteFile));
 }
 
@@ -474,11 +475,19 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	{
 		language = 0;
 	}
+
 	const char* array const * array const keys = keyboards[language];
 	PixelNumber row = keyboardTopMargin + keyButtonVStep;
+
 	for (size_t i = 0; i < 4; ++i)
 	{
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
+#if 1
+		// New code using CharButtonRow to economise on RAM
+		const PixelNumber column = popupSideMargin + (i * keyButtonHStep)/3;
+		keyboardPopup->AddField(new CharButtonRow(row, column, keyButtonWidth, keyButtonHStep, keys[i], evKey));
+#else
+		// Old code using individual buttons
 		PixelNumber column = popupSideMargin + (i * keyButtonHStep)/3;
 		const char * s = keys[i];
 		while (*s != 0)
@@ -487,6 +496,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 			++s;
 			column += keyButtonHStep;
 		}
+#endif
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.buttonImageBackColour);
 		switch (i)
 		{
@@ -834,6 +844,7 @@ namespace UI
 		mgr.Init(colours.defaultBackColour);
 		DisplayField::SetDefaultFont(DEFAULT_FONT);
 		ButtonWithText::SetFont(DEFAULT_FONT);
+		CharButtonRow::SetFont(DEFAULT_FONT);
 		SingleButton::SetTextMargin(textButtonMargin);
 		SingleButton::SetIconMargin(iconButtonMargin);
 
@@ -1013,7 +1024,7 @@ namespace UI
 	{
 		if (t <= 0)
 		{
-			timesLeftText.catFrom(strings->notAvailable);
+			timesLeftText.cat(strings->notAvailable);
 		}
 		else if (t < 60)
 		{
@@ -1037,11 +1048,11 @@ namespace UI
 			timesLeft[index] = seconds;
 			timesLeftText.copy(strings->file);
 			AppendTimeLeft(timesLeft[0]);
-			timesLeftText.catFrom(strings->filament);
+			timesLeftText.cat(strings->filament);
 			AppendTimeLeft(timesLeft[1]);
 			if (DisplayX >= 800)
 			{
-				timesLeftText.catFrom(strings->layer);
+				timesLeftText.cat(strings->layer);
 				AppendTimeLeft(timesLeft[2]);
 			}
 			timeLeftField->SetValue(timesLeftText.c_str());
@@ -1658,14 +1669,15 @@ namespace UI
 				}
 				break;
 
-			case evPrint:
+			case evPrintFile:
+			case evSimulateFile:
 				mgr.ClearPopup();			// clear the file info popup
 				mgr.ClearPopup();			// clear the file list popup
 				if (currentFile != nullptr)
 				{
-					SerialIo::SendString("M32 ");
+					SerialIo::SendString((ev == evSimulateFile) ? "M37 \"" : "M32 ");
 					SerialIo::SendFilename(CondStripDrive(StripPrefix(FileManager::GetFilesDir())), currentFile);
-					SerialIo::SendChar('\n');
+					SerialIo::SendString((ev == evSimulateFile) ? "\"\n" : "\n");
 					PrintingFilenameChanged(currentFile);
 					currentFile = nullptr;							// allow the file list to be updated
 					CurrentButtonReleased();
@@ -1682,7 +1694,7 @@ namespace UI
 				break;
 
 			case evDeleteFile:
-				CurrentButtonReleased();;
+				CurrentButtonReleased();
 				PopupAreYouSure(ev, strings->confirmFileDelete);
 				break;
 
