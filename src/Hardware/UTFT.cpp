@@ -47,13 +47,12 @@
 
 
 #include "asf.h"
+#undef min
+#undef max
 #include "UTFT.hpp"
 #include "memorysaver.h"
 #include "HW_AVR.h" 
 #include <cstring>			// for strchr
-#undef array
-#include <algorithm>		// for min
-#define array _ecv_array
 
 // Write the previous 16-bit data again the specified number of times.
 // Only supported in 9 and 16 bit modes. Used to speed up setting large blocks of pixels to the same colour.

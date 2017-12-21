@@ -227,7 +227,7 @@ const char * array StripPrefix(const char * array dir)
 // Adjust the brightness
 void ChangeBrightness(bool up)
 {
-	int adjust = max<int>(1, GetBrightness()/16);
+	int adjust = max<int>(1, GetBrightness()/5);
 	if (!up)
 	{
 		adjust = -adjust;
@@ -1416,9 +1416,9 @@ namespace UI
 
 					case evExtrusionFactor:
 						{
-							int heater = fieldBeingAdjusted.GetIParam();
-							SerialIo::SendString("M221 P");
-							SerialIo::SendInt(heater);
+							const int extruder = fieldBeingAdjusted.GetIParam();
+							SerialIo::SendString("M221 D");
+							SerialIo::SendInt(extruder);
 							SerialIo::SendString(" S");
 							SerialIo::SendInt(val);
 							SerialIo::SendChar('\n');

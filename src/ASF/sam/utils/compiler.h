@@ -203,7 +203,7 @@
 #endif
 
 /* Define WEAK attribute */
-#if defined   ( __CC_ARM   ) /* Keil µVision 4 */
+#if defined   ( __CC_ARM   ) /* Keil ï¿½Vision 4 */
 #   define WEAK __attribute__ ((weak))
 #elif defined ( __ICCARM__ ) /* IAR Ewarm 5.41+ */
 #   define WEAK __weak
@@ -221,7 +221,7 @@
 #endif
 
 /* Define RAMFUNC attribute */
-#if defined   ( __CC_ARM   ) /* Keil µVision 4 */
+#if defined   ( __CC_ARM   ) /* Keil ï¿½Vision 4 */
 #   define RAMFUNC __attribute__ ((section(".ramfunc")))
 #elif defined ( __ICCARM__ ) /* IAR Ewarm 5.41+ */
 #   define RAMFUNC __ramfunc
@@ -230,12 +230,12 @@
 #endif
 
 /* Define OPTIMIZE_HIGH attribute */
-#if defined   ( __CC_ARM   ) /* Keil µVision 4 */
+#if defined   ( __CC_ARM   ) /* Keil ï¿½Vision 4 */
 #   define OPTIMIZE_HIGH _Pragma("O3") 
 #elif defined ( __ICCARM__ ) /* IAR Ewarm 5.41+ */
 #   define OPTIMIZE_HIGH _Pragma("optimize=high")
 #elif defined (  __GNUC__  ) /* GCC CS3 2009q3-68 */
-#   define OPTIMIZE_HIGH __attribute__((optimize(s)))
+#   define OPTIMIZE_HIGH __attribute__((optimize("-O3")))
 #endif
 
 #include "interrupt.h"

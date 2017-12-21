@@ -10,6 +10,7 @@
 #include "UserInterfaceConstants.hpp"
 #include "UserInterface.hpp"
 #include "Hardware/SerialIo.hpp"
+#include <cctype>
 
 #undef min
 #undef max
