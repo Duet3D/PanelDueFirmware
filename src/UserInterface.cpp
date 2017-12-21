@@ -301,7 +301,7 @@ void CreateExtrudePopup(const ColourScheme& colours)
 	static const char * array extrudeSpeedValues[] = { "50", "40", "20", "10", "5" };
 	static const char * array extrudeSpeedParams[] = { "3000", "2400", "1200", "600", "300" };
 
-	extrudePopup = CreatePopupWindow(extrudePopupHeight, extrudePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupButtonTextColour, colours.buttonImageBackColour, strings->extrusionAmount);
+	extrudePopup = CreatePopupWindow(extrudePopupHeight, extrudePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->extrusionAmount);
 	PixelNumber ypos = popupTopMargin + buttonHeight + extrudeButtonRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 	currentExtrudeAmountPress = CreateStringButtonRow(extrudePopup, ypos, popupSideMargin, extrudePopupWidth - 2 * popupSideMargin, fieldSpacing, 6, extrudeAmountValues, extrudeAmountValues, evExtrudeAmount, 3);
