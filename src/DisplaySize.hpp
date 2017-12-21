@@ -46,6 +46,14 @@ const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientati
 # define DISPLAY_X				(800)
 # define DISPLAY_Y				(480)
 
+#elif DISPLAY_TYPE == DISPLAY_TYPE_CPLD_70
+
+# define DISPLAY_CONTROLLER		CPLD_800
+const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(Default);
+const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation>(SwapXY);
+# define DISPLAY_X				(800)
+# define DISPLAY_Y				(480)
+
 #else
 # error DISPLAY_TYPE is not defined correctly
 #endif

@@ -68,6 +68,7 @@ enum DisplayType {
 	S1D19122,
 	SSD1963_480,
 	SSD1963_800,
+	CPLD_800,
 	S6D1121,
 	
 	// Aliases for particular display models
