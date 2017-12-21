@@ -116,6 +116,10 @@ UTFT::UTFT(DisplayType model, unsigned int RS, unsigned int WR, unsigned int CS,
 			disp_x_size=479;
 			disp_y_size=799;
 			break;
+		case CPLD_800:
+			disp_x_size=799;
+			disp_y_size=479;
+			break;
 	}
 
 	// Set up parallel output on the 16-bit data bus
@@ -1290,6 +1294,13 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 		LCD_Write_COM(0x22);
 		break;
 #endif
+#ifndef DISABLE_CPLD_800
+	case CPLD_800:
+		LCD_Write_COM(0x0F);
+		LCD_Write_COM_DATA16(0x01, 0x0010);
+		LCD_Write_COM(0x0F);
+		break;
+#endif
 	default:
 		break;
 	}
@@ -1352,18 +1363,30 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 	}
 
 #if 1
-	// Optimised code supporting only the SSD1963
-	// In the following we use LCD_WRITE_BUS to write additional data without having to write RS again.
-	LCD_Write_COM_DATA16(0x2a, y1>>8);
-	LCD_Write_Bus(y1);
-	LCD_Write_Bus(y2>>8);
-	LCD_Write_Bus(y2);
-	LCD_Write_COM_DATA16(0x2b, x1>>8);
-	LCD_Write_Bus(x1);
-	LCD_Write_Bus(x2>>8);
-	LCD_Write_Bus(x2);
-	LCD_Write_COM(0x2c);
+	switch(displayModel)
+	{
+		case CPLD_800:
+			LCD_Write_COM_DATA16(0x02, y1);	// start row register (0-480)
+			LCD_Write_COM_DATA16(0x03, x1);	// start column register (0-800)
+			LCD_Write_COM_DATA16(0x06, y2);	// end row register (0-480)
+			LCD_Write_COM_DATA16(0x07, x2);	// end column register (0-800)
+			LCD_Write_COM(0x0F);
+			break;
 
+		default:
+			// Optimised code supporting only the SSD1963
+			// In the following we use LCD_WRITE_BUS to write additional data without having to write RS again.
+			LCD_Write_COM_DATA16(0x2a, y1>>8);
+			LCD_Write_Bus(y1);
+			LCD_Write_Bus(y2>>8);
+			LCD_Write_Bus(y2);
+			LCD_Write_COM_DATA16(0x2b, x1>>8);
+			LCD_Write_Bus(x1);
+			LCD_Write_Bus(x2>>8);
+			LCD_Write_Bus(x2);
+			LCD_Write_COM(0x2c);
+			break;
+	}
 #else
 
 	switch(displayModel)
@@ -2231,6 +2254,10 @@ void UTFT::lcdOff()
 	case PCF8833:
 		LCD_Write_COM(0x28);
 		break;
+	case CPLD_800:
+		LCD_Write_COM_DATA16(0x01, 0x0000);
+		LCD_Write_COM(0x0F);
+		break;
 	default:
 		break;
 	}
@@ -2244,6 +2271,10 @@ void UTFT::lcdOn()
 	{
 	case PCF8833:
 		LCD_Write_COM(0x29);
+		break;
+	case CPLD_800:
+		LCD_Write_COM_DATA16(0x01, 0x0010);
+		LCD_Write_COM(0x0F);
 		break;
 	default:
 		break;

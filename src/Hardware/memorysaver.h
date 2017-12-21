@@ -24,8 +24,12 @@
 #define DISABLE_ST7735			1
 #define DISABLE_PCF8833			1
 #define DISABLE_S1D19122		1
-//#define DISABLE_SSD1963_480		1
-//#define DISABLE_SSD1963_800		1
+#ifdef SCREEN_70CPLD
+#define DISABLE_SSD1963_480		1
+#define DISABLE_SSD1963_800		1
+#else
+#define DISABLE_CPLD_800		1
+#endif
 #define DISABLE_S6D1121			1
 
 // End
