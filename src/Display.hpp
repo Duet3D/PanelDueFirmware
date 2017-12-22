@@ -349,15 +349,7 @@ public:
 	int GetIParam(unsigned int index) const override { UNUSED(index); return param.iParam; }
 	//float GetFParam() const { return param.fParam; }
 
-	void Press(bool p, int index) override
-	{
-		UNUSED(p); UNUSED(index);
-		if (p != pressed)
-		{
-			pressed = p;
-			changed = true;
-		}
-	}
+	void Press(bool p, int index) override;
 	
 	static void SetTextMargin(PixelNumber p) { textMargin = p; }
 	static void SetIconMargin(PixelNumber p) { iconMargin = p; }
@@ -431,6 +423,8 @@ protected:
 public:
 	CharButtonRow(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ps, const char * array s, event_t e);
 	int GetIParam(unsigned int index) const override { return (int)text[index]; }
+	void Press(bool p, int index) override;
+	void ChangeText(const char* array s);
 };
 
 class TextButton : public ButtonWithText

@@ -620,6 +620,16 @@ void SingleButton::DrawOutline(PixelNumber xOffset, PixelNumber yOffset) const
 	ButtonBase::DrawOutline(xOffset, yOffset, pressed);
 }
 
+void SingleButton::Press(bool p, int index) /*override*/
+{
+	UNUSED(index);
+	if (p != pressed)
+	{
+		pressed = p;
+		changed = true;
+	}
+}
+
 /*static*/ LcdFont ButtonWithText::font;
 
 PixelNumber ButtonWithText::GetHeight() const
@@ -818,6 +828,17 @@ void CharButtonRow::CheckEvent(PixelNumber x, PixelNumber y, int& bestError, But
 			}
 		}
 	}
+}
+
+void CharButtonRow::Press(bool p, int index) /*override*/
+{
+	whichPressed = (p) ? index : -1;
+}
+
+void CharButtonRow::ChangeText(const char* array s)
+{
+	text = s;
+	changed = true;
 }
 
 void ProgressBar::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)

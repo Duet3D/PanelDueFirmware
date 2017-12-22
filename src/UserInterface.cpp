@@ -60,6 +60,8 @@ static IntegerButton *spd, *extrusionFactors[maxHeaters - 1], *fanSpeed, *baudRa
 static TextButton *languageButton, *coloursButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *alertPopup, *babystepPopup;
+static CharButtonRow *keyboardRows[4];
+static const char* array const * array currentKeyboard;
 
 static ButtonBase * null currentTab = nullptr;
 
@@ -93,6 +95,7 @@ static Event eventToConfirm = evNull;
 const char* array null currentFile = nullptr;			// file whose info is displayed in the file info popup
 const StringTable * strings = &LanguageTables[0];
 static bool keyboardIsDisplayed = false;
+static bool keyboardShifted = false;
 
 // Create a standard popup window with a title and a close button at the top right
 PopupWindow *CreatePopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder, Colour textColour, Colour imageBackColour, const char * null title, PixelNumber topMargin = popupTopMargin)
@@ -458,9 +461,9 @@ void CreateLanguagePopup(const ColourScheme& colours)
 // Create the pop-up keyboard
 void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 {
-	static const char* array const keysEN[4] = { "1234567890-+", "QWERTYUIOP", "ASDFGHJKL:", "ZXCVBNM./" };
-	static const char* array const keysDE[4] = { "1234567890-+", "QWERTZUIOP", "ASDFGHJKL:", "YXCVBNM./" };
-	static const char* array const keysFR[4] = { "1234567890-+", "AZERTWUIOP", "QSDFGHJKLM", "YXCVBN.:/" };
+	static const char* array const keysEN[8] = { "1234567890-+", "QWERTYUIOP[]", "ASDFGHJKL:@", "ZXCVBNM,./", "!\"#$%^&*()_=", "qwertyuiop{}", "asdfghjkl;'", "zxcvbnm<>?" };
+	static const char* array const keysDE[8] = { "1234567890-+", "QWERTZUIOP[]", "ASDFGHJKL:@", "YXCVBNM,./", "!\"#$%^&*()_=", "qwertzuiop{}", "asdfghjkl;'", "yxcvbnm<>?" };
+	static const char* array const keysFR[8] = { "1234567890-+", "AZERTWUIOP[]", "QSDFGHJKLM@", "YXCVBN.,:/", "!\"#$%^&*()_=", "azertwuiop{}", "qsdfghjklm'", "yxcvbn<>;?" };
 	static const char* array const * const keyboards[numLanguages] = { keysEN, keysDE, keysFR /*, keysEN */ };		// Spain keyboard layout is same as English
 
 	keyboardPopup = CreatePopupWindow(keyboardPopupHeight, keyboardPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupInfoTextColour, colours.buttonImageBackColour, nullptr, keyboardTopMargin);
@@ -476,16 +479,17 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 		language = 0;
 	}
 
-	const char* array const * array const keys = keyboards[language];
+	currentKeyboard = keyboards[language];
 	PixelNumber row = keyboardTopMargin + keyButtonVStep;
 
 	for (size_t i = 0; i < 4; ++i)
 	{
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 #if 1
-		// New code using CharButtonRow to economise on RAM
+		// New code using CharButtonRow to economise on RAM at the expense of more flash memory usage
 		const PixelNumber column = popupSideMargin + (i * keyButtonHStep)/3;
-		keyboardPopup->AddField(new CharButtonRow(row, column, keyButtonWidth, keyButtonHStep, keys[i], evKey));
+		keyboardRows[i] = new CharButtonRow(row, column, keyButtonWidth, keyButtonHStep, currentKeyboard[i], evKey);
+		keyboardPopup->AddField(keyboardRows[i]);
 #else
 		// Old code using individual buttons
 		PixelNumber column = popupSideMargin + (i * keyButtonHStep)/3;
@@ -500,8 +504,8 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.buttonImageBackColour);
 		switch (i)
 		{
-		case 1:
-			keyboardPopup->AddField(new IconButton(row, keyboardPopupWidth - popupSideMargin - 2 * keyButtonWidth, 2 * keyButtonWidth, IconBackspace, evBackspace));
+		case 0:
+			keyboardPopup->AddField(new IconButton(row, keyboardPopupWidth - popupSideMargin - (5 * keyButtonWidth)/4, (5 * keyButtonWidth)/4, IconBackspace, evBackspace));
 			break;
 
 		case 2:
@@ -518,10 +522,11 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 		row += keyButtonVStep;
 	}
 
-	// Add the space and enter keys
+	// Add the shift, space and enter keys
 	const PixelNumber keyButtonHSpace = keyButtonHStep - keyButtonWidth;
 	const PixelNumber wideKeyButtonWidth = (keyboardPopupWidth - 2 * popupSideMargin - 2 * keyButtonHSpace)/5;
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
+	keyboardPopup->AddField(new TextButton(row, popupSideMargin, wideKeyButtonWidth, "Shift", evShift, 0));
 	keyboardPopup->AddField(new TextButton(row, popupSideMargin + wideKeyButtonWidth + keyButtonHSpace, 2 * wideKeyButtonWidth, nullptr, evKey, (int)' '));
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.buttonImageBackColour);
 	keyboardPopup->AddField(new IconButton(row, popupSideMargin + 3 * wideKeyButtonWidth + 2 * keyButtonHSpace, wideKeyButtonWidth, IconEnter, evSendKeyboardCommand));
@@ -1843,6 +1848,27 @@ namespace UI
 					userCommandBuffers[currentUserCommandBuffer].add((char)bp.GetIParam());
 					userCommandField->SetChanged();
 				}
+				break;
+
+			case evShift:
+				{
+					size_t rowOffset;
+					if (keyboardShifted)
+					{
+						bp.GetButton()->Press(false, 0);
+						rowOffset = 0;
+					}
+					else
+					{
+						rowOffset = 4;
+					}
+					for (size_t i = 0; i < 4; ++i)
+					{
+						keyboardRows[i]->ChangeText(currentKeyboard[i + rowOffset]);
+					}
+				}
+				keyboardShifted = !keyboardShifted;
+				currentButton.Clear();				// make the key sticky
 				break;
 
 			case evBackspace:

@@ -53,7 +53,7 @@ enum Event : uint8_t
 	evResumePrint,
 	evBabyStepPopup, evBabyStepAmount,
 
-	evKey, evBackspace, evSendKeyboardCommand, evUp, evDown,
+	evKey, evShift, evBackspace, evSendKeyboardCommand, evUp, evDown,
 
 	evAdjustLanguage, evSetLanguage,
 	evAdjustColours, evSetColours,
