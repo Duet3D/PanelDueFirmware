@@ -20,6 +20,8 @@ extern StaticTextField *touchCalibInstruction;
 extern StaticTextField *messageTextFields[], *messageTimeFields[];
 extern TextField *fwVersionField;
 
+class Alert;
+
 namespace UI
 {
 	extern unsigned int GetNumLanguages();
@@ -44,7 +46,9 @@ namespace UI
 	extern void UpdateHomedStatus(int axis, bool isHomed);
 	extern void UpdateZProbe(const char data[]);
 	extern void UpdateMachineName(const char data[]);
-	extern void ProcessAlert(const char data[]);
+	extern void ProcessAlert(const Alert& alert);
+	extern void ClearAlert();
+	extern void ProcessSimpleAlert(const char* array text);
 	extern void UpdateFileGeneratedByText(const char data[]);
 	extern void UpdateFileObjectHeight(float f);
 	extern void UpdateFileLayerHeight(float f);

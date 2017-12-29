@@ -80,7 +80,7 @@ struct HostFirmwareType
 
 const HostFirmwareType firmwareTypes[] =
 {
-	{ "RepRapFirmware", 0 },
+	{ "RepRapFirmware", quoteFilenames },
 	{ "Smoothie", noGcodesFolder | noStandbyTemps | noG10Temps | noDriveNumber | noM20M36 },
 	{ "Repetier", noGcodesFolder | noStandbyTemps | noG10Temps }
 };
@@ -112,12 +112,15 @@ static bool isDelta = false;
 static bool axisHomed[MAX_AXES] = {false, false, false};
 static bool allAxesHomed = false;
 static size_t numAxes = MIN_AXES;
-static int beepFrequency = 0, beepLength = 0;
+static int32_t beepFrequency = 0, beepLength = 0;
 static unsigned int numHeads = 1;
-static unsigned int messageSeq = 0;
-static unsigned int newMessageSeq = 0;
+static uint32_t messageSeq = 0;
+static uint32_t newMessageSeq = 0;
 
 const ColourScheme *colours = &colourSchemes[0];
+
+Alert currentAlert;
+uint32_t lastAlertSeq = 0;
 
 struct FlashData
 {
@@ -192,6 +195,7 @@ enum ReceivedDataEvent
 	rcvMboxControls,
 	rcvMboxTimeout,
 	rcvMboxTitle,
+	rcvMboxSeq,
 	rcvMyName,
 	rcvProbe,
 	rcvResponse,
@@ -601,7 +605,7 @@ void Reconnect()
 }
 
 // Try to get an integer value from a string. If it is actually a floating point value, round it.
-bool GetInteger(const char s[], int &rslt)
+bool GetInteger(const char s[], int32_t &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 
@@ -621,7 +625,7 @@ bool GetInteger(const char s[], int &rslt)
 }
 
 // Try to get an unsigned integer value from a string
-bool GetUnsignedInteger(const char s[], unsigned int &rslt)
+bool GetUnsignedInteger(const char s[], uint32_t &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 	char* endptr;
@@ -672,6 +676,7 @@ const ReceiveDataTableEntry fieldTable[] =
 	{ rcvMboxControls,	"msgBox.controls" },
 	{ rcvMboxMode,		"msgBox.mode" },
 	{ rcvMboxMsg,		"msgBox.msg" },
+	{ rcvMboxSeq,		"msgBox.seq" },
 	{ rcvMboxTimeout,	"msgBox.timeout" },
 	{ rcvMboxTitle,		"msgBox.title" },
 	{ rcvMyName,		"myName" },
@@ -694,6 +699,7 @@ void StartReceivedMessage()
 	newMessageSeq = messageSeq;
 	MessageLog::BeginNewMessage();
 	FileManager::BeginNewMessage();
+	currentAlert.flags = 0;
 	ShowLine;
 }
 
@@ -708,6 +714,15 @@ void EndReceivedMessage()
 		MessageLog::DisplayNewMessage();
 	}	
 	FileManager::EndReceivedMessage(UI::IsDisplayingFileInfo());
+	if ((currentAlert.flags & Alert::GotMode) != 0 && currentAlert.mode < 0)
+	{
+		UI::ClearAlert();
+	}
+	else if (currentAlert.flags == Alert::GotAll && currentAlert.seq != lastAlertSeq)
+	{
+		UI::ProcessAlert(currentAlert);
+		lastAlertSeq = currentAlert.seq;
+	}
 	ShowLine;
 }
 
@@ -720,7 +735,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 	case rcvActive:
 		ShowLine;
 		{
-			int ival;
+			int32_t ival;
 			if (GetInteger(data, ival) && indices[0] < maxHeaters)
 			{
 				UI::UpdateActiveTemperature(indices[0], ival);
@@ -731,7 +746,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 	case rcvStandby:
 		ShowLine;
 		{
-			int ival;
+			int32_t ival;
 			if (GetInteger(data, ival) && indices[0] < (int)maxHeaters && indices[0] != 0)
 			{
 				UI::UpdateStandbyTemperature(indices[0], ival);
@@ -762,7 +777,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		ShowLine;
 		if (indices[0] < maxHeaters)
 		{
-			int ival;
+			int32_t ival;
 			if (GetInteger(data, ival))
 			{
 				UI::UpdateHeaterStatus(indices[0], ival);
@@ -784,7 +799,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 	case rcvEfactor:
 		ShowLine;
 		{
-			int ival;
+			int32_t ival;
 			if (GetInteger(data, ival) && indices[0] + 1 < (int)maxHeaters)
 			{
 				UI::UpdateExtrusionFactor(indices[0], ival);
@@ -821,7 +836,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 	case rcvHomed:
 		ShowLine;
 		{
-			int ival;
+			int32_t ival;
 			if (indices[0] < MAX_AXES && GetInteger(data, ival) && ival >= 0 && ival < 2)
 			{
 				bool isHomed = (ival == 1);
@@ -851,7 +866,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 	case rcvTimesLeft:
 		ShowLine;
 		{
-			int i;
+			int32_t i;
 			bool b = GetInteger(data, i);
 			if (b && i >= 0 && i < 10 * 24 * 60 * 60 && PrintInProgress())
 			{
@@ -875,7 +890,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 
 	case rcvSfactor:
 		{
-			int ival;
+			int32_t ival;
 			if (GetInteger(data, ival))
 			{
 				UI::UpdateSpeedPercent(ival);
@@ -900,7 +915,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 
 	case rcvSize:
 		{
-			int sz;
+			int32_t sz;
 			if (GetInteger(data, sz))
 			{
 				UI::UpdateFileSize(sz);
@@ -967,7 +982,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 
 	case rcvAxes:
 		{
-			unsigned int n = MIN_AXES;
+			uint32_t n = MIN_AXES;
 			GetUnsignedInteger(data, n);
 			numAxes = constrain<unsigned int>(n, MIN_AXES, MAX_AXES);
 			UI::UpdateGeometry(numAxes, isDelta);
@@ -987,20 +1002,57 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		break;
 
 	case rcvMessage:
-		UI::ProcessAlert(data);
+		if (data[0] == 0)
+		{
+			UI::ClearAlert();
+		}
+		else
+		{
+			UI::ProcessSimpleAlert(data);
+		}
 		break;
 
 	case rcvMboxMode:
+		if (GetInteger(data, currentAlert.mode))
+		{
+			currentAlert.flags |= Alert::GotMode;
+		}
+		break;
+
 	case rcvMboxMsg:
+		currentAlert.text.copy(data);
+		currentAlert.flags |= Alert::GotText;
+		break;
+
 	case rcvMboxControls:
+		if (GetUnsignedInteger(data, currentAlert.controls))
+		{
+			currentAlert.flags |= Alert::GotControls;
+		}
+		break;
+
 	case rcvMboxTimeout:
+		if (GetFloat(data, currentAlert.timeout))
+		{
+			currentAlert.flags |= Alert::GotTimeout;
+		}
+		break;
+
 	case rcvMboxTitle:
-		//TODO
+		currentAlert.title.copy(data);
+		currentAlert.flags |= Alert::GotTitle;
+		break;
+
+	case rcvMboxSeq:
+		if (GetUnsignedInteger(data, currentAlert.seq))
+		{
+			currentAlert.flags |= Alert::GotSeq;
+		}
 		break;
 
 	case rcvErr:
 		{
-			int i;
+			int32_t i;
 			if (GetInteger(data, i))
 			{
 				FileManager::ReceiveErrorCode(i);
@@ -1010,7 +1062,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 
 	case rcvVolumes:
 		{
-			unsigned int i;
+			uint32_t i;
 			if (GetUnsignedInteger(data, i))
 			{
 				FileManager::SetNumVolumes(i);
@@ -1020,7 +1072,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 
 	case rcvNumTools:
 		{
-			unsigned int i;
+			uint32_t i;
 			if (GetUnsignedInteger(data, i))
 			{
 				UI::SetNumTools(i);
@@ -1126,6 +1178,8 @@ int main(void)
 	wdt_init (WDT, WDT_MR_WDRSTEN, 1000, 1000);
 	SysTick_Config(SystemCoreClock / 1000);
 	lastTouchTime = SystemTick::GetTickCount();
+
+	firmwareFeatures = firmwareTypes[0].features;		// assume RepRapFirmware until we hear otherwise
 
 	// Read parameters from flash memory
 	nvData.Load();

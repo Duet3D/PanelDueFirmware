@@ -1229,7 +1229,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/OEM/1|src/OEM/2|src/OEM/4|src/OEM/5|src/OEM/6|src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

@@ -19,6 +19,7 @@
 #include "Hardware/Buzzer.hpp"
 #include "Hardware/Reset.hpp"
 #include "Hardware/SerialIo.hpp"
+#include "Hardware/SysTick.hpp"
 #include "Strings.hpp"
 
 const unsigned int numLanguages = 3;
@@ -39,6 +40,8 @@ StaticTextField *touchCalibInstruction, *debugField;
 StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
 
 // Private fields
+class AlertPopup;
+
 static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *filePopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
 static SingleButton *scrollFilesLeftButton, *scrollFilesRightButton, *filesUpButton, *changeCardButton;
 static StaticTextField *areYouSureTextField, *areYouSureQueryField, *macroPopupTitleField;
@@ -59,7 +62,8 @@ static IntegerButton *activeTemps[maxHeaters], *standbyTemps[maxHeaters];
 static IntegerButton *spd, *extrusionFactors[maxHeaters - 1], *fanSpeed, *baudRateButton, *volumeButton;
 static TextButton *languageButton, *coloursButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
-static PopupWindow *alertPopup, *babystepPopup;
+static PopupWindow *babystepPopup;
+static AlertPopup *alertPopup;
 static CharButtonRow *keyboardRows[4];
 static const char* array const * array currentKeyboard;
 
@@ -72,13 +76,11 @@ static ButtonPress currentExtrudeRatePress, currentExtrudeAmountPress;
 const size_t machineNameLength = 30;
 const size_t printingFileLength = 40;
 const size_t zprobeBufLength = 12;
-const size_t alertTextLength = 80;
 const size_t generatedByTextLength = 50;
 
 static String<machineNameLength> machineName;
 static String<printingFileLength> printingFile;
 static String<zprobeBufLength> zprobeBuf;
-static String<alertTextLength> alertText;
 static String<generatedByTextLength> generatedByText;
 
 const size_t maxUserCommandLength = 40;					// max length of a user gcode command
@@ -97,19 +99,101 @@ const StringTable * strings = &LanguageTables[0];
 static bool keyboardIsDisplayed = false;
 static bool keyboardShifted = false;
 
-// Create a standard popup window with a title and a close button at the top right
-PopupWindow *CreatePopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder, Colour textColour, Colour imageBackColour, const char * null title, PixelNumber topMargin = popupTopMargin)
+int32_t alertMode = -1;
+uint32_t alertTicks = 0;
+uint32_t whenAlertReceived;
+
+class StandardPopupWindow : public PopupWindow
 {
-	PopupWindow *window = new PopupWindow(ph, pw, pb, pBorder);
+public:
+	StandardPopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder, Colour textColour, Colour imageBackColour,
+			const char * null title, PixelNumber topMargin = popupTopMargin);
+
+protected:
+	StaticTextField *titleField;
+	IconButton *closeButton;
+};
+
+class AlertPopup : public StandardPopupWindow
+{
+public:
+	AlertPopup(const ColourScheme& colours);
+	void Set(const char *title, const char *text, int32_t mode, uint32_t controls);
+
+private:
+	TextButton *okButton, *cancelButton, *zUpCourseButton, *zUpMedButton, *zUpFineButton, *zDownCourseButton, *zDownMedButton, *zDownFineButton;
+	String<alertTextLength/2> alertText1, alertText2;
+	String<alertTitleLength> alertTitle;
+};
+
+// Create a standard popup window with a title and a close button at the top right
+StandardPopupWindow::StandardPopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder, Colour textColour, Colour imageBackColour, const char * null title, PixelNumber topMargin)
+	: PopupWindow(ph, pw, pb, pBorder), titleField(nullptr)
+{
 	DisplayField::SetDefaultColours(textColour, pb);
 	if (title != nullptr)
 	{
-		window->AddField(new StaticTextField(topMargin + labelRowAdjust, popupSideMargin + closeButtonWidth + popupFieldSpacing,
+		AddField(titleField = new StaticTextField(topMargin + labelRowAdjust, popupSideMargin + closeButtonWidth + popupFieldSpacing,
 							pw - 2 * (popupSideMargin + closeButtonWidth + popupFieldSpacing), TextAlignment::Centre, title));
 	}
+	else
+	{
+		titleField = nullptr;
+	}
 	DisplayField::SetDefaultColours(textColour, imageBackColour);
-	window->AddField(new IconButton(popupTopMargin, pw - (closeButtonWidth + popupSideMargin), closeButtonWidth, IconCancel, evCancel));
-	return window;
+	AddField(closeButton = new IconButton(popupTopMargin, pw - (closeButtonWidth + popupSideMargin), closeButtonWidth, IconCancel, evCancel));
+}
+
+AlertPopup::AlertPopup(const ColourScheme& colours)
+	: StandardPopupWindow(alertPopupHeight, alertPopupWidth,
+			colours.alertPopupBackColour, colours.popupBorderColour, colours.alertPopupTextColour, colours.buttonImageBackColour, "", popupTopMargin)		// title is present, but empty for now
+{
+	DisplayField::SetDefaultColours(colours.alertPopupTextColour, colours.alertPopupBackColour);
+	titleField->SetValue(alertTitle.c_str());
+	AddField(new StaticTextField(popupTopMargin + 2 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText1.c_str()));
+	AddField(new StaticTextField(popupTopMargin + 3 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText2.c_str()));
+
+	// Calculate the button positions
+	constexpr unsigned int numButtons = 6;
+	constexpr PixelNumber buttonWidthUnits = 5;
+	constexpr PixelNumber buttonSpacingUnits = 1;
+	constexpr PixelNumber totalUnits = (numButtons * buttonWidthUnits) + ((numButtons - 1) * buttonSpacingUnits);
+	constexpr PixelNumber unitWidth = (alertPopupWidth - 2 * popupSideMargin)/totalUnits;
+	constexpr PixelNumber buttonWidth = buttonWidthUnits * unitWidth;
+	constexpr PixelNumber buttonStep = (buttonWidthUnits + buttonSpacingUnits) * unitWidth;
+	constexpr PixelNumber hOffset = popupSideMargin + (alertPopupWidth - 2 * popupSideMargin - totalUnits * unitWidth)/2;
+
+	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
+	AddField(zUpCourseButton =   new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset,				  buttonWidth, UP_ARROW "2.0", evMoveZ, "2.0"));
+	AddField(zUpMedButton =      new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + buttonStep,     buttonWidth, UP_ARROW "0.2", evMoveZ, "0.2"));
+	AddField(zUpFineButton =     new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, UP_ARROW "0.02", evMoveZ, "0.02"));
+	AddField(zDownFineButton =   new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, DOWN_ARROW "0.02", evMoveZ, "-0.02"));
+	AddField(zDownMedButton =    new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, DOWN_ARROW "0.2", evMoveZ, "-0.2"));
+	AddField(zDownCourseButton = new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, DOWN_ARROW "2.0", evMoveZ, "-2.0"));
+
+	AddField(okButton =          new TextButton(popupTopMargin + 5 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + buttonStep,     buttonWidth + buttonStep, "OK", evCloseAlert, "M292 P0"));
+	AddField(cancelButton =      new TextButton(popupTopMargin + 5 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + 3 * buttonStep, buttonWidth + buttonStep, "Cancel", evCloseAlert, "M292 P1"));
+}
+
+void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t controls)
+{
+	alertTitle.copy(title);
+
+	// Split the alert text into 2 lines
+	const size_t splitPoint = MessageLog::FindSplitPoint(text, alertText1.capacity(), GetWidth() - 2 * popupSideMargin);
+	alertText1.copy(text);
+	alertText1.truncate(splitPoint);
+	alertText2.copy(text + splitPoint);
+	closeButton->Show(mode == 1);
+	okButton->Show(mode >= 2);
+	cancelButton->Show(mode == 3);
+	const bool showZbuttons = (controls & (1u << 2)) != 0;
+	zUpCourseButton->Show(showZbuttons);
+	zUpMedButton->Show(showZbuttons);
+	zUpFineButton->Show(showZbuttons);
+	zDownCourseButton->Show(showZbuttons);
+	zDownMedButton->Show(showZbuttons);
+	zDownFineButton->Show(showZbuttons);
 }
 
 // Add a text button
@@ -164,6 +248,7 @@ ButtonPress CreateStringButtonRow(Window * pf, PixelNumber top, PixelNumber left
 	return bp;
 }
 
+#if 0	// currently unused
 // Create a row of icon buttons.
 // Set the colours before calling this
 void CreateIconButtonRow(Window * pf, PixelNumber top, PixelNumber left, PixelNumber totalWidth, PixelNumber spacing, unsigned int numButtons,
@@ -175,6 +260,7 @@ void CreateIconButtonRow(Window * pf, PixelNumber top, PixelNumber left, PixelNu
 		pf->AddField(new IconButton(top, left + i * step, step - spacing, icons[i], evt, params[i]));
 	}
 }
+#endif
 
 // Create a popup bar with string parameters
 PopupWindow *CreateStringPopupBar(const ColourScheme& colours, PixelNumber width, unsigned int numEntries, const char* const text[], const char* const params[], Event ev)
@@ -275,7 +361,7 @@ void CreateMovePopup(const ColourScheme& colours)
 	static const char * array const xyJogValues[] = { "-100", "-10", "-1", "-0.1", "0.1",  "1", "10", "100" };
 	static const char * array const zJogValues[] = { "-50", "-5", "-0.5", "-0.05", "0.05",  "0.5", "5", "50" };
 
-	movePopup = CreatePopupWindow(movePopupHeight, movePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->moveHead);
+	movePopup = new StandardPopupWindow(movePopupHeight, movePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->moveHead);
 	PixelNumber ypos = popupTopMargin + buttonHeight + moveButtonRowSpacing;
 	const PixelNumber xpos = popupSideMargin + axisLabelWidth;
 	Event e = evMoveX;
@@ -304,7 +390,7 @@ void CreateExtrudePopup(const ColourScheme& colours)
 	static const char * array extrudeSpeedValues[] = { "50", "40", "20", "10", "5" };
 	static const char * array extrudeSpeedParams[] = { "3000", "2400", "1200", "600", "300" };
 
-	extrudePopup = CreatePopupWindow(extrudePopupHeight, extrudePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->extrusionAmount);
+	extrudePopup = new StandardPopupWindow(extrudePopupHeight, extrudePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->extrusionAmount);
 	PixelNumber ypos = popupTopMargin + buttonHeight + extrudeButtonRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 	currentExtrudeAmountPress = CreateStringButtonRow(extrudePopup, ypos, popupSideMargin, extrudePopupWidth - 2 * popupSideMargin, fieldSpacing, 6, extrudeAmountValues, extrudeAmountValues, evExtrudeAmount, 3);
@@ -322,7 +408,7 @@ void CreateExtrudePopup(const ColourScheme& colours)
 // Create the popup used to list files and macros
 void CreateFileListPopup(const ColourScheme& colours)
 {
-	fileListPopup = CreatePopupWindow(fileListPopupHeight, fileListPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, nullptr);
+	fileListPopup = new StandardPopupWindow(fileListPopupHeight, fileListPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, nullptr);
 	const PixelNumber closeButtonPos = fileListPopupWidth - closeButtonWidth - popupSideMargin;
 	const PixelNumber navButtonWidth = (closeButtonPos - popupSideMargin)/7;
 	const PixelNumber upButtonPos = closeButtonPos - navButtonWidth - fieldSpacing;
@@ -338,11 +424,11 @@ void CreateFileListPopup(const ColourScheme& colours)
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.buttonImageBackColour);
 	fileListPopup->AddField(changeCardButton = new IconButton(popupTopMargin, changeButtonPos, navButtonWidth, IconFiles, evChangeCard, 0));
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	fileListPopup->AddField(scrollFilesLeftButton = new TextButton(popupTopMargin, leftButtonPos, navButtonWidth, "<", evScrollFiles, -1));
+	fileListPopup->AddField(scrollFilesLeftButton = new TextButton(popupTopMargin, leftButtonPos, navButtonWidth, LEFT_ARROW, evScrollFiles, -1));
 	scrollFilesLeftButton->Show(false);
-	fileListPopup->AddField(scrollFilesRightButton = new TextButton(popupTopMargin, rightButtonPos, navButtonWidth, ">", evScrollFiles, 1));
+	fileListPopup->AddField(scrollFilesRightButton = new TextButton(popupTopMargin, rightButtonPos, navButtonWidth, RIGHT_ARROW, evScrollFiles, 1));
 	scrollFilesRightButton->Show(false);
-	fileListPopup->AddField(filesUpButton = new IconButton(popupTopMargin, upButtonPos, navButtonWidth, IconUp, evNull));
+	fileListPopup->AddField(filesUpButton = new TextButton(popupTopMargin, upButtonPos, navButtonWidth, UP_ARROW, evNull));
 	filesUpButton->Show(false);
 
 	const PixelNumber fileFieldWidth = (fileListPopupWidth + fieldSpacing - (2 * popupSideMargin))/numFileColumns;
@@ -370,7 +456,7 @@ void CreateFileListPopup(const ColourScheme& colours)
 // Create the popup window used to display the file dialog
 void CreateFileActionPopup(const ColourScheme& colours)
 {
-	filePopup = CreatePopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
+	filePopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
 	PixelNumber ypos = popupTopMargin + (3 * rowTextHeight)/2;
 	fpNameField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->fileName);
@@ -466,7 +552,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	static const char* array const keysFR[8] = { "1234567890-+", "AZERTWUIOP[]", "QSDFGHJKLM@", "YXCVBN.,:/", "!\"#$%^&*()_=", "azertwuiop{}", "qsdfghjklm'", "yxcvbn<>;?" };
 	static const char* array const * const keyboards[numLanguages] = { keysEN, keysDE, keysFR /*, keysEN */ };		// Spain keyboard layout is same as English
 
-	keyboardPopup = CreatePopupWindow(keyboardPopupHeight, keyboardPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupInfoTextColour, colours.buttonImageBackColour, nullptr, keyboardTopMargin);
+	keyboardPopup = new StandardPopupWindow(keyboardPopupHeight, keyboardPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupInfoTextColour, colours.buttonImageBackColour, nullptr, keyboardTopMargin);
 
 	// Add the text area in which the command is built
 	DisplayField::SetDefaultColours(colours.popupInfoTextColour, colours.popupInfoBackColour);		// need a different background colour
@@ -509,11 +595,11 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 			break;
 
 		case 2:
-			keyboardPopup->AddField(new IconButton(row, keyboardPopupWidth - popupSideMargin - (3 * keyButtonWidth)/2, (3 * keyButtonWidth)/2, IconUp, evUp));
+			keyboardPopup->AddField(new TextButton(row, keyboardPopupWidth - popupSideMargin - (3 * keyButtonWidth)/2, (3 * keyButtonWidth)/2, UP_ARROW, evUp));
 			break;
 
 		case 3:
-			keyboardPopup->AddField(new IconButton(row, keyboardPopupWidth - popupSideMargin - (3 * keyButtonWidth)/2, (3 * keyButtonWidth)/2, IconDown, evDown));
+			keyboardPopup->AddField(new TextButton(row, keyboardPopupWidth - popupSideMargin - (3 * keyButtonWidth)/2, (3 * keyButtonWidth)/2, DOWN_ARROW, evDown));
 			break;
 
 		default:
@@ -532,28 +618,21 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	keyboardPopup->AddField(new IconButton(row, popupSideMargin + 3 * wideKeyButtonWidth + 2 * keyButtonHSpace, wideKeyButtonWidth, IconEnter, evSendKeyboardCommand));
 }
 
-// Create the message popup window
-void CreateMessagePopup(const ColourScheme& colours)
-{
-	alertPopup = CreatePopupWindow(alertPopupHeight, alertPopupWidth, colours.alertPopupBackColour, colours.popupBorderColour, colours.alertPopupTextColour, colours.buttonImageBackColour,
-			strings->message);
-	DisplayField::SetDefaultColours(colours.alertPopupTextColour, colours.alertPopupBackColour);
-	alertPopup->AddField(new StaticTextField(popupTopMargin + 2 * rowTextHeight, popupSideMargin, alertPopupWidth - 2 * popupSideMargin, TextAlignment::Centre, alertText.c_str()));
-}
-
 // Create the babystep popup
 void CreateBabystepPopup(const ColourScheme& colours)
 {
-	static const Icon babystepIcons[2] = {IconUp, IconDown };
+//	static const Icon babystepIcons[2] = {IconUp, IconDown };
+	static const char * array const babystepStrings[2] = { UP_ARROW " 0.05", DOWN_ARROW " 0.05" };
 	static const char * array const babystepCommands[2] = { "M290 S0.05", "M290 S-0.05" };
-	babystepPopup = CreatePopupWindow(babystepPopupHeight, babystepPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour,
+	babystepPopup = new StandardPopupWindow(babystepPopupHeight, babystepPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour,
 			strings->babyStepping);
 	PixelNumber ypos = popupTopMargin + babystepRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
 	babystepPopup->AddField(babystepOffsetField = new FloatField(ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, TextAlignment::Left, 3, strings->currentZoffset, "mm"));
 	ypos += babystepRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.buttonImageBackColour);
-	CreateIconButtonRow(babystepPopup, ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, fieldSpacing, 2, babystepIcons, babystepCommands, evBabyStepAmount);
+//	CreateIconButtonRow(babystepPopup, ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, fieldSpacing, 2, babystepIcons, babystepCommands, evBabyStepAmount);
+	CreateStringButtonRow(babystepPopup, ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, fieldSpacing, 2, babystepStrings, babystepCommands, evBabyStepAmount);
 }
 
 // Create the grid of heater icons and temperatures
@@ -868,7 +947,7 @@ namespace UI
 		CreateAreYouSurePopup(colours);
 		CreateKeyboardPopup(language, colours);
 		CreateLanguagePopup(colours);
-		CreateMessagePopup(colours);
+		alertPopup = new AlertPopup(colours);
 		CreateBabystepPopup(colours);
 
 		DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
@@ -1135,6 +1214,10 @@ namespace UI
 		{
 			MessageLog::UpdateMessages(false);
 		}
+		if (alertTicks != 0 && SystemTick::GetTickCount() - whenAlertReceived >= alertTicks)
+		{
+			ClearAlert();
+		}
 	}
 
 	// This is called when we have just started a file print
@@ -1268,16 +1351,35 @@ namespace UI
 		UpdateField(spd, ival);
 	}
 
-	// Process an alert message. If the data is empty then we should clear any existing alert.
-	void ProcessAlert(const char data[])
+	// Process a new message box alert, clearing any existing one
+	void ProcessAlert(const Alert& alert)
 	{
-		if (data[0] == 0)
+		alertMode = alert.mode;
+		whenAlertReceived = SystemTick::GetTickCount();
+		alertTicks = (alertMode < 2) ? (uint32_t)(alert.timeout * 1000.0) : 0;
+		alertPopup->Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
+		mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+	}
+
+	// Process a command to clear a message box alert
+	void ClearAlert()
+	{
+		if (alertMode >= 0)
 		{
+			alertTicks = 0;
 			mgr.ClearPopup(true, alertPopup);
+			alertMode = -1;
 		}
-		else
+	}
+
+	void ProcessSimpleAlert(const char* array text)
+	{
+		if (alertMode < 2)								// if the current alert doesn't require acknowledgement
 		{
-			alertText.copy(data);
+			alertMode = -1;
+			whenAlertReceived = SystemTick::GetTickCount();
+			alertTicks = 0;								// no timeout
+			alertPopup->Set(strings->message, text, 1, 0);
 			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
 		}
 	}
@@ -1680,9 +1782,9 @@ namespace UI
 				mgr.ClearPopup();			// clear the file list popup
 				if (currentFile != nullptr)
 				{
-					SerialIo::SendString((ev == evSimulateFile) ? "M37 \"" : "M32 ");
+					SerialIo::SendString((ev == evSimulateFile) ? "M37 P" : "M32 ");
 					SerialIo::SendFilename(CondStripDrive(StripPrefix(FileManager::GetFilesDir())), currentFile);
-					SerialIo::SendString((ev == evSimulateFile) ? "\"\n" : "\n");
+					SerialIo::SendChar('\n');
 					PrintingFilenameChanged(currentFile);
 					currentFile = nullptr;							// allow the file list to be updated
 					CurrentButtonReleased();
@@ -1843,9 +1945,8 @@ namespace UI
 				break;
 
 			case evKey:
-				if (!userCommandBuffers[currentUserCommandBuffer].full())
+				if (userCommandBuffers[currentUserCommandBuffer].add((char)bp.GetIParam()))
 				{
-					userCommandBuffers[currentUserCommandBuffer].add((char)bp.GetIParam());
 					userCommandField->SetChanged();
 				}
 				break;
@@ -1922,6 +2023,12 @@ namespace UI
 					userCommandBuffers[currentUserCommandBuffer].clear();
 					userCommandField->SetLabel(userCommandBuffers[currentUserCommandBuffer].c_str());
 				}
+				break;
+
+			case evCloseAlert:
+				SerialIo::SendString(bp.GetSParam());
+				SerialIo::SendChar('\n');
+				ClearAlert();
 				break;
 
 			default:

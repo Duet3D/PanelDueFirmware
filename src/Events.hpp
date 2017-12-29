@@ -61,8 +61,10 @@ enum Event : uint8_t
 
 	evRestart, evEmergencyStop,
 
+	evJogZ, evCloseAlert
+
 #ifdef OEM_LAYOUT
-	evOemJogPage, evOemSetIncrement, evOemAdjustUpDown, evOemDone, evOemSetBrightness, evOemAxisSelect, evOemDistanceSelect, evOemCardSelect
+	, evOemJogPage, evOemSetIncrement, evOemAdjustUpDown, evOemDone, evOemSetBrightness, evOemAxisSelect, evOemDistanceSelect, evOemCardSelect
 #endif
 };
 

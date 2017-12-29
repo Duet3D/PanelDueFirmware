@@ -119,6 +119,10 @@ namespace SerialIo
 	
 	void SendFilename(const char * array dir, const char * array name)
 	{
+		if (GetFirmwareFeatures() & quoteFilenames)
+		{
+			SendChar('"');
+		}
 		if (*dir != 0)
 		{
 			// We have a directory, so send it followed by '/' if necessary
@@ -135,6 +139,10 @@ namespace SerialIo
 			
 		}
 		SendString(name);
+		if (GetFirmwareFeatures() & quoteFilenames)
+		{
+			SendChar('"');
+		}
 	}
 
 	void SendInt(int i)
@@ -183,7 +191,7 @@ namespace SerialIo
 
 	// fieldId is the name of the field being received. A '^' character indicates the position of an array index, and a ':' character indicates a field separator.
 	String<50> fieldId;
-	String<100> fieldVal;
+	String<160> fieldVal;	// long enough for about 3 lines of message
 	size_t arrayIndices[MaxArrayNesting];
 	size_t arrayDepth = 0;
 	
@@ -388,23 +396,16 @@ namespace SerialIo
 						state = jsHadId;
 						break;
 					default:
-						if (c >= ' ')
-						{
-							if (c != ':' && c != '^')
-							{
-								if (fieldId.full())
-								{
-									state = jsError;
-								}
-								else
-								{
-									fieldId.add(c);
-								}
-							}
-						}
-						else
+						if (c < ' ')
 						{
 							state = jsError;
+						}
+						else if (c != ':' && c != '^')
+						{
+							if (!fieldId.add(c))
+							{
+								state = jsError;
+							}
 						}
 						break;
 					}
@@ -434,15 +435,14 @@ namespace SerialIo
 						state = jsStringVal;
 						break;
 					case '[':
-						if (fieldId.full() || arrayDepth == MaxArrayNesting)
+						if (arrayDepth < MaxArrayNesting && fieldId.add('^'))
 						{
-							state = jsError;
+							arrayIndices[arrayDepth] = 0;		// start an array
+							++arrayDepth;
 						}
 						else
 						{
-							fieldId.add('^');
-							arrayIndices[arrayDepth] = 0;		// start an array
-							++arrayDepth;
+							state = jsError;
 						}
 						break;
 					case ']':
@@ -459,25 +459,16 @@ namespace SerialIo
 						break;
 					case '-':
 						fieldVal.clear();
-						fieldVal.add(c);
-						state = jsNegIntVal;
+						state = (fieldVal.add(c)) ? jsNegIntVal : jsError;
 						break;
 					case '{':					// start of a nested object
-						if (fieldId.full())
-						{
-							state = jsError;
-						}
-						else
-						{
-							fieldId.add(':');
-							state = jsExpectId;
-						}
+						state = (fieldId.add(':')) ? jsExpectId : jsError;
 						break;
 					default:
 						if (c >= '0' && c <= '9')
 						{
 							fieldVal.clear();
-							fieldVal.add(c);
+							fieldVal.add(c);	// must succeed because we just cleared fieldVal
 							state = jsIntVal;
 							break;
 						}
@@ -504,9 +495,9 @@ namespace SerialIo
 						{
 							state = jsError;
 						}
-						else if (!fieldVal.full())
+						else
 						{
-							fieldVal.add(c);
+							fieldVal.add(c);	// ignore any error so that long string parameters just get truncated
 						}
 						break;
 					}
@@ -520,11 +511,17 @@ namespace SerialIo
 						case '"':
 						case '\\':
 						case '/':
-							fieldVal.add(c);
+							if (!fieldVal.add(c))
+							{
+								state = jsError;
+							}
 							break;
 						case 'n':
 						case 't':
-							fieldVal.add(' ');		// replace newline and tab by space
+							if (!fieldVal.add(' '))		// replace newline and tab by space
+							{
+								state = jsError;
+							}
 							break;
 						case 'b':
 						case 'f':
@@ -537,30 +534,14 @@ namespace SerialIo
 					break;
 
 				case jsNegIntVal:		// had '-' so expecting a integer value
-					if (c >= '0' && c <= '9')
-					{
-						fieldVal.add(c);
-						state = jsIntVal;
-					}
-					else
-					{
-						state = jsError;
-					}
+					state = (c >= '0' && c <= '9' && fieldVal.add(c)) ? jsIntVal : jsError;
 					break;
 					
 				case jsIntVal:			// receiving an integer value
 					switch(c)
 					{
 					case '.':
-						if (fieldVal.full())
-						{
-							state = jsError;
-						}
-						else
-						{
-							fieldVal.add(c);
-							state = jsFracVal;
-						}
+						state = (fieldVal.add(c)) ? jsFracVal : jsError;
 						break;
 					case ',':
 						ProcessField();
@@ -612,11 +593,7 @@ namespace SerialIo
 						}
 						break;
 					default:
-						if (c >= '0' && c <= '9' && !fieldVal.full())
-						{
-							fieldVal.add(c);
-						}
-						else
+						if  (!(c >= '0' && c <= '9' && fieldVal.add(c)))
 						{
 							state = jsError;
 						}
@@ -636,6 +613,7 @@ namespace SerialIo
 						}
 						else
 						{
+							RemoveLastId();
 							state = jsExpectId;
 						}
 						break;
@@ -674,11 +652,7 @@ namespace SerialIo
 						}
 						break;
 					default:
-						if (c >= '0' && c <= '9' && !fieldVal.full())
-						{
-							fieldVal.add(c);
-						}
-						else
+						if (!(c >= '0' && c <= '9' && fieldVal.add(c)))
 						{
 							state = jsError;
 						}

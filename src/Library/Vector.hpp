@@ -27,7 +27,7 @@ public:
 		
 	bool full() const { return filled == N; }
 
-	size_t capacity() const { return N; }
+	constexpr size_t capacity() const { return N; }
 
 	size_t size() const { return filled; }
 
@@ -37,9 +37,9 @@ public:
 
 	T& operator[](size_t index) pre(index < N) { return storage[index]; }
 
-	void add(const T& x);
+	bool add(const T& x);
 
-	void add(const T* array p, size_t n);
+	bool add(const T* array p, size_t n);
 	
 	void erase(size_t pos, size_t count = 1);
 
@@ -56,21 +56,28 @@ protected:
 	size_t filled;	
 };
 
-template<class T, size_t N> void Vector<T, N>::add(const T& x)
+template<class T, size_t N> bool Vector<T, N>::add(const T& x)
 {
 	if (filled < N)
 	{
 		storage[filled++] = x;
+		return true;
 	}
+	return false;
 }
 
-template<class T, size_t N> void Vector<T, N>::add(const T* array p, size_t n)
+template<class T, size_t N> bool Vector<T, N>::add(const T* array p, size_t n)
 {
-	while (n != 0 && filled != N)
+	while (n != 0)
 	{
+		if (filled == N)
+		{
+			return false;
+		}
 		storage[filled++] = *p++;
 		--n;
 	}
+	return true;
 }
 
 template<class T, size_t N> void Vector<T, N>::sort(bool (*sortfunc)(T, T))
@@ -129,22 +136,17 @@ public:
 		this->copy(s);
 	}
 
+	// Redefine 'capacity' so as to make room for a null terminator
+	constexpr size_t capacity() const { return N; }
+
 	// Redefine 'full' so as to make room for a null terminator
 	bool full() const { return this->filled == N; }
 		
 	// Redefine 'add' to add a null terminator
-	void add(char x) pre(this->filled < N)
-	{
-		this->Vector<char, N + 1>::add(x);
-		this->storage[this->filled] = '\0';
-	}
+	bool add(char x);
 
 	// Redefine 'add' to add a null terminator
-	void add(const char* array p, size_t n)
-	{
-		this->Vector<char, N + 1>::add(p, n);
-		this->storage[this->filled] = '\0';
-	}
+	bool add(const char* array p, size_t n);
 
 	// Redefine 'erase' to preserve the null terminator
 	void erase(size_t pos, size_t count = 1)
@@ -209,6 +211,32 @@ public:
 		return strcasecmp(s, this->storage) == 0;
 	}
 };
+
+// Redefine 'add' to add a null terminator
+template<size_t N> bool String<N>::add(char x)
+{
+	this->Vector<char, N + 1>::add(x);
+	const bool overflow = (this->filled == N + 1);
+	if (overflow)
+	{
+		--this->filled;
+	}
+	this->storage[this->filled] = '\0';
+	return !overflow;
+}
+
+// Redefine 'add' to add a null terminator
+template<size_t N> bool String<N>::add(const char* array p, size_t n)
+{
+	this->Vector<char, N + 1>::add(p, n);
+	const bool overflow = (this->filled == N + 1);
+	if (overflow)
+	{
+		--this->filled;
+	}
+	this->storage[this->filled] = '\0';
+	return !overflow;
+}
 
 template<size_t N> int String<N>::printf(const char *fmt, ...)
 {

@@ -186,7 +186,7 @@ namespace FileManager
 			}
 		}
 		requestedPath.clear();
-		for (size_t i = 0; i < end && !requestedPath.full(); ++i)
+		for (size_t i = 0; i < end; ++i)
 		{
 			requestedPath.add(currentPath[i]);
 		}
@@ -200,7 +200,7 @@ namespace FileManager
 		FileListUpdated();									// this hides the file list until we receive a new one
 
 		requestedPath.copy(currentPath);
-		if (requestedPath.size() == 0 || (requestedPath[requestedPath.size() - 1] != '/' && !requestedPath.full()))
+		if (requestedPath.size() == 0 || (requestedPath[requestedPath.size() - 1] != '/'))
 		{
 			requestedPath.add('/');
 		}
@@ -301,7 +301,7 @@ namespace FileManager
 				++i;
 			}
 			String<10> temp;
-			while (i < fileDirectoryName.size() && fileDirectoryName[i] != '/' && !temp.full())
+			while (i < fileDirectoryName.size() && fileDirectoryName[i] != '/')
 			{
 				temp.add(fileDirectoryName[i++]);
 			}

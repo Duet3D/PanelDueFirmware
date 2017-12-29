@@ -13,6 +13,7 @@
 #include "RequestTimer.hpp"
 #include "PrinterStatus.hpp"
 #include "FirmwareFeatures.hpp"
+#include "Library/Vector.hpp"
 
 // Functions called from the serial I/O module
 extern void ProcessReceivedValue(const char id[], const char val[], const size_t indices[]);
@@ -56,6 +57,29 @@ extern MainWindow mgr;
 class ColourScheme;
 extern const ColourScheme *colours;
 
-const size_t MIN_AXES = 3;		// the minimum number of axes we support
+const size_t MIN_AXES = 3;					// the minimum number of axes we support
+const size_t alertTextLength = 110;			// maximum characters in the alert text
+const size_t alertTitleLength = 50;			// maximum characters in the alert title
+
+struct Alert
+{
+	int32_t mode;
+	uint32_t seq;
+	uint32_t controls;
+	float timeout;
+	String<50> title;
+	String<alertTextLength> text;
+	uint8_t flags;
+
+	static constexpr uint8_t GotMode = 0x01;
+	static constexpr uint8_t GotSeq = 0x02;
+	static constexpr uint8_t GotTimeout = 0x04;
+	static constexpr uint8_t GotTitle = 0x08;
+	static constexpr uint8_t GotText = 0x10;
+	static constexpr uint8_t GotControls = 0x20;
+	static constexpr uint8_t GotAll = GotMode | GotSeq | GotTimeout | GotTitle | GotText | GotControls;
+
+	Alert() { flags = 0; }
+};
 
 #endif /* PANELDUE_H_ */
