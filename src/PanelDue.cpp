@@ -747,7 +747,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		ShowLine;
 		{
 			int32_t ival;
-			if (GetInteger(data, ival) && indices[0] < (int)maxHeaters && indices[0] != 0)
+			if (GetInteger(data, ival) && indices[0] < maxHeaters)
 			{
 				UI::UpdateStandbyTemperature(indices[0], ival);
 			}
