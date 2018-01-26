@@ -1,0 +1,28 @@
+[done, test] Extrusion factor command sends parameter P instead of D
+[done, test] Send M408 S1 occasionally instead of M408 S0
+[done, test] Use bigger brightness up/down steps
+[done, test] Support simulating files
+[done] Change format of workspace paths, use quotes - issue #3
+[done, test] Keys on keyboard no longer show they are pressed
+[done, ok] Support new message box
+[done, ok] More characters on keyboard, in particular " and '
+[done, test] Skip leading digits followed by underscore in macro names
+[done] Characters beyond U+00FF
+[done] Reduce babystepping to 0.02mm
+[checked, ok] Check fan command - should send M106 without a fan number
+[done] Send file names in quotes
+
+Entire keyboard gets redrawn when a key is pressed
+Handle no bed heater better?
+Improve visual appearance?
+Load splash screen separately at a specific address? Or concatenate with binary?
+Cancel splash screen if screen is touched
+Look at https://www.duet3d.com/forum/thread.php?pid=27861#p27861
+Dim screen after no activity?
+User requests: https://www.duet3d.com/forum/thread.php?pid=33908#p33908
+User request to display virtual heaters e.g. chamber, heatsink https://www.duet3d.com/forum/thread.php?pid=34123#p34123
+Bug: https://www.duet3d.com/forum/thread.php?pid=34772#p34772 (needs RRF fix too?)
+Bug: standby temps not settable, see https://duet3d.com/wiki/Test_the_Z_probe
+User request: https://www.duet3d.com/forum/thread.php?pid=35713#p35713
+Pressing Control should close the extrusion or Move popup
+When older firmware sends popups, it displays some Z adjustment buttons

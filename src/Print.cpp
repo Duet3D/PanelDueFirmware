@@ -27,6 +27,20 @@ size_t Print::print(const char str[])
 	return w;
 }
 
+size_t Print::print(const char str[], size_t maxChars)
+{
+	size_t w = 0;
+	if (str != nullptr)
+	{
+		while (*str != 0 && *str != '\n' && w < maxChars)
+		{
+			w += write(*str);
+			++str;
+		}
+	}
+	return w;
+}
+
 size_t Print::print(long n, unsigned int base)
 {
 	if (base == 0)

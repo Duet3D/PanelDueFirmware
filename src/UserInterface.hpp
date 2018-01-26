@@ -12,9 +12,9 @@
 #include "PrinterStatus.hpp"
 #include "Display.hpp"
 #include "FirmwareFeatures.hpp"
+#include "Events.hpp"
 
 extern IntegerField *freeMem;
-extern TextButton *filenameButtons[];
 extern StaticTextField *debugField;
 extern StaticTextField *touchCalibInstruction;
 extern StaticTextField *messageTextFields[], *messageTimeFields[];
@@ -67,9 +67,13 @@ namespace UI
 	extern bool IsDisplayingFileInfo();
 	extern void UpdateFilesListTitle(int cardNumber, unsigned int numVolumes, bool isFilesList);
 	extern void SetNumTools(unsigned int n);
+
 	extern void FileListLoaded(int errCode);
 	extern void EnableFileNavButtons(bool scrollEarlier, bool scrollLater, bool parentDir);
+	extern void ShowFileButton(unsigned int i, Event ev, const char *text, const char *param);
+	extern void HideFileButton(unsigned int i);
 	extern unsigned int GetNumScrolledFiles();
+
 	extern void SetBabystepOffset(float f);
 }
 

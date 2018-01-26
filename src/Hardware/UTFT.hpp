@@ -52,8 +52,6 @@
 #include "OneBitPort.hpp"
 #include "DisplayOrientation.hpp"
 
-#include "HW_AVR_defines.h"
-
 enum DisplayType {
 	HX8347A,
 	ILI9327,
@@ -98,8 +96,9 @@ struct FontDescriptor
 	uint8_t x_size;
 	uint8_t y_size;
 	uint8_t spaces;
-	uint8_t firstChar;
-	uint8_t lastChar;
+	uint8_t spare;
+	uint16_t firstChar;
+	uint16_t lastChar;
 	const uint8_t* font;
 };
 
@@ -132,9 +131,6 @@ public:
 	static constexpr Colour fromRGB(uint8_t r, uint8_t g, uint8_t b);
 		
 	// New print functions
-	// Set up translation for characters. Useful for translating fullstop into decimal point, or changing the width of spaces.
-	// Either the first string passed must be NULL, or the two strings must have equal lengths as returned by strlen().
-	void setTranslation(const char *tFrom, const char *tTo);
 	void setTextPos(uint16_t x, uint16_t y, uint16_t rm = 9999);
 	void clearToMargin();
 	size_t print(const char *s, uint16_t x, uint16_t y, uint16_t rm = 9999);
@@ -168,13 +164,11 @@ private:
 	FontDescriptor cfont;
 	uint16_t textXpos, textYpos, textRightMargin;
 	uint32_t lastCharColData;		// used for auto kerning
-	const char* translateFrom;
-	const char* translateTo;
 	
 	uint32_t charVal;
 	uint8_t numContinuationBytesLeft;
 
-	size_t writeNative(uint8_t c);
+	size_t writeNative(uint16_t c);
 	void applyGradient(uint16_t grad);
 
 	// Hardware interface

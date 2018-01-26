@@ -18,10 +18,13 @@ namespace MessageLog
 	// Update the messages on the message tab. If 'all' is true we do the times and the text, else we just do the times.
 	void UpdateMessages(bool all);
 
-	// Add a message to the end of the list. It will be just off the visible part until we scroll it in.
+	// Add a message to the end of the list immediately
 	void AppendMessage(const char* data);
 
-	// If there is a new message, scroll it in
+	// Save a message for possible display later
+	void SaveMessage(const char* data);
+
+	// If we saved a message, display it
 	void DisplayNewMessage();
 	
 	// This is called when we receive a new response from the host, which may or may not include a new message for the log

@@ -31,6 +31,7 @@ public:
 	virtual size_t write(uint8_t c) = 0;
 
 	size_t print(const char[]);
+	size_t print(const char[], size_t maxChars);
 	size_t print(int n, unsigned int base = DEC) { return print((long)n, base); }
 	size_t print(unsigned int n, unsigned int base = DEC) { return printNumber(n, base); }
 	size_t print(long n, unsigned int base = DEC);

@@ -51,7 +51,6 @@
 #undef max
 #include "UTFT.hpp"
 #include "memorysaver.h"
-#include "HW_AVR.h" 
 #include <cstring>			// for strchr
 
 // Write the previous 16-bit data again the specified number of times.
@@ -76,7 +75,6 @@ UTFT::UTFT(DisplayType model, unsigned int RS, unsigned int WR, unsigned int CS,
 	: fcolour(0xFFFF), bcolour(0), transparentBackground(false),
 	  displayModel(model),
 	  portRS(RS), portWR(WR), portCS(CS), portRST(RST), portSDA(RS), portSCL(SER_LATCH),
-	  translateFrom(NULL), translateTo(NULL),
 	  numContinuationBytesLeft(0)
 { 
 	switch (model)
@@ -1906,7 +1904,7 @@ size_t UTFT::write(uint8_t c)
 		--numContinuationBytesLeft;
 		if (numContinuationBytesLeft == 0)
 		{
-			return writeNative((charVal < 0x100) ? (uint8_t)charVal : 0x7F);
+			return writeNative((charVal < 0x10000) ? (uint16_t)charVal : 0x007F);
 		}
 		else
 		{
@@ -1923,20 +1921,11 @@ size_t UTFT::write(uint8_t c)
 
 // Write a character. Always returns the number of bytes consumed i.e. 1.
 // If textYpos is off the end of the display, then don't write anything, just update textXpos and lastCharColData
-size_t UTFT::writeNative(uint8_t c)
+size_t UTFT::writeNative(uint16_t c)
 {
-	if (translateFrom != 0)
-	{
-		const char* p = strchr(translateFrom, c);
-		if (p != 0)
-		{
-			c = translateTo[p - translateFrom];
-		}
-	}
-
     if (c < cfont.firstChar || c > cfont.lastChar)
     {
-		return 1;
+		c = 0x007F;			// replace unsupported characters by square box
     }
     
 	uint8_t ySize = cfont.y_size;
@@ -2068,23 +2057,14 @@ size_t UTFT::writeNative(uint8_t c)
 	return 1;
 }
 
-// Set up translation for characters. Useful for translating fullstop into decimal point, or changing the width of spaces.
-// Either the first string passed must be NULL, or the two strings must have equal lengths as returned by strlen().
-void UTFT::setTranslation(const char *tFrom, const char *tTo)
-{
-	translateFrom = tFrom;
-	translateTo = tTo;
-}
-
 void UTFT::setFont(const uint8_t* font)
 {
-	cfont.font=font;
-	cfont.x_size=fontbyte(0);
-	cfont.y_size=fontbyte(1);
-	cfont.spaces=fontbyte(2);
-	cfont.firstChar=fontbyte(3);
-	cfont.lastChar=fontbyte(4);
-	cfont.font += 5;
+	cfont.x_size = font[0];
+	cfont.y_size = font[1];
+	cfont.spaces = font[2];
+	cfont.firstChar = *reinterpret_cast<const uint16_t*>(font + 4);
+	cfont.lastChar = *reinterpret_cast<const uint16_t*>(font + 6);
+	cfont.font = font + 8;
 }
 
 // Draw a bitmap using 16-bit colours

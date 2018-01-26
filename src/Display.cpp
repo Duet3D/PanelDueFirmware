@@ -68,7 +68,14 @@ void DisplayField::SetTextRows(const char * array null t)
 /*static*/ PixelNumber DisplayField::GetTextWidth(const char* array s, PixelNumber maxWidth)
 {
 	lcd.setTextPos(0, 9999, maxWidth);
-	lcd.print(s);    // dummy print to get text width
+	lcd.print(s);						// dummy print to get text width
+	return lcd.getTextX();
+}
+
+/*static*/ PixelNumber DisplayField::GetTextWidth(const char* array s, PixelNumber maxWidth, size_t maxChars)
+{
+	lcd.setTextPos(0, 9999, maxWidth);
+	lcd.print(s, maxChars);				// dummy print to get text width
 	return lcd.getTextX();
 }
 
@@ -696,6 +703,17 @@ size_t TextButton::PrintText(size_t offset) const
 		return lcd.print(text + offset);
 	}
 	return 0;
+}
+
+ShadowTextButton::ShadowTextButton(PixelNumber py, PixelNumber px, PixelNumber pw, TextButton *b)
+: ButtonWithText(py, px, pw), shadowedButton(b)
+{
+	SetEvent(b->GetEvent(), b->GetUParam());
+}
+
+size_t ShadowTextButton::PrintText(size_t offset) const
+{
+	return shadowedButton->PrintText(offset);
 }
 
 IconButton::IconButton(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int param)

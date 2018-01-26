@@ -102,18 +102,31 @@ namespace FileManager
 			// 4. Display the file list
 			for (size_t i = 0; i < numDisplayedFiles; ++i)
 			{
-				TextButton *f = filenameButtons[i];
 				if (i + scrollOffset < fileIndex.size())
 				{
 					const char *text = fileIndex[i + scrollOffset];
-					f->SetText(text);
-					f->SetEvent(fileEvent, text);
-					mgr.Show(f, true);
+					const char * const param = text;
+					if (!isFilesList && isdigit(*text))
+					{
+						// If the text starts with decimal digits followed by underscore, skip that bit
+						do
+						{
+							++text;
+						} while (isdigit(*text));
+						if (*text == '_')
+						{
+							++text;
+						}
+						else
+						{
+							text = param;
+						}
+					}
+					UI::ShowFileButton(i, fileEvent, text, param);
 				}
 				else
 				{
-					f->SetText("");
-					mgr.Show(f, false);
+					UI::HideFileButton(i);
 				}
 			}
 			displayedFileSet = this;
@@ -123,7 +136,7 @@ namespace FileManager
 			UI::EnableFileNavButtons(false, false, false);
 			for (size_t i = 0; i < numDisplayedFiles; ++i)
 			{
-				mgr.Show(filenameButtons[i], false);
+				UI::HideFileButton(i);
 			}
 		}
 	}

@@ -16,24 +16,26 @@
 
 namespace MessageLog
 {
-	const unsigned int maxMessageChars = 80;
+	const unsigned int MaxCharsPerRow = 80;
+	const unsigned int MaxCharsPerMessage = 256;
+	const unsigned int MaxNewMessageLines = 3;
 
 	struct Message
 	{
 		static const size_t rttLen = 5;					// number of chars we print for the message age
 		uint32_t receivedTime;
 		char receivedTimeText[rttLen];					// 5 characters plus null terminator
-		char msg[maxMessageChars + 1];
+		char msg[MaxCharsPerRow + 1];
 	};
 
-	static Message messages[numMessageRows + 1];		// one extra slot for receiving new messages into
+	static String<MaxCharsPerMessage> newMessage;		// buffer for receiving a new message into
+	static Message messages[numMessageRows];
 	static unsigned int messageStartRow = 0;			// the row number at the top
-	static unsigned int newMessageStartRow = 0;			// the row number that we put a new message in
 
 	void Init()
 	{
 		// Clear the message log
-		for (size_t i = 0; i <= numMessageRows; ++i)	// note we have numMessageRows+1 message slots
+		for (size_t i = 0; i < numMessageRows; ++i)	// note we have numMessageRows+1 message slots
 		{
 			messages[i].receivedTime = 0;
 			messages[i].msg[0] = 0;
@@ -97,15 +99,15 @@ namespace MessageLog
 			{
 				messageTextFields[i]->SetValue(m->msg);
 			}
-			index = (index + 1) % (numMessageRows + 1);
+			index = (index + 1) % numMessageRows;
 		}
 	}
 
-	// Add a message to the end of the list. It will be just off the visible part until we scroll it in.
+	// Add a message to the end of the list
 	void AppendMessage(const char* array data)
 	{
 		// Skip any leading spaces, we don't have room on the display to waste
-		while (*data == ' ')
+		while (*data == ' ' || *data == '\n')
 		{
 			++data;
 		}
@@ -117,18 +119,18 @@ namespace MessageLog
 			unsigned int numLines = 0;
 			do
 			{
+				size_t msgRow = (messageStartRow + numLines) % numMessageRows;
 				++numLines;
-				size_t msgRow = (messageStartRow + numLines + numMessageRows - 1) % (numMessageRows + 1);
 				size_t splitPoint;
 			
 				// See if the rest of the message will fit on one line
 				if (numLines == numMessageRows)
 				{
-					split = false;		// if we have printed the maximum number of rows, don't split any more, just truncate
+					split = false;		// if we have printed the maximum number of rows (unlikely), don't split any more, just truncate
 				}
 				else
 				{
-					splitPoint = FindSplitPoint(data, maxMessageChars, messageTextWidth);
+					splitPoint = FindSplitPoint(data, MaxCharsPerRow, messageTextWidth);
 					split = data[splitPoint] != '\0';
 				}
 			
@@ -143,47 +145,52 @@ namespace MessageLog
 				}
 				else
 				{
-					safeStrncpy(messages[msgRow].msg, data, maxMessageChars + 1);
+					safeStrncpy(messages[msgRow].msg, data, MaxCharsPerRow + 1);
 				}
 			
 				messages[msgRow].receivedTime = (numLines == 1) ? SystemTick::GetTickCount() : 0;
 			} while (split && data[0] != '\0');
 
-			newMessageStartRow = (messageStartRow + numLines) % (numMessageRows + 1);
+			messageStartRow = (messageStartRow + numLines) % numMessageRows;
+			UpdateMessages(true);
 		}
+	}
+
+	// Save a message for possible display later
+	void SaveMessage(const char* data)
+	{
+		newMessage.copy(data);
 	}
 
 	// If there is a new message, scroll it in
 	void DisplayNewMessage()
 	{
-		if (newMessageStartRow != messageStartRow)
+		if (!newMessage.isEmpty())
 		{
-			messageStartRow = newMessageStartRow;
-			UpdateMessages(true);
+			AppendMessage(newMessage.c_str());
+			newMessage.clear();
 		}
 	}
 	
 	// This is called when we receive a new response from the host, which may or may not include a new message for the log
 	void BeginNewMessage()
 	{
-		newMessageStartRow = messageStartRow;
+		newMessage.clear();
 	}
 
-	// Find where we need to split a text string so that it will fit in  a field
+	// Find where we need to split a text string so that it will fit in a field
 	size_t FindSplitPoint(const char * array s, size_t maxChars, PixelNumber width)
 	{
 		const size_t remLength = strlen(s);
-		maxChars = min<size_t>(maxChars, maxMessageChars);
+		maxChars = min<size_t>(maxChars, MaxCharsPerRow);
 		if (remLength > maxChars || DisplayField::GetTextWidth(s, width + 1) > width)
 		{
 			// We need to split the line, so find out where
 			size_t low = 0, high = min<size_t>(remLength, maxChars + 1);
 			while (low + 1 < high)
 			{
-				size_t mid = (low + high)/2;
-				char buf[maxMessageChars + 1];
-				safeStrncpy(buf, s, mid + 1);
-				if (DisplayField::GetTextWidth(buf, messageTextWidth + 1) <= messageTextWidth)
+				const size_t mid = (low + high)/2;
+				if (DisplayField::GetTextWidth(s, messageTextWidth + 1, mid) <= messageTextWidth)
 				{
 					low = mid;
 				}
@@ -207,7 +214,7 @@ namespace MessageLog
 					}
 					if ((low - splitPoint) * 5 > low)
 					{
-						// If there is no good split point within 1/5 of ther most that will fit, split anyway
+						// If there is no good split point within 1/5 of the most that will fit, split anyway
 						splitPoint = low;
 						break;
 					}

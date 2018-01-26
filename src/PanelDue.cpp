@@ -588,7 +588,6 @@ void SetStatus(char c)
 		if (status == PrinterStatus::configuring || (status == PrinterStatus::connecting && newStatus != PrinterStatus::configuring))
 		{
 			MessageLog::AppendMessage("Connected");
-			MessageLog::DisplayNewMessage();
 		}
 	
 		status = newStatus;
@@ -994,7 +993,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		break;
 
 	case rcvResponse:
-		MessageLog::AppendMessage(data);
+		MessageLog::SaveMessage(data);
 		break;
 
 	case rcvDir:

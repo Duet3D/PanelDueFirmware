@@ -621,9 +621,8 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 // Create the babystep popup
 void CreateBabystepPopup(const ColourScheme& colours)
 {
-//	static const Icon babystepIcons[2] = {IconUp, IconDown };
-	static const char * array const babystepStrings[2] = { UP_ARROW " 0.05", DOWN_ARROW " 0.05" };
-	static const char * array const babystepCommands[2] = { "M290 S0.05", "M290 S-0.05" };
+	static const char * array const babystepStrings[2] = { UP_ARROW " 0.02", DOWN_ARROW " 0.02" };
+	static const char * array const babystepCommands[2] = { "M290 S0.02", "M290 S-0.02" };
 	babystepPopup = new StandardPopupWindow(babystepPopupHeight, babystepPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour,
 			strings->babyStepping);
 	PixelNumber ypos = popupTopMargin + babystepRowSpacing;
@@ -631,7 +630,6 @@ void CreateBabystepPopup(const ColourScheme& colours)
 	babystepPopup->AddField(babystepOffsetField = new FloatField(ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, TextAlignment::Left, 3, strings->currentZoffset, "mm"));
 	ypos += babystepRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.buttonImageBackColour);
-//	CreateIconButtonRow(babystepPopup, ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, fieldSpacing, 2, babystepIcons, babystepCommands, evBabyStepAmount);
 	CreateStringButtonRow(babystepPopup, ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, fieldSpacing, 2, babystepStrings, babystepCommands, evBabyStepAmount);
 }
 
@@ -2155,6 +2153,21 @@ namespace UI
 		mgr.Show(scrollFilesLeftButton, scrollEarlier);
 		mgr.Show(scrollFilesRightButton, scrollLater);
 		mgr.Show(filesUpButton, parentDir);
+	}
+
+	void ShowFileButton(unsigned int i, Event ev, const char *text, const char *param)
+	{
+		TextButton *f = filenameButtons[i];
+		f->SetText(text);
+		f->SetEvent(ev, param);
+		mgr.Show(f, true);
+	}
+
+	void HideFileButton(unsigned int i)
+	{
+		TextButton *f = filenameButtons[i];
+		f->SetText("");
+		mgr.Show(f, false);
 	}
 
 	unsigned int GetNumScrolledFiles()

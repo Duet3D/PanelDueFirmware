@@ -118,7 +118,8 @@ public:
 	static PixelNumber GetIconHeight(Icon ic) { return ic[1]; }
 	static const uint8_t * array GetIconData(Icon ic) { return ic + 2; }
 
-	static PixelNumber GetTextWidth(const char* array s, PixelNumber maxWidth);		// find out how much width we need to print this text
+	static PixelNumber GetTextWidth(const char* array s, PixelNumber maxWidth);						// find out how much width we need to print this text
+	static PixelNumber GetTextWidth(const char* array s, PixelNumber maxWidth, size_t maxChars);	// find out how much width we need to print this text
 };
 
 class PopupWindow;
@@ -330,12 +331,13 @@ public:
 
 class SingleButton : public ButtonBase
 {
-	union
+	union EventParameter
 	{
 		const char* null sParam;
 		int iParam;
 		//float fParam;
-	} param;
+	};
+	EventParameter param;
 
 protected:
 	SingleButton(PixelNumber py, PixelNumber px, PixelNumber pw);
@@ -345,10 +347,12 @@ protected:
 public:
 	bool IsButton() const override final { return true; }
 
-	void SetEvent(event_t e, const char* null sp ) { evt = e; param.sParam = sp; }
-	void SetEvent(event_t e, int ip ) { evt = e; param.iParam = ip; }
-	//void SetEvent(event_t e, float fp ) { evt = e; param.fParam = fp; }
+	void SetEvent(event_t e, EventParameter p) { evt = e; param = p; }
+	void SetEvent(event_t e, const char* null sp) { evt = e; param.sParam = sp; }
+	void SetEvent(event_t e, int ip) { evt = e; param.iParam = ip; }
+	//void SetEvent(event_t e, float fp) { evt = e; param.fParam = fp; }
 
+	EventParameter GetUParam() const { return param; }
 	const char* null GetSParam(unsigned int index) const override { UNUSED(index); return param.sParam; }
 	int GetIParam(unsigned int index) const override { UNUSED(index); return param.iParam; }
 	//float GetFParam() const { return param.fParam; }
@@ -431,8 +435,11 @@ public:
 	void ChangeText(const char* array s);
 };
 
+// Standard button with text
 class TextButton : public ButtonWithText
 {
+	friend class ShadowTextButton;
+
 	const char * array null text;
 	
 protected:
@@ -449,6 +456,19 @@ public:
 	}
 };
 
+// Button to shadow a standard text button
+class ShadowTextButton : public ButtonWithText
+{
+	TextButton *shadowedButton;
+
+protected:
+	size_t PrintText(size_t offset) const override;
+
+public:
+	ShadowTextButton(PixelNumber py, PixelNumber px, PixelNumber pw, TextButton *b);
+};
+
+// Standard button with an icon
 class IconButton : public SingleButton
 {
 	Icon icon;
@@ -463,6 +483,7 @@ public:
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override final;
 };
 
+// Button that displays an integer value, optionally preceded by a label and followed by units
 class IntegerButton : public ButtonWithText
 {
 	const char* array null label;
@@ -491,6 +512,7 @@ public:
 	}
 };
 
+// Button that displays a float value, optionally followed by units
 class FloatButton : public ButtonWithText
 {
 	const char * array null units;
