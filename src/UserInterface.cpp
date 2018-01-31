@@ -22,7 +22,7 @@
 #include "Hardware/SysTick.hpp"
 #include "Strings.hpp"
 
-const unsigned int numLanguages = 3;
+const unsigned int numLanguages = 4;
 static_assert(ARRAY_SIZE(LanguageTables) == numLanguages, "Wrong number of languages in LanguageTable");
 static const char* array const axisNames[] = { "X", "Y", "Z", "U", "V", "W" };
 
@@ -344,13 +344,13 @@ void PopupAreYouSure(Event ev, const char* text, const char* query = strings->ar
 
 void PopupRestart()
 {
-	PopupAreYouSure(evRestart, "Restart required", "Restart now?");
+	PopupAreYouSure(evRestart, strings->restartRequired, strings->restartNow);
 }
 
 void CreateIntegerAdjustPopup(const ColourScheme& colours)
 {
 	// Create the popup window used to adjust temperatures, fan speed, extrusion factor etc.
-	static const char* const tempPopupText[] = {"-5", "-1", "Set", "+1", "+5"};
+	static const char* const tempPopupText[] = {"-5", "-1", strings->set, "+1", "+5"};
 	static const int tempPopupParams[] = { -5, -1, 0, 1, 5 };
 	setTempPopup = CreateIntPopupBar(colours, tempPopupBarWidth, 5, tempPopupText, tempPopupParams, evAdjustInt, evSetInt);
 }
@@ -550,7 +550,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	static const char* array const keysEN[8] = { "1234567890-+", "QWERTYUIOP[]", "ASDFGHJKL:@", "ZXCVBNM,./", "!\"#$%^&*()_=", "qwertyuiop{}", "asdfghjkl;'", "zxcvbnm<>?" };
 	static const char* array const keysDE[8] = { "1234567890-+", "QWERTZUIOP[]", "ASDFGHJKL:@", "YXCVBNM,./", "!\"#$%^&*()_=", "qwertzuiop{}", "asdfghjkl;'", "yxcvbnm<>?" };
 	static const char* array const keysFR[8] = { "1234567890-+", "AZERTWUIOP[]", "QSDFGHJKLM@", "YXCVBN.,:/", "!\"#$%^&*()_=", "azertwuiop{}", "qsdfghjklm'", "yxcvbn<>;?" };
-	static const char* array const * const keyboards[numLanguages] = { keysEN, keysDE, keysFR /*, keysEN */ };		// Spain keyboard layout is same as English
+	static const char* array const * const keyboards[numLanguages] = { keysEN, keysDE, keysFR, keysEN /*, keysEN */ };		// Spain and Czech keyboard layout is same as English
 
 	keyboardPopup = new StandardPopupWindow(keyboardPopupHeight, keyboardPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupInfoTextColour, colours.buttonImageBackColour, nullptr, keyboardTopMargin);
 
