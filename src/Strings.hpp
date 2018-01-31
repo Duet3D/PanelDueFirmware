@@ -48,6 +48,7 @@ struct StringTable
 	CSTRING babystep;
 	CSTRING resume;
 	CSTRING cancel;
+	CSTRING set;
 
 	// Setup page
 	CSTRING volume;
@@ -69,6 +70,8 @@ struct StringTable
 	CSTRING touchTheSpot;
 	CSTRING settingsNotSavedText;
 	CSTRING restartNeededText;
+	CSTRING restartRequired;
+	CSTRING restartNow;
 	CSTRING moveHead;
 	CSTRING extrusionAmount;
 	CSTRING extrusionSpeed;
@@ -100,7 +103,7 @@ struct StringTable
 	CSTRING colourSchemeNames[NumColourSchemes];
 };
 
-const StringTable LanguageTables[3] =
+const StringTable LanguageTables[4] =
 {
 	// English
 	{
@@ -133,6 +136,7 @@ const StringTable LanguageTables[3] =
 		"Baby step",
 		"Resume",
 		"Cancel",
+		"Set",
 
 		// Setup page
 		"Volume ",							// note space at end
@@ -154,6 +158,8 @@ const StringTable LanguageTables[3] =
 		"Touch the spot",
 		"Some settings are not saved!",
 		"Touch Save & Restart to use new settings",
+		"Restart required",
+		"Restart now?",
 		"Move head",
 		"Extrusion amount (mm)",
 		"Speed (mm/s)",
@@ -231,6 +237,7 @@ const StringTable LanguageTables[3] =
 		"Baby Step",
 		"Fortsetzen",
 		"Abbrechen",
+		"Set",
 
 		// Setup page
 		"Lautstärke ",						// note space at end
@@ -252,6 +259,8 @@ const StringTable LanguageTables[3] =
 		"Berühren sie den Punkt",
 		"Einige Einstellungen sind nicht gespeichert!",
 		"Berühren sie Speichern & Neustarten um die neuen Einstellungen anzuwenden",
+		"Neustarten erforderlich",
+		"Neustarten jetzt?",
 		"Kopf bewegen",
 		"Extrusionsmenge (mm)",
 		"Geschwindigkeit (mm/s)",
@@ -329,6 +338,7 @@ const StringTable LanguageTables[3] =
 		"Baby step",
 		"Reprise",
 		"Annuler",
+		"Set",
 
 		// Setup page
 		"Volume ",								// note space at end
@@ -350,6 +360,8 @@ const StringTable LanguageTables[3] =
 		"Appuyer sur le point",
 		"Certains réglages ne sont pas sauvegardés!",
 		"Appuyer sur Sauvegarde et Redémarrage pour utiliser les nouveaux réglages",
+		"Restart required",
+		"Restart now?",
 		"Mouvement de la  tête",
 		"Quantité de Matiére extrudée (mm)",
 		"Vitesse (mm/s)",
@@ -395,6 +407,105 @@ const StringTable LanguageTables[3] =
 			"Fond Noir"
 		}
 	},
+	// Czech
+		{
+			// Language name
+			"Čeština",
+
+			// Main page strings
+			"Ovládání",
+			"Tisk",
+			"Konzole",
+			"Nastavení",
+			"Aktuální" THIN_SPACE DEGREE_SYMBOL "C",
+			"Aktivní" THIN_SPACE DEGREE_SYMBOL "C",
+			"Nečinná" THIN_SPACE DEGREE_SYMBOL "C",
+			"Pohyb",
+			"Extruder",
+			"Makra",
+			"STOP",
+
+			// Print page
+			"Extruder" THIN_SPACE "%",
+			"Rychl. ",							// note space at end
+			"Vent. ",							// note space at end
+			"Čas do konce: ",
+			"soubor ",							// note space at end
+			", materiál ",						// note space at end
+			", vrstva ",							// note space at end
+			"n/a",
+			"Pozastavit",
+			"Baby step",
+			"Pokračovat",
+			"Zrušit",
+			"OK",
+
+			// Setup page
+			"Hlasitost ",							// note space at end
+			"Kalibrace dotyku",
+			"Zrcadlit displej",
+			"Obrátit displej",
+			"Motiv",
+			"Podsvícení -",
+			"Podsvícení +",
+			"Uložit nastavení",
+			"Smazat nastavení",
+			"Uložit a Restart",
+
+			// Misc
+			"Skutečně obnovit tovární nastavení?",
+			"Restartovat?",
+			"Skutečně smazat?",
+			"Určitě?",
+			"Dotkněte se bodu",
+			"Některá nastavení nejsou uložena!",
+			"Zvolte Uložit a Restart pro dokončení",
+			"Vyžadován restart",
+			"Restartovat nyní?",
+			"Posun hlavy",
+			"Množství (mm)",
+			"Rychlost (mm/s)",
+			"Vytlačit (extr.)",
+			"Zatlačit (retr.)",
+			"Baby stepping",
+			"Aktuální Z offset: ",
+			"Zpráva",
+			"Zprávy",
+			"Verze firmware Panel Due ",	// note space at end
+			// File popup
+			"Soubory na kartě ",				// note the space on the end
+			"Makra",
+			"Chyba ",						// note the space at the end
+			" přístupu ke kartě",			// note the space at the start
+			"Název: ",
+			"Velikost: ",
+			"Výška vrstvy: ",
+			"Výška objektu: ",
+			"Spotřeba (mat.): ",
+			"Slicer: ",
+			"Simulace",
+
+			// Printer status strings
+			{
+				"Připojování",
+				"Nečinný",
+				"Tiskne",
+				"Zastaven",
+				"Startuje",
+				"Pozastaven",
+				"Zaneprázdněný",
+				"Pozastavuje se",
+				"Pokračuje",
+				"Nahrává firmware",
+				"Výměna nástroje"
+			},
+
+			// Theme names
+			{
+				"Světlý",
+				"Tmavý"
+			}
+		},
 
 #if 0	// Spanish not supported yet
 	// Spanish
