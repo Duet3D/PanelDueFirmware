@@ -1519,7 +1519,13 @@ namespace UI
 					case evAdjustStandbyTemp:
 						{
 							int heater = fieldBeingAdjusted.GetIParam();
-							if (heater > 0)
+							if (heater == 0)
+							{
+								SerialIo::SendString("M140 R");
+								SerialIo::SendInt(val);
+								SerialIo::SendChar('\n');
+							}
+							else
 							{
 								SerialIo::SendString("G10 P");
 								SerialIo::SendInt(heater - 1);
