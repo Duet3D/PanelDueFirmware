@@ -54,6 +54,13 @@ void DisplayField::SetTextRows(const char * array null t)
 	textRows = rows;
 }
 
+void DisplayField::SetPositionAndWidth(PixelNumber newX, PixelNumber newWidth)
+{
+	x = newX;
+	width = newWidth;
+	changed = true;
+}
+
 /*static*/ void DisplayField::SetDefaultColours(Colour pf, Colour pb, Colour pbb, Colour pg, Colour pbp, Colour pgp, Palette pal)
 {
 	defaultFcolour = pf;

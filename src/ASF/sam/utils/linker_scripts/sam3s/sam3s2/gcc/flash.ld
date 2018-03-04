@@ -123,13 +123,14 @@ SECTIONS
 
     .relocate : AT (_etext)
     {
-        . = ALIGN(4);
         _srelocate = .;
         *(.ramfunc .ramfunc.*);
         *(.data .data.*);
         . = ALIGN(4);
         _erelocate = .;
     } > ram
+
+    _esplash = _etext + (_erelocate - _srelocate);
 
     /* .bss section which is used for uninitialized data */ 
     .bss (NOLOAD) :

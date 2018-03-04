@@ -1,0 +1,35 @@
+/* THIS FILE WILL BE OVERWRITTEN BY DEV-C++ */
+/* DO NOT EDIT! */
+
+#include <windows.h> // include for version info constants
+
+
+//
+// TO CHANGE VERSION INFORMATION, EDIT PROJECT OPTIONS...
+//
+1 VERSIONINFO
+FILEVERSION 0,0,2,72
+PRODUCTVERSION 0,0,2,72
+FILETYPE VFT_APP
+{
+  BLOCK "StringFileInfo"
+	 {
+		 BLOCK "080904E4"
+		 {
+			 VALUE "CompanyName", "nimp software"
+			 VALUE "FileVersion", ""
+			 VALUE "FileDescription", "please visit www.nimp.co.uk/software for updates"
+			 VALUE "InternalName", ""
+			 VALUE "LegalCopyright", "Copyright (c) 2007, Sebastien Riou"
+			 VALUE "LegalTrademarks", ""
+			 VALUE "OriginalFilename", "bmp2c.exe"
+			 VALUE "ProductName", "bmp2c"
+			 VALUE "ProductVersion", "0002"
+		 }
+	 }
+  BLOCK "VarFileInfo"
+	 {
+		 VALUE "Translation", 0x0809, 1252
+	 }
+}
+

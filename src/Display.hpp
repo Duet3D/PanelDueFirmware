@@ -105,7 +105,9 @@ public:
 	PixelNumber GetMaxX() const { return x + width - 1; }
 	PixelNumber GetMinY() const { return y; }
 	PixelNumber GetMaxY() const { return y + GetHeight() - 1; }
-		
+
+	void SetPositionAndWidth(PixelNumber newX, PixelNumber newWidth);
+
 	virtual event_t GetEvent() const { return nullEvent; }
 
 	static void SetDefaultColours(Colour pf, Colour pb) { defaultFcolour = pf; defaultBcolour = pb; }

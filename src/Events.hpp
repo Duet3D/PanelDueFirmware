@@ -38,7 +38,7 @@ enum Event : uint8_t
 	evFactoryReset,
 	evAdjustSpeed,
 
-	evScrollFiles, evFilesUp, evMacrosUp, evChangeCard,
+	evScrollFiles, evScrollMacros, evFilesUp, evMacrosUp, evChangeCard,
 
 	evKeyboard,
 

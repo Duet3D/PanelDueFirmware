@@ -97,7 +97,7 @@ struct StringTable
 	CSTRING simulate;
 
 	// Printer status strings
-	CSTRING statusValues[11];
+	CSTRING statusValues[12];
 
 	// Colour theme names
 	CSTRING colourSchemeNames[NumColourSchemes];
@@ -196,7 +196,8 @@ const StringTable LanguageTables[4] =
 			"Pausing",
 			"Resuming",
 			"Firmware upload",
-			"Changing tool"
+			"Changing tool",
+			"Simulating"
 		},
 
 		// Theme names
@@ -226,7 +227,7 @@ const StringTable LanguageTables[4] =
 
 		// Print page
 		"Extruder" THIN_SPACE "%",
-		"Geschwindigkeit ",					// note space at end
+		"Speed ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
 		"Lüfter ",							// note space at end
 		"Zeit übrig: ",
 		"Datei ",							// note space at end
@@ -243,7 +244,7 @@ const StringTable LanguageTables[4] =
 		"Lautstärke ",						// note space at end
 		"Touch kalibrieren",
 		"Anzeige spiegeln",
-		"Farben invertieren",
+		"Anzeige invertieren",
 		"Thema",
 		"Helligkeit -",
 		"Helligkeit +",
@@ -297,7 +298,8 @@ const StringTable LanguageTables[4] =
 			"Pausiere",
 			"Fortsetzen",
 			"Firmware-Upload",
-			"Wechsle Tool"
+			"Wechsle Tool",
+			"Simuliert"
 		},
 
 		// Theme names
@@ -398,7 +400,8 @@ const StringTable LanguageTables[4] =
 			"Pause",
 			"Reprise",
 			"Téleverser le firmware",
-			"Changement d'outil"
+			"Changement d'outil",
+			"Simuler"
 		},
 
 		// Theme names
@@ -497,7 +500,8 @@ const StringTable LanguageTables[4] =
 				"Pozastavuje se",
 				"Pokračuje",
 				"Nahrává firmware",
-				"Výměna nástroje"
+				"Výměna nástroje",
+				"Simulace"
 			},
 
 			// Theme names
@@ -596,7 +600,8 @@ const StringTable LanguageTables[4] =
 			"pausando",
 			"reanudando",
 			"carga del firmware",
-			"herramienta de cambio"
+			"herramienta de cambio",
+			"simulating"
 		},
 
 		// Theme names

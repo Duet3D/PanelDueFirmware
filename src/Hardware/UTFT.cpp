@@ -1959,7 +1959,7 @@ size_t UTFT::writeNative(uint16_t c)
 			thisCharColData = *(uint32_t*)(fontPtr + bytesPerColumn) & cmask;	// get the next column instead
 		}
 
-		bool kern = (numSpaces >= 2)
+		const bool kern = (numSpaces >= 2)
 						? ((thisCharColData & lastCharColData) == 0)
 						: (((thisCharColData | (thisCharColData << 1)) & (lastCharColData | (lastCharColData << 1))) == 0);
 		if (kern)

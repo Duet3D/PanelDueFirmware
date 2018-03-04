@@ -42,7 +42,7 @@ namespace UI
 	extern void ShowDefaultPage();
 	extern void UpdatePrintingFields();
 	extern void SetPrintProgressPercent(unsigned int percent);
-	extern void UpdateGeometry(unsigned int numAxes, bool isDelta);
+	extern void UpdateGeometry(unsigned int p_numAxes, bool p_isDelta);
 	extern void UpdateHomedStatus(int axis, bool isHomed);
 	extern void UpdateZProbe(const char data[]);
 	extern void UpdateMachineName(const char data[]);
@@ -65,14 +65,14 @@ namespace UI
 	pre(bp.IsValid());
 	extern void OnButtonPressTimeout();
 	extern bool IsDisplayingFileInfo();
-	extern void UpdateFilesListTitle(int cardNumber, unsigned int numVolumes, bool isFilesList);
 	extern void SetNumTools(unsigned int n);
 
-	extern void FileListLoaded(int errCode);
-	extern void EnableFileNavButtons(bool scrollEarlier, bool scrollLater, bool parentDir);
-	extern void ShowFileButton(unsigned int i, Event ev, const char *text, const char *param);
-	extern void HideFileButton(unsigned int i);
-	extern unsigned int GetNumScrolledFiles();
+	extern void DisplayFilesOrMacrosList(bool filesNotMacros, int cardNumber, unsigned int numVolumes);
+	extern void FileListLoaded(bool filesNotMacros, int errCode);
+	extern void EnableFileNavButtons(bool filesNotMacros, bool scrollEarlier, bool scrollLater, bool parentDir);
+	extern void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * array null text, const char * array null param);
+	extern unsigned int GetNumScrolledFiles(bool filesNotMacros);
+	extern bool UpdateMacroShortList(unsigned int buttonIndex, const char * array null text, const char * array null param);
 
 	extern void SetBabystepOffset(float f);
 }

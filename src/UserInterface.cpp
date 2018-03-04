@@ -27,39 +27,50 @@ static_assert(ARRAY_SIZE(LanguageTables) == numLanguages, "Wrong number of langu
 static const char* array const axisNames[] = { "X", "Y", "Z", "U", "V", "W" };
 
 #if DISPLAY_X == 800
-const Icon heaterIcons[maxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNozzle3, IconNozzle4, IconNozzle5, IconNozzle6 };
+const Icon heaterIcons[MaxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNozzle3, IconNozzle4, IconNozzle5, IconNozzle6 };
 #else
-const Icon heaterIcons[maxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNozzle3, IconNozzle4 };
+const Icon heaterIcons[MaxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNozzle3, IconNozzle4 };
 #endif
 
 // Public fields
 TextField *fwVersionField, *userCommandField;
 IntegerField *freeMem, *touchX, *touchY;
-TextButton *filenameButtons[numDisplayedFiles];
 StaticTextField *touchCalibInstruction, *debugField;
 StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
 
 // Private fields
 class AlertPopup;
 
-static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *filePopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
-static SingleButton *scrollFilesLeftButton, *scrollFilesRightButton, *filesUpButton, *changeCardButton;
-static StaticTextField *areYouSureTextField, *areYouSureQueryField, *macroPopupTitleField;
+struct FileListButtons
+{
+	SingleButton *scrollLeftButton, *scrollRightButton, *folderUpButton;
+	IntegerField *errorField;
+};
+
+static FileListButtons filesListButtons, macrosListButtons;
+static SingleButton *changeCardButton;
+
+static TextButton *filenameButtons[NumDisplayedFiles];
+static TextButton *macroButtons[NumDisplayedMacros];
+static TextButton *controlPageMacroButtons[NumControlPageMacroButtons];
+
+static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
+static StaticTextField *areYouSureTextField, *areYouSureQueryField;
 static DisplayField *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
-static SingleButton *homeButtons[MAX_AXES], *toolButtons[maxHeaters], *homeAllButton, *bedCompButton;
-static FloatField *axisPos[MAX_AXES];
-static FloatField *currentTemps[maxHeaters];
+static SingleButton *homeButtons[MaxAxes], *toolButtons[MaxHeaters], *homeAllButton, *bedCompButton;
+static FloatField *axisPos[MaxAxes];
+static FloatField *currentTemps[MaxHeaters];
 static FloatField *fpHeightField, *fpLayerHeightField, *babystepOffsetField;
-static IntegerField *fpSizeField, *fpFilamentField, *fileListErrorField, *filePopupTitleField;
+static IntegerField *fpSizeField, *fpFilamentField, *filePopupTitleField;
 static ProgressBar *printProgressBar;
 static SingleButton *tabControl, *tabPrint, *tabMsg, *tabSetup;
 static ButtonBase *filesButton, *pauseButton, *resumeButton, *resetButton, *babystepButton;
 static TextField *timeLeftField, *zProbe;
 static TextField *fpNameField, *fpGeneratedByField;
-static StaticTextField *moveAxisRows[MAX_AXES];
+static StaticTextField *moveAxisRows[MaxAxes];
 static StaticTextField *nameField, *statusField, *settingsNotSavedField;
-static IntegerButton *activeTemps[maxHeaters], *standbyTemps[maxHeaters];
-static IntegerButton *spd, *extrusionFactors[maxHeaters - 1], *fanSpeed, *baudRateButton, *volumeButton;
+static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
+static IntegerButton *spd, *extrusionFactors[MaxHeaters - 1], *fanSpeed, *baudRateButton, *volumeButton;
 static TextButton *languageButton, *coloursButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
@@ -89,10 +100,13 @@ const size_t numUserCommandBuffers = 6;					// number of command history buffers
 static String<maxUserCommandLength> userCommandBuffers[numUserCommandBuffers];
 static size_t currentUserCommandBuffer = 0, currentHistoryBuffer = 0;
 
+static unsigned int numTools = 0;
 static int oldIntValue;
 static bool restartNeeded = false;
-int heaterStatus[maxHeaters];
+int heaterStatus[MaxHeaters];
 static Event eventToConfirm = evNull;
+static unsigned int numAxes = 0;						// initialise to 0 so we refresh the macros list when we receive the number of axes
+static bool isDelta = false;
 
 const char* array null currentFile = nullptr;			// file whose info is displayed in the file info popup
 const StringTable * strings = &LanguageTables[0];
@@ -365,7 +379,7 @@ void CreateMovePopup(const ColourScheme& colours)
 	PixelNumber ypos = popupTopMargin + buttonHeight + moveButtonRowSpacing;
 	const PixelNumber xpos = popupSideMargin + axisLabelWidth;
 	Event e = evMoveX;
-	for (size_t i = 0; i < MAX_AXES; ++i)
+	for (size_t i = 0; i < MaxAxes; ++i)
 	{
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 		const char * array const * array values = (axisNames[i][0] == 'Z') ? zJogValues : xyJogValues;
@@ -405,10 +419,11 @@ void CreateExtrudePopup(const ColourScheme& colours)
 	extrudePopup->AddField(new TextButton(ypos, (2 * extrudePopupWidth)/3 + popupSideMargin, extrudePopupWidth/3 - 2 * popupSideMargin, strings->retract, evRetract));
 }
 
-// Create the popup used to list files and macros
-void CreateFileListPopup(const ColourScheme& colours)
+// Create a popup used to list files pr macros
+PopupWindow *CreateFileListPopup(FileListButtons& controlButtons, TextButton ** array fileButtons, unsigned int numRows, unsigned int numCols, const ColourScheme& colours, bool filesNotMacros)
+pre(fileButtons.lim == numRows * numCols)
 {
-	fileListPopup = new StandardPopupWindow(fileListPopupHeight, fileListPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, nullptr);
+	PopupWindow * const popup = new StandardPopupWindow(fileListPopupHeight, fileListPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, nullptr);
 	const PixelNumber closeButtonPos = fileListPopupWidth - closeButtonWidth - popupSideMargin;
 	const PixelNumber navButtonWidth = (closeButtonPos - popupSideMargin)/7;
 	const PixelNumber upButtonPos = closeButtonPos - navButtonWidth - fieldSpacing;
@@ -418,45 +433,57 @@ void CreateFileListPopup(const ColourScheme& colours)
 	const PixelNumber changeButtonPos = popupSideMargin;
 
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
-	fileListPopup->AddField(filePopupTitleField = new IntegerField(popupTopMargin + labelRowAdjust, textPos, leftButtonPos - textPos, TextAlignment::Centre, strings->filesOnCard, nullptr));
-	fileListPopup->AddField(macroPopupTitleField = new StaticTextField(popupTopMargin + labelRowAdjust, textPos, leftButtonPos - textPos, TextAlignment::Centre, strings->macros));
+	if (filesNotMacros)
+	{
+		popup->AddField(filePopupTitleField = new IntegerField(popupTopMargin + labelRowAdjust, textPos, leftButtonPos - textPos, TextAlignment::Centre, strings->filesOnCard, nullptr));
+	}
+	else
+	{
+		popup->AddField(new StaticTextField(popupTopMargin + labelRowAdjust, textPos, leftButtonPos - textPos, TextAlignment::Centre, strings->macros));
+	}
 
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.buttonImageBackColour);
-	fileListPopup->AddField(changeCardButton = new IconButton(popupTopMargin, changeButtonPos, navButtonWidth, IconFiles, evChangeCard, 0));
-	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	fileListPopup->AddField(scrollFilesLeftButton = new TextButton(popupTopMargin, leftButtonPos, navButtonWidth, LEFT_ARROW, evScrollFiles, -1));
-	scrollFilesLeftButton->Show(false);
-	fileListPopup->AddField(scrollFilesRightButton = new TextButton(popupTopMargin, rightButtonPos, navButtonWidth, RIGHT_ARROW, evScrollFiles, 1));
-	scrollFilesRightButton->Show(false);
-	fileListPopup->AddField(filesUpButton = new TextButton(popupTopMargin, upButtonPos, navButtonWidth, UP_ARROW, evNull));
-	filesUpButton->Show(false);
+	if (filesNotMacros)
+	{
+		popup->AddField(changeCardButton = new IconButton(popupTopMargin, changeButtonPos, navButtonWidth, IconFiles, evChangeCard, 0));
+	}
 
-	const PixelNumber fileFieldWidth = (fileListPopupWidth + fieldSpacing - (2 * popupSideMargin))/numFileColumns;
-	unsigned int fileNum = 0;
-	for (unsigned int c = 0; c < numFileColumns; ++c)
+	const Event scrollEvent = (filesNotMacros) ? evScrollFiles : evScrollMacros;
+
+	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
+	popup->AddField(controlButtons.scrollLeftButton = new TextButton(popupTopMargin, leftButtonPos, navButtonWidth, LEFT_ARROW, scrollEvent, -1));
+	controlButtons.scrollLeftButton->Show(false);
+	popup->AddField(controlButtons.scrollRightButton = new TextButton(popupTopMargin, rightButtonPos, navButtonWidth, RIGHT_ARROW, scrollEvent, 1));
+	controlButtons.scrollRightButton->Show(false);
+	popup->AddField(controlButtons.folderUpButton = new TextButton(popupTopMargin, upButtonPos, navButtonWidth, UP_ARROW, (filesNotMacros) ? evFilesUp : evMacrosUp));
+	controlButtons.folderUpButton->Show(false);
+
+	const PixelNumber fileFieldWidth = (fileListPopupWidth + fieldSpacing - (2 * popupSideMargin))/numCols;
+	for (unsigned int c = 0; c < numCols; ++c)
 	{
 		PixelNumber row = popupTopMargin;
-		for (unsigned int r = 0; r < numFileRows; ++r)
+		for (unsigned int r = 0; r < numRows; ++r)
 		{
 			row += buttonHeight + fileButtonRowSpacing;
 			TextButton *t = new TextButton(row, (fileFieldWidth * c) + popupSideMargin, fileFieldWidth - fieldSpacing, nullptr, evNull);
 			t->Show(false);
-			fileListPopup->AddField(t);
-			filenameButtons[fileNum] = t;
-			++fileNum;
+			popup->AddField(t);
+			*fileButtons = t;
+			++fileButtons;
 		}
 	}
 
-	fileListErrorField = new IntegerField(popupTopMargin + 2 * (buttonHeight + fileButtonRowSpacing), popupSideMargin, fileListPopupWidth - (2 * popupSideMargin),
+	controlButtons.errorField = new IntegerField(popupTopMargin + 2 * (buttonHeight + fileButtonRowSpacing), popupSideMargin, fileListPopupWidth - (2 * popupSideMargin),
 							TextAlignment::Centre, strings->error, strings->accessingSdCard);
-	fileListErrorField->Show(false);
-	fileListPopup->AddField(fileListErrorField);
+	controlButtons.errorField->Show(false);
+	popup->AddField(controlButtons.errorField);
+	return popup;
 }
 
 // Create the popup window used to display the file dialog
 void CreateFileActionPopup(const ColourScheme& colours)
 {
-	filePopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
+	fileDetailPopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
 	PixelNumber ypos = popupTopMargin + (3 * rowTextHeight)/2;
 	fpNameField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->fileName);
@@ -470,18 +497,18 @@ void CreateFileActionPopup(const ColourScheme& colours)
 	fpFilamentField = new IntegerField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->filamentNeeded, "mm");
 	ypos += rowTextHeight;
 	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
-	filePopup->AddField(fpNameField);
-	filePopup->AddField(fpSizeField);
-	filePopup->AddField(fpLayerHeightField);
-	filePopup->AddField(fpHeightField);
-	filePopup->AddField(fpFilamentField);
-	filePopup->AddField(fpGeneratedByField);
+	fileDetailPopup->AddField(fpNameField);
+	fileDetailPopup->AddField(fpSizeField);
+	fileDetailPopup->AddField(fpLayerHeightField);
+	fileDetailPopup->AddField(fpHeightField);
+	fileDetailPopup->AddField(fpFilamentField);
+	fileDetailPopup->AddField(fpGeneratedByField);
 
 	// Add the buttons
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	filePopup->AddField(new TextButton(popupTopMargin + 8 * rowTextHeight, popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->print, evPrintFile));
-	filePopup->AddField(new TextButton(popupTopMargin + 8 * rowTextHeight, fileInfoPopupWidth/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->simulate, evSimulateFile));
-	filePopup->AddField(new IconButton(popupTopMargin + 8 * rowTextHeight, (2 * fileInfoPopupWidth)/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, IconTrash, evDeleteFile));
+	fileDetailPopup->AddField(new TextButton(popupTopMargin + 8 * rowTextHeight, popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->print, evPrintFile));
+	fileDetailPopup->AddField(new TextButton(popupTopMargin + 8 * rowTextHeight, fileInfoPopupWidth/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->simulate, evSimulateFile));
+	fileDetailPopup->AddField(new IconButton(popupTopMargin + 8 * rowTextHeight, (2 * fileInfoPopupWidth)/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, IconTrash, evDeleteFile));
 }
 
 // Create the "Are you sure?" popup
@@ -648,7 +675,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 	mgr.AddField(new StaticTextField(row5 + labelRowAdjust, margin, bedColumn - fieldSpacing - margin, TextAlignment::Right, strings->standby));
 
 	// Add the grid
-	for (unsigned int i = 0; i < maxHeaters; ++i)
+	for (unsigned int i = 0; i < MaxHeaters; ++i)
 	{
 		PixelNumber column = ((tempButtonWidth + fieldSpacing) * i) + bedColumn;
 
@@ -689,8 +716,8 @@ void CreateControlTabFields(const ColourScheme& colours)
 
 	DisplayField::SetDefaultColours(colours.infoTextColour, colours.infoBackColour);
 	PixelNumber column = margin;
-	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MAX_AXES * fieldSpacing))/(MAX_AXES + 1);
-	for (size_t i = 0; i < MAX_AXES; ++i)
+	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxAxes * fieldSpacing))/(MaxAxes + 1);
+	for (size_t i = 0; i < MaxAxes; ++i)
 	{
 		FloatField *f = new FloatField(row6p3 + labelRowAdjust, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
 		axisPos[i] = f;
@@ -703,30 +730,39 @@ void CreateControlTabFields(const ColourScheme& colours)
 	mgr.AddField(zProbe = new TextField(row6p3 + labelRowAdjust, column, DISPLAY_X - column - margin, TextAlignment::Left, "P", zprobeBuf.c_str()));
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.notHomedButtonBackColour);
-	homeAllButton = AddIconButton(row7p7, 0, MAX_AXES + 2, IconHomeAll, evSendCommand, "G28");
-	homeButtons[0] = AddIconButton(row7p7, 1, MAX_AXES + 2, IconHomeX, evSendCommand, "G28 X0");
-	homeButtons[1] = AddIconButton(row7p7, 2, MAX_AXES + 2, IconHomeY, evSendCommand, "G28 Y0");
-	homeButtons[2] = AddIconButton(row7p7, 3, MAX_AXES + 2, IconHomeZ, evSendCommand, "G28 Z0");
-#if MAX_AXES > 3
-	homeButtons[3] = AddIconButton(row7p7, 4, MAX_AXES + 2, IconHomeU, evSendCommand, "G28 U0");
+	homeAllButton = AddIconButton(row7p7, 0, MaxAxes + 2, IconHomeAll, evSendCommand, "G28");
+	homeButtons[0] = AddIconButton(row7p7, 1, MaxAxes + 2, IconHomeX, evSendCommand, "G28 X0");
+	homeButtons[1] = AddIconButton(row7p7, 2, MaxAxes + 2, IconHomeY, evSendCommand, "G28 Y0");
+	homeButtons[2] = AddIconButton(row7p7, 3, MaxAxes + 2, IconHomeZ, evSendCommand, "G28 Z0");
+#if MaxAxes > 3
+	homeButtons[3] = AddIconButton(row7p7, 4, MaxAxes + 2, IconHomeU, evSendCommand, "G28 U0");
 	homeButtons[3]->Show(false);
 #endif
-#if MAX_AXES > 4
-	homeButtons[4] = AddIconButton(row7p7, 5, MAX_AXES + 2, IconHomeV, evSendCommand, "G28 V0");
+#if MaxAxes > 4
+	homeButtons[4] = AddIconButton(row7p7, 5, MaxAxes + 2, IconHomeV, evSendCommand, "G28 V0");
 	homeButtons[4]->Show(false);
 #endif
-#if MAX_AXES > 5
-	homeButtons[5] = AddIconButton(row7p7, 6, MAX_AXES + 2, IconHomeW, evSendCommand, "G28 W0");
+#if MaxAxes > 5
+	homeButtons[5] = AddIconButton(row7p7, 6, MaxAxes + 2, IconHomeW, evSendCommand, "G28 W0");
 	homeButtons[5]->Show(false);
 #endif
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
-	bedCompButton = AddIconButton(row7p7, MAX_AXES + 1, MAX_AXES + 2, IconBedComp, evSendCommand, "G32");
+	bedCompButton = AddIconButton(row7p7, MaxAxes + 1, MaxAxes + 2, IconBedComp, evSendCommand, "G32");
 
 	filesButton = AddIconButton(row8p7, 0, 4, IconFiles, evListFiles, nullptr);
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	moveButton = AddTextButton(row8p7, 1, 4, strings->move, evMovePopup, nullptr);
 	extrudeButton = AddTextButton(row8p7, 2, 4, strings->extrusion, evExtrudePopup, nullptr);
 	macroButton = AddTextButton(row8p7, 3, 4, strings->macro, evListMacros, nullptr);
+
+	// When there is room, we also display a few macro buttons on the right hand side
+	for (size_t i = 0; i < NumControlPageMacroButtons; ++i)
+	{
+		// The position and width of the buttons will get corrected when we know how many tools we have
+		TextButton *b = controlPageMacroButtons[i] = new TextButton(row2 + i * rowHeight, 999, 99, nullptr, evMacro);
+		b->Show(false);			// hide them until we have loaded the macros
+		mgr.AddField(b);
+	}
 
 	controlRoot = mgr.GetRoot();
 }
@@ -742,13 +778,13 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 
 	// Extrusion factor buttons
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	for (unsigned int i = 1; i < maxHeaters; ++i)
+	for (unsigned int i = 1; i < MaxHeaters; ++i)
 	{
 		PixelNumber column = ((tempButtonWidth + fieldSpacing) * i) + bedColumn;
 
 		IntegerButton *ib = new IntegerButton(row6, column, tempButtonWidth);
 		ib->SetValue(100);
-		ib->SetEvent(evExtrusionFactor, i);
+		ib->SetEvent(evExtrusionFactor, i - 1);
 		extrusionFactors[i - 1] = ib;
 		mgr.AddField(ib);
 	}
@@ -937,7 +973,8 @@ namespace UI
 		CreateIntegerAdjustPopup(colours);
 		CreateMovePopup(colours);
 		CreateExtrudePopup(colours);
-		CreateFileListPopup(colours);
+		fileListPopup = CreateFileListPopup(filesListButtons, filenameButtons, NumFileRows, NumFileColumns, colours, true);
+		macrosPopup = CreateFileListPopup(macrosListButtons, macroButtons, NumMacroRows, NumMacroColumns, colours, false);
 		CreateFileActionPopup(colours);
 		CreateVolumePopup(colours);
 		CreateBaudRatePopup(colours);
@@ -1015,7 +1052,7 @@ namespace UI
 
 	void UpdateAxisPosition(size_t axis, float fval)
 	{
-		if (axis < MAX_AXES && axisPos[axis] != nullptr)
+		if (axis < MaxAxes && axisPos[axis] != nullptr)
 		{
 			axisPos[axis]->SetValue(fval);
 		}
@@ -1059,6 +1096,7 @@ namespace UI
 		switch (newStatus)
 		{
 		case PrinterStatus::printing:
+		case PrinterStatus::simulating:
 			if (oldStatus != PrinterStatus::paused && oldStatus != PrinterStatus::resuming)
 			{
 				// Starting a new print, so clear the times
@@ -1145,7 +1183,11 @@ namespace UI
 	// Change to the page indicated. Return true if the page has a permanently-visible button.
 	bool ChangePage(ButtonBase *newTab)
 	{
-		if (newTab != currentTab)
+		if (newTab == currentTab)
+		{
+			mgr.ClearAllPopups();						// if already on the correct page, just clear popups
+		}
+		else
 		{
 			if (currentTab != nullptr)
 			{
@@ -1246,7 +1288,7 @@ namespace UI
 	// Update the fields that are to do with the printing status
 	void UpdatePrintingFields()
 	{
-		if (GetStatus() == PrinterStatus::printing)
+		if (GetStatus() == PrinterStatus::printing || GetStatus() == PrinterStatus::simulating)
 		{
 			ShowPauseButton();
 		}
@@ -1278,12 +1320,18 @@ namespace UI
 	}
 
 	// Update the geometry or the number of axes
-	void UpdateGeometry(unsigned int numAxes, bool isDelta)
+	void UpdateGeometry(unsigned int p_numAxes, bool p_isDelta)
 	{
-		for (size_t i = 0; i < MAX_AXES; ++i)
+		if (p_numAxes != numAxes || p_isDelta != isDelta)
 		{
-			mgr.Show(homeButtons[i], !isDelta && i < numAxes);
-			ShowAxis(i, i < numAxes);
+			numAxes = p_numAxes;
+			isDelta = p_isDelta;
+			FileManager::RefreshMacrosList();
+			for (size_t i = 0; i < MaxAxes; ++i)
+			{
+				mgr.Show(homeButtons[i], !isDelta && i < numAxes);
+				ShowAxis(i, i < numAxes);
+			}
 		}
 	}
 
@@ -1295,7 +1343,7 @@ namespace UI
 		{
 			homeButton = homeAllButton;
 		}
-		else if (axis < MAX_AXES)
+		else if (axis < MaxAxes)
 		{
 			homeButton = homeButtons[axis];
 		}
@@ -1357,6 +1405,7 @@ namespace UI
 		alertTicks = (alertMode < 2) ? (uint32_t)(alert.timeout * 1000.0) : 0;
 		alertPopup->Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
 		mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+		RestoreBrightness();
 	}
 
 	// Process a command to clear a message box alert
@@ -1380,6 +1429,7 @@ namespace UI
 			alertPopup->Set(strings->message, text, 1, 0);
 			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
 		}
+		RestoreBrightness();
 	}
 
 	// This is called when the user selects a new file from a list of SD card files
@@ -1436,7 +1486,7 @@ namespace UI
 	void FirmwareFeaturesChanged(FirmwareFeatures newFeatures)
 	{
 		// Some firmwares don't support tool standby temperatures
-		for (size_t i = 0; i < maxHeaters; ++i)
+		for (size_t i = 0; i < MaxHeaters; ++i)
 		{
 			mgr.Show(standbyTemps[i], (newFeatures & noStandbyTemps) == 0);
 		}
@@ -1526,7 +1576,7 @@ namespace UI
 								SerialIo::SendChar('\n');
 							}
 							else
-							{
+ 							{
 								SerialIo::SendString("G10 P");
 								SerialIo::SendInt(heater - 1);
 								SerialIo::SendString(" R");
@@ -1703,7 +1753,7 @@ namespace UI
 							SerialIo::SendChar('\n');
 						}
 					}
-					else if (head < (int)maxHeaters)
+					else if (head < (int)MaxHeaters)
 					{
 						if (heaterStatus[head] == 2)		// if head is active
 						{
@@ -1738,7 +1788,7 @@ namespace UI
 							SerialIo::SendFilename(CondStripDrive(FileManager::GetFilesDir()), currentFile);
 							SerialIo::SendChar('\n');
 							FileSelected(currentFile);
-							mgr.SetPopup(filePopup, AutoPlace, AutoPlace);
+							mgr.SetPopup(fileDetailPopup, AutoPlace, AutoPlace);
 						}
 					}
 					else
@@ -1818,7 +1868,12 @@ namespace UI
 				break;
 
 			case evScrollFiles:
-				FileManager::Scroll(bp.GetIParam() * GetNumScrolledFiles());
+				FileManager::ScrollFiles(bp.GetIParam() * NumFileRows);
+				ShortenTouchDelay();
+				break;
+
+			case evScrollMacros:
+				FileManager::ScrollMacros(bp.GetIParam() * NumMacroRows);
 				ShortenTouchDelay();
 				break;
 
@@ -2131,63 +2186,96 @@ namespace UI
 		}
 	}
 
-	void UpdateFilesListTitle(int cardNumber, unsigned int numVolumes, bool isFilesList)
+	void DisplayFilesOrMacrosList(bool filesNotMacros, int cardNumber, unsigned int numVolumes)
 	{
-		filePopupTitleField->SetValue(cardNumber);
-		filePopupTitleField->Show(isFilesList);
-		macroPopupTitleField->Show(!isFilesList);
-		changeCardButton->Show(isFilesList && numVolumes > 1);
-		filesUpButton->SetEvent((isFilesList) ? evFilesUp : evMacrosUp, nullptr);
-		mgr.SetPopup(fileListPopup, AutoPlace, AutoPlace);
+		if (filesNotMacros)
+		{
+			filePopupTitleField->SetValue(cardNumber);
+			changeCardButton->Show(numVolumes > 1);
+		}
+		mgr.SetPopup((filesNotMacros) ? fileListPopup : macrosPopup, AutoPlace, AutoPlace);
 	}
 
-	void FileListLoaded(int errCode)
+	void FileListLoaded(bool filesNotMacros, int errCode)
 	{
+		FileListButtons& buttons = (filesNotMacros) ? filesListButtons : macrosListButtons;
 		if (errCode == 0)
 		{
-			mgr.Show(fileListErrorField, false);
+			mgr.Show(buttons.errorField, false);
 		}
 		else
 		{
-			fileListErrorField->SetValue(errCode);
-			mgr.Show(fileListErrorField, true);
+			buttons.errorField->SetValue(errCode);
+			mgr.Show(buttons.errorField, true);
 		}
 	}
 
-	void EnableFileNavButtons(bool scrollEarlier, bool scrollLater, bool parentDir)
+	void EnableFileNavButtons(bool filesNotMacros, bool scrollEarlier, bool scrollLater, bool parentDir)
 	{
-		mgr.Show(scrollFilesLeftButton, scrollEarlier);
-		mgr.Show(scrollFilesRightButton, scrollLater);
-		mgr.Show(filesUpButton, parentDir);
+		FileListButtons& buttons = (filesNotMacros) ? filesListButtons : macrosListButtons;
+		mgr.Show(buttons.scrollLeftButton, scrollEarlier);
+		mgr.Show(buttons.scrollRightButton, scrollLater);
+		mgr.Show(buttons.folderUpButton, parentDir);
 	}
 
-	void ShowFileButton(unsigned int i, Event ev, const char *text, const char *param)
+	// Update the specified button in the file or macro buttons list. If 'text' is nullptr then hide the button, else display it.
+	void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * array null text, const char * array null param)
 	{
-		TextButton *f = filenameButtons[i];
+		TextButton * const f = ((filesNotMacros) ? filenameButtons : macroButtons)[buttonIndex];
 		f->SetText(text);
-		f->SetEvent(ev, param);
-		mgr.Show(f, true);
+		f->SetEvent((text == nullptr) ? evNull : (filesNotMacros) ? evFile : evMacro, param);
+		mgr.Show(f, text != nullptr);
 	}
 
-	void HideFileButton(unsigned int i)
+	// Update the specified button in the macro short list. If 'text' is nullptr then hide the button, else display it.
+	// Return true if this should be called again for the next button.
+	bool UpdateMacroShortList(unsigned int buttonIndex, const char * array null text, const char * array null param)
 	{
-		TextButton *f = filenameButtons[i];
-		f->SetText("");
-		mgr.Show(f, false);
+		if (buttonIndex >= ARRAY_SIZE(controlPageMacroButtons) || controlPageMacroButtons[buttonIndex] == nullptr || numTools == 0 || numTools > MaxHeaters - 2)
+		{
+			return false;
+		}
+
+		TextButton * const f = controlPageMacroButtons[buttonIndex];
+		f->SetText(text);
+		f->SetEvent((text == nullptr) ? evNull : evMacro, param);
+		mgr.Show(f, text != nullptr);
+		return true;
 	}
 
-	unsigned int GetNumScrolledFiles()
+	unsigned int GetNumScrolledFiles(bool filesNotMacros)
 	{
-		return numFileRows;
+		return (filesNotMacros) ? NumFileRows : NumMacroRows;
 	}
 
 	void SetNumTools(unsigned int n)
 	{
+
 		// Tool button 0 is the bed, hence we use <= instead of < in the following
-		for (size_t i = 1; i < maxHeaters; ++i)
+		for (size_t i = 1; i < MaxHeaters; ++i)
 		{
 			mgr.Show(toolButtons[i], i <= n);
 		}
+
+		if (n != numTools)
+		{
+			// Adjust the width of the control page macro buttons, or hide them completely if insufficient room
+			const PixelNumber controlPageMacroButtonsColumn = ((tempButtonWidth + fieldSpacing) * (n + 1)) + bedColumn + fieldSpacing;
+			const PixelNumber controlPageMacroButtonsWidth = (controlPageMacroButtonsColumn >= DisplayX - margin) ? 0 : DisplayX - margin - controlPageMacroButtonsColumn;
+
+			for (TextButton *& b : controlPageMacroButtons)
+			{
+				if (controlPageMacroButtonsWidth < minControlPageMacroButtonsWidth)
+				{
+					mgr.Show(b, false);
+				}
+				else
+				{
+					b->SetPositionAndWidth(controlPageMacroButtonsColumn, controlPageMacroButtonsWidth);
+				}
+			}
+		}
+		numTools = n;
 	}
 
 	void SetBabystepOffset(float f)

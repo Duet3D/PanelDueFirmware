@@ -23,24 +23,25 @@ namespace FileManager
 	class FileSet
 	{
 	private:
+		const unsigned numDisplayed;
 		Path requestedPath;
 		Path currentPath;
 		RequestTimer timer;
-		int which;
-		const Event fileEvent;
+		int whichList;
 		int scrollOffset;
 		bool IsInSubdir() const;
 		const bool isFilesList;			// true for a file list, false for a macro list
 		uint8_t cardNumber;
-		
+
 	public:
-		FileSet(Event fe, const char * array rootDir, bool pIsFilesList);
+		FileSet(const char * array rootDir, unsigned numDisp, bool pIsFilesList);
 		void Display();
 		void Reload(int whichList, const Path& dir, int errCode);
+		void ReloadMacroShortList(int errorCode);
 		void FileListUpdated();
 		void Scroll(int amount);
-		void SetIndex(int index) { which = index; }
-		int GetIndex() const { return which; }
+		void SetIndex(int index) { whichList = index; }
+		int GetIndex() const { return whichList; }
 		void SetPath(const char * array pPath);
 		const char * array GetPath() { return currentPath.c_str(); }
 		void RequestParentDir()
@@ -58,16 +59,17 @@ namespace FileManager
 	};
 
 	void BeginNewMessage();
-	void EndReceivedMessage(bool displayingFileInfo);
+	void EndReceivedMessage();
 	void BeginReceivingFiles();
 	void ReceiveFile(const char * array data);
 	void ReceiveDirectoryName(const char * array data);
 	void ReceiveErrorCode(int err);
-	
+
 	void DisplayFilesList();
 	void DisplayMacrosList();
-	void Scroll(int amount);
-	
+	void ScrollFiles(int amount);
+	void ScrollMacros(int amount);
+
 	void RequestFilesSubdir(const char * array dir);
 	void RequestMacrosSubdir(const char * array dir);
 	void RequestFilesParentDir();
@@ -76,6 +78,7 @@ namespace FileManager
 	const char * array GetMacrosDir();
 
 	void RefreshFilesList();
+	void RefreshMacrosList();
 	bool ProcessTimers();
 	bool NextCard();
 	bool SelectCard(unsigned int cardNum);

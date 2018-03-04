@@ -22,7 +22,8 @@ enum class PrinterStatus
 	pausing = 7,
 	resuming = 8,
 	flashing = 9,
-	toolChange = 10
+	toolChange = 10,
+	simulating = 11
 };
 
 #endif /* SRC_PRINTERSTATUS_HPP_ */
