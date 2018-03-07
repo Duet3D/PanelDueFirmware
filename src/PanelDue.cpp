@@ -496,6 +496,13 @@ extern void RestoreBrightness()
 {
 	Buzzer::SetBacklight(nvData.brightness);
 	isDimmed = false;
+	lastActionTime = SystemTick::GetTickCount();
+}
+
+extern void DimBrightness()
+{
+	Buzzer::SetBacklight(nvData.brightness >> 3);
+	isDimmed = true;
 }
 
 void SetVolume(uint32_t newVolume)
@@ -1319,8 +1326,7 @@ int main(void)
 			}
 			else if (!isDimmed && SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
 			{
-				Buzzer::SetBacklight(nvData.brightness/8);
-				isDimmed = true;
+				DimBrightness();
 			}
 		}
 		ShowLine;
