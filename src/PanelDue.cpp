@@ -612,6 +612,9 @@ void SetStatus(char c)
 	
 		status = newStatus;
 		UI::UpdatePrintingFields();
+
+		// if the status changed, illuminate the screen
+		RestoreBrightness();
 	}
 }
 
