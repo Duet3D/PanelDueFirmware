@@ -101,6 +101,9 @@ struct StringTable
 
 	// Colour theme names
 	CSTRING colourSchemeNames[NumColourSchemes];
+
+	// display dimmer types
+	CSTRING displayDimmingNames[DISPLAYDIMMER_MAX+1];
 };
 
 const StringTable LanguageTables[4] =
@@ -204,6 +207,13 @@ const StringTable LanguageTables[4] =
 		{
 			"Light",
 			"Dark"
+		},
+
+		// display dimming types
+		{
+			"Always Dim",
+			"Never Dim",
+			"Idle Dim"
 		}
 	},
 
@@ -228,8 +238,8 @@ const StringTable LanguageTables[4] =
 		// Print page
 		"Extruder" THIN_SPACE "%",
 		"Speed ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
-		"Lüfter ",							// note space at end
-		"Zeit übrig: ",
+		"LÃ¼fter ",							// note space at end
+		"Zeit Ã¼brig: ",
 		"Datei ",							// note space at end
 		", Filament ",						// note space at end
 		", Schicht ",						// note space at end
@@ -241,7 +251,7 @@ const StringTable LanguageTables[4] =
 		"Set",
 
 		// Setup page
-		"Lautstärke ",						// note space at end
+		"LautstÃ¤rke ",						// note space at end
 		"Touch kalibrieren",
 		"Anzeige spiegeln",
 		"Anzeige invertieren",
@@ -249,24 +259,24 @@ const StringTable LanguageTables[4] =
 		"Helligkeit -",
 		"Helligkeit +",
 		"Einstellungen speichern",
-		"Einstellungen löschen",
+		"Einstellungen lÃ¶schen",
 		"Speichern & Neustarten",
 
 		// Misc
-		"Rücksetzen bestätigen",
-		"Neustart bestätigen",
-		"Löschen bestätigen",
+		"RÃ¼cksetzen bestÃ¤tigen",
+		"Neustart bestÃ¤tigen",
+		"LÃ¶schen bestÃ¤tigen",
 		"Sind sie sicher?",
-		"Berühren sie den Punkt",
+		"BerÃ¼hren sie den Punkt",
 		"Einige Einstellungen sind nicht gespeichert!",
-		"Berühren sie Speichern & Neustarten um die neuen Einstellungen anzuwenden",
+		"BerÃ¼hren sie Speichern & Neustarten um die neuen Einstellungen anzuwenden",
 		"Neustarten erforderlich",
 		"Neustarten jetzt?",
 		"Kopf bewegen",
 		"Extrusionsmenge (mm)",
 		"Geschwindigkeit (mm/s)",
 		"Extrudieren",
-		"Zurückziehen",
+		"ZurÃ¼ckziehen",
 		"Babystepping",
 		"Aktueller Z-Versatz: ",
 		"Nachricht",
@@ -279,10 +289,10 @@ const StringTable LanguageTables[4] =
 		"Fehler ",						// note the space at the end
 		" beim Zugriff auf SD-Karte",	// note the space at the start
 		"Dateiname: ",
-		"Größe: ",
-		"Schichthöhe: ",
-		"Objekthöhe: ",
-		"Benötigtes Filament: ",
+		"GrÃ¶ÃŸe: ",
+		"SchichthÃ¶he: ",
+		"ObjekthÃ¶he: ",
+		"BenÃ¶tigtes Filament: ",
 		"Erzeugt mit: ",
 		"Simulieren",
 
@@ -294,7 +304,7 @@ const StringTable LanguageTables[4] =
 			"Angehalten",
 			"Starte",
 			"Pausiert",
-			"Beschäftigt",
+			"BeschÃ¤ftigt",
 			"Pausiere",
 			"Fortsetzen",
 			"Firmware-Upload",
@@ -306,16 +316,25 @@ const StringTable LanguageTables[4] =
 		{
 			"Hell",
 			"Dunkel"
+		},
+
+		// display dimming types
+		{
+			"Immer Dim",
+			"Nie dämmern",
+			"Idle Dim"
 		}
+
+
 	},
 
 	// French
 	{
 		// Language name
-		"Français",
+		"FranÃ§ais",
 
 		// Main page strings
-		"Contrôle",
+		"ContrÃ´le",
 		"Imprimer",
 		"Console",
 		"Installation",
@@ -325,7 +344,7 @@ const StringTable LanguageTables[4] =
 		"Mouvement",
 		"Extrusion",
 		"Macro",
-		"ARRÊT",
+		"ARRÃŠT",
 
 		// Print page
 		"Extrudeuse" THIN_SPACE "%",
@@ -345,32 +364,32 @@ const StringTable LanguageTables[4] =
 		// Setup page
 		"Volume ",								// note space at end
 		"Calibrer touch",
-		"Affichage en négatif",
+		"Affichage en nÃ©gatif",
 		"Inverser affichage",
-		"Théme",
-		"Luminosité -",
-		"Luminosité +",
-		"Sauver paramêtres",
-		"Effacer paramêtres",
-		"Sauvegarde & Redémarrage",
+		"ThÃ©me",
+		"LuminositÃ© -",
+		"LuminositÃ© +",
+		"Sauver paramÃªtres",
+		"Effacer paramÃªtres",
+		"Sauvegarde & RedÃ©marrage",
 
 		// Misc
-		"Confirmer le réinitialisation de l'imprimante",
-		"Confirm Redémarrage",
+		"Confirmer le rÃ©initialisation de l'imprimante",
+		"Confirm RedÃ©marrage",
 		"Confirm suppression fichier",
-		"Vous êtes sûre?",
+		"Vous Ãªtes sÃ»re?",
 		"Appuyer sur le point",
-		"Certains réglages ne sont pas sauvegardés!",
-		"Appuyer sur Sauvegarde et Redémarrage pour utiliser les nouveaux réglages",
+		"Certains rÃ©glages ne sont pas sauvegardÃ©s!",
+		"Appuyer sur Sauvegarde et RedÃ©marrage pour utiliser les nouveaux rÃ©glages",
 		"Restart required",
 		"Restart now?",
-		"Mouvement de la  tête",
-		"Quantité de Matiére extrudée (mm)",
+		"Mouvement de la  tÃªte",
+		"QuantitÃ© de MatiÃ©re extrudÃ©e (mm)",
 		"Vitesse (mm/s)",
 		"Extruder",
 		"Retracter",
 		"Baby stepping",
-		"décalage Z courant : ",
+		"dÃ©calage Z courant : ",
 		"Message",
 		"Messages",
 		"Version du firmware du Panel Due ",	// note space at end
@@ -379,7 +398,7 @@ const StringTable LanguageTables[4] =
 		"Fichier sur carte ",					// note the space on the end
 		"Macros",
 		"Erreur ",								// note the space at the end
-		" accés SD card en cours",				// note the space at the start
+		" accÃ©s SD card en cours",				// note the space at the start
 		"Nom du fichier : ",
 		"Taille : ",
 		"Hauteur de couche: ",
@@ -393,13 +412,13 @@ const StringTable LanguageTables[4] =
 			"Connection en cours",
 			"Au repos",
 			"Impression",
-			"Arrêt",
-			"Démarrage",
+			"ArrÃªt",
+			"DÃ©marrage",
 			"Pause",
-			"Occupé"
+			"OccupÃ©"
 			"Pause",
 			"Reprise",
-			"Téleverser le firmware",
+			"TÃ©leverser le firmware",
 			"Changement d'outil",
 			"Simuler"
 		},
@@ -408,21 +427,29 @@ const StringTable LanguageTables[4] =
 		{
 			"Fond Blanc",
 			"Fond Noir"
+		},
+
+		// display dimming types
+		{
+			"Toujours Dim",
+			"Jamais Dim",
+			"Idle Dim"
 		}
+
 	},
 	// Czech
 		{
 			// Language name
-			"Čeština",
+			"ÄŒeÅ¡tina",
 
 			// Main page strings
-			"Ovládání",
+			"OvlÃ¡dÃ¡nÃ­",
 			"Tisk",
 			"Konzole",
-			"Nastavení",
-			"Aktuální" THIN_SPACE DEGREE_SYMBOL "C",
-			"Aktivní" THIN_SPACE DEGREE_SYMBOL "C",
-			"Nečinná" THIN_SPACE DEGREE_SYMBOL "C",
+			"NastavenÃ­",
+			"AktuÃ¡lnÃ­" THIN_SPACE DEGREE_SYMBOL "C",
+			"AktivnÃ­" THIN_SPACE DEGREE_SYMBOL "C",
+			"NeÄ�innÃ¡" THIN_SPACE DEGREE_SYMBOL "C",
 			"Pohyb",
 			"Extruder",
 			"Makra",
@@ -432,83 +459,90 @@ const StringTable LanguageTables[4] =
 			"Extruder" THIN_SPACE "%",
 			"Rychl. ",							// note space at end
 			"Vent. ",							// note space at end
-			"Čas do konce: ",
+			"ÄŒas do konce: ",
 			"soubor ",							// note space at end
-			", materiál ",						// note space at end
+			", materiÃ¡l ",						// note space at end
 			", vrstva ",							// note space at end
 			"n/a",
 			"Pozastavit",
 			"Baby step",
-			"Pokračovat",
-			"Zrušit",
+			"PokraÄ�ovat",
+			"ZruÅ¡it",
 			"OK",
 
 			// Setup page
 			"Hlasitost ",							// note space at end
 			"Kalibrace dotyku",
 			"Zrcadlit displej",
-			"Obrátit displej",
+			"ObrÃ¡tit displej",
 			"Motiv",
-			"Podsvícení -",
-			"Podsvícení +",
-			"Uložit nastavení",
-			"Smazat nastavení",
-			"Uložit a Restart",
+			"PodsvÃ­cenÃ­ -",
+			"PodsvÃ­cenÃ­ +",
+			"UloÅ¾it nastavenÃ­",
+			"Smazat nastavenÃ­",
+			"UloÅ¾it a Restart",
 
 			// Misc
-			"Skutečně obnovit tovární nastavení?",
+			"SkuteÄ�nÄ› obnovit tovÃ¡rnÃ­ nastavenÃ­?",
 			"Restartovat?",
-			"Skutečně smazat?",
-			"Určitě?",
-			"Dotkněte se bodu",
-			"Některá nastavení nejsou uložena!",
-			"Zvolte Uložit a Restart pro dokončení",
-			"Vyžadován restart",
-			"Restartovat nyní?",
+			"SkuteÄ�nÄ› smazat?",
+			"UrÄ�itÄ›?",
+			"DotknÄ›te se bodu",
+			"NÄ›kterÃ¡ nastavenÃ­ nejsou uloÅ¾ena!",
+			"Zvolte UloÅ¾it a Restart pro dokonÄ�enÃ­",
+			"VyÅ¾adovÃ¡n restart",
+			"Restartovat nynÃ­?",
 			"Posun hlavy",
-			"Množství (mm)",
+			"MnoÅ¾stvÃ­ (mm)",
 			"Rychlost (mm/s)",
-			"Vytlačit (extr.)",
-			"Zatlačit (retr.)",
+			"VytlaÄ�it (extr.)",
+			"ZatlaÄ�it (retr.)",
 			"Baby stepping",
-			"Aktuální Z offset: ",
-			"Zpráva",
-			"Zprávy",
+			"AktuÃ¡lnÃ­ Z offset: ",
+			"ZprÃ¡va",
+			"ZprÃ¡vy",
 			"Verze firmware Panel Due ",	// note space at end
 			// File popup
-			"Soubory na kartě ",				// note the space on the end
+			"Soubory na kartÄ› ",				// note the space on the end
 			"Makra",
 			"Chyba ",						// note the space at the end
-			" přístupu ke kartě",			// note the space at the start
-			"Název: ",
+			" pÅ™Ã­stupu ke kartÄ›",			// note the space at the start
+			"NÃ¡zev: ",
 			"Velikost: ",
-			"Výška vrstvy: ",
-			"Výška objektu: ",
-			"Spotřeba (mat.): ",
+			"VÃ½Å¡ka vrstvy: ",
+			"VÃ½Å¡ka objektu: ",
+			"SpotÅ™eba (mat.): ",
 			"Slicer: ",
 			"Simulace",
 
 			// Printer status strings
 			{
-				"Připojování",
-				"Nečinný",
+				"PÅ™ipojovÃ¡nÃ­",
+				"NeÄ�innÃ½",
 				"Tiskne",
 				"Zastaven",
 				"Startuje",
 				"Pozastaven",
-				"Zaneprázdněný",
+				"ZaneprÃ¡zdnÄ›nÃ½",
 				"Pozastavuje se",
-				"Pokračuje",
-				"Nahrává firmware",
-				"Výměna nástroje",
+				"PokraÄ�uje",
+				"NahrÃ¡vÃ¡ firmware",
+				"VÃ½mÄ›na nÃ¡stroje",
 				"Simulace"
 			},
 
 			// Theme names
 			{
-				"Světlý",
-				"Tmavý"
+				"SvÄ›tlÃ½",
+				"TmavÃ½"
+			},
+			// display dimming types
+			{
+				"Vždy dim",
+				"Nikdy nezměníme",
+				"Idle Dim"
 			}
+
 		},
 
 #if 0	// Spanish not supported yet
@@ -590,7 +624,7 @@ const StringTable LanguageTables[4] =
 
 		// Printer status strings
 		{
-			"conexión",
+			"conexiÃ³n",
 			"ocioso",
 			"imprimiendo",
 			"detuvo",

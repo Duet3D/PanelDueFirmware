@@ -71,7 +71,7 @@ static StaticTextField *moveAxisRows[MaxAxes];
 static StaticTextField *nameField, *statusField, *settingsNotSavedField;
 static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
 static IntegerButton *spd, *extrusionFactors[MaxHeaters - 1], *fanSpeed, *baudRateButton, *volumeButton;
-static TextButton *languageButton, *coloursButton;
+static TextButton *languageButton, *coloursButton, *dimmingTypeButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
 static AlertPopup *alertPopup;
@@ -336,6 +336,17 @@ void ChangeBrightness(bool up)
 		adjust = -adjust;
 	}
 	SetBrightness(GetBrightness() + adjust);
+}
+
+// cycle through available display dimmer types
+void ChangeDisplayDimmerType()
+{
+	DisplayDimmerTypes newType = (DisplayDimmerTypes) ((uint8_t)GetDisplayDimmerType() + 1);
+	if (newType > DISPLAYDIMMER_MAX)
+	{
+		newType = (DisplayDimmerTypes) 0;
+	}
+	SetDisplayDimmerType(newType);
 }
 
 // Update an integer field, provided it isn't the one being adjusted
@@ -879,9 +890,11 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	coloursButton->SetText(strings->colourSchemeNames[colours.index]);
 	AddTextButton(row6, 1, 3, strings->brightnessDown, evDimmer, nullptr);
 	AddTextButton(row6, 2, 3, strings->brightnessUp, evBrighter, nullptr);
-	AddTextButton(row7, 0, 3, strings->saveSettings, evSaveSettings, nullptr);
-	AddTextButton(row7, 1, 3, strings->clearSettings, evFactoryReset, nullptr);
-	AddTextButton(row7, 2, 3, strings->saveAndRestart, evRestart, nullptr);
+	dimmingTypeButton = AddTextButton(row7, 0, 3, strings->displayDimmingNames[GetDisplayDimmerType()], evSetDimmingType, nullptr);
+	dimmingTypeButton->SetText(strings->displayDimmingNames[GetDisplayDimmerType()]);
+	AddTextButton(row8, 0, 3, strings->saveSettings, evSaveSettings, nullptr);
+	AddTextButton(row8, 1, 3, strings->clearSettings, evFactoryReset, nullptr);
+	AddTextButton(row8, 2, 3, strings->saveAndRestart, evRestart, nullptr);
 	setupRoot = mgr.GetRoot();
 }
 
@@ -1965,6 +1978,12 @@ namespace UI
 					languageButton->SetText(LanguageTables[newLanguage].languageName);
 				}
 				CheckSettingsAreSaved();						// not sure we need this because we are going to reset anyway
+				break;
+
+			case evSetDimmingType:
+				ChangeDisplayDimmerType();
+				dimmingTypeButton->SetText(strings->displayDimmingNames[GetDisplayDimmerType()]);
+				CheckSettingsAreSaved();
 				break;
 
 			case evYes:

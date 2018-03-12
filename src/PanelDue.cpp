@@ -129,7 +129,7 @@ uint32_t lastAlertSeq = 0;
 struct FlashData
 {
 	// We now use a different magic value for each display size, to force the "touch the spot" screen to be displayed when you change the display size
-	static const uint32_t magicVal = 0x3AB629E0 + DISPLAY_TYPE;
+	static const uint32_t magicVal = 0x3AB629F0 + DISPLAY_TYPE;
 	static const uint32_t muggleVal = 0xFFFFFFFF;
 
 	uint32_t magic;
@@ -144,9 +144,16 @@ struct FlashData
 	uint32_t language;
 	uint32_t colourScheme;
 	uint32_t brightness;
+	uint8_t displayDimmerType;
+	// if the data to be saved isn't a multiple of 32 bits, something appears to be truncating the
+	// structure.  Adding data elements so that the entire structure is a multiple of 32bits seems
+	// to correct the issue.  These extra "alignment buffers" should be altered/removed as needed
+	// to keep the entire structure a multiple of 32-bits.
+	uint8_t alignmentBuffer8;
+	uint16_t alignmentBuffer16;
 	char dummy;
 	
-	FlashData() : magic(muggleVal) { }
+	FlashData() : magic(muggleVal) {}
 	bool operator==(const FlashData& other);
 	bool operator!=(const FlashData& other) { return !operator==(other); }
 	bool IsValid() const; 
@@ -228,7 +235,8 @@ bool FlashData::IsValid() const
 		&& brightness >= Buzzer::MinBrightness
 		&& brightness <= Buzzer::MaxBrightness
 		&& language < UI::GetNumLanguages()
-		&& colourScheme < NumColourSchemes;
+		&& colourScheme < NumColourSchemes
+		&& displayDimmerType <= DISPLAYDIMMER_MAX;
 }
 
 bool FlashData::operator==(const FlashData& other)
@@ -244,7 +252,8 @@ bool FlashData::operator==(const FlashData& other)
 		&& touchVolume == other.touchVolume
 		&& language == other.language
 		&& colourScheme == other.colourScheme
-		&& brightness == other.brightness;
+		&& brightness == other.brightness
+		&& displayDimmerType == other.displayDimmerType;
 }
 
 void FlashData::SetDefaults()
@@ -260,6 +269,7 @@ void FlashData::SetDefaults()
 	brightness = Buzzer::DefaultBrightness;
 	language = 0;
 	colourScheme = 0;
+	displayDimmerType = (uint8_t)DISPLAYDIMMER_ALWAYS;
 	magic = magicVal;
 }
 
@@ -501,8 +511,12 @@ extern void RestoreBrightness()
 
 extern void DimBrightness()
 {
-	Buzzer::SetBacklight(nvData.brightness >> 3);
-	isDimmed = true;
+	if ((DISPLAYDIMMER_ALWAYS == GetDisplayDimmerType()) ||
+		((DISPLAYDIMMER_ONIDLE == GetDisplayDimmerType()) && (PrinterStatus::idle == status)))
+	{
+		Buzzer::SetBacklight(nvData.brightness >> 3);
+		isDimmed = true;
+	}
 }
 
 void SetVolume(uint32_t newVolume)
@@ -533,6 +547,16 @@ uint32_t GetVolume()
 int GetBrightness()
 {
 	return (int)nvData.brightness;
+}
+
+DisplayDimmerTypes GetDisplayDimmerType()
+{
+	return (DisplayDimmerTypes) nvData.displayDimmerType;
+}
+
+void SetDisplayDimmerType(DisplayDimmerTypes newType)
+{
+	nvData.displayDimmerType = (uint8_t) newType;
 }
 
 // Factory reset
@@ -1329,6 +1353,7 @@ int main(void)
 			}
 			else if (!isDimmed && SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
 			{
+				// it might not actually dim the display, depending on various flags
 				DimBrightness();
 			}
 		}
