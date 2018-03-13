@@ -96,7 +96,7 @@ public:
 	DisplayField * null next;					// link to next field in list
 
 	virtual bool IsButton() const { return false; }
-	bool IsVisible() const { return visible; }
+	virtual bool IsVisible() const { return visible; }
 	void Show(bool v);
 	virtual void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) = 0;
 	void SetColours(Colour pf, Colour pb);
@@ -451,23 +451,14 @@ public:
 	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, int param = 0);
 	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, const char * array param);
 
+	// Hide any text buttons with null text
+	bool IsVisible() const override { return text != nullptr && DisplayField::IsVisible(); }
+
 	void SetText(const char* array null pt)
 	{
 		text = pt;
 		changed = true;
 	}
-};
-
-// Button to shadow a standard text button
-class ShadowTextButton : public ButtonWithText
-{
-	TextButton *shadowedButton;
-
-protected:
-	size_t PrintText(size_t offset) const override;
-
-public:
-	ShadowTextButton(PixelNumber py, PixelNumber px, PixelNumber pw, TextButton *b);
 };
 
 // Standard button with an icon

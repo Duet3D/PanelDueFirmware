@@ -178,12 +178,13 @@ const unsigned int NumDisplayedMacros = NumMacroColumns * NumMacroRows;
 const PixelNumber MacroListPopupWidth = fullPopupWidth;
 const PixelNumber MacroListPopupHeight = ((NumMacroRows + 1) * buttonHeight) + (NumMacroRows * fileButtonRowSpacing) + (2 * popupTopMargin);
 
-const uint32_t numMessageRows = (rowTabs - margin - rowHeight)/rowTextHeight;
+const unsigned int numMessageRows = (rowTabs - margin - rowHeight)/rowTextHeight;
 const PixelNumber messageTextX = margin + messageTimeWidth + 2;
 const PixelNumber messageTextWidth = DisplayX - margin - messageTextX;
 
 const unsigned int NumControlPageMacroButtons = 4;
 const PixelNumber minControlPageMacroButtonsWidth = (tempButtonWidth * 3)/2;
+const PixelNumber maxControlPageMacroButtonsWidth = DisplayX/2 - 2 * margin;
 
 const PixelNumber alertPopupWidth = fullPopupWidth - 6 * margin;
 const PixelNumber alertPopupHeight = 2 * popupTopMargin + 5 * rowTextHeight + 2 * buttonHeight + moveButtonRowSpacing;

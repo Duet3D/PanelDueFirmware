@@ -712,17 +712,6 @@ size_t TextButton::PrintText(size_t offset) const
 	return 0;
 }
 
-ShadowTextButton::ShadowTextButton(PixelNumber py, PixelNumber px, PixelNumber pw, TextButton *b)
-: ButtonWithText(py, px, pw), shadowedButton(b)
-{
-	SetEvent(b->GetEvent(), b->GetUParam());
-}
-
-size_t ShadowTextButton::PrintText(size_t offset) const
-{
-	return shadowedButton->PrintText(offset);
-}
-
 IconButton::IconButton(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int param)
 	: SingleButton(py, px, pw), icon(ic)
 {

@@ -117,7 +117,6 @@ static bool axisHomed[MaxAxes] = {false, false, false};
 static bool allAxesHomed = false;
 static size_t numAxes = MIN_AXES;
 static int32_t beepFrequency = 0, beepLength = 0;
-static unsigned int numHeads = 1;
 static uint32_t messageSeq = 0;
 static uint32_t newMessageSeq = 0;
 
@@ -128,6 +127,7 @@ uint32_t lastAlertSeq = 0;
 
 struct FlashData
 {
+	// The magic value should be changed whenever the layout of the NVRAM changes
 	// We now use a different magic value for each display size, to force the "touch the spot" screen to be displayed when you change the display size
 	static const uint32_t magicVal = 0x3AB629F0 + DISPLAY_TYPE;
 	static const uint32_t muggleVal = 0xFFFFFFFF;
@@ -145,15 +145,10 @@ struct FlashData
 	uint32_t colourScheme;
 	uint32_t brightness;
 	uint8_t displayDimmerType;
-	// if the data to be saved isn't a multiple of 32 bits, something appears to be truncating the
-	// structure.  Adding data elements so that the entire structure is a multiple of 32bits seems
-	// to correct the issue.  These extra "alignment buffers" should be altered/removed as needed
-	// to keep the entire structure a multiple of 32-bits.
-	uint8_t alignmentBuffer8;
-	uint16_t alignmentBuffer16;
-	char dummy;
+	uint8_t padding[3];
+	char dummy;								// must be at a multiple of 4 bytes from the start because flash is read/written in whole dwords
 	
-	FlashData() : magic(muggleVal) {}
+	FlashData() : magic(muggleVal) { }
 	bool operator==(const FlashData& other);
 	bool operator!=(const FlashData& other) { return !operator==(other); }
 	bool IsValid() const; 
@@ -236,7 +231,7 @@ bool FlashData::IsValid() const
 		&& brightness <= Buzzer::MaxBrightness
 		&& language < UI::GetNumLanguages()
 		&& colourScheme < NumColourSchemes
-		&& displayDimmerType <= DISPLAYDIMMER_MAX;
+		&& displayDimmerType < (uint8_t)DisplayDimmerType::NumTypes;
 }
 
 bool FlashData::operator==(const FlashData& other)
@@ -269,7 +264,7 @@ void FlashData::SetDefaults()
 	brightness = Buzzer::DefaultBrightness;
 	language = 0;
 	colourScheme = 0;
-	displayDimmerType = (uint8_t)DISPLAYDIMMER_ALWAYS;
+	displayDimmerType = (uint8_t)DisplayDimmerType::always;
 	magic = magicVal;
 }
 
@@ -505,18 +500,29 @@ extern void SetBrightness(int percent)
 extern void RestoreBrightness()
 {
 	Buzzer::SetBacklight(nvData.brightness);
-	isDimmed = false;
 	lastActionTime = SystemTick::GetTickCount();
+	isDimmed = false;
 }
 
 extern void DimBrightness()
 {
-	if ((DISPLAYDIMMER_ALWAYS == GetDisplayDimmerType()) ||
-		((DISPLAYDIMMER_ONIDLE == GetDisplayDimmerType()) && (PrinterStatus::idle == status)))
+	if (   (GetDisplayDimmerType() == DisplayDimmerType::always)
+		|| (GetDisplayDimmerType() == DisplayDimmerType::onIdle && status == PrinterStatus::idle)
+	   )
 	{
-		Buzzer::SetBacklight(nvData.brightness >> 3);
+		Buzzer::SetBacklight(nvData.brightness/8);
 		isDimmed = true;
 	}
+}
+
+DisplayDimmerType GetDisplayDimmerType()
+{
+	return (DisplayDimmerType)nvData.displayDimmerType;
+}
+
+void SetDisplayDimmerType(DisplayDimmerType newType)
+{
+	nvData.displayDimmerType = (uint8_t)newType;
 }
 
 void SetVolume(uint32_t newVolume)
@@ -547,16 +553,6 @@ uint32_t GetVolume()
 int GetBrightness()
 {
 	return (int)nvData.brightness;
-}
-
-DisplayDimmerTypes GetDisplayDimmerType()
-{
-	return (DisplayDimmerTypes) nvData.displayDimmerType;
-}
-
-void SetDisplayDimmerType(DisplayDimmerTypes newType)
-{
-	nvData.displayDimmerType = (uint8_t) newType;
 }
 
 // Factory reset
@@ -627,6 +623,7 @@ void SetStatus(char c)
 	
 	if (newStatus != status)
 	{
+		RestoreBrightness();
 		UI::ChangeStatus(status, newStatus);
 		
 		if (status == PrinterStatus::configuring || (status == PrinterStatus::connecting && newStatus != PrinterStatus::configuring))
@@ -636,9 +633,6 @@ void SetStatus(char c)
 	
 		status = newStatus;
 		UI::UpdatePrintingFields();
-
-		// if the status changed, illuminate the screen
-		RestoreBrightness();
 	}
 }
 
@@ -782,7 +776,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		ShowLine;
 		{
 			int32_t ival;
-			if (GetInteger(data, ival) && indices[0] < MaxHeaters)
+			if (GetInteger(data, ival))
 			{
 				UI::UpdateActiveTemperature(indices[0], ival);
 			}
@@ -793,7 +787,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		ShowLine;
 		{
 			int32_t ival;
-			if (GetInteger(data, ival) && indices[0] < MaxHeaters)
+			if (GetInteger(data, ival))
 			{
 				UI::UpdateStandbyTemperature(indices[0], ival);
 			}
@@ -802,26 +796,18 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 
 	case rcvHeaters:
 		ShowLine;
-		if (indices[0] < MaxHeaters)
 		{
 			float fval;
 			if (GetFloat(data, fval))
 			{
 				ShowLine;
 				UI::UpdateCurrentTemperature(indices[0], fval);
-				if (indices[0] == numHeads + 1)
-				{
-					ShowLine;
-					UI::ShowHeater(indices[0], true);
-					++numHeads;
-				}
 			}
 		}
 		break;
 
 	case rcvHstat:
 		ShowLine;
-		if (indices[0] < MaxHeaters)
 		{
 			int32_t ival;
 			if (GetInteger(data, ival))
@@ -846,7 +832,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		ShowLine;
 		{
 			int32_t ival;
-			if (GetInteger(data, ival) && indices[0] + 1 < (int)MaxHeaters)
+			if (GetInteger(data, ival))
 			{
 				UI::UpdateExtrusionFactor(indices[0], ival);
 			}
@@ -1166,6 +1152,10 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	{
 		FileManager::BeginReceivingFiles();				// received an empty file list - need to tell the file manager about it
 	}
+	if (strcmp(id, "heaters^") == 0)
+	{
+		UI::SetNumHeaters(indices[0]);					// tell the user interface how many heaters there are
+	}
 }
 
 // Update those fields that display debug information
@@ -1284,10 +1274,8 @@ int main(void)
 	lastPollTime = SystemTick::GetTickCount() - printerPollInterval;	// allow a poll immediately
 	
 	// Hide the Head 2+ parameters until we know we have a second head
-	for (unsigned int i = 2; i < MaxHeaters; ++i)
-	{
-		UI::ShowHeater(i, false);
-	}
+	UI::SetNumHeaters(2);
+	UI::SetNumTools(1);
 	
 	debugField->Show(DEBUG != 0);					// show the debug field only if debugging is enabled
 
@@ -1323,7 +1311,6 @@ int main(void)
 				touchX->SetValue((int)x);	//debug
 				touchY->SetValue((int)y);	//debug
 #endif
-				lastActionTime = SystemTick::GetTickCount();
 				if (isDimmed)
 				{
 					RestoreBrightness();
@@ -1331,6 +1318,7 @@ int main(void)
 				}
 				else
 				{
+					lastActionTime = SystemTick::GetTickCount();
 					ButtonPress bp = mgr.FindEvent(x, y);
 					if (bp.IsValid())
 					{
@@ -1351,11 +1339,10 @@ int main(void)
 					}
 				}
 			}
-			else if (!isDimmed && SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
+			else if (!isDimmed && SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout && UI::CanDimDisplay())
 			{
-				// it might not actually dim the display, depending on various flags
-				DimBrightness();
-			}
+				DimBrightness();				// it might not actually dim the display, depending on various flags
+ 			}
 		}
 		ShowLine;
 		

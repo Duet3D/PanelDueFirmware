@@ -101,6 +101,8 @@ static String<maxUserCommandLength> userCommandBuffers[numUserCommandBuffers];
 static size_t currentUserCommandBuffer = 0, currentHistoryBuffer = 0;
 
 static unsigned int numTools = 0;
+static unsigned int numHeaters = 0;
+static unsigned int numHeaterAndToolColumns = 0;
 static int oldIntValue;
 static bool restartNeeded = false;
 int heaterStatus[MaxHeaters];
@@ -338,13 +340,13 @@ void ChangeBrightness(bool up)
 	SetBrightness(GetBrightness() + adjust);
 }
 
-// cycle through available display dimmer types
+// Cycle through available display dimmer types
 void ChangeDisplayDimmerType()
 {
-	DisplayDimmerTypes newType = (DisplayDimmerTypes) ((uint8_t)GetDisplayDimmerType() + 1);
-	if (newType > DISPLAYDIMMER_MAX)
+	DisplayDimmerType newType = (DisplayDimmerType) ((uint8_t)GetDisplayDimmerType() + 1);
+	if (newType == DisplayDimmerType::NumTypes)
 	{
-		newType = (DisplayDimmerTypes) 0;
+		newType = (DisplayDimmerType)0;
 	}
 	SetDisplayDimmerType(newType);
 }
@@ -693,6 +695,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 		// Add the icon button
 		DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
 		SingleButton *b = new IconButton(row2, column, tempButtonWidth, heaterIcons[i], evSelectHead, i);
+		b->Show(false);
 		toolButtons[i] = b;
 		mgr.AddField(b);
 
@@ -700,6 +703,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 		DisplayField::SetDefaultColours(colours.infoTextColour, colours.defaultBackColour);
 		FloatField *f = new FloatField(row3 + labelRowAdjust, column, tempButtonWidth, TextAlignment::Centre, 1);
 		f->SetValue(0.0);
+		f->Show(false);
 		currentTemps[i] = f;
 		mgr.AddField(f);
 
@@ -708,6 +712,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 		IntegerButton *ib = new IntegerButton(row4, column, tempButtonWidth);
 		ib->SetEvent(evAdjustActiveTemp, i);
 		ib->SetValue(0);
+		ib->Show(false);
 		activeTemps[i] = ib;
 		mgr.AddField(ib);
 
@@ -715,6 +720,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 		ib = new IntegerButton(row5, column, tempButtonWidth);
 		ib->SetEvent(evAdjustStandbyTemp, i);
 		ib->SetValue(0);
+		ib->Show(false);
 		standbyTemps[i] = ib;
 		mgr.AddField(ib);
 	}
@@ -796,6 +802,7 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 		IntegerButton *ib = new IntegerButton(row6, column, tempButtonWidth);
 		ib->SetValue(100);
 		ib->SetEvent(evExtrusionFactor, i - 1);
+		ib->Show(false);
 		extrusionFactors[i - 1] = ib;
 		mgr.AddField(ib);
 	}
@@ -887,11 +894,9 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	AddTextButton(row5, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
 	AddTextButton(row5, 2, 3, strings->invertDisplay, evInvertY, nullptr);
 	coloursButton = AddTextButton(row6, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
-	coloursButton->SetText(strings->colourSchemeNames[colours.index]);
 	AddTextButton(row6, 1, 3, strings->brightnessDown, evDimmer, nullptr);
 	AddTextButton(row6, 2, 3, strings->brightnessUp, evBrighter, nullptr);
-	dimmingTypeButton = AddTextButton(row7, 0, 3, strings->displayDimmingNames[GetDisplayDimmerType()], evSetDimmingType, nullptr);
-	dimmingTypeButton->SetText(strings->displayDimmingNames[GetDisplayDimmerType()]);
+	dimmingTypeButton = AddTextButton(row7, 0, 3, strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()], evSetDimmingType, nullptr);
 	AddTextButton(row8, 0, 3, strings->saveSettings, evSaveSettings, nullptr);
 	AddTextButton(row8, 1, 3, strings->clearSettings, evFactoryReset, nullptr);
 	AddTextButton(row8, 2, 3, strings->saveAndRestart, evRestart, nullptr);
@@ -1073,31 +1078,26 @@ namespace UI
 
 	void UpdateCurrentTemperature(size_t heater, float fval)
 	{
-		if (currentTemps[heater] != nullptr)
+		if (heater < MaxHeaters && currentTemps[heater] != nullptr)
 		{
 			currentTemps[heater]->SetValue(fval);
 		}
 	}
 
-	void ShowHeater(size_t heater, bool show)
-	{
-		mgr.Show(currentTemps[heater], show);
-		mgr.Show(activeTemps[heater], show);
-		mgr.Show(standbyTemps[heater], show);
-		mgr.Show(extrusionFactors[heater - 1], show);
-	}
-
 	void UpdateHeaterStatus(size_t heater, int ival)
 	{
-		heaterStatus[heater] = ival;
-		if (currentTemps[heater] != nullptr)
+		if (heater < MaxHeaters)
 		{
-			Colour c = (ival == 1) ? colours->standbyBackColour
-						: (ival == 2) ? colours->activeBackColour
-						: (ival == 3) ? colours->errorBackColour
-						: (ival == 4) ? colours->tuningBackColour
-						: colours->defaultBackColour;
-			currentTemps[heater]->SetColours((ival == 3) ? colours->errorTextColour : colours->infoTextColour, c);
+			heaterStatus[heater] = ival;
+			if (currentTemps[heater] != nullptr)
+			{
+				Colour c = (ival == 1) ? colours->standbyBackColour
+							: (ival == 2) ? colours->activeBackColour
+							: (ival == 3) ? colours->errorBackColour
+							: (ival == 4) ? colours->tuningBackColour
+							: colours->defaultBackColour;
+				currentTemps[heater]->SetColours((ival == 3) ? colours->errorTextColour : colours->infoTextColour, c);
+			}
 		}
 	}
 
@@ -1389,19 +1389,28 @@ namespace UI
 	// Update an active temperature
 	void UpdateActiveTemperature(size_t index, int ival)
 	{
-		UpdateField(activeTemps[index], ival);
+		if (index < MaxHeaters)
+		{
+			UpdateField(activeTemps[index], ival);
+		}
 	}
 
 	// Update a standby temperature
 	void UpdateStandbyTemperature(size_t index, int ival)
 	{
-		UpdateField(standbyTemps[index], ival);
+		if (index < MaxHeaters)
+		{
+			UpdateField(standbyTemps[index], ival);
+		}
 	}
 
 	// Update an extrusion factor
 	void UpdateExtrusionFactor(size_t index, int ival)
 	{
-		UpdateField(extrusionFactors[index], ival);
+		if (index < MaxHeaters)
+		{
+			UpdateField(extrusionFactors[index], ival);
+		}
 	}
 
 	// Update the print speed factor
@@ -1430,6 +1439,11 @@ namespace UI
 			mgr.ClearPopup(true, alertPopup);
 			alertMode = -1;
 		}
+	}
+
+	bool CanDimDisplay()
+	{
+		return alertMode < 2;
 	}
 
 	void ProcessSimpleAlert(const char* array text)
@@ -1982,7 +1996,7 @@ namespace UI
 
 			case evSetDimmingType:
 				ChangeDisplayDimmerType();
-				dimmingTypeButton->SetText(strings->displayDimmingNames[GetDisplayDimmerType()]);
+				dimmingTypeButton->SetText(strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()]);
 				CheckSettingsAreSaved();
 				break;
 
@@ -2267,34 +2281,75 @@ namespace UI
 		return (filesNotMacros) ? NumFileRows : NumMacroRows;
 	}
 
-	void SetNumTools(unsigned int n)
+	void AdjustControlPageMacroButtons()
 	{
+		const unsigned int n = max<unsigned int>(numHeaters, numTools + 1);
 
-		// Tool button 0 is the bed, hence we use <= instead of < in the following
-		for (size_t i = 1; i < MaxHeaters; ++i)
+		if (n != numHeaterAndToolColumns)
 		{
-			mgr.Show(toolButtons[i], i <= n);
-		}
+			numHeaterAndToolColumns = n;
 
-		if (n != numTools)
-		{
 			// Adjust the width of the control page macro buttons, or hide them completely if insufficient room
-			const PixelNumber controlPageMacroButtonsColumn = ((tempButtonWidth + fieldSpacing) * (n + 1)) + bedColumn + fieldSpacing;
-			const PixelNumber controlPageMacroButtonsWidth = (controlPageMacroButtonsColumn >= DisplayX - margin) ? 0 : DisplayX - margin - controlPageMacroButtonsColumn;
+			PixelNumber controlPageMacroButtonsColumn = ((tempButtonWidth + fieldSpacing) * n) + bedColumn + fieldSpacing;
+			PixelNumber controlPageMacroButtonsWidth = (controlPageMacroButtonsColumn >= DisplayX - margin) ? 0 : DisplayX - margin - controlPageMacroButtonsColumn;
+			if (controlPageMacroButtonsWidth > maxControlPageMacroButtonsWidth)
+			{
+				controlPageMacroButtonsColumn +=  controlPageMacroButtonsWidth - maxControlPageMacroButtonsWidth;
+				controlPageMacroButtonsWidth = maxControlPageMacroButtonsWidth;
+			}
+
+			bool showControlPageMacroButtons = controlPageMacroButtonsWidth >= minControlPageMacroButtonsWidth;
 
 			for (TextButton *& b : controlPageMacroButtons)
 			{
-				if (controlPageMacroButtonsWidth < minControlPageMacroButtonsWidth)
-				{
-					mgr.Show(b, false);
-				}
-				else
+				if (showControlPageMacroButtons)
 				{
 					b->SetPositionAndWidth(controlPageMacroButtonsColumn, controlPageMacroButtonsWidth);
 				}
+				mgr.Show(b, showControlPageMacroButtons);
+			}
+
+			if (currentTab == tabControl)
+			{
+				mgr.Refresh(true);
 			}
 		}
+	}
+
+	void SetNumHeaters(size_t nHeaters)
+	{
+		if (nHeaters > MaxHeaters)
+		{
+			nHeaters = MaxHeaters;
+		}
+
+		while (nHeaters < numHeaters)
+		{
+			--numHeaters;
+			mgr.Show(currentTemps[numHeaters], false);
+			mgr.Show(activeTemps[numHeaters], false);
+			mgr.Show(standbyTemps[numHeaters], false);
+			mgr.Show(extrusionFactors[numHeaters - 1], false);
+		}
+		while (numHeaters < nHeaters)
+		{
+			mgr.Show(currentTemps[numHeaters], true);
+			mgr.Show(activeTemps[numHeaters], true);
+			mgr.Show(standbyTemps[numHeaters], true);
+			mgr.Show(extrusionFactors[numHeaters - 1], true);
+			++numHeaters;
+		}
+		AdjustControlPageMacroButtons();
+	}
+
+	void SetNumTools(unsigned int n)
+	{
 		numTools = n;
+		for (size_t i = 0; i < MaxHeaters; ++i)
+		{
+			mgr.Show(toolButtons[i], i <= n);				// tool button 0 is the bed, hence we use <= instead of < in the following
+		}
+		AdjustControlPageMacroButtons();
 	}
 
 	void SetBabystepOffset(float f)

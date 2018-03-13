@@ -102,8 +102,8 @@ struct StringTable
 	// Colour theme names
 	CSTRING colourSchemeNames[NumColourSchemes];
 
-	// display dimmer types
-	CSTRING displayDimmingNames[DISPLAYDIMMER_MAX+1];
+	// Display dimmer types
+	CSTRING displayDimmingNames[(unsigned int)DisplayDimmerType::NumTypes];
 };
 
 const StringTable LanguageTables[4] =
@@ -209,13 +209,13 @@ const StringTable LanguageTables[4] =
 			"Dark"
 		},
 
-		// display dimming types
+		// Display dimming types
 		{
-			"Always Dim",
 			"Never Dim",
-			"Idle Dim"
+			"Idle Dim",
+			"Always Dim"
 		}
-	},
+ 	},
 
 	// German
 	{
@@ -318,11 +318,11 @@ const StringTable LanguageTables[4] =
 			"Dunkel"
 		},
 
-		// display dimming types
+		// Display dimming types
 		{
-			"Immer Dim",
 			"Nie dämmern",
-			"Idle Dim"
+			"Idle Dim",
+			"Immer Dim"
 		}
 	},
 
@@ -427,119 +427,121 @@ const StringTable LanguageTables[4] =
 			"Fond Noir"
 		},
 
-		// display dimming types
+		// Display dimming types
 		{
-			"Toujours Dim",
 			"Jamais Dim",
-			"Idle Dim"
+			"Idle Dim",
+			"Toujours Dim"
 		}
 	},
+
 	// Czech
+	{
+		// Language name
+		"Čeština",
+
+		// Main page strings
+		"Ovládání",
+		"Tisk",
+		"Konzole",
+		"Nastavení",
+		"Aktuální" THIN_SPACE DEGREE_SYMBOL "C",
+		"Aktivní" THIN_SPACE DEGREE_SYMBOL "C",
+		"Nečinná" THIN_SPACE DEGREE_SYMBOL "C",
+		"Pohyb",
+		"Extruder",
+		"Makra",
+		"STOP",
+
+		// Print page
+		"Extruder" THIN_SPACE "%",
+		"Rychl. ",							// note space at end
+		"Vent. ",							// note space at end
+		"Čas do konce: ",
+		"soubor ",							// note space at end
+		", materiál ",						// note space at end
+		", vrstva ",							// note space at end
+		"n/a",
+		"Pozastavit",
+		"Baby step",
+		"Pokračovat",
+		"Zrušit",
+		"OK",
+
+		// Setup page
+		"Hlasitost ",						// note space at end
+		"Kalibrace dotyku",
+		"Zrcadlit displej",
+		"Obrátit displej",
+		"Motiv",
+		"Podsvícení -",
+		"Podsvícení +",
+		"Uložit nastavení",
+		"Smazat nastavení",
+		"Uložit a Restart",
+
+		// Misc
+		"Skutečně obnovit tovární nastavení?",
+		"Restartovat?",
+		"Skutečně smazat?",
+		"Určitě?",
+		"Dotkněte se bodu",
+		"Některá nastavení nejsou uložena!",
+		"Zvolte Uložit a Restart pro dokončení",
+		"Vyžadován restart",
+		"Restartovat nyní?",
+		"Posun hlavy",
+		"Množství (mm)",
+		"Rychlost (mm/s)",
+		"Vytlačit (extr.)",
+		"Zatlačit (retr.)",
+		"Baby stepping",
+		"Aktuální Z offset: ",
+		"Zpráva",
+		"Zprávy",
+		"Verze firmware Panel Due ",	// note space at end
+		// File popup
+		"Soubory na kartě ",			// note the space on the end
+		"Makra",
+		"Chyba ",						// note the space at the end
+		" přístupu ke kartě",			// note the space at the start
+		"Název: ",
+		"Velikost: ",
+		"Výška vrstvy: ",
+		"Výška objektu: ",
+		"Spotřeba (mat.): ",
+		"Slicer: ",
+		"Simulace",
+
+		// Printer status strings
 		{
-			// Language name
-			"Čeština",
-
-			// Main page strings
-			"Ovládání",
-			"Tisk",
-			"Konzole",
-			"Nastavení",
-			"Aktuální" THIN_SPACE DEGREE_SYMBOL "C",
-			"Aktivní" THIN_SPACE DEGREE_SYMBOL "C",
-			"Nečinná" THIN_SPACE DEGREE_SYMBOL "C",
-			"Pohyb",
-			"Extruder",
-			"Makra",
-			"STOP",
-
-			// Print page
-			"Extruder" THIN_SPACE "%",
-			"Rychl. ",							// note space at end
-			"Vent. ",							// note space at end
-			"Čas do konce: ",
-			"soubor ",							// note space at end
-			", materiál ",						// note space at end
-			", vrstva ",							// note space at end
-			"n/a",
-			"Pozastavit",
-			"Baby step",
-			"Pokračovat",
-			"Zrušit",
-			"OK",
-
-			// Setup page
-			"Hlasitost ",							// note space at end
-			"Kalibrace dotyku",
-			"Zrcadlit displej",
-			"Obrátit displej",
-			"Motiv",
-			"Podsvícení -",
-			"Podsvícení +",
-			"Uložit nastavení",
-			"Smazat nastavení",
-			"Uložit a Restart",
-
-			// Misc
-			"Skutečně obnovit tovární nastavení?",
-			"Restartovat?",
-			"Skutečně smazat?",
-			"Určitě?",
-			"Dotkněte se bodu",
-			"Některá nastavení nejsou uložena!",
-			"Zvolte Uložit a Restart pro dokončení",
-			"Vyžadován restart",
-			"Restartovat nyní?",
-			"Posun hlavy",
-			"Množství (mm)",
-			"Rychlost (mm/s)",
-			"Vytlačit (extr.)",
-			"Zatlačit (retr.)",
-			"Baby stepping",
-			"Aktuální Z offset: ",
-			"Zpráva",
-			"Zprávy",
-			"Verze firmware Panel Due ",	// note space at end
-			// File popup
-			"Soubory na kartě ",				// note the space on the end
-			"Makra",
-			"Chyba ",						// note the space at the end
-			" přístupu ke kartě",			// note the space at the start
-			"Název: ",
-			"Velikost: ",
-			"Výška vrstvy: ",
-			"Výška objektu: ",
-			"Spotřeba (mat.): ",
-			"Slicer: ",
-			"Simulace",
-
-			// Printer status strings
-			{
-				"Připojování",
-				"Nečinný",
-				"Tiskne",
-				"Zastaven",
-				"Startuje",
-				"Pozastaven",
-				"Zaneprázdněný",
-				"Pozastavuje se",
-				"Pokračuje",
-				"Nahrává firmware",
-				"Výměna nástroje",
-				"Simulace"
-			},
-
-			// Theme names
-			{
-				"Světlý",
-				"Tmavý"
-			},
-			// display dimming types
-			{
-				"Vždy Dim",
-				"Nikdy nezměníme",
-				"Idle Dim"
-			}
+			"Připojování",
+			"Nečinný",
+			"Tiskne",
+			"Zastaven",
+			"Startuje",
+			"Pozastaven",
+			"Zaneprázdněný",
+			"Pozastavuje se",
+			"Pokračuje",
+			"Nahrává firmware",
+			"Výměna nástroje",
+			"Simulace"
 		},
+
+		// Theme names
+		{
+			"Světlý",
+			"Tmavý"
+		},
+
+		// Display dimming types
+		{
+			"Nikdy nezměníme",
+			"Idle Dim",
+			"Vždy Dim"
+		}
+	},
 
 #if 0	// Spanish not supported yet
 	// Spanish
@@ -638,6 +640,13 @@ const StringTable LanguageTables[4] =
 		{
 			"Light",
 			"Dark"
+		},
+
+		// Display dimming types
+		{
+			"Never Dim",
+			"Idle Dim".
+			"Always Dim",
 		}
 	},
 #endif
