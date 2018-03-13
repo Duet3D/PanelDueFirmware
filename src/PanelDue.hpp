@@ -31,6 +31,14 @@ extern void ErrorBeep();
 extern void CalibrateTouch();
 
 // Functions called from module UserInterface to manipulate non-volatile settings and associated hardware
+enum DisplayDimmerTypes : uint8_t
+{
+	DISPLAYDIMMER_ALWAYS = 0,		// default - always dim
+	DISPLAYDIMMER_NEVER = 1,		// never dim the display
+	DISPLAYDIMMER_ONIDLE = 2, 		// only display when printer status is idle
+
+	DISPLAYDIMMER_MAX = 2,
+};
 extern void FactoryReset();
 extern void SaveSettings();
 extern bool IsSaveAndRestartNeeded();
@@ -40,12 +48,17 @@ extern void InvertDisplay();
 extern void SetBaudRate(uint32_t rate);
 extern void SetBrightness(int percent);
 extern void RestoreBrightness();
+extern void DimBrightness();
 extern void SetVolume(uint32_t newVolume);
 extern void SetColourScheme(uint32_t newColours);
 extern void SetLanguage(uint32_t newLanguage);
 extern uint32_t GetBaudRate();
 extern int GetBrightness();
 extern uint32_t GetVolume();
+extern DisplayDimmerTypes GetDisplayDimmerType();
+extern void SetDisplayDimmerType(DisplayDimmerTypes newType);
+
+
 extern FirmwareFeatures GetFirmwareFeatures();
 extern const char* array CondStripDrive(const char* array arg);
 extern void Reconnect();
@@ -82,5 +95,7 @@ struct Alert
 
 	Alert() { flags = 0; }
 };
+
+
 
 #endif /* PANELDUE_H_ */

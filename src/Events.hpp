@@ -58,6 +58,7 @@ enum Event : uint8_t
 	evAdjustLanguage, evSetLanguage,
 	evAdjustColours, evSetColours,
 	evBrighter, evDimmer,
+	evSetDimmingType,
 
 	evRestart, evEmergencyStop,
 

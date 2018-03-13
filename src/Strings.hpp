@@ -101,6 +101,9 @@ struct StringTable
 
 	// Colour theme names
 	CSTRING colourSchemeNames[NumColourSchemes];
+
+	// display dimmer types
+	CSTRING displayDimmingNames[DISPLAYDIMMER_MAX+1];
 };
 
 const StringTable LanguageTables[4] =
@@ -204,6 +207,13 @@ const StringTable LanguageTables[4] =
 		{
 			"Light",
 			"Dark"
+		},
+
+		// display dimming types
+		{
+			"Always Dim",
+			"Never Dim",
+			"Idle Dim"
 		}
 	},
 
@@ -306,6 +316,13 @@ const StringTable LanguageTables[4] =
 		{
 			"Hell",
 			"Dunkel"
+		},
+
+		// display dimming types
+		{
+			"Immer Dim",
+			"Nie dämmern",
+			"Idle Dim"
 		}
 	},
 
@@ -408,6 +425,13 @@ const StringTable LanguageTables[4] =
 		{
 			"Fond Blanc",
 			"Fond Noir"
+		},
+
+		// display dimming types
+		{
+			"Toujours Dim",
+			"Jamais Dim",
+			"Idle Dim"
 		}
 	},
 	// Czech
@@ -508,6 +532,12 @@ const StringTable LanguageTables[4] =
 			{
 				"Světlý",
 				"Tmavý"
+			},
+			// display dimming types
+			{
+				"Vždy Dim",
+				"Nikdy nezměníme",
+				"Idle Dim"
 			}
 		},
 
