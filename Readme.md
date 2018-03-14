@@ -8,7 +8,7 @@ https://miscsolutions.wordpress.com/paneldue/
 
 (see section "Testing the board and updating the firmware").
 
-3. Customising the splash screen
+3. Customising the splash screen (versions 1.20RC4 and later)
 
 If you wish to display a custom splash screen when PanelDue is powered up:
 - First export the image you want to display in 24-bit bitmap (.bmp) format. The width and height in pixels must match exactly the resolution of the TFT panel (480x272 for the 4.3" panel, or 800x480 for the 5" and 7" panels)
