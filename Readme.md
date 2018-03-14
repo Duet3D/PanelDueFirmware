@@ -19,4 +19,4 @@ To add the splash screen:
 - Run this Windows command to compress the image: bmp2c-escher3d.exe myimage.bmp myimage.bin /b /c
 - Run this Windows command to append it to the binary: copy /b PanelDue-v3-5.0-nologo.bin+myimage.bin PanelDueFirmware.bin
 
-substituting appropriate filenames. Then check that the resulting firmware file (PanelDueFirmware.bin in this example) is no olarher than the flash memory size.
+substituting appropriate filenames. Then check that the resulting firmware file (PanelDueFirmware.bin in this example) is no larger than the flash memory size.
