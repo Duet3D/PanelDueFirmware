@@ -2255,7 +2255,7 @@ namespace UI
 	void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * array null text, const char * array null param)
 	{
 		TextButton * const f = ((filesNotMacros) ? filenameButtons : macroButtons)[buttonIndex];
-		f->SetText(text);
+		f->SetText(text != nullptr ? text : "");
 		f->SetEvent((text == nullptr) ? evNull : (filesNotMacros) ? evFile : evMacro, param);
 		mgr.Show(f, text != nullptr);
 	}
