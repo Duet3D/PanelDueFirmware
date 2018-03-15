@@ -16,7 +16,7 @@ If you wish to display a custom splash screen when PanelDue is powered up:
 - Version 1 PanelDue controllers have 128kb flash memory. Version 2 controllers use either a ATSAM3S2B (128kb) chip or a ATSAM3S4B (256kb) chip. Version 3 controllers and the 7i integrated version have 256kb flash memory. If you have a 128kb chip then you will only be able to use a splash screen if you are using the 4.3" panel and the image compresses well.
 
 To add the splash screen:
-- Run this Windows command to compress the image: bmp2c-escher3d.exe myimage.bmp myimage.bin /b /c
+- Run this Windows command to compress the image: bmp2c-escher3d.exe myimage.bmp myimage.bin -b -c
 - Run this Windows command to append it to the binary: copy /b PanelDue-v3-5.0-nologo.bin+myimage.bin PanelDueFirmware.bin
 
 substituting appropriate filenames. Then check that the resulting firmware file (PanelDueFirmware.bin in this example) is no larger than the flash memory size.
