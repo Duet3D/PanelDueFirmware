@@ -308,7 +308,7 @@ void Window::Redraw(DisplayField *f)
 
 void Window::Show(DisplayField * null f, bool v)
 {
-	if (f != nullptr && f->IsVisible() != v)
+	if (f != nullptr && (f->IsVisible() != v || f->HasChanged()))
 	{
 		f->Show(v);
 
@@ -604,7 +604,7 @@ void ButtonBase::DrawOutline(PixelNumber xOffset, PixelNumber yOffset, bool isPr
 
 void ButtonBase::CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) /*override*/
 {
-	if (visible && GetEvent() != nullEvent)
+	if (IsVisible() && GetEvent() != nullEvent)
 	{
 		const int xError = (x < GetMinX()) ? GetMinX() - x
 								: (x > GetMaxX()) ? x - GetMaxX()

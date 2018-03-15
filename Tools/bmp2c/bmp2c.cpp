@@ -226,7 +226,7 @@ try
 {
 	if (argc < 2)
 	{
-		cout << "Usage: " << argv[0] << "input_file.bmp [output_file.cpp] [-b] [-c] [-p]" << endl;
+		cout << "Usage: " << argv[0] << " input_file.bmp [output_file.cpp] [-b] [-c] [-p]" << endl;
 		return 0;
 	}
 

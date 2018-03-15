@@ -21,6 +21,7 @@
 #include "Hardware/SerialIo.hpp"
 #include "Hardware/SysTick.hpp"
 #include "Strings.hpp"
+#include "Version.hpp"
 
 const unsigned int numLanguages = 4;
 static_assert(ARRAY_SIZE(LanguageTables) == numLanguages, "Wrong number of languages in LanguageTable");
@@ -611,22 +612,10 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	for (size_t i = 0; i < 4; ++i)
 	{
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-#if 1
 		// New code using CharButtonRow to economise on RAM at the expense of more flash memory usage
 		const PixelNumber column = popupSideMargin + (i * keyButtonHStep)/3;
 		keyboardRows[i] = new CharButtonRow(row, column, keyButtonWidth, keyButtonHStep, currentKeyboard[i], evKey);
 		keyboardPopup->AddField(keyboardRows[i]);
-#else
-		// Old code using individual buttons
-		PixelNumber column = popupSideMargin + (i * keyButtonHStep)/3;
-		const char * s = keys[i];
-		while (*s != 0)
-		{
-			keyboardPopup->AddField(new CharButton(row, column, keyButtonWidth, *s, evKey));
-			++s;
-			column += keyButtonHStep;
-		}
-#endif
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.buttonImageBackColour);
 		switch (i)
 		{
@@ -653,7 +642,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	const PixelNumber wideKeyButtonWidth = (keyboardPopupWidth - 2 * popupSideMargin - 2 * keyButtonHSpace)/5;
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 	keyboardPopup->AddField(new TextButton(row, popupSideMargin, wideKeyButtonWidth, "Shift", evShift, 0));
-	keyboardPopup->AddField(new TextButton(row, popupSideMargin + wideKeyButtonWidth + keyButtonHSpace, 2 * wideKeyButtonWidth, nullptr, evKey, (int)' '));
+	keyboardPopup->AddField(new TextButton(row, popupSideMargin + wideKeyButtonWidth + keyButtonHSpace, 2 * wideKeyButtonWidth, "", evKey, (int)' '));
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.buttonImageBackColour);
 	keyboardPopup->AddField(new IconButton(row, popupSideMargin + 3 * wideKeyButtonWidth + 2 * keyButtonHSpace, wideKeyButtonWidth, IconEnter, evSendKeyboardCommand));
 }
@@ -2255,7 +2244,7 @@ namespace UI
 	void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * array null text, const char * array null param)
 	{
 		TextButton * const f = ((filesNotMacros) ? filenameButtons : macroButtons)[buttonIndex];
-		f->SetText(text != nullptr ? text : "");
+		f->SetText(text);
 		f->SetEvent((text == nullptr) ? evNull : (filesNotMacros) ? evFile : evMacro, param);
 		mgr.Show(f, text != nullptr);
 	}

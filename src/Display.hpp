@@ -101,6 +101,7 @@ public:
 	virtual void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) = 0;
 	void SetColours(Colour pf, Colour pb);
 	void SetChanged() { changed = true; }
+	bool HasChanged() const { return changed; }
 	PixelNumber GetMinX() const { return x; }
 	PixelNumber GetMaxX() const { return x + width - 1; }
 	PixelNumber GetMinY() const { return y; }
