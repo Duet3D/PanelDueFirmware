@@ -94,6 +94,7 @@ struct StringTable
 	CSTRING objectHeight;
 	CSTRING filamentNeeded;
 	CSTRING generatedBy;
+	CSTRING lastModified;
 	CSTRING simulate;
 
 	// Printer status strings
@@ -185,6 +186,7 @@ const StringTable LanguageTables[4] =
 		"Object height: ",
 		"Filament needed: ",
 		"Sliced by: ",
+		"Last modified: ",
 		"Simulate",
 
 		// Printer status strings
@@ -294,6 +296,7 @@ const StringTable LanguageTables[4] =
 		"Objekthöhe: ",
 		"Benötigtes Filament: ",
 		"Erzeugt mit: ",
+		"Letzte Änderung: ",
 		"Simulieren",
 
 		// Printer status strings
@@ -403,6 +406,7 @@ const StringTable LanguageTables[4] =
 		"Hauteur de l'objet: ",
 		"Filament requis: ",
 		"Sliced par: ",
+		"Last modified: ",
 		"Simuler",
 
 		// Printer status strings
@@ -511,6 +515,7 @@ const StringTable LanguageTables[4] =
 		"Výška objektu: ",
 		"Spotřeba (mat.): ",
 		"Slicer: ",
+		"Last modified: ",
 		"Simulace",
 
 		// Printer status strings
@@ -618,6 +623,7 @@ const StringTable LanguageTables[4] =
 		"Object height: ",
 		"Filament needed: ",
 		"Sliced by: ",
+		"Last modified: ",
 		"Simulate",
 
 		// Printer status strings

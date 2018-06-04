@@ -50,6 +50,7 @@ namespace UI
 	extern void ClearAlert();
 	extern void ProcessSimpleAlert(const char* array text);
 	extern bool CanDimDisplay();
+	extern void UpdateFileLastModifiedText(const char data[]);
 	extern void UpdateFileGeneratedByText(const char data[]);
 	extern void UpdateFileObjectHeight(float f);
 	extern void UpdateFileLayerHeight(float f);

@@ -146,7 +146,7 @@ const PixelNumber popupBarHeight = buttonHeight + (2 * popupTopMargin);
 
 const PixelNumber tempPopupBarWidth = (3 * fullPopupWidth)/4;
 const PixelNumber fileInfoPopupWidth = fullPopupWidth - (4 * margin),
-				  fileInfoPopupHeight = (8 * rowTextHeight) + buttonHeight + (2 * popupTopMargin);
+				  fileInfoPopupHeight = (9 * rowTextHeight) + buttonHeight + (2 * popupTopMargin);
 const PixelNumber areYouSurePopupWidth = DisplayX - 80,
 				  areYouSurePopupHeight = (3 * rowHeight) + (2 * popupTopMargin);
 

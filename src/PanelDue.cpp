@@ -194,6 +194,7 @@ enum ReceivedDataEvent
 	rcvGeneratedBy,
 	rcvGeometry,
 	rcvHeight,
+	rcvLastModified,
 	rcvLayerHeight,
 	rcvMessage,
 	rcvMboxMode,
@@ -711,6 +712,7 @@ const ReceiveDataTableEntry fieldTable[] =
 	{ rcvHeight,		"height" },
 	{ rcvHomed,			"homed^" },
 	{ rcvHstat,			"hstat^" },
+	{ rcvLastModified,	"lastModified" },
 	{ rcvLayerHeight,	"layerHeight" },
 	{ rcvMessage,		"message" },
 	{ rcvMboxControls,	"msgBox.controls" },
@@ -963,6 +965,10 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 				UI::UpdateFileObjectHeight(f);
 			}
 		}
+		break;
+
+	case rcvLastModified:
+		UI::UpdateFileLastModifiedText(data);
 		break;
 
 	case rcvLayerHeight:
