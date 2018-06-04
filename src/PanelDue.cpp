@@ -84,7 +84,8 @@ const HostFirmwareType firmwareTypes[] =
 {
 	{ "RepRapFirmware", quoteFilenames },
 	{ "Smoothie", noGcodesFolder | noStandbyTemps | noG10Temps | noDriveNumber | noM20M36 },
-	{ "Repetier", noGcodesFolder | noStandbyTemps | noG10Temps }
+	{ "Repetier", noGcodesFolder | noStandbyTemps | noG10Temps },
+	{ "Marlin", noGcodesFolder | noStandbyTemps | noG10Temps }
 };
 
 // Variables
@@ -204,10 +205,12 @@ enum ReceivedDataEvent
 	rcvMboxTitle,
 	rcvMboxSeq,
 	rcvMyName,
+	rcvPrintTime,
 	rcvProbe,
 	rcvResponse,
 	rcvSeq,
 	rcvSfactor,
+	rcvSimulatedTime,
 	rcvSize,
 	rcvStatus,
 	rcvTimesLeft,
@@ -581,46 +584,8 @@ void SaveSettings()
 // This is called when the status changes
 void SetStatus(char c)
 {
-	PrinterStatus newStatus;
-	switch(c)
-	{
-	case 'A':
-		newStatus = PrinterStatus::paused;
-		break;
-	case 'B':
-		newStatus = PrinterStatus::busy;
-		break;
-	case 'C':
-		newStatus = PrinterStatus::configuring;
-		break;
-	case 'D':
-		newStatus = PrinterStatus::pausing;
-		break;
-	case 'F':
-		newStatus = PrinterStatus::flashing;
-		break;
-	case 'I':
-		newStatus = PrinterStatus::idle;
-		break;
-	case 'P':
-		newStatus = PrinterStatus::printing;
-		break;
-	case 'M':
-		newStatus = PrinterStatus::simulating;
-		break;
-	case 'R':
-		newStatus = PrinterStatus::resuming;
-		break;
-	case 'S':
-		newStatus = PrinterStatus::stopped;
-		break;
-	case 'T':
-		newStatus = PrinterStatus::toolChange;
-		break;
-	default:
-		newStatus = status;		// leave the status alone if we don't recognise it
-		break;
-	}
+	const char * const p = strchr(StatusLetters, c);
+	const PrinterStatus newStatus = (p != nullptr) ? (PrinterStatus)(p - StatusLetters + 1) : status;
 	
 	if (newStatus != status)
 	{
@@ -724,10 +689,12 @@ const ReceiveDataTableEntry fieldTable[] =
 	{ rcvMyName,		"myName" },
 	{ rcvNumTools,		"numTools" },
 	{ rcvPos,			"pos^" },
+	{ rcvPrintTime,		"printTime" },
 	{ rcvProbe,			"probe" },
 	{ rcvResponse,		"resp" },
 	{ rcvSeq,			"seq" },
 	{ rcvSfactor,		"sfactor" },
+	{ rcvSimulatedTime,	"simulatedTime" },
 	{ rcvSize,			"size" },
 	{ rcvStandby,		"standby^" },
 	{ rcvStatus,		"status" },
@@ -772,7 +739,8 @@ void EndReceivedMessage()
 void ProcessReceivedValue(const char id[], const char data[], const size_t indices[])
 {
 	ShowLine;
-	switch(bsearch(fieldTable, sizeof(fieldTable)/sizeof(fieldTable[0]), id))
+	const ReceivedDataEvent rde = bsearch(fieldTable, sizeof(fieldTable)/sizeof(fieldTable[0]), id);
+	switch (rde)
 	{
 	case rcvActive:
 		ShowLine;
@@ -969,6 +937,17 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 
 	case rcvLastModified:
 		UI::UpdateFileLastModifiedText(data);
+		break;
+
+	case rcvPrintTime:
+	case rcvSimulatedTime:
+		{
+			int32_t sz;
+			if (GetInteger(data, sz) && sz > 0)
+			{
+				UI::UpdatePrintTimeText((uint32_t)sz, rde == rcvSimulatedTime);
+			}
+		}
 		break;
 
 	case rcvLayerHeight:

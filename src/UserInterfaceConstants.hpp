@@ -61,6 +61,8 @@ const PixelNumber closeButtonWidth = 40;
 
 const PixelNumber touchCalibMargin = 15;
 
+const PixelNumber ColourGradientLeftPos = 136;
+
 extern uint8_t glcd19x21[];				// declare which fonts we will be using
 #define DEFAULT_FONT	glcd19x21
 
@@ -105,6 +107,8 @@ const PixelNumber closeButtonWidth = 66;
 
 const PixelNumber touchCalibMargin = 22;
 
+const PixelNumber ColourGradientLeftPos = 400;
+
 extern uint8_t glcd28x32[];				// declare which fonts we will be using
 #define DEFAULT_FONT	glcd28x32
 
@@ -132,6 +136,9 @@ const PixelNumber row9 = row8 + rowHeight;
 const PixelNumber rowTabs = DisplayY - rowTextHeight;			// place at bottom of screen with no margin
 const PixelNumber labelRowAdjust = 2;							// how much to drop non-button fields to line up with buttons
 
+const PixelNumber ColourGradientTopPos = row2;
+const PixelNumber ColourGradientHeight = rowTextHeight;
+
 const PixelNumber speedColumn = margin;
 const PixelNumber fanColumn = DISPLAY_X/4 + 20;
 
@@ -146,7 +153,7 @@ const PixelNumber popupBarHeight = buttonHeight + (2 * popupTopMargin);
 
 const PixelNumber tempPopupBarWidth = (3 * fullPopupWidth)/4;
 const PixelNumber fileInfoPopupWidth = fullPopupWidth - (4 * margin),
-				  fileInfoPopupHeight = (9 * rowTextHeight) + buttonHeight + (2 * popupTopMargin);
+				  fileInfoPopupHeight = (10 * rowTextHeight) + buttonHeight + (2 * popupTopMargin);
 const PixelNumber areYouSurePopupWidth = DisplayX - 80,
 				  areYouSurePopupHeight = (3 * rowHeight) + (2 * popupTopMargin);
 

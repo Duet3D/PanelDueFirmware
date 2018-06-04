@@ -51,6 +51,8 @@ public:
 
 	void sort(bool (*sortfunc)(T, T));
 
+	bool replace(T oldVal, T newVal);
+
 protected:
 	T storage[N];
 	size_t filled;	
@@ -119,6 +121,19 @@ template<class T, size_t N> void Vector<T, N>::truncate(size_t pos)
 	{
 		filled = pos;
 	}
+}
+
+template<class T, size_t N> bool Vector<T, N>::replace(T oldVal, T newVal)
+{
+	for (size_t i = 0; i < filled; ++i)
+	{
+		if (storage[i] == oldVal)
+		{
+			storage[i] = newVal;
+			return true;
+		}
+	}
+	return false;
 }
 
 // String class. This is like the vector class except that we always keep a null terminator so that we can call c_str() on it.

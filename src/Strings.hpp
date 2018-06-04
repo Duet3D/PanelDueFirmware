@@ -95,10 +95,11 @@ struct StringTable
 	CSTRING filamentNeeded;
 	CSTRING generatedBy;
 	CSTRING lastModified;
+	CSTRING printTime;
 	CSTRING simulate;
 
 	// Printer status strings
-	CSTRING statusValues[12];
+	CSTRING statusValues[13];
 
 	// Colour theme names
 	CSTRING colourSchemeNames[NumColourSchemes];
@@ -187,6 +188,7 @@ const StringTable LanguageTables[4] =
 		"Filament needed: ",
 		"Sliced by: ",
 		"Last modified: ",
+		"Print time: ",
 		"Simulate",
 
 		// Printer status strings
@@ -202,7 +204,8 @@ const StringTable LanguageTables[4] =
 			"Resuming",
 			"Firmware upload",
 			"Changing tool",
-			"Simulating"
+			"Simulating",
+			"Standby"
 		},
 
 		// Theme names
@@ -228,26 +231,26 @@ const StringTable LanguageTables[4] =
 		"Steuerung",
 		"Druck",
 		"Konsole",
-		"Einrichtung",
-		"Aktuell" THIN_SPACE DEGREE_SYMBOL "C",
+		"Setup",
+		"Istwert" THIN_SPACE DEGREE_SYMBOL "C",
 		"Aktiv" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
 		"Bewegung",
 		"Extrusion",
 		"Makro",
-		"NOT-AUS",
+		"STOP",
 
 		// Print page
 		"Extruder" THIN_SPACE "%",
-		"Speed ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
+		"Tempo ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
 		"Lüfter ",							// note space at end
-		"Zeit übrig: ",
+		"Restzeit: ",
 		"Datei ",							// note space at end
 		", Filament ",						// note space at end
 		", Schicht ",						// note space at end
 		"n/v",
 		"Pause",
-		"Baby Step",
+		"Einzelschritt",
 		"Fortsetzen",
 		"Abbrechen",
 		"Set",
@@ -256,30 +259,30 @@ const StringTable LanguageTables[4] =
 		"Lautstärke ",						// note space at end
 		"Touch kalibrieren",
 		"Anzeige spiegeln",
-		"Anzeige invertieren",
-		"Thema",
-		"Helligkeit -",
-		"Helligkeit +",
-		"Einstellungen speichern",
-		"Einstellungen löschen",
-		"Speichern & Neustarten",
+		"Anzeige umkehren",
+		"Darstellung",
+		"Beleuchtung  -",
+		"Beleuchtung  +",
+		"Einstllgen sichern",
+		"Werks-Reset",
+		"Sichern & Reboot",
 
 		// Misc
-		"Rücksetzen bestätigen",
-		"Neustart bestätigen",
-		"Löschen bestätigen",
+		"Alle Einstellungen zurücksetzen",
+		"Das Gerät wird neu gestartet",
+		"Die Datei wird gelöscht",
 		"Sind sie sicher?",
-		"Berühren sie den Punkt",
-		"Einige Einstellungen sind nicht gespeichert!",
-		"Berühren sie Speichern & Neustarten um die neuen Einstellungen anzuwenden",
+		"Bitte auf den Punkt tippen",
+		"Einige Einstellungen sind nicht gesichert!",
+		"Zum Übernehmen der Änderung 'Sichern & Reboot' drücken",
 		"Neustarten erforderlich",
-		"Neustarten jetzt?",
+		"Jetzt neu starten?",
 		"Kopf bewegen",
 		"Extrusionsmenge (mm)",
 		"Geschwindigkeit (mm/s)",
 		"Extrudieren",
 		"Zurückziehen",
-		"Babystepping",
+		"Einzelschritte",
 		"Aktueller Z-Versatz: ",
 		"Nachricht",
 		"Nachrichten",
@@ -297,13 +300,14 @@ const StringTable LanguageTables[4] =
 		"Benötigtes Filament: ",
 		"Erzeugt mit: ",
 		"Letzte Änderung: ",
+		"Druckdauer: ",
 		"Simulieren",
 
 		// Printer status strings
 		{
 			"Verbinde",
 			"Leerlauf",
-			"Drucken",
+			"Druckt",
 			"Angehalten",
 			"Starte",
 			"Pausiert",
@@ -312,20 +316,21 @@ const StringTable LanguageTables[4] =
 			"Fortsetzen",
 			"Firmware-Upload",
 			"Wechsle Tool",
-			"Simuliert"
+			"Simuliert",
+			"Stand-by"
 		},
 
 		// Theme names
 		{
-			"Hell",
-			"Dunkel"
+			"Anzeige hell",
+			"Anzeige invertiert"
 		},
 
 		// Display dimming types
 		{
-			"Nie dämmern",
-			"Idle Dim",
-			"Immer Dim"
+			"Dimmen aus",
+			"Dim bei idle",				//shortened due to space limitations, ideally "Nur im Standby dimmen"
+			"Dimmen ein"
 		}
 	},
 
@@ -407,6 +412,7 @@ const StringTable LanguageTables[4] =
 		"Filament requis: ",
 		"Sliced par: ",
 		"Last modified: ",
+		"Print time: ",
 		"Simuler",
 
 		// Printer status strings
@@ -422,7 +428,8 @@ const StringTable LanguageTables[4] =
 			"Reprise",
 			"Téleverser le firmware",
 			"Changement d'outil",
-			"Simuler"
+			"Simuler",
+			"Etre prêt"
 		},
 
 		// Theme names
@@ -516,6 +523,7 @@ const StringTable LanguageTables[4] =
 		"Spotřeba (mat.): ",
 		"Slicer: ",
 		"Last modified: ",
+		"Print time: ",
 		"Simulace",
 
 		// Printer status strings
@@ -531,7 +539,8 @@ const StringTable LanguageTables[4] =
 			"Pokračuje",
 			"Nahrává firmware",
 			"Výměna nástroje",
-			"Simulace"
+			"Simulace",
+			"Pohotovostní"
 		},
 
 		// Theme names
@@ -624,6 +633,7 @@ const StringTable LanguageTables[4] =
 		"Filament needed: ",
 		"Sliced by: ",
 		"Last modified: ",
+		"Print time: ",
 		"Simulate",
 
 		// Printer status strings
@@ -639,7 +649,8 @@ const StringTable LanguageTables[4] =
 			"reanudando",
 			"carga del firmware",
 			"herramienta de cambio",
-			"simulating"
+			"simulating",
+			"low voltage"
 		},
 
 		// Theme names

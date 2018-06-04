@@ -1,0 +1,53 @@
+1.20RC1:
+[checked, ok] Check fan command - should send M106 without a fan number
+[done] Change format of workspace paths, use quotes - issue #3
+[done, ok] Support new message box
+[done, ok] More characters on keyboard, in particular " and '
+[done, test] Extrusion factor command sends parameter P instead of D
+[done, ok] Use bigger brightness up/down steps
+[done, test] Send M408 S1 occasionally instead of M408 S0
+[done, test] Support simulating files
+[done, test] Keys on keyboard no longer show they are pressed
+[done] Send file names in quotes
+
+1.20RC4:
+[done, test] Skip leading digits followed by underscore in macro names
+[done] Characters beyond U+00FF
+[done] Reduce babystepping to 0.02mm
+[done] Correct german translation of "Invert display" and replace translation of "Speed" which is too long
+[done, test] Handle status M (simulating)
+[done, test] Pressing Control should close the extrusion or Move popup
+[done, test] Concatenate splash screen with the binary, load it if present
+[done, test] Cancel splash screen if screen is touched
+[done, test] Dim screen after no activity
+[done, test] Fix for setting standby bed temperature
+[done, test] Set extrusion factor not working, test with DWC active too
+
+1.20 release:
+- don't dim while a message needs to be acknowledged
+- [done, test] restore brightness when status changes
+- [done, test] when restoring brightness due to message etc. restart dimmer timer, https://www.duet3d.com/forum/thread.php?pid=41171#p41171
+- [done, ok] issues when tools are deleted, https://www.duet3d.com/forum/thread.php?pid=41124#p41124
+- [done] Invisible space bar
+- [done] Directories with only a few files, https://www.duet3d.com/forum/thread.php?pid=42305#p42305
+
+1.21 release:
+- Light/Dark popup covers Save & Restart button, https://www.duet3d.com/forum/thread.php?pid=42495#p42495
+- [done, test] If you use macro subfolders then Control page macros are displayed incorrectly if you go into a macro subfolder, https://www.duet3d.com/forum/thread.php?pid=44644#p44644
+- [done apart from translations] Support new status letter 'O' (powered off)
+- [done, test] Add last modified date/time to file info popup (have a PR for this)
+- Add print time to file info popup
+- Add colour gradient test pattern on setup page
+- [done] Add support for Marlin firmware type
+
+Optional PIN code for access (mrehorstdmd)
+Feature request: coordinates on the Move screen
+Handle no bed heater better?
+Improve visual appearance?
+Look at https://www.duet3d.com/forum/thread.php?pid=27861#p27861
+User requests: https://www.duet3d.com/forum/thread.php?pid=33908#p33908
+User request to display virtual heaters e.g. chamber, heatsink https://www.duet3d.com/forum/thread.php?pid=34123#p34123
+Bug: https://www.duet3d.com/forum/thread.php?pid=34772#p34772 (needs RRF fix too?)
+Test extrusion factor are working, we have a report that they get reset to 100 on T3
+User request: https://www.duet3d.com/forum/thread.php?pid=35713#p35713
+Sort files by date https://forum.duet3d.com/topic/598/gcode-files-sorting-backup-system/12

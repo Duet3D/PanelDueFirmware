@@ -35,12 +35,20 @@ const Icon heaterIcons[MaxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNo
 
 // Public fields
 TextField *fwVersionField, *userCommandField;
-IntegerField *freeMem, *touchX, *touchY;
+IntegerField *freeMem;
 StaticTextField *touchCalibInstruction, *debugField;
 StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
 
 // Private fields
 class AlertPopup;
+
+const size_t machineNameLength = 30;
+const size_t printingFileLength = 40;
+const size_t zprobeBufLength = 12;
+const size_t generatedByTextLength = 50;
+const size_t lastModifiedTextLength = 20;
+const size_t printTimeTextLength = 12;		// e.g. 11h 55m
+const size_t controlPageMacroTextLength = 20;
 
 struct FileListButtons
 {
@@ -54,6 +62,7 @@ static SingleButton *changeCardButton;
 static TextButton *filenameButtons[NumDisplayedFiles];
 static TextButton *macroButtons[NumDisplayedMacros];
 static TextButton *controlPageMacroButtons[NumControlPageMacroButtons];
+static String<controlPageMacroTextLength> controlPageMacroText[NumControlPageMacroButtons];
 
 static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
 static StaticTextField *areYouSureTextField, *areYouSureQueryField;
@@ -67,7 +76,7 @@ static ProgressBar *printProgressBar;
 static SingleButton *tabControl, *tabPrint, *tabMsg, *tabSetup;
 static ButtonBase *filesButton, *pauseButton, *resumeButton, *resetButton, *babystepButton;
 static TextField *timeLeftField, *zProbe;
-static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField;
+static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
 static StaticTextField *moveAxisRows[MaxAxes];
 static StaticTextField *nameField, *statusField, *settingsNotSavedField;
 static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
@@ -85,17 +94,12 @@ static ButtonPress currentButton;
 static ButtonPress fieldBeingAdjusted;
 static ButtonPress currentExtrudeRatePress, currentExtrudeAmountPress;
 
-const size_t machineNameLength = 30;
-const size_t printingFileLength = 40;
-const size_t zprobeBufLength = 12;
-const size_t generatedByTextLength = 50;
-const size_t lastModifiedTextLength = 20;
-
 static String<machineNameLength> machineName;
 static String<printingFileLength> printingFile;
 static String<zprobeBufLength> zprobeBuf;
 static String<generatedByTextLength> generatedByText;
 static String<lastModifiedTextLength> lastModifiedText;
+static String<printTimeTextLength> printTimeText;
 
 const size_t maxUserCommandLength = 40;					// max length of a user gcode command
 const size_t numUserCommandBuffers = 6;					// number of command history buffers plus one
@@ -515,6 +519,9 @@ void CreateFileActionPopup(const ColourScheme& colours)
 	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
 	ypos += rowTextHeight;
 	fpLastModifiedField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->lastModified, lastModifiedText.c_str());
+	ypos += rowTextHeight;
+	fpPrintTimeField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->printTime, printTimeText.c_str());
+
 	fileDetailPopup->AddField(fpNameField);
 	fileDetailPopup->AddField(fpSizeField);
 	fileDetailPopup->AddField(fpLayerHeightField);
@@ -522,12 +529,13 @@ void CreateFileActionPopup(const ColourScheme& colours)
 	fileDetailPopup->AddField(fpFilamentField);
 	fileDetailPopup->AddField(fpGeneratedByField);
 	fileDetailPopup->AddField(fpLastModifiedField);
+	fileDetailPopup->AddField(fpPrintTimeField);
 
 	// Add the buttons
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	fileDetailPopup->AddField(new TextButton(popupTopMargin + 9 * rowTextHeight, popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->print, evPrintFile));
-	fileDetailPopup->AddField(new TextButton(popupTopMargin + 9 * rowTextHeight, fileInfoPopupWidth/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->simulate, evSimulateFile));
-	fileDetailPopup->AddField(new IconButton(popupTopMargin + 9 * rowTextHeight, (2 * fileInfoPopupWidth)/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, IconTrash, evDeleteFile));
+	fileDetailPopup->AddField(new TextButton(popupTopMargin + 10 * rowTextHeight, popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->print, evPrintFile));
+	fileDetailPopup->AddField(new TextButton(popupTopMargin + 10 * rowTextHeight, fileInfoPopupWidth/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->simulate, evSimulateFile));
+	fileDetailPopup->AddField(new IconButton(popupTopMargin + 10 * rowTextHeight, (2 * fileInfoPopupWidth)/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, IconTrash, evDeleteFile));
 }
 
 // Create the "Are you sure?" popup
@@ -871,30 +879,62 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	// The firmware version field doubles up as an area for displaying debug messages, so make it the full width of the display
 	mgr.AddField(fwVersionField = new TextField(row1, margin, DisplayX, TextAlignment::Left, strings->firmwareVersion, VERSION_TEXT));
 	mgr.AddField(freeMem = new IntegerField(row2, margin, DisplayX/2 - margin, TextAlignment::Left, "Free RAM: "));
-	mgr.AddField(touchX = new IntegerField(row2, DisplayX/2, DisplayX/4, TextAlignment::Left, "Touch: ", ","));
-	mgr.AddField(touchY = new IntegerField(row2, (DisplayX * 3)/4, DisplayX/4, TextAlignment::Left));
 
 	DisplayField::SetDefaultColours(colours.errorTextColour, colours.errorBackColour);
 	mgr.AddField(settingsNotSavedField = new StaticTextField(row3, margin, DisplayX - 2 * margin, TextAlignment::Left, strings->settingsNotSavedText));
 	settingsNotSavedField->Show(false);
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	baudRateButton = AddIntegerButton(row4, 0, 3, nullptr, " baud", evSetBaudRate);
+	baudRateButton = AddIntegerButton(row3, 0, 3, nullptr, " baud", evSetBaudRate);
 	baudRateButton->SetValue(GetBaudRate());
-	volumeButton = AddIntegerButton(row4, 1, 3, strings->volume, nullptr, evSetVolume);
+	volumeButton = AddIntegerButton(row3, 1, 3, strings->volume, nullptr, evSetVolume);
 	volumeButton->SetValue(GetVolume());
-	languageButton = AddTextButton(row4, 2, 3, LanguageTables[language].languageName, evSetLanguage, nullptr);
-	AddTextButton(row5, 0, 3, strings->calibrateTouch, evCalTouch, nullptr);
-	AddTextButton(row5, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
-	AddTextButton(row5, 2, 3, strings->invertDisplay, evInvertY, nullptr);
-	coloursButton = AddTextButton(row6, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
-	AddTextButton(row6, 1, 3, strings->brightnessDown, evDimmer, nullptr);
-	AddTextButton(row6, 2, 3, strings->brightnessUp, evBrighter, nullptr);
-	dimmingTypeButton = AddTextButton(row7, 0, 3, strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()], evSetDimmingType, nullptr);
-	AddTextButton(row8, 0, 3, strings->saveSettings, evSaveSettings, nullptr);
-	AddTextButton(row8, 1, 3, strings->clearSettings, evFactoryReset, nullptr);
-	AddTextButton(row8, 2, 3, strings->saveAndRestart, evRestart, nullptr);
+	languageButton = AddTextButton(row3, 2, 3, LanguageTables[language].languageName, evSetLanguage, nullptr);
+	AddTextButton(row4, 0, 3, strings->calibrateTouch, evCalTouch, nullptr);
+	AddTextButton(row4, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
+	AddTextButton(row4, 2, 3, strings->invertDisplay, evInvertY, nullptr);
+	coloursButton = AddTextButton(row5, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
+	AddTextButton(row5, 1, 3, strings->brightnessDown, evDimmer, nullptr);
+	AddTextButton(row5, 2, 3, strings->brightnessUp, evBrighter, nullptr);
+	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()], evSetDimmingType, nullptr);
+	AddTextButton(row7, 0, 3, strings->saveSettings, evSaveSettings, nullptr);
+	AddTextButton(row7, 1, 3, strings->clearSettings, evFactoryReset, nullptr);
+	AddTextButton(row7, 2, 3, strings->saveAndRestart, evRestart, nullptr);
 	setupRoot = mgr.GetRoot();
+}
+
+// Display a colour gradient so we can check for correct colours during testing
+void DisplayColourGradient()
+{
+	PixelNumber x = ColourGradientLeftPos;
+	const PixelNumber lineRepeat = (DISPLAY_X - ColourGradientLeftPos)/128;
+	for (PixelNumber i = 0; i < 32; ++i)
+	{
+		lcd.setColor(i << 11);
+		for (PixelNumber j = 0; j < lineRepeat; ++j)
+		{
+			lcd.drawLine(x, ColourGradientTopPos, x, ColourGradientTopPos + ColourGradientHeight);
+			++x;
+		}
+	}
+	for (PixelNumber i = 0; i < 64; ++i)
+	{
+		lcd.setColor(i << 5);
+		for (PixelNumber j = 0; j < lineRepeat; ++j)
+		{
+			lcd.drawLine(x, ColourGradientTopPos, x, ColourGradientTopPos + ColourGradientHeight);
+			++x;
+		}
+	}
+	for (PixelNumber i = 0; i < 32; ++i)
+	{
+		lcd.setColor(i);
+		for (PixelNumber j = 0; j < lineRepeat; ++j)
+		{
+			lcd.drawLine(x, ColourGradientTopPos, x, ColourGradientTopPos + ColourGradientHeight);
+			++x;
+		}
+	}
 }
 
 // Create the fields that are displayed on all pages
@@ -1466,6 +1506,8 @@ namespace UI
 		fpGeneratedByField->SetChanged();
 		lastModifiedText.clear();
 		fpLastModifiedField->SetChanged();
+		printTimeText.clear();
+		fpPrintTimeField->SetChanged();
 	}
 
 	// This is called when the "generated by" file information has been received
@@ -1479,7 +1521,23 @@ namespace UI
 	void UpdateFileLastModifiedText(const char data[])
 	{
 		lastModifiedText.copy(data);
+		lastModifiedText.replace('T', ' ');
 		fpLastModifiedField->SetChanged();
+	}
+
+	// This is called when the "last modified" file information has been received
+	void UpdatePrintTimeText(uint32_t seconds, bool isSimulated)
+	{
+		if (isSimulated)
+		{
+			printTimeText.clear();		// prefer simulated to estimated print time
+		}
+		if (printTimeText.isEmpty())
+		{
+			unsigned int minutes = (seconds + 50)/60;
+			printTimeText.printf("%dh %02dm", minutes / 60, minutes % 60);
+			fpPrintTimeField->SetChanged();
+		}
 	}
 
 	// This is called when the object height information for the file has been received
@@ -1545,10 +1603,17 @@ namespace UI
 			case evTabControl:
 			case evTabPrint:
 			case evTabMsg:
+				if (ChangePage(f))
+				{
+					currentButton.Clear();						// keep the button highlighted after it is released
+				}
+				break;
+
 			case evTabSetup:
 				if (ChangePage(f))
 				{
 					currentButton.Clear();						// keep the button highlighted after it is released
+					DisplayColourGradient();
 				}
 				break;
 
@@ -2272,8 +2337,14 @@ namespace UI
 			return false;
 		}
 
+		String<controlPageMacroTextLength>& str = controlPageMacroText[buttonIndex];
+		str.clear();
+		if (text != nullptr)
+		{
+			str.copy(text);
+		}
 		TextButton * const f = controlPageMacroButtons[buttonIndex];
-		f->SetText(text);
+		f->SetText(str.c_str());
 		f->SetEvent((text == nullptr) ? evNull : evMacro, param);
 		mgr.Show(f, text != nullptr);
 		return true;
