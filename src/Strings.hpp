@@ -589,7 +589,7 @@ const StringTable LanguageTables[4] =
 		"archivo ",							// note space at end
 		", filamento ",						// note space at end
 		", capa ",							// note space at end
-		"n/a",								// I don't have a panelDue, what is this referring to?
+		"n/d",								// Nota available / no disponible
 		"Pausa",
 		"Micro paso",							// Literal translation of baby step it's very odd in spanish...
 		"Resumir",
@@ -656,7 +656,7 @@ const StringTable LanguageTables[4] =
 			"carga del firmware",
 			"herramienta de cambio",
 			"simulando",
-			"baja tensión"
+			"en espera"						// previusly "low voltage" now "standby"
 		},
 
 		// Theme names
