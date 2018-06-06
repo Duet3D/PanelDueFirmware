@@ -95,7 +95,8 @@ struct StringTable
 	CSTRING filamentNeeded;
 	CSTRING generatedBy;
 	CSTRING lastModified;
-	CSTRING printTime;
+	CSTRING estimatedPrintTime;
+	CSTRING simulatedPrintTime;
 	CSTRING simulate;
 
 	// Printer status strings
@@ -188,7 +189,8 @@ const StringTable LanguageTables[4] =
 		"Filament needed: ",
 		"Sliced by: ",
 		"Last modified: ",
-		"Print time: ",
+		"Estimated print time: ",
+		"Simulated print time: ",
 		"Simulate",
 
 		// Printer status strings
@@ -300,7 +302,8 @@ const StringTable LanguageTables[4] =
 		"Benötigtes Filament: ",
 		"Erzeugt mit: ",
 		"Letzte Änderung: ",
-		"Druckdauer: ",
+		"Geschätzte Druckdauer: ",
+		"Errechnete Druckdauer: ",
 		"Simulieren",
 
 		// Printer status strings
@@ -411,8 +414,9 @@ const StringTable LanguageTables[4] =
 		"Hauteur de l'objet: ",
 		"Filament requis: ",
 		"Sliced par: ",
-		"Last modified: ",
-		"Print time: ",
+		"Dernière modification: ",
+		"Temps d'impression estimé: ",
+		"Temps d'impression simulé: ",
 		"Simuler",
 
 		// Printer status strings
@@ -429,7 +433,7 @@ const StringTable LanguageTables[4] =
 			"Téleverser le firmware",
 			"Changement d'outil",
 			"Simuler",
-			"Etre prêt"
+			"En veille"
 		},
 
 		// Theme names
@@ -523,7 +527,8 @@ const StringTable LanguageTables[4] =
 		"Spotřeba (mat.): ",
 		"Slicer: ",
 		"Last modified: ",
-		"Print time: ",
+		"Estimated print time: ",
+		"Simulated print time: ",
 		"Simulace",
 
 		// Printer status strings
@@ -633,7 +638,8 @@ const StringTable LanguageTables[4] =
 		"Filament needed: ",
 		"Sliced by: ",
 		"Last modified: ",
-		"Print time: ",
+		"Estimated print time: ",
+		"Simulated print time: ",
 		"Simulate",
 
 		// Printer status strings

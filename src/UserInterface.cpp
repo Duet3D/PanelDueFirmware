@@ -520,7 +520,7 @@ void CreateFileActionPopup(const ColourScheme& colours)
 	ypos += rowTextHeight;
 	fpLastModifiedField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->lastModified, lastModifiedText.c_str());
 	ypos += rowTextHeight;
-	fpPrintTimeField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->printTime, printTimeText.c_str());
+	fpPrintTimeField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->estimatedPrintTime, printTimeText.c_str());
 
 	fileDetailPopup->AddField(fpNameField);
 	fileDetailPopup->AddField(fpSizeField);
@@ -1528,11 +1528,19 @@ namespace UI
 	// This is called when the "last modified" file information has been received
 	void UpdatePrintTimeText(uint32_t seconds, bool isSimulated)
 	{
+		bool update = false;
 		if (isSimulated)
 		{
-			printTimeText.clear();		// prefer simulated to estimated print time
+			printTimeText.clear();					// prefer simulated to estimated print time
+			fpPrintTimeField->SetLabel(strings->simulatedPrintTime);
+			update = true;
 		}
-		if (printTimeText.isEmpty())
+		else if (printTimeText.isEmpty())
+		{
+			fpPrintTimeField->SetLabel(strings->estimatedPrintTime);
+			update = true;
+		}
+		if (update)
 		{
 			unsigned int minutes = (seconds + 50)/60;
 			printTimeText.printf("%dh %02dm", minutes / 60, minutes % 60);
