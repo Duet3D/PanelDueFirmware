@@ -566,86 +566,86 @@ const StringTable LanguageTables[4] =
 	// Spanish
 	{
 		// Language name
-		"Espanol",
+		"Español",
 
 		// Main page strings
 		"Control",
-		"Print",
-		"Console",
-		"Setup",
-		"Current" THIN_SPACE DEGREE_SYMBOL "C",
-		"Active" THIN_SPACE DEGREE_SYMBOL "C",
-		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
-		"Move",
-		"Extrusion",
+		"Imprimir",
+		"Consola",
+		"Configuración",
+		"Actual" THIN_SPACE DEGREE_SYMBOL "C",
+		"Activo" THIN_SPACE DEGREE_SYMBOL "C",
+		"Esperando" THIN_SPACE DEGREE_SYMBOL "C",
+		"Mover",
+		"Extrusión",
 		"Macro",
-		"STOP",
+		"PARADA",							// It could also be STOP, both are OK
 
 		// Print page
-		"Extruder" THIN_SPACE "%",
-		"Speed ",							// note space at end
-		"Fan ",								// note space at end
-		"Time left: ",
-		"file ",							// note space at end
-		", filament ",						// note space at end
-		", layer ",							// note space at end
-		"n/a",
-		"Pause",
-		"Baby step",
-		"Resume",
-		"Cancel",
+		"Extrusor" THIN_SPACE "%",
+		"Velocidad ",							// note space at end
+		"Ventilador ",								// note space at end
+		"Tiempo restante: ",
+		"archivo ",							// note space at end
+		", filamento ",						// note space at end
+		", capa ",							// note space at end
+		"n/d",								// Nota available / no disponible
+		"Pausa",
+		"Micro paso",							// Literal translation of baby step it's very odd in spanish...
+		"Resumir",
+		"Cancelar",
 
 		// Setup page
-		"Volume ",							// note space at end
-		"Calibrate touch",
-		"Mirror display",
-		"Invert display",
-		"Theme",
-		"Brightness -",
-		"Brightness +",
-		"Save settings",
-		"Clear settings",
-		"Save & Restart",
+		"Volumen ",							// note space at end
+		"Calibrar toque",						// this one is tricky because "touch" is very known in regard to screens...
+		"Espejar pantalla",
+		"Invertir pantalla",
+		"Tema",
+		"Brillo -",
+		"Brillo +",
+		"Guardar parámetros",
+		"Borrar parámetros",
+		"Guardar y Reiniciar",
 
 		// Misc
-		"Confirm factory reset",
-		"Confirm restart",
-		"Confirm file delete",
-		"Are you sure?",
-		"Touch the spot",
-		"Some settings are not saved!",
-		"Touch Save & Restart to use new settings",
-		"Move head",
-		"Extrusion amount (mm)",
-		"Speed (mm/s)",
-		"Extrude",
-		"Retract",
-		"Baby stepping",
-		"Current Z offset: ",
-		"Message",
-		"Messages",
-		"Panel Due firmware version ",	// note space at end
+		"Confirma restablecimiento de fábrica",
+		"Confirma reiniciar",
+		"Confirma borrar archivo",
+		"Está seguro?",
+		"Tocar el punto",
+		"Algunos parámetros no están guardados!",
+		"Toca Guardar y Reiniciar para usar los nuevos parámetros",
+		"Mover cabezal",
+		"Cantidad de extrusión (mm)",
+		"Velocidad (mm/s)",
+		"Extruir",
+		"Retraer",
+		"Micro paso",
+		"Separación actual de Z: ",
+		"Mensaje",
+		"Mensajes",
+		"Panel Due versión de firmware ",	// note space at end
 
 		// File popup
-		"Files on card ",				// note the space on the end
+		"Archivos en la tarjeta ",				// note the space on the end
 		"Macros",
 		"Error ",						// note the space at the end
-		" accessing SD card",			// note the space at the start
-		"Filename: ",
-		"Size: ",
-		"Layer height: ",
-		"Object height: ",
-		"Filament needed: ",
-		"Sliced by: ",
-		"Last modified: ",
-		"Estimated print time: ",
-		"Simulated print time: ",
-		"Simulate",
+		" accediendo a la tarjeta SD",			// note the space at the start
+		"Nombre de archivo: ",
+		"Tamaño: ",
+		"Altura de capa: ",
+		"Altura de objeto: ",
+		"Filamento necesario: ",
+		"Procesado por: ",						// there is no translation in spanish for this meaning, so I proposed to use "processed by" wich is understandable 
+		"Última modificación: ",
+		"Tiempo estimado de impresión: ",
+		"Tiempo de impresión simulado: ",
+		"Simular",
 
 		// Printer status strings
 		{
 			"conexión",
-			"ocioso",
+			"en espera",						// it's more frequently use "en espera" than "ocioso", it makes more sense for a machine 
 			"imprimiendo",
 			"detuvo",
 			"empezando",
@@ -655,21 +655,21 @@ const StringTable LanguageTables[4] =
 			"reanudando",
 			"carga del firmware",
 			"herramienta de cambio",
-			"simulating",
-			"low voltage"
+			"simulando",
+			"en espera"						// previusly "low voltage" now "standby"
 		},
 
 		// Theme names
 		{
-			"Light",
-			"Dark"
+			"Claro",
+			"Oscuro"
 		},
 
 		// Display dimming types
 		{
-			"Never Dim",
-			"Idle Dim".
-			"Always Dim",
+			"Nunca Atenuar",
+			"Atenuar en espera".
+			"Siempre Atenuar",
 		}
 	},
 #endif
