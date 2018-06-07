@@ -17,6 +17,8 @@
 #define Newline			"\n"
 #define DegreeSymbol	"\u00B0"
 
+constexpr unsigned int numLanguages = 5;
+
 struct StringTable
 {
 	// Language name
@@ -109,7 +111,7 @@ struct StringTable
 	CSTRING displayDimmingNames[(unsigned int)DisplayDimmerType::NumTypes];
 };
 
-const StringTable LanguageTables[4] =
+const StringTable LanguageTables[numLanguages] =
 {
 	// English
 	{
@@ -475,7 +477,7 @@ const StringTable LanguageTables[4] =
 		"Čas do konce: ",
 		"soubor ",							// note space at end
 		", materiál ",						// note space at end
-		", vrstva ",							// note space at end
+		", vrstva ",						// note space at end
 		"n/a",
 		"Pozastavit",
 		"Baby step",
@@ -515,6 +517,7 @@ const StringTable LanguageTables[4] =
 		"Zpráva",
 		"Zprávy",
 		"Verze firmware Panel Due ",	// note space at end
+
 		// File popup
 		"Soubory na kartě ",			// note the space on the end
 		"Makra",
@@ -562,7 +565,6 @@ const StringTable LanguageTables[4] =
 		}
 	},
 
-#if 0	// Spanish not supported yet
 	// Spanish
 	{
 		// Language name
@@ -583,21 +585,22 @@ const StringTable LanguageTables[4] =
 
 		// Print page
 		"Extrusor" THIN_SPACE "%",
-		"Velocidad ",							// note space at end
-		"Ventilador ",								// note space at end
+		"Velocidad ",						// note space at end
+		"Ventilador ",						// note space at end
 		"Tiempo restante: ",
 		"archivo ",							// note space at end
 		", filamento ",						// note space at end
 		", capa ",							// note space at end
 		"n/d",								// Nota available / no disponible
 		"Pausa",
-		"Micro paso",							// Literal translation of baby step it's very odd in spanish...
+		"Micro paso",						// Literal translation of baby step it's very odd in spanish...
 		"Resumir",
 		"Cancelar",
+		"Set",								// ***need translation
 
 		// Setup page
 		"Volumen ",							// note space at end
-		"Calibrar toque",						// this one is tricky because "touch" is very known in regard to screens...
+		"Calibrar toque",					// this one is tricky because "touch" is very known in regard to screens...
 		"Espejar pantalla",
 		"Invertir pantalla",
 		"Tema",
@@ -615,6 +618,8 @@ const StringTable LanguageTables[4] =
 		"Tocar el punto",
 		"Algunos parámetros no están guardados!",
 		"Toca Guardar y Reiniciar para usar los nuevos parámetros",
+		"Restart required",					// ***need translation
+		"Restart now?",						// ***need translation
 		"Mover cabezal",
 		"Cantidad de extrusión (mm)",
 		"Velocidad (mm/s)",
@@ -627,16 +632,16 @@ const StringTable LanguageTables[4] =
 		"Panel Due versión de firmware ",	// note space at end
 
 		// File popup
-		"Archivos en la tarjeta ",				// note the space on the end
+		"Archivos en la tarjeta ",			// note the space on the end
 		"Macros",
-		"Error ",						// note the space at the end
-		" accediendo a la tarjeta SD",			// note the space at the start
+		"Error ",							// note the space at the end
+		" accediendo a la tarjeta SD",		// note the space at the start
 		"Nombre de archivo: ",
 		"Tamaño: ",
 		"Altura de capa: ",
 		"Altura de objeto: ",
 		"Filamento necesario: ",
-		"Procesado por: ",						// there is no translation in spanish for this meaning, so I proposed to use "processed by" wich is understandable 
+		"Procesado por: ",					// there is no translation in spanish for this meaning, so I proposed to use "processed by" which is understandable
 		"Última modificación: ",
 		"Tiempo estimado de impresión: ",
 		"Tiempo de impresión simulado: ",
@@ -645,7 +650,7 @@ const StringTable LanguageTables[4] =
 		// Printer status strings
 		{
 			"conexión",
-			"en espera",						// it's more frequently use "en espera" than "ocioso", it makes more sense for a machine 
+			"en espera",					// it's more frequently use "en espera" than "ocioso", it makes more sense for a machine
 			"imprimiendo",
 			"detuvo",
 			"empezando",
@@ -656,7 +661,7 @@ const StringTable LanguageTables[4] =
 			"carga del firmware",
 			"herramienta de cambio",
 			"simulando",
-			"en espera"						// previusly "low voltage" now "standby"
+			"en espera"
 		},
 
 		// Theme names
@@ -668,11 +673,10 @@ const StringTable LanguageTables[4] =
 		// Display dimming types
 		{
 			"Nunca Atenuar",
-			"Atenuar en espera".
+			"Atenuar en espera",
 			"Siempre Atenuar",
-		}
-	},
-#endif
+		},
+	}
 };
 
 #endif /* SRC_STRINGS_HPP_ */

@@ -23,8 +23,6 @@
 #include "Strings.hpp"
 #include "Version.hpp"
 
-const unsigned int numLanguages = 4;
-static_assert(ARRAY_SIZE(LanguageTables) == numLanguages, "Wrong number of languages in LanguageTable");
 static const char* array const axisNames[] = { "X", "Y", "Z", "U", "V", "W" };
 
 #if DISPLAY_X == 800
