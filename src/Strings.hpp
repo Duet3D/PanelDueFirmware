@@ -591,12 +591,12 @@ const StringTable LanguageTables[numLanguages] =
 		"archivo ",							// note space at end
 		", filamento ",						// note space at end
 		", capa ",							// note space at end
-		"n/d",								// Nota available / no disponible
+		"n/d",								// Not available / no disponible
 		"Pausa",
 		"Micro paso",						// Literal translation of baby step it's very odd in spanish...
 		"Resumir",
 		"Cancelar",
-		"Set",								// ***need translation
+		"Fijar",								// "Establecer" would be more correct, but it's longer.
 
 		// Setup page
 		"Volumen ",							// note space at end
@@ -618,8 +618,8 @@ const StringTable LanguageTables[numLanguages] =
 		"Tocar el punto",
 		"Algunos parámetros no están guardados!",
 		"Toca Guardar y Reiniciar para usar los nuevos parámetros",
-		"Restart required",					// ***need translation
-		"Restart now?",						// ***need translation
+		"Reinicio requerido",						
+		"Reiniciar ahora?",						
 		"Mover cabezal",
 		"Cantidad de extrusión (mm)",
 		"Velocidad (mm/s)",
