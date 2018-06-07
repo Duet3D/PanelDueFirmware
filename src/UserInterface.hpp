@@ -26,7 +26,6 @@ namespace UI
 {
 	extern unsigned int GetNumLanguages();
 	extern void CreateFields(uint32_t language, const ColourScheme& colours);
-	extern void CheckSettingsAreSaved();
 	extern void ShowAxis(size_t axis, bool b);
 	extern void UpdateAxisPosition(size_t axis, float fval);
 	extern void UpdateCurrentTemperature(size_t heater, float fval);

@@ -76,7 +76,7 @@ static ButtonBase *filesButton, *pauseButton, *resumeButton, *resetButton, *baby
 static TextField *timeLeftField, *zProbe;
 static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
 static StaticTextField *moveAxisRows[MaxAxes];
-static StaticTextField *nameField, *statusField, *settingsNotSavedField;
+static StaticTextField *nameField, *statusField;
 static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
 static IntegerButton *spd, *extrusionFactors[MaxHeaters - 1], *fanSpeed, *baudRateButton, *volumeButton;
 static TextButton *languageButton, *coloursButton, *dimmingTypeButton;
@@ -109,7 +109,6 @@ static unsigned int numTools = 0;
 static unsigned int numHeaters = 0;
 static unsigned int numHeaterAndToolColumns = 0;
 static int oldIntValue;
-static bool restartNeeded = false;
 int heaterStatus[MaxHeaters];
 static Event eventToConfirm = evNull;
 static unsigned int numAxes = 0;						// initialise to 0 so we refresh the macros list when we receive the number of axes
@@ -372,11 +371,6 @@ void PopupAreYouSure(Event ev, const char* text, const char* query = strings->ar
 	areYouSureTextField->SetValue(text);
 	areYouSureQueryField->SetValue(query);
 	mgr.SetPopup(areYouSurePopup, AutoPlace, AutoPlace);
-}
-
-void PopupRestart()
-{
-	PopupAreYouSure(evRestart, strings->restartRequired, strings->restartNow);
 }
 
 void CreateIntegerAdjustPopup(const ColourScheme& colours)
@@ -878,10 +872,6 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	mgr.AddField(fwVersionField = new TextField(row1, margin, DisplayX, TextAlignment::Left, strings->firmwareVersion, VERSION_TEXT));
 	mgr.AddField(freeMem = new IntegerField(row2, margin, DisplayX/2 - margin, TextAlignment::Left, "Free RAM: "));
 
-	DisplayField::SetDefaultColours(colours.errorTextColour, colours.errorBackColour);
-	mgr.AddField(settingsNotSavedField = new StaticTextField(row3, margin, DisplayX - 2 * margin, TextAlignment::Left, strings->settingsNotSavedText));
-	settingsNotSavedField->Show(false);
-
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	baudRateButton = AddIntegerButton(row3, 0, 3, nullptr, " baud", evSetBaudRate);
 	baudRateButton->SetValue(GetBaudRate());
@@ -895,9 +885,7 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	AddTextButton(row5, 1, 3, strings->brightnessDown, evDimmer, nullptr);
 	AddTextButton(row5, 2, 3, strings->brightnessUp, evBrighter, nullptr);
 	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()], evSetDimmingType, nullptr);
-	AddTextButton(row7, 0, 3, strings->saveSettings, evSaveSettings, nullptr);
-	AddTextButton(row7, 1, 3, strings->clearSettings, evFactoryReset, nullptr);
-	AddTextButton(row7, 2, 3, strings->saveAndRestart, evRestart, nullptr);
+	AddTextButton(row6, 2, 3, strings->clearSettings, evFactoryReset, nullptr);
 	setupRoot = mgr.GetRoot();
 }
 
@@ -1039,25 +1027,6 @@ namespace UI
 		touchCalibInstruction = new StaticTextField(DisplayY/2 - 10, 0, DisplayX, TextAlignment::Centre, strings->touchTheSpot);
 
 		mgr.SetRoot(nullptr);
-	}
-
-	// Show or hide the field that warns about unsaved settings
-	void CheckSettingsAreSaved()
-	{
-		if (IsSaveAndRestartNeeded())
-		{
-			settingsNotSavedField->SetValue(strings->restartNeededText);
-			mgr.Show(settingsNotSavedField, true);
-		}
-		else if (IsSaveNeeded())
-		{
-			settingsNotSavedField->SetValue(strings->settingsNotSavedText);
-			mgr.Show(settingsNotSavedField, true);
-		}
-		else
-		{
-			mgr.Show(settingsNotSavedField, false);
-		}
 	}
 
 	void ShowFilesButton()
@@ -1237,6 +1206,10 @@ namespace UI
 			if (currentTab != nullptr)
 			{
 				currentTab->Press(false, 0);			// remove highlighting from the old tab
+				if (currentTab->GetEvent() == evTabSetup && IsSaveNeeded())
+				{
+					SaveSettings();						// leaving the Control tab and we have changed settings, so save them
+				}
 			}
 			newTab->Press(true, 0);						// highlight the new tab
 			currentTab = newTab;
@@ -1819,23 +1792,10 @@ namespace UI
 
 			case evCalTouch:
 				CalibrateTouch();
-				CheckSettingsAreSaved();
 				break;
 
 			case evFactoryReset:
 				PopupAreYouSure(ev, strings->confirmFactoryReset);
-				break;
-
-			case evRestart:
-				PopupAreYouSure(ev, strings->confirmRestart);
-				break;
-
-			case evSaveSettings:
-				SaveSettings();
-				if (restartNeeded)
-				{
-					PopupRestart();
-				}
 				break;
 
 			case evSelectHead:
@@ -1989,13 +1949,11 @@ namespace UI
 			case evInvertX:
 				MirrorDisplay();
 				CalibrateTouch();
-				CheckSettingsAreSaved();
 				break;
 
 			case evInvertY:
 				InvertDisplay();
 				CalibrateTouch();
-				CheckSettingsAreSaved();
 				break;
 
 			case evSetBaudRate:
@@ -2009,7 +1967,6 @@ namespace UI
 					SetBaudRate(rate);
 					baudRateButton->SetValue(rate);
 				}
-				CheckSettingsAreSaved();
 				CurrentButtonReleased();
 				mgr.ClearPopup();
 				StopAdjusting();
@@ -2031,7 +1988,6 @@ namespace UI
 			case evBrighter:
 			case evDimmer:
 				ChangeBrightness(ev == evBrighter);
-				CheckSettingsAreSaved();
 				ShortenTouchDelay();
 				break;
 
@@ -2042,16 +1998,18 @@ namespace UI
 					volumeButton->SetValue(newVolume);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
-				CheckSettingsAreSaved();
 				break;
 
 			case evAdjustColours:
 				{
-					const int newColours = bp.GetIParam();
-					SetColourScheme(newColours);
-					coloursButton->SetText(strings->colourSchemeNames[newColours]);
+					const unsigned int newColours = bp.GetIParam();
+					if (SetColourScheme(newColours))
+					{
+						SaveSettings();
+						Restart();
+					}
 				}
-				CheckSettingsAreSaved();
+				mgr.ClearPopup();
 				break;
 
 			case evSetLanguage:
@@ -2061,17 +2019,19 @@ namespace UI
 
 			case evAdjustLanguage:
 				{
-					const int newLanguage = bp.GetIParam();
-					SetLanguage(newLanguage);
-					languageButton->SetText(LanguageTables[newLanguage].languageName);
+					const unsigned int newLanguage = bp.GetIParam();
+					if (SetLanguage(newLanguage))
+					{
+						SaveSettings();
+						Restart();
+					}
 				}
-				CheckSettingsAreSaved();						// not sure we need this because we are going to reset anyway
+				mgr.ClearPopup();
 				break;
 
 			case evSetDimmingType:
 				ChangeDisplayDimmerType();
 				dimmingTypeButton->SetText(strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()]);
-				CheckSettingsAreSaved();
 				break;
 
 			case evYes:
@@ -2093,14 +2053,6 @@ namespace UI
 						FileManager::RefreshFilesList();
 						currentFile = nullptr;
 					}
-					break;
-
-				case evRestart:
-					if (IsSaveNeeded())
-					{
-						SaveSettings();
-					}
-					Restart();
 					break;
 
 				default:
@@ -2232,11 +2184,6 @@ namespace UI
 			case evSetLanguage:
 				mgr.ClearPopup();
 				StopAdjusting();
-				if (IsSaveAndRestartNeeded())
-				{
-					restartNeeded = true;
-					PopupRestart();
-				}
 				break;
 			}
 		}
@@ -2267,9 +2214,7 @@ namespace UI
 			case evCalTouch:
 			case evInvertX:
 			case evInvertY:
-			case evSaveSettings:
 			case evFactoryReset:
-			case evRestart:
 				// On the Setup tab, we allow any other button to be pressed to exit the current popup
 				StopAdjusting();
 				DelayTouchLong();	// by default, ignore further touches for a long time

@@ -467,11 +467,6 @@ void CalibrateTouch()
 	mgr.Refresh(true);
 }
 
-bool IsSaveAndRestartNeeded()
-{
-	return nvData.language != savedNvData.language || nvData.colourScheme != savedNvData.colourScheme;
-}
-
 bool IsSaveNeeded()
 {
 	return nvData != savedNvData;
@@ -534,14 +529,19 @@ void SetVolume(uint32_t newVolume)
 	nvData.touchVolume = newVolume;
 }
 
-void SetColourScheme(uint32_t newColours)
+bool SetColourScheme(uint32_t newColours)
 {
+	const bool ret = (newColours != nvData.colourScheme);
 	nvData.colourScheme = newColours;
+	return ret;
 }
 
-void SetLanguage(uint32_t newLanguage)
+// Set the language, returning true if it has changed
+bool SetLanguage(uint32_t newLanguage)
 {
+	const bool ret = (newLanguage != nvData.language);
 	nvData.language = newLanguage;
+	return ret;
 }
 
 uint32_t GetBaudRate()
@@ -578,7 +578,6 @@ void SaveSettings()
 	nvData.Save();
 	// To make sure it worked, load the settings again
 	savedNvData.Load();
-	UI::CheckSettingsAreSaved();
 }
 
 // This is called when the status changes

@@ -41,7 +41,6 @@ extern void CalibrateTouch();
 // Functions called from module UserInterface to manipulate non-volatile settings and associated hardware
 extern void FactoryReset();
 extern void SaveSettings();
-extern bool IsSaveAndRestartNeeded();
 extern bool IsSaveNeeded();
 extern void MirrorDisplay();
 extern void InvertDisplay();
@@ -49,8 +48,8 @@ extern void SetBaudRate(uint32_t rate);
 extern void SetBrightness(int percent);
 extern void RestoreBrightness();
 extern void SetVolume(uint32_t newVolume);
-extern void SetColourScheme(uint32_t newColours);
-extern void SetLanguage(uint32_t newLanguage);
+extern bool SetColourScheme(uint32_t newColours);
+extern bool SetLanguage(uint32_t newLanguage);
 extern uint32_t GetBaudRate();
 extern int GetBrightness();
 extern uint32_t GetVolume();

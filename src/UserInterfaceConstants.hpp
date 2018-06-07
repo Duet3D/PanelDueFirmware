@@ -61,8 +61,6 @@ const PixelNumber closeButtonWidth = 40;
 
 const PixelNumber touchCalibMargin = 15;
 
-const PixelNumber ColourGradientLeftPos = 136;
-
 extern uint8_t glcd19x21[];				// declare which fonts we will be using
 #define DEFAULT_FONT	glcd19x21
 
@@ -107,8 +105,6 @@ const PixelNumber closeButtonWidth = 66;
 
 const PixelNumber touchCalibMargin = 22;
 
-const PixelNumber ColourGradientLeftPos = 400;
-
 extern uint8_t glcd28x32[];				// declare which fonts we will be using
 #define DEFAULT_FONT	glcd28x32
 
@@ -138,6 +134,7 @@ const PixelNumber labelRowAdjust = 2;							// how much to drop non-button field
 
 const PixelNumber ColourGradientTopPos = row2;
 const PixelNumber ColourGradientHeight = rowTextHeight;
+const PixelNumber ColourGradientLeftPos = DISPLAY_X/2;
 
 const PixelNumber speedColumn = margin;
 const PixelNumber fanColumn = DISPLAY_X/4 + 20;

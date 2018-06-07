@@ -66,14 +66,9 @@ struct StringTable
 
 	// Misc
 	CSTRING confirmFactoryReset;
-	CSTRING confirmRestart;
 	CSTRING confirmFileDelete;
 	CSTRING areYouSure;
 	CSTRING touchTheSpot;
-	CSTRING settingsNotSavedText;
-	CSTRING restartNeededText;
-	CSTRING restartRequired;
-	CSTRING restartNow;
 	CSTRING moveHead;
 	CSTRING extrusionAmount;
 	CSTRING extrusionSpeed;
@@ -160,14 +155,9 @@ const StringTable LanguageTables[numLanguages] =
 
 		// Misc
 		"Confirm factory reset",
-		"Confirm restart",
 		"Confirm file delete",
 		"Are you sure?",
 		"Touch the spot",
-		"Some settings are not saved!",
-		"Touch Save & Restart to use new settings",
-		"Restart required",
-		"Restart now?",
 		"Move head",
 		"Extrusion amount (mm)",
 		"Speed (mm/s)",
@@ -273,14 +263,9 @@ const StringTable LanguageTables[numLanguages] =
 
 		// Misc
 		"Alle Einstellungen zurücksetzen",
-		"Das Gerät wird neu gestartet",
 		"Die Datei wird gelöscht",
 		"Sind sie sicher?",
 		"Bitte auf den Punkt tippen",
-		"Einige Einstellungen sind nicht gesichert!",
-		"Zum Übernehmen der Änderung 'Sichern & Reboot' drücken",
-		"Neustarten erforderlich",
-		"Jetzt neu starten?",
 		"Kopf bewegen",
 		"Extrusionsmenge (mm)",
 		"Geschwindigkeit (mm/s)",
@@ -386,14 +371,9 @@ const StringTable LanguageTables[numLanguages] =
 
 		// Misc
 		"Confirmer le réinitialisation de l'imprimante",
-		"Confirm Redémarrage",
 		"Confirm suppression fichier",
 		"Vous êtes sûre?",
 		"Appuyer sur le point",
-		"Certains réglages ne sont pas sauvegardés!",
-		"Appuyer sur Sauvegarde et Redémarrage pour utiliser les nouveaux réglages",
-		"Restart required",
-		"Restart now?",
 		"Mouvement de la  tête",
 		"Quantité de Matiére extrudée (mm)",
 		"Vitesse (mm/s)",
@@ -499,14 +479,9 @@ const StringTable LanguageTables[numLanguages] =
 
 		// Misc
 		"Skutečně obnovit tovární nastavení?",
-		"Restartovat?",
 		"Skutečně smazat?",
 		"Určitě?",
 		"Dotkněte se bodu",
-		"Některá nastavení nejsou uložena!",
-		"Zvolte Uložit a Restart pro dokončení",
-		"Vyžadován restart",
-		"Restartovat nyní?",
 		"Posun hlavy",
 		"Množství (mm)",
 		"Rychlost (mm/s)",
@@ -585,8 +560,8 @@ const StringTable LanguageTables[numLanguages] =
 
 		// Print page
 		"Extrusor" THIN_SPACE "%",
-		"Velocidad ",						// note space at end
-		"Ventilador ",						// note space at end
+		"Veloc. ",							// note space at end. "Velocidad" is too long.
+		"Ventil. ",							// note space at end. "Ventilador" is too lonh.
 		"Tiempo restante: ",
 		"archivo ",							// note space at end
 		", filamento ",						// note space at end
@@ -596,7 +571,7 @@ const StringTable LanguageTables[numLanguages] =
 		"Micro paso",						// Literal translation of baby step it's very odd in spanish...
 		"Resumir",
 		"Cancelar",
-		"Fijar",								// "Establecer" would be more correct, but it's longer.
+		"Fijar",							// "Establecer" would be more correct, but it's longer.
 
 		// Setup page
 		"Volumen ",							// note space at end
@@ -612,14 +587,9 @@ const StringTable LanguageTables[numLanguages] =
 
 		// Misc
 		"Confirma restablecimiento de fábrica",
-		"Confirma reiniciar",
 		"Confirma borrar archivo",
 		"Está seguro?",
 		"Tocar el punto",
-		"Algunos parámetros no están guardados!",
-		"Toca Guardar y Reiniciar para usar los nuevos parámetros",
-		"Reinicio requerido",						
-		"Reiniciar ahora?",						
 		"Mover cabezal",
 		"Cantidad de extrusión (mm)",
 		"Velocidad (mm/s)",
