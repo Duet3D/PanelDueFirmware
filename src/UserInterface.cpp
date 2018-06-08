@@ -583,8 +583,8 @@ void CreateLanguagePopup(const ColourScheme& colours)
 {
 	languagePopup = new PopupWindow(popupBarHeight, fullPopupWidth, colours.popupBackColour, colours.popupBorderColour);
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	PixelNumber step = (fullPopupWidth - 2 * popupSideMargin + popupFieldSpacing)/numLanguages;
-	for (unsigned int i = 0; i < numLanguages; ++i)
+	PixelNumber step = (fullPopupWidth - 2 * popupSideMargin + popupFieldSpacing)/NumLanguages;
+	for (unsigned int i = 0; i < NumLanguages; ++i)
 	{
 		languagePopup->AddField(new TextButton(popupSideMargin, popupSideMargin + i * step, step - popupFieldSpacing, LanguageTables[i].languageName, evAdjustLanguage, i));
 	}
@@ -596,7 +596,9 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	static const char* array const keysEN[8] = { "1234567890-+", "QWERTYUIOP[]", "ASDFGHJKL:@", "ZXCVBNM,./", "!\"#$%^&*()_=", "qwertyuiop{}", "asdfghjkl;'", "zxcvbnm<>?" };
 	static const char* array const keysDE[8] = { "1234567890-+", "QWERTZUIOP[]", "ASDFGHJKL:@", "YXCVBNM,./", "!\"#$%^&*()_=", "qwertzuiop{}", "asdfghjkl;'", "yxcvbnm<>?" };
 	static const char* array const keysFR[8] = { "1234567890-+", "AZERTWUIOP[]", "QSDFGHJKLM@", "YXCVBN.,:/", "!\"#$%^&*()_=", "azertwuiop{}", "qsdfghjklm'", "yxcvbn<>;?" };
-	static const char* array const * const keyboards[numLanguages] = { keysEN, keysDE, keysFR, keysEN /*, keysEN */ };		// Spain and Czech keyboard layout is same as English
+	static const char* array const * const keyboards[] = { keysEN, keysDE, keysFR, keysEN, keysEN };		// Spain and Czech keyboard layout is same as English
+
+	static_assert(ARRAY_SIZE(keyboards) >= NumLanguages, "Wrong number of keyboard entries");
 
 	keyboardPopup = new StandardPopupWindow(keyboardPopupHeight, keyboardPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupInfoTextColour, colours.buttonImageBackColour, nullptr, keyboardTopMargin);
 
@@ -606,7 +608,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	userCommandField->SetLabel(userCommandBuffers[currentUserCommandBuffer].c_str());	// set up to display the current user command
 	keyboardPopup->AddField(userCommandField);
 
-	if (language >= numLanguages)
+	if (language >= NumLanguages)
 	{
 		language = 0;
 	}
@@ -990,7 +992,7 @@ namespace UI
 	// Return the number of supported languages
 	extern unsigned int GetNumLanguages()
 	{
-		return numLanguages;
+		return NumLanguages;
 	}
 
 	// Create all the fields we ever display

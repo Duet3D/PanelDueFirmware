@@ -8,6 +8,6 @@
 #ifndef SRC_VERSION_HPP_
 #define SRC_VERSION_HPP_
 
-#define VERSION_TEXT		"1.21(07b2)"
+#define VERSION_TEXT		"1.21(08b2)"
 
 #endif /* SRC_VERSION_HPP_ */
