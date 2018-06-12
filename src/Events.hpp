@@ -32,7 +32,7 @@ enum Event : uint8_t
 	evSetInt,
 	evListFiles,
 
-	evFile, evMacro,
+	evFile, evMacro, evMacroControlPage,
 	evPrintFile,
 	evSendCommand,
 	evFactoryReset,
