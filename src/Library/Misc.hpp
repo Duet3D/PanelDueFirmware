@@ -25,6 +25,9 @@ post(_ecv_isNullTerminated(dst));
 bool stringStartsWith(const char* array a, const char* array b)
 pre(_ecv_isNullTerminated(a); _ecv_isNullTerminated(b));
 
+// If the text starts with decimal digits followed by underscore, skip that bit
+const char * array SkipDigitsAndUnderscore(const char * array text);
+
 template<class T> T min(const T& a, const T& b)
 {
 	return (a < b) ? a : b;

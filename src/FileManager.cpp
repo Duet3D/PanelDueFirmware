@@ -10,6 +10,7 @@
 #include "UserInterfaceConstants.hpp"
 #include "UserInterface.hpp"
 #include "Hardware/SerialIo.hpp"
+#include "Library/Misc.hpp"
 #include <cctype>
 
 #undef min
@@ -44,21 +45,6 @@ namespace FileManager
 	static inline bool StringGreaterThan(const char* a, const char* b)
 	{
 		return strcasecmp(a, b) > 0;
-	}
-
-	// If the text starts with decimal digits followed by underscore, skip that bit
-	static const char * array SkipDigitsAndUnderscore(const char * array text)
-	{
-		const char * const array originalText = text;
-		if (isdigit(*text))
-		{
-			do
-			{
-				++text;
-			} while (isdigit(*text));
-			return (*text == '_') ? text + 1 : originalText;
-		}
-		return originalText;
 	}
 
 	FileSet::FileSet(const char * array rootDir, unsigned int numDisp, bool pIsFilesList)
@@ -106,12 +92,12 @@ namespace FileManager
 			}
 			if (fileNum < index.size())
 			{
-				again = UI::UpdateMacroShortList(buttonNum, SkipDigitsAndUnderscore(index[fileNum]), index[fileNum]);
+				again = UI::UpdateMacroShortList(buttonNum, index[fileNum]);
 				++fileNum;
 			}
 			else
 			{
-				again = UI::UpdateMacroShortList(buttonNum, nullptr, nullptr);
+				again = UI::UpdateMacroShortList(buttonNum, nullptr);
 			}
 			++buttonNum;
 		} while (again);

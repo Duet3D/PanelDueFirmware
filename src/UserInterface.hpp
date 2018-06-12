@@ -74,7 +74,7 @@ namespace UI
 	extern void EnableFileNavButtons(bool filesNotMacros, bool scrollEarlier, bool scrollLater, bool parentDir);
 	extern void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * array null text, const char * array null param);
 	extern unsigned int GetNumScrolledFiles(bool filesNotMacros);
-	extern bool UpdateMacroShortList(unsigned int buttonIndex, const char * array null text, const char * array null param);
+	extern bool UpdateMacroShortList(unsigned int buttonIndex, const char * array null fileName);
 
 	extern void SetBabystepOffset(float f);
 }

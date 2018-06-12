@@ -1145,7 +1145,6 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 		LCD_Write_COM(0xF0);		//pixel data interface
 		LCD_Write_DATA8(0x03);
 
-
 		delay_ms(1);
 
 		setXY(0, 0, 479, 271);
@@ -1168,7 +1167,7 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 #ifndef DISABLE_SSD1963_800
 	case SSD1963_800:
 		LCD_Write_COM(0xE2);		//PLL multiplier, set PLL clock to 120M
-		LCD_Write_DATA8(0x1E);	    //N=0x36 for 6.5M, 0x23 for 10M crystal
+		LCD_Write_DATA8(0x1E);	    //N=0x36 for 6.5M, 0x23 for 10M crystal (ER 5": 0x23)
 		LCD_Write_DATA8(0x02);
 		LCD_Write_DATA8(0x54);
 		LCD_Write_COM(0xE0);		// PLL enable
@@ -1181,11 +1180,13 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 		delay_ms(100);
 		LCD_Write_COM(0xE6);		//PLL setting for PCLK, depends on resolution
 		LCD_Write_DATA8(0x03);
-		LCD_Write_DATA8(0xFF);
-		LCD_Write_DATA8(0xFF);
+		LCD_Write_DATA8(0xFF);		// ER 5": 0x33
+		LCD_Write_DATA8(0xFF);		// ER 5": 0x33
 
 		LCD_Write_COM(0xB0);		//LCD SPECIFICATION
-		LCD_Write_DATA8((is24bit) ? 0x24 : 0x04);
+		LCD_Write_DATA8((isER) ? 0x20			// East Rising displays are 24-bit, data latched on falling edge
+						: (is24bit) ? 0x20		// other 5" displays are 24-bit, data latched on falling edge I assume (setting 0x24 for rising edge works too)
+							: 0x00);			// other 7" displays are 18-bit, data latched on falling edge (works better than setting rising edge)
 		LCD_Write_DATA8(0x00);
 		LCD_Write_DATA8(0x03);		//Set HDP	799
 		LCD_Write_DATA8(0x1F);
@@ -1194,23 +1195,23 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 		LCD_Write_DATA8(0x00);
 
 		LCD_Write_COM(0xB4);		//HSYNC
-		LCD_Write_DATA8(0x03);		//Set HT	928
-		LCD_Write_DATA8(0xA0);
+		LCD_Write_DATA8(0x03);		//Set HT	928 (ER 5": 0x04 = 1055)
+		LCD_Write_DATA8(0xA0);		// ER 5": 0x1f
 		LCD_Write_DATA8(0x00);		//Set HPS	46
-		LCD_Write_DATA8(0x2E);
+		LCD_Write_DATA8(0x2E);		// ER 5": 0xD2 = 210
 		LCD_Write_DATA8(0x30);		//Set HPW	48
-		LCD_Write_DATA8(0x00);		//Set LPS	15
-		LCD_Write_DATA8(0x0F);
+		LCD_Write_DATA8(0x00);		//Set LPS	15 (ER 5": 0)
+		LCD_Write_DATA8(0x0F);		// ER 5": 0
 		LCD_Write_DATA8(0x00);
 
 		LCD_Write_COM(0xB6);		//VSYNC
 		LCD_Write_DATA8(0x02);		//Set VT	525
-		LCD_Write_DATA8(0x0D);
+		LCD_Write_DATA8(0x0D);		// ER 5": 0x0c = 524
 		LCD_Write_DATA8(0x00);		//Set VPS	16
-		LCD_Write_DATA8(0x10);
-		LCD_Write_DATA8(0x10);		//Set VPW	16
+		LCD_Write_DATA8(0x10);		// ER 5": 0x22 = 34
+		LCD_Write_DATA8(0x10);		//Set VPW	16 (ER 5": 0x00 = 0)
 		LCD_Write_DATA8(0x00);		//Set FPS	8
-		LCD_Write_DATA8(0x08);
+		LCD_Write_DATA8(0x08);		// ER 5": 0x00 = 0
 
 		LCD_Write_COM(0xBA);
 		LCD_Write_DATA8(0x0F);		//GPIO[3:0] out 1

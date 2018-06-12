@@ -2281,9 +2281,9 @@ namespace UI
 		mgr.Show(f, text != nullptr);
 	}
 
-	// Update the specified button in the macro short list. If 'text' is nullptr then hide the button, else display it.
+	// Update the specified button in the macro short list. If 'fileName' is nullptr then hide the button, else display it.
 	// Return true if this should be called again for the next button.
-	bool UpdateMacroShortList(unsigned int buttonIndex, const char * array null text, const char * array null param)
+	bool UpdateMacroShortList(unsigned int buttonIndex, const char * array null fileName)
 	{
 		if (buttonIndex >= ARRAY_SIZE(controlPageMacroButtons) || controlPageMacroButtons[buttonIndex] == nullptr || numTools == 0 || numTools > MaxHeaters - 2)
 		{
@@ -2292,14 +2292,15 @@ namespace UI
 
 		String<controlPageMacroTextLength>& str = controlPageMacroText[buttonIndex];
 		str.clear();
-		if (text != nullptr)
+		const bool isFile = (fileName != nullptr);
+		if (isFile)
 		{
-			str.copy(text);
+			str.copy(fileName);
 		}
 		TextButton * const f = controlPageMacroButtons[buttonIndex];
-		f->SetText(str.c_str());
-		f->SetEvent((text == nullptr) ? evNull : evMacro, param);
-		mgr.Show(f, text != nullptr);
+		f->SetText(SkipDigitsAndUnderscore(str.c_str()));
+		f->SetEvent((isFile) ? evMacro : evNull, str.c_str());
+		mgr.Show(f, isFile);
 		return true;
 	}
 
