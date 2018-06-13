@@ -1883,7 +1883,8 @@ namespace UI
 						else
 						{
 							SerialIo::SendString("M98 P");
-							SerialIo::SendFilename(ev == evMacroControlPage ? CondStripDrive(FileManager::GetMacrosRootDir()) : CondStripDrive(FileManager::GetMacrosDir()), fileName);
+							const char * array const dir = (ev == evMacroControlPage) ? FileManager::GetMacrosRootDir() : FileManager::GetMacrosDir();
+							SerialIo::SendFilename(CondStripDrive(dir), fileName);
 							SerialIo::SendChar('\n');
 						}
 					}
