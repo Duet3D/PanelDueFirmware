@@ -442,6 +442,11 @@ namespace FileManager
 		return macroFilesList.GetPath();
 	}
 
+	const char * array GetMacrosRootDir()
+	{
+		return macrosRoot;
+	}
+
 	void RefreshFilesList()
 	{
 		gcodeFilesList.SetPending();

@@ -772,7 +772,7 @@ void CreateControlTabFields(const ColourScheme& colours)
 	for (size_t i = 0; i < NumControlPageMacroButtons; ++i)
 	{
 		// The position and width of the buttons will get corrected when we know how many tools we have
-		TextButton *b = controlPageMacroButtons[i] = new TextButton(row2 + i * rowHeight, 999, 99, nullptr, evMacro);
+		TextButton *b = controlPageMacroButtons[i] = new TextButton(row2 + i * rowHeight, 999, 99, nullptr, evNull);
 		b->Show(false);			// hide them until we have loaded the macros
 		mgr.AddField(b);
 	}
@@ -1870,6 +1870,7 @@ namespace UI
 				break;
 
 			case evMacro:
+			case evMacroControlPage:
 				{
 					const char *fileName = bp.GetSParam();
 					if (fileName != nullptr)
@@ -1882,7 +1883,7 @@ namespace UI
 						else
 						{
 							SerialIo::SendString("M98 P");
-							SerialIo::SendFilename(CondStripDrive(FileManager::GetMacrosDir()), fileName);
+							SerialIo::SendFilename(ev == evMacroControlPage ? CondStripDrive(FileManager::GetMacrosRootDir()) : CondStripDrive(FileManager::GetMacrosDir()), fileName);
 							SerialIo::SendChar('\n');
 						}
 					}
@@ -2299,7 +2300,7 @@ namespace UI
 		}
 		TextButton * const f = controlPageMacroButtons[buttonIndex];
 		f->SetText(SkipDigitsAndUnderscore(str.c_str()));
-		f->SetEvent((isFile) ? evMacro : evNull, str.c_str());
+		f->SetEvent((isFile) ? evMacroControlPage : evNull, str.c_str());
 		mgr.Show(f, isFile);
 		return true;
 	}

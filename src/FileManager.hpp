@@ -76,6 +76,7 @@ namespace FileManager
 	void RequestMacrosParentDir();
 	const char * array GetFilesDir();
 	const char * array GetMacrosDir();
+	const char * array GetMacrosRootDir();
 
 	void RefreshFilesList();
 	void RefreshMacrosList();
