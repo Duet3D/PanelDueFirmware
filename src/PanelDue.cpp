@@ -362,7 +362,7 @@ ReceivedDataEvent bsearch(const ReceiveDataTableEntry array table[], size_t numE
 // We don't want to send these when the printer is busy with a previous command, because they will block normal status requests.
 bool OkToSend()
 {
-	return status == PrinterStatus::idle || status == PrinterStatus::printing || status == PrinterStatus::paused;
+	return status == PrinterStatus::off || status == PrinterStatus::idle || status == PrinterStatus::printing || status == PrinterStatus::paused;
 }
 
 // Return the printer status
