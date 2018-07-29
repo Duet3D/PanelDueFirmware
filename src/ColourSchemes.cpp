@@ -85,7 +85,7 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 		.errorTextColour = white,
 		.errorBackColour = red,
 		.normalTempBackColour = midGreen,
-		.warningTempBackColour = yellow,
+		.warningTempBackColour = midYellow,
 		.errorTempBackColour = lightRed,
 
 		.popupBorderColour = white,

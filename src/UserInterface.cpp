@@ -6,6 +6,7 @@
  */
 
 #ifndef OEM_LAYOUT
+#include <cctype>
 
 #include "UserInterface.hpp"
 
@@ -1086,8 +1087,8 @@ namespace UI
 			int colourSet = false;
 			Colour cf = colours->labelTextColour;
 			Colour c;
-			float redLimit = fval * 0.03;
-			float yellowLimit = fval * 0.01;
+			float redLimit = 5.0;
+			float yellowLimit = 2.0;
 			float checkTemp;
 
 			currentTemps[heater]->SetValue(fval);
@@ -1119,9 +1120,10 @@ namespace UI
 
 			if (!colourSet) {
 				if (checkTemp > 0) {
-					if ((fval > (checkTemp + redLimit)) || (fval < (checkTemp - redLimit))) {
+					checkTemp = abs(fval - checkTemp);
+					if (checkTemp > redLimit) {
 						c = colours->errorTempBackColour;
-					} else if ((fval > (checkTemp + yellowLimit)) || (fval < (checkTemp - yellowLimit))) {
+					} else if (checkTemp > yellowLimit) {
 						c = colours->warningTempBackColour;
 					} else {
 						c = colours->normalTempBackColour;

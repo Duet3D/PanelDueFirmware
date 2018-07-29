@@ -20,6 +20,7 @@ const Colour
 	darkRed = UTFT::fromRGB(128, 0, 0),
 	yellow = UTFT::fromRGB(128,128,0),
 	lightYellow = UTFT::fromRGB(255, 255, 128),
+	midYellow = UTFT::fromRGB(192, 192, 0),
 	darkYellow = UTFT::fromRGB(64, 64, 0),
 	lightOrange = UTFT::fromRGB(255, 224, 192),
 	darkOrange = UTFT::fromRGB(128, 64, 0),
