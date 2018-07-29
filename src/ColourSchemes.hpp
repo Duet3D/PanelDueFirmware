@@ -45,11 +45,15 @@ struct ColourScheme
 	Colour infoTextColour;
 	Colour infoBackColour;
 	Colour defaultBackColour;
-	Colour activeBackColour;
-	Colour standbyBackColour;
+
+	Colour onBackColour;
+	Colour offBackColour;
 	Colour tuningBackColour;
 	Colour errorTextColour;
 	Colour errorBackColour;
+	Colour normalTempBackColour;
+	Colour warningTempBackColour;
+	Colour errorTempBackColour;
 
 	Colour popupBorderColour;
 	Colour popupBackColour;

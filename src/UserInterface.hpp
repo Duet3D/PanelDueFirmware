@@ -22,15 +22,29 @@ extern TextField *fwVersionField;
 
 class Alert;
 
+/*
+ * These need to be in the same order as the hstat values returned
+ * by M408
+ */
+enum HeaterStatus : uint8_t
+{
+	hsOff = 0,
+	hsStandby,
+	hsActive,
+	hsFault,
+	hsTuning
+};
+
 namespace UI
 {
+
 	extern unsigned int GetNumLanguages();
 	extern void CreateFields(uint32_t language, const ColourScheme& colours);
 	extern void ShowAxis(size_t axis, bool b);
 	extern void UpdateAxisPosition(size_t axis, float fval);
 	extern void UpdateCurrentTemperature(size_t heater, float fval);
 	extern void SetNumHeaters(size_t nHeaters);
-	extern void UpdateHeaterStatus(size_t heater, int ival);
+	extern void UpdateHeaterStatus(size_t heater, enum HeaterStatus ival);
 	extern void ChangeStatus(PrinterStatus oldStatus, PrinterStatus newStatus);
 	extern void UpdateTimesLeft(size_t index, unsigned int seconds);
 	extern bool ChangePage(ButtonBase *newTab);

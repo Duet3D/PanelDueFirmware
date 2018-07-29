@@ -109,7 +109,7 @@ static unsigned int numTools = 0;
 static unsigned int numHeaters = 0;
 static unsigned int numHeaterAndToolColumns = 0;
 static int oldIntValue;
-int heaterStatus[MaxHeaters];
+static enum HeaterStatus heaterStatus[MaxHeaters];
 static Event eventToConfirm = evNull;
 static unsigned int numAxes = 0;						// initialise to 0 so we refresh the macros list when we receive the number of axes
 static bool isDelta = false;
@@ -1083,23 +1083,87 @@ namespace UI
 	{
 		if (heater < MaxHeaters && currentTemps[heater] != nullptr)
 		{
+			int colourSet = false;
+			Colour cf = colours->labelTextColour;
+			Colour c;
+			float redLimit = fval * 0.03;
+			float yellowLimit = fval * 0.01;
+			float checkTemp;
+
 			currentTemps[heater]->SetValue(fval);
+
+			switch (heaterStatus[heater]) {
+			case hsOff:
+				colourSet = true;
+				c = colours->defaultBackColour;
+				break;
+			case hsStandby:
+				checkTemp = standbyTemps[heater]->GetValue();
+				break;
+			case hsActive:
+				checkTemp = activeTemps[heater]->GetValue();
+				break;
+			case hsFault:
+				colourSet = true;
+				cf = colours->errorTextColour;
+				c = colours->errorBackColour;
+				break;
+			case hsTuning:
+				colourSet = true;
+				c = colours->tuningBackColour;
+				break;
+			default:
+				colourSet = true;
+				c = colours->defaultBackColour;
+			}
+
+			if (!colourSet) {
+				if (checkTemp > 0) {
+					if ((fval > (checkTemp + redLimit)) || (fval < (checkTemp - redLimit))) {
+						c = colours->errorTempBackColour;
+					} else if ((fval > (checkTemp + yellowLimit)) || (fval < (checkTemp - yellowLimit))) {
+						c = colours->warningTempBackColour;
+					} else {
+						c = colours->normalTempBackColour;
+					}
+				} else {
+					c = colours->defaultBackColour;
+				}
+			}
+			currentTemps[heater]->SetColours(cf, c);
 		}
 	}
 
-	void UpdateHeaterStatus(size_t heater, int ival)
+	void UpdateHeaterStatus(size_t heater, enum HeaterStatus ival)
 	{
 		if (heater < MaxHeaters)
 		{
 			heaterStatus[heater] = ival;
-			if (currentTemps[heater] != nullptr)
-			{
-				Colour c = (ival == 1) ? colours->standbyBackColour
-							: (ival == 2) ? colours->activeBackColour
-							: (ival == 3) ? colours->errorBackColour
-							: (ival == 4) ? colours->tuningBackColour
-							: colours->defaultBackColour;
-				currentTemps[heater]->SetColours((ival == 3) ? colours->errorTextColour : colours->infoTextColour, c);
+			switch (heaterStatus[heater]) {
+			case hsOff:
+				standbyTemps[heater]->SetColours(colours->labelTextColour, colours->offBackColour);
+				activeTemps[heater]->SetColours(colours->labelTextColour, colours->offBackColour);
+				break;
+			case hsStandby:
+				standbyTemps[heater]->SetColours(colours->labelTextColour, colours->onBackColour);
+				activeTemps[heater]->SetColours(colours->labelTextColour, colours->offBackColour);
+				break;
+			case hsActive:
+				standbyTemps[heater]->SetColours(colours->labelTextColour, colours->offBackColour);
+				activeTemps[heater]->SetColours(colours->labelTextColour, colours->onBackColour);
+				break;
+			case hsFault:
+				standbyTemps[heater]->SetColours(colours->errorTextColour, colours->offBackColour);
+				activeTemps[heater]->SetColours(colours->errorTextColour, colours->offBackColour);
+				break;
+			case hsTuning:
+				standbyTemps[heater]->SetColours(colours->labelTextColour, colours->tuningBackColour);
+				activeTemps[heater]->SetColours(colours->labelTextColour, colours->tuningBackColour);
+				break;
+			default:
+				standbyTemps[heater]->SetColours(colours->errorTextColour, colours->offBackColour);
+				activeTemps[heater]->SetColours(colours->errorTextColour, colours->offBackColour);
+				break;
 			}
 		}
 	}

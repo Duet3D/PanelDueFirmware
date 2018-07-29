@@ -781,7 +781,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 			int32_t ival;
 			if (GetInteger(data, ival))
 			{
-				UI::UpdateHeaterStatus(indices[0], ival);
+				UI::UpdateHeaterStatus(indices[0], (enum HeaterStatus) ival);
 			}
 		}
 		break;
