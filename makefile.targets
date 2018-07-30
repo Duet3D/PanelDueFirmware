@@ -1,0 +1,10 @@
+
+$(BUILD_ARTIFACT_BASENAME)-nologo.bin: $(BUILD_ARTIFACT_BASENAME).elf
+	arm-none-eabi-objcopy -O binary $< $@
+
+$(BUILD_ARTIFACT_BASENAME).bin: $(BUILD_ARTIFACT_BASENAME)-nologo.bin
+ifeq ($(OS),Windows_NT)
+	copy /B /Y "$<"+"$(SPLASH)" "$@"
+else
+	cat "$<" "$(SPLASH)" > "$@"
+endif
