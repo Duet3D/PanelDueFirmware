@@ -1459,19 +1459,19 @@ namespace UI
 		UpdateField(fanSpeed, rpm);
 	}
 
-	// Update an active temperature
+	// Update an active temperature if it's valid
 	void UpdateActiveTemperature(size_t index, int ival)
 	{
-		if (index < MaxHeaters)
+		if (index < MaxHeaters && ival > 0)
 		{
 			UpdateField(activeTemps[index], ival);
 		}
 	}
 
-	// Update a standby temperature
+	// Update a standby temperature if it's valid
 	void UpdateStandbyTemperature(size_t index, int ival)
 	{
-		if (index < MaxHeaters)
+		if (index < MaxHeaters && ival > 0)
 		{
 			UpdateField(standbyTemps[index], ival);
 		}
@@ -1871,28 +1871,70 @@ namespace UI
 					int head = bp.GetIParam();
 					if (head == 0)
 					{
-						if (heaterStatus[0] == 2)			// if bed is active
-						{
+						switch(heaterStatus[0]) {
+						case hsActive:
+							// Go to standby
+							SerialIo::SendString("M140 R");
+							SerialIo::SendInt(standbyTemps[0]->GetValue());
+							SerialIo::SendChar('\n');
 							SerialIo::SendString("M144\n");
-						}
-						else
-						{
+							break;
+						case hsStandby:
+							/*
+							 * We turn the heater off by setting its active temp to -273
+							 * but we do NOT reset the saved value in activeTemps.
+							 * This way when the user taps the tool button again we can
+							 * set the active temp to whatever it was before.
+							 */
+							SerialIo::SendString("M140 S-273\n");
+							break;
+						case hsOff:
+							// Go to active
 							SerialIo::SendString("M140 S");
 							SerialIo::SendInt(activeTemps[0]->GetValue());
 							SerialIo::SendChar('\n');
+						default:
+							// If we're in fault or tuning state, we do nothing.
+							break;
 						}
 					}
 					else if (head < (int)MaxHeaters)
 					{
-						if (heaterStatus[head] == 2)		// if head is active
-						{
+						switch(heaterStatus[head]) {
+						case hsActive:
+							// Go to standby
 							SerialIo::SendString("T-1\n");
-						}
-						else
-						{
+							break;
+						case hsStandby:
+							/*
+							 * We turn the heater off by setting its active temp to -273
+							 * but we do NOT reset the saved value in activeTemps.
+							 * This way when the user taps the tool button again we can
+							 * set the active temp to whatever it was before.
+							 */
+							SerialIo::SendString(((GetFirmwareFeatures() & noG10Temps) == 0) ? "G10 P" : "M104 T");
+							SerialIo::SendInt(head - 1);
+							SerialIo::SendString(" S-273");
+							SerialIo::SendChar('\n');
+							break;
+						case hsOff:
+							/*
+							 * To turn the heater back on, we need to first set its
+							 * active temp which we still have in activeTemps.
+							 */
+							SerialIo::SendString(((GetFirmwareFeatures() & noG10Temps) == 0) ? "G10 P" : "M104 T");
+							SerialIo::SendInt(head - 1);
+							SerialIo::SendString(" S");
+							SerialIo::SendInt(activeTemps[head]->GetValue());
+							SerialIo::SendChar('\n');
+							// Now we can select the tool.
 							SerialIo::SendChar('T');
 							SerialIo::SendInt(head - 1);
 							SerialIo::SendChar('\n');
+							break;
+						default:
+							// If we're in fault or tuning state, we do nothing.
+							break;
 						}
 					}
 				}
