@@ -61,6 +61,14 @@ void DisplayField::SetPositionAndWidth(PixelNumber newX, PixelNumber newWidth)
 	changed = true;
 }
 
+void DisplayField::SetPositionAndWidth(PixelNumber newY, PixelNumber newX, PixelNumber newWidth)
+{
+	y = newY;
+	x = newX;
+	width = newWidth;
+	changed = true;
+}
+
 /*static*/ void DisplayField::SetDefaultColours(Colour pf, Colour pb, Colour pbb, Colour pg, Colour pbp, Colour pgp, Palette pal)
 {
 	defaultFcolour = pf;

@@ -773,8 +773,8 @@ void CreateControlTabFields(const ColourScheme& colours)
 	for (size_t i = 0; i < NumControlPageMacroButtons; ++i)
 	{
 		// The position and width of the buttons will get corrected when we know how many tools we have
-		TextButton *b = controlPageMacroButtons[i] = new TextButton(row2 + i * rowHeight, 999, 99, nullptr, evNull);
-		b->Show(false);			// hide them until we have loaded the macros
+		TextButton *b = controlPageMacroButtons[i] = new TextButton(999, 999, 99, nullptr, evNull);
+		b->Show(false);                 // hide them until we have loaded the macros
 		mgr.AddField(b);
 	}
 
@@ -2437,14 +2437,34 @@ namespace UI
 			}
 
 			bool showControlPageMacroButtons = controlPageMacroButtonsWidth >= minControlPageMacroButtonsWidth;
+			bool twoColumns = ((controlPageMacroButtonsWidth / 2) - (fieldSpacing / 2) - margin)
+					> minControlPageMacroButtonsWidth ? true : false;
+
+			int i = 0;
+			int row = row2;
+			int column = controlPageMacroButtonsColumn;
+			int width = twoColumns
+				? ((controlPageMacroButtonsWidth / 2) - (fieldSpacing / 2) - margin)
+					: controlPageMacroButtonsWidth;
 
 			for (TextButton *& b : controlPageMacroButtons)
 			{
 				if (showControlPageMacroButtons)
 				{
-					b->SetPositionAndWidth(controlPageMacroButtonsColumn, controlPageMacroButtonsWidth);
+					b->SetPositionAndWidth(row, column, width);
 				}
+
 				mgr.Show(b, showControlPageMacroButtons);
+				i++;
+				if (!twoColumns && i >= (NumControlPageMacroButtons / 2)) {
+					break;
+				}
+				if (!(twoColumns && i % 2)) {
+					row += rowHeight;
+					column = controlPageMacroButtonsColumn;
+				} else {
+					column = controlPageMacroButtonsColumn + (controlPageMacroButtonsWidth / 2) + fieldSpacing;
+				}
 			}
 
 			if (currentTab == tabControl)
