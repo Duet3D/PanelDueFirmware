@@ -67,6 +67,7 @@ struct StringTable
 	CSTRING theme;
 	CSTRING brightnessDown;
 	CSTRING brightnessUp;
+	CSTRING macroColumns;
 	CSTRING saveSettings;
 	CSTRING clearSettings;
 	CSTRING saveAndRestart;
@@ -156,6 +157,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Theme",
 		"Brightness -",
 		"Brightness +",
+		"Macro Columns ",
 		"Save settings",
 		"Clear settings",
 		"Save & Restart",
@@ -264,6 +266,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Darstellung",
 		"Beleuchtung  -",
 		"Beleuchtung  +",
+		"Makrospalten ",
 		"Einstllgen sichern",
 		"Werks-Reset",
 		"Sichern & Reboot",
@@ -372,6 +375,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Théme",
 		"Luminosité -",
 		"Luminosité +",
+		"Colonnes de macro ",
 		"Sauver paramêtres",
 		"Effacer paramêtres",
 		"Sauvegarde & Redémarrage",
@@ -480,6 +484,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Tema",
 		"Brillo -",
 		"Brillo +",
+		"Macro columnas ",
 		"Guardar parámetros",
 		"Borrar parámetros",
 		"Guardar y Reiniciar",
@@ -589,6 +594,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Motiv",
 		"Podsvícení -",
 		"Podsvícení +",
+		"Makro sloupce ",
 		"Uložit nastavení",
 		"Smazat nastavení",
 		"Uložit a Restart",

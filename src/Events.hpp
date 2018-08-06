@@ -59,6 +59,7 @@ enum Event : uint8_t
 	evAdjustColours, evSetColours,
 	evBrighter, evDimmer,
 	evSetDimmingType,
+	evAdjustMacroColumns, evSetMacroColumns,
 
 	evEmergencyStop,
 

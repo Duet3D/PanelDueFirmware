@@ -186,7 +186,9 @@ const unsigned int numMessageRows = (rowTabs - margin - rowHeight)/rowTextHeight
 const PixelNumber messageTextX = margin + messageTimeWidth + 2;
 const PixelNumber messageTextWidth = DisplayX - margin - messageTextX;
 
-const unsigned int NumControlPageMacroButtons = 8;
+const unsigned int MaxNumControlPageMacroButtons = 16;
+const unsigned int NumControlPageMacroButtons[] = { 0, 4, 8, 12, 16};
+
 const PixelNumber minControlPageMacroButtonsWidth = (tempButtonWidth * 3)/2;
 const PixelNumber maxControlPageMacroButtonsWidth = DisplayX/2 - 2 * margin;
 

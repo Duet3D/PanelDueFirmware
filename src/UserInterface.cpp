@@ -60,10 +60,10 @@ static SingleButton *changeCardButton;
 
 static TextButton *filenameButtons[NumDisplayedFiles];
 static TextButton *macroButtons[NumDisplayedMacros];
-static TextButton *controlPageMacroButtons[NumControlPageMacroButtons];
-static String<controlPageMacroTextLength> controlPageMacroText[NumControlPageMacroButtons];
+static TextButton *controlPageMacroButtons[MaxNumControlPageMacroButtons];
+static String<controlPageMacroTextLength> controlPageMacroText[MaxNumControlPageMacroButtons];
 
-static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
+static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup, *macroColumnsPopup;
 static StaticTextField *areYouSureTextField, *areYouSureQueryField;
 static DisplayField *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
 static SingleButton *homeButtons[MaxAxes], *toolButtons[MaxHeaters], *homeAllButton, *bedCompButton;
@@ -80,6 +80,7 @@ static StaticTextField *moveAxisRows[MaxAxes];
 static StaticTextField *nameField, *statusField;
 static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
 static IntegerButton *spd, *extrusionFactors[MaxHeaters - 1], *fanSpeed, *baudRateButton, *volumeButton;
+static IntegerButton *macroColumnsButton;
 static TextButton *languageButton, *coloursButton, *dimmingTypeButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
@@ -114,6 +115,7 @@ static enum HeaterStatus heaterStatus[MaxHeaters];
 static Event eventToConfirm = evNull;
 static unsigned int numAxes = 0;						// initialise to 0 so we refresh the macros list when we receive the number of axes
 static bool isDelta = false;
+static unsigned int currentMacroColumns = 0;
 
 const char* array null currentFile = nullptr;			// file whose info is displayed in the file info popup
 const StringTable * strings = &LanguageTables[0];
@@ -579,6 +581,14 @@ void CreateColoursPopup(const ColourScheme& colours)
 	}
 }
 
+// Create the macro padding adjustment popup
+void CreateMacroColumnsPopup(const ColourScheme& colours)
+{
+	static const char* const macroColumnsText[] = { "-1(Auto)", "0", "1", "2", "3", "4" };
+	static const int macroColumnsParams[] = { -1, 0, 1, 2, 3, 4 };
+	macroColumnsPopup = CreateIntPopupBar(colours, fullPopupWidth, 6, macroColumnsText, macroColumnsParams, evAdjustMacroColumns, evAdjustMacroColumns);
+}
+
 // Create the language popup (currently only affects the keyboard layout)
 void CreateLanguagePopup(const ColourScheme& colours)
 {
@@ -770,7 +780,7 @@ void CreateControlTabFields(const ColourScheme& colours)
 	macroButton = AddTextButton(row8p7, 3, 4, strings->macro, evListMacros, nullptr);
 
 	// When there is room, we also display a few macro buttons on the right hand side
-	for (size_t i = 0; i < NumControlPageMacroButtons; ++i)
+	for (size_t i = 0; i < MaxNumControlPageMacroButtons; ++i)
 	{
 		// The position and width of the buttons will get corrected when we know how many tools we have
 		TextButton *b = controlPageMacroButtons[i] = new TextButton(999, 999, 99, nullptr, evNull);
@@ -888,7 +898,9 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	AddTextButton(row5, 1, 3, strings->brightnessDown, evDimmer, nullptr);
 	AddTextButton(row5, 2, 3, strings->brightnessUp, evBrighter, nullptr);
 	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()], evSetDimmingType, nullptr);
-	AddTextButton(row6, 2, 3, strings->clearSettings, evFactoryReset, nullptr);
+	macroColumnsButton = AddIntegerButton(row6, 1, 3, strings->macroColumns, nullptr, evSetMacroColumns);
+	macroColumnsButton->SetValue(GetMacroColumns());
+	AddTextButton(row7, 0, 3, strings->clearSettings, evFactoryReset, nullptr);
 	setupRoot = mgr.GetRoot();
 }
 
@@ -1020,6 +1032,7 @@ namespace UI
 		CreateVolumePopup(colours);
 		CreateBaudRatePopup(colours);
 		CreateColoursPopup(colours);
+		CreateMacroColumnsPopup(colours);
 		CreateAreYouSurePopup(colours);
 		CreateKeyboardPopup(language, colours);
 		CreateLanguagePopup(colours);
@@ -2146,6 +2159,22 @@ namespace UI
 				dimmingTypeButton->SetText(strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()]);
 				break;
 
+			case evSetMacroColumns:
+				Adjusting(bp);
+				mgr.SetPopup(macroColumnsPopup, AutoPlace, popupY);
+				break;
+
+			case evAdjustMacroColumns:
+				{
+					const int newColumns = bp.GetIParam();
+					SetMacroColumns(newColumns);
+					macroColumnsButton->SetValue(newColumns);
+				}
+				mgr.ClearPopup();
+				AdjustControlPageMacroButtons();
+				StopAdjusting();
+				break;
+
 			case evYes:
 				CurrentButtonReleased();
 				mgr.ClearPopup();								// clear the yes/no popup
@@ -2395,7 +2424,7 @@ namespace UI
 	// Return true if this should be called again for the next button.
 	bool UpdateMacroShortList(unsigned int buttonIndex, const char * array null fileName)
 	{
-		if (buttonIndex >= ARRAY_SIZE(controlPageMacroButtons) || controlPageMacroButtons[buttonIndex] == nullptr || numTools == 0 || numTools > MaxHeaters - 2)
+		if (buttonIndex >= NumControlPageMacroButtons[currentMacroColumns])
 		{
 			return false;
 		}
@@ -2410,7 +2439,7 @@ namespace UI
 		TextButton * const f = controlPageMacroButtons[buttonIndex];
 		f->SetText(SkipDigitsAndUnderscore(str.c_str()));
 		f->SetEvent((isFile) ? evMacroControlPage : evNull, str.c_str());
-		mgr.Show(f, isFile);
+		mgr.Show(f, buttonIndex < NumControlPageMacroButtons[currentMacroColumns]);
 		return true;
 	}
 
@@ -2427,43 +2456,44 @@ namespace UI
 		{
 			numHeaterAndToolColumns = n;
 
-			// Adjust the width of the control page macro buttons, or hide them completely if insufficient room
 			PixelNumber controlPageMacroButtonsColumn = ((tempButtonWidth + fieldSpacing) * n) + bedColumn + fieldSpacing;
-			PixelNumber controlPageMacroButtonsWidth = (controlPageMacroButtonsColumn >= DisplayX - margin) ? 0 : DisplayX - margin - controlPageMacroButtonsColumn;
-			if (controlPageMacroButtonsWidth > maxControlPageMacroButtonsWidth)
-			{
-				controlPageMacroButtonsColumn +=  controlPageMacroButtonsWidth - maxControlPageMacroButtonsWidth;
-				controlPageMacroButtonsWidth = maxControlPageMacroButtonsWidth;
+			PixelNumber minColumnWidth = minControlPageMacroButtonsWidth + fieldSpacing;
+			PixelNumber spaceAvailable = DisplayX - margin - controlPageMacroButtonsColumn;
+
+			// Calculate or set the number of macro columns that will fit
+			if (GetMacroColumns() < 0) {
+				currentMacroColumns = (int)((spaceAvailable + fieldSpacing) / minColumnWidth);
+			} else {
+				currentMacroColumns = GetMacroColumns();
 			}
 
-			bool showControlPageMacroButtons = controlPageMacroButtonsWidth >= minControlPageMacroButtonsWidth;
-			bool twoColumns = ((controlPageMacroButtonsWidth / 2) - (fieldSpacing / 2) - margin)
-					> minControlPageMacroButtonsWidth ? true : false;
+			PixelNumber controlPageMacroButtonsWidth =
+				(spaceAvailable / currentMacroColumns)
+				- (fieldSpacing * (currentMacroColumns ? currentMacroColumns - 1 : 0) / currentMacroColumns);
 
-			int i = 0;
 			int row = row2;
 			int column = controlPageMacroButtonsColumn;
-			int width = twoColumns
-				? ((controlPageMacroButtonsWidth / 2) - (fieldSpacing / 2) - margin)
-					: controlPageMacroButtonsWidth;
+			int i = 0;
 
-			for (TextButton *& b : controlPageMacroButtons)
+			for (TextButton *&b : controlPageMacroButtons)
 			{
-				if (showControlPageMacroButtons)
-				{
-					b->SetPositionAndWidth(row, column, width);
-				}
+				bool show = ( i < NumControlPageMacroButtons[currentMacroColumns] );
 
-				mgr.Show(b, showControlPageMacroButtons);
-				i++;
-				if (!twoColumns && i >= (NumControlPageMacroButtons / 2)) {
-					break;
+				if (show)
+				{
+					b->SetPositionAndWidth(row, column, controlPageMacroButtonsWidth);
 				}
-				if (!(twoColumns && i % 2)) {
+				mgr.Show(b, show);
+
+				i++;
+				if ((i % currentMacroColumns) == 0)
+				{
 					row += rowHeight;
 					column = controlPageMacroButtonsColumn;
-				} else {
-					column = controlPageMacroButtonsColumn + (controlPageMacroButtonsWidth / 2) + fieldSpacing;
+				}
+				else
+				{
+					column += (controlPageMacroButtonsWidth + fieldSpacing);
 				}
 			}
 

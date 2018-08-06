@@ -59,6 +59,8 @@ extern FirmwareFeatures GetFirmwareFeatures();
 extern const char* array CondStripDrive(const char* array arg);
 extern void Reconnect();
 extern void Delay(uint32_t milliSeconds);
+extern void SetMacroColumns(uint8_t columns);
+extern int GetMacroColumns();
 
 // Global data in PanelDue.cpp that is used elsewhere
 extern UTFT lcd;
