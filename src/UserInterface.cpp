@@ -1475,7 +1475,7 @@ namespace UI
 	// Update an active temperature if it's valid
 	void UpdateActiveTemperature(size_t index, int ival)
 	{
-		if (index < MaxHeaters && ival > 0)
+		if (index < MaxHeaters)
 		{
 			UpdateField(activeTemps[index], ival);
 		}
@@ -1484,7 +1484,7 @@ namespace UI
 	// Update a standby temperature if it's valid
 	void UpdateStandbyTemperature(size_t index, int ival)
 	{
-		if (index < MaxHeaters && ival > 0)
+		if (index < MaxHeaters)
 		{
 			UpdateField(standbyTemps[index], ival);
 		}

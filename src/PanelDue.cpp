@@ -146,7 +146,7 @@ struct FlashData
 	uint32_t colourScheme;
 	uint32_t brightness;
 	uint8_t displayDimmerType;
-	uint8_t macroColumns;
+	int8_t macroColumns;
 	uint8_t padding[2];
 	char dummy;								// must be at a multiple of 4 bytes from the start because flash is read/written in whole dwords
 	
@@ -236,7 +236,9 @@ bool FlashData::IsValid() const
 		&& brightness <= Buzzer::MaxBrightness
 		&& language < UI::GetNumLanguages()
 		&& colourScheme < NumColourSchemes
-		&& displayDimmerType < (uint8_t)DisplayDimmerType::NumTypes;
+		&& displayDimmerType < (uint8_t)DisplayDimmerType::NumTypes
+		&& macroColumns >= -1
+		&& macroColumns <= 4;
 }
 
 bool FlashData::operator==(const FlashData& other)
@@ -562,7 +564,7 @@ int GetBrightness()
 	return (int)nvData.brightness;
 }
 
-void SetMacroColumns(uint8_t columns)
+void SetMacroColumns(int8_t columns)
 {
 	nvData.macroColumns = columns;
 }
