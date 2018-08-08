@@ -81,7 +81,7 @@ static StaticTextField *nameField, *statusField;
 static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
 static IntegerButton *spd, *extrusionFactors[MaxHeaters - 1], *fanSpeed, *baudRateButton, *volumeButton;
 static IntegerButton *macroColumnsButton;
-static TextButton *languageButton, *coloursButton, *dimmingTypeButton;
+static TextButton *languageButton, *coloursButton, *dimmingTypeButton, *stickyTempsButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
 static AlertPopup *alertPopup;
@@ -110,12 +110,12 @@ static size_t currentUserCommandBuffer = 0, currentHistoryBuffer = 0;
 static unsigned int numTools = 0;
 static unsigned int numHeaters = 0;
 static unsigned int numHeaterAndToolColumns = 0;
+static unsigned int currentMacroColumns = 0;
 static int oldIntValue;
 static enum HeaterStatus heaterStatus[MaxHeaters];
 static Event eventToConfirm = evNull;
 static unsigned int numAxes = 0;						// initialise to 0 so we refresh the macros list when we receive the number of axes
 static bool isDelta = false;
-static unsigned int currentMacroColumns = 0;
 
 const char* array null currentFile = nullptr;			// file whose info is displayed in the file info popup
 const StringTable * strings = &LanguageTables[0];
@@ -900,6 +900,7 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()], evSetDimmingType, nullptr);
 	macroColumnsButton = AddIntegerButton(row6, 1, 3, strings->macroColumns, nullptr, evSetMacroColumns);
 	macroColumnsButton->SetValue(GetMacroColumns());
+	stickyTempsButton = AddTextButton(row6, 2, 3, strings->stickyTemps[(unsigned int)GetStickyTemps()], evSetStickyTemps, nullptr);
 	AddTextButton(row7, 0, 3, strings->clearSettings, evFactoryReset, nullptr);
 	setupRoot = mgr.GetRoot();
 }
@@ -1475,18 +1476,20 @@ namespace UI
 	// Update an active temperature if it's valid
 	void UpdateActiveTemperature(size_t index, int ival)
 	{
-		if (index < MaxHeaters)
+		if (index < MaxHeaters
+			&& (!GetStickyTemps() || (GetStickyTemps() && ival > 0)))
 		{
-			UpdateField(activeTemps[index], ival);
+			UpdateField(activeTemps[index], ival < 0 ? 0 : ival);
 		}
 	}
 
 	// Update a standby temperature if it's valid
 	void UpdateStandbyTemperature(size_t index, int ival)
 	{
-		if (index < MaxHeaters)
+		if (index < MaxHeaters
+			&& (!GetStickyTemps() || (GetStickyTemps() && ival > 0)))
 		{
-			UpdateField(standbyTemps[index], ival);
+			UpdateField(standbyTemps[index], ival < 0 ? 0 : ival);
 		}
 	}
 
@@ -1887,24 +1890,30 @@ namespace UI
 						switch(heaterStatus[0]) {
 						case hsActive:
 							// Go to standby
+							// Set the bed standby temp
 							SerialIo::SendString("M140 R");
 							SerialIo::SendInt(standbyTemps[0]->GetValue());
 							SerialIo::SendChar('\n');
+							// Set the bed to standby mode
 							SerialIo::SendString("M144\n");
 							break;
 						case hsStandby:
-							/*
-							 * We turn the heater off by setting its active temp to -273
-							 * but we do NOT reset the saved value in activeTemps.
-							 * This way when the user taps the tool button again we can
-							 * set the active temp to whatever it was before.
-							 */
-							SerialIo::SendString("M140 S-273\n");
+							// Go to off
+							// Set active and standby temps to off
+							SerialIo::SendString("M140 S-273.15 R-273.15\n");
+							if (!GetStickyTemps())
+							{
+								activeTemps[0] = 0;
+								standbyTemps[0] = 0;
+							}
 							break;
 						case hsOff:
 							// Go to active
+							// Set both active and standby temps
 							SerialIo::SendString("M140 S");
 							SerialIo::SendInt(activeTemps[0]->GetValue());
+							SerialIo::SendString(" R");
+							SerialIo::SendInt(standbyTemps[0]->GetValue());
 							SerialIo::SendChar('\n');
 						default:
 							// If we're in fault or tuning state, we do nothing.
@@ -1916,34 +1925,81 @@ namespace UI
 						switch(heaterStatus[head]) {
 						case hsActive:
 							// Go to standby
+							// If the board doesn't support G10 all we can do is turn off the heater
+							if (GetFirmwareFeatures() & noG10Temps)
+							{
+								SerialIo::SendString("M104 T");
+								SerialIo::SendInt(head - 1);
+								SerialIo::SendString(" S-273.15");
+								SerialIo::SendChar('\n');
+							}
+							// Otherwise, set the standby temp
+							else
+							{
+								SerialIo::SendString("G10 P");
+								SerialIo::SendInt(head - 1);
+								SerialIo::SendString(" R");
+								SerialIo::SendInt(standbyTemps[head]->GetValue());
+								SerialIo::SendChar('\n');
+							}
+
+							// Now deselect the tool which will put it in standby
 							SerialIo::SendString("T-1\n");
 							break;
 						case hsStandby:
-							/*
-							 * We turn the heater off by setting its active temp to -273
-							 * but we do NOT reset the saved value in activeTemps.
-							 * This way when the user taps the tool button again we can
-							 * set the active temp to whatever it was before.
-							 */
-							SerialIo::SendString(((GetFirmwareFeatures() & noG10Temps) == 0) ? "G10 P" : "M104 T");
-							SerialIo::SendInt(head - 1);
-							SerialIo::SendString(" S-273");
-							SerialIo::SendChar('\n');
+							// Go to off
+							// We turn the heater off by setting its standby temp to -273.15
+							// If the board doesn't support G10, we can only do that
+							// for the active temp
+							if (GetFirmwareFeatures() & noG10Temps)
+							{
+								SerialIo::SendString("M104 T");
+								SerialIo::SendInt(head - 1);
+								SerialIo::SendString(" S-273.15");
+								SerialIo::SendChar('\n');
+							}
+							// Otherwise set active and standby temps to -273
+							else
+							{
+								SerialIo::SendString("G10 P");
+								SerialIo::SendInt(head - 1);
+								SerialIo::SendString(" S-273.15 R-273.15");
+								SerialIo::SendChar('\n');
+							}
+							if (!GetStickyTemps())
+							{
+								activeTemps[head] = 0;
+								standbyTemps[head] = 0;
+							}
 							break;
 						case hsOff:
-							/*
-							 * To turn the heater back on, we need to first set its
-							 * active temp which we still have in activeTemps.
-							 */
-							SerialIo::SendString(((GetFirmwareFeatures() & noG10Temps) == 0) ? "G10 P" : "M104 T");
-							SerialIo::SendInt(head - 1);
-							SerialIo::SendString(" S");
-							SerialIo::SendInt(activeTemps[head]->GetValue());
-							SerialIo::SendChar('\n');
+							// Go to active
+							// If the board doesn't support G10, we can only set the
+							// active temp
+							if (GetFirmwareFeatures() & noG10Temps)
+							{
+								SerialIo::SendString("M104 T");
+								SerialIo::SendInt(head - 1);
+								SerialIo::SendString(" S");
+								SerialIo::SendInt(activeTemps[head]->GetValue());
+								SerialIo::SendChar('\n');
+							}
+							// Otherwise set both active and standby temps
+							else
+							{
+								SerialIo::SendString("G10 P");
+								SerialIo::SendInt(head - 1);
+								SerialIo::SendString(" S");
+								SerialIo::SendInt(activeTemps[head]->GetValue());
+								SerialIo::SendString(" R");
+								SerialIo::SendInt(standbyTemps[head]->GetValue());
+								SerialIo::SendChar('\n');
+							}
 							// Now we can select the tool.
 							SerialIo::SendChar('T');
 							SerialIo::SendInt(head - 1);
 							SerialIo::SendChar('\n');
+							MessageLog::AppendMessage("to active");
 							break;
 						default:
 							// If we're in fault or tuning state, we do nothing.
@@ -2165,14 +2221,19 @@ namespace UI
 				break;
 
 			case evAdjustMacroColumns:
+				mgr.ClearPopup();
+				StopAdjusting();
 				{
 					const int newColumns = bp.GetIParam();
 					SetMacroColumns(newColumns);
 					macroColumnsButton->SetValue(newColumns);
+					AdjustControlPageMacroButtons(true);
 				}
-				mgr.ClearPopup();
-				AdjustControlPageMacroButtons();
-				StopAdjusting();
+				break;
+
+			case evSetStickyTemps:
+				SetStickyTemps(!GetStickyTemps());
+				stickyTempsButton->SetText(strings->stickyTemps[(unsigned int)GetStickyTemps()]);
 				break;
 
 			case evYes:
@@ -2318,6 +2379,7 @@ namespace UI
 			case evSetBaudRate:
 			case evSetVolume:
 			case evSetColours:
+			case evSetMacroColumns:
 				mgr.ClearPopup();
 				StopAdjusting();
 				break;
@@ -2448,11 +2510,11 @@ namespace UI
 		return (filesNotMacros) ? NumFileRows : NumMacroRows;
 	}
 
-	void AdjustControlPageMacroButtons()
+	void AdjustControlPageMacroButtons(bool force=false)
 	{
 		const unsigned int n = max<unsigned int>(numHeaters, numTools + 1);
 
-		if (n != numHeaterAndToolColumns)
+		if (n != numHeaterAndToolColumns || force)
 		{
 			numHeaterAndToolColumns = n;
 

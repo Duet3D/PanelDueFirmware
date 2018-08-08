@@ -112,6 +112,9 @@ struct StringTable
 
 	// Display dimmer types
 	CSTRING displayDimmingNames[(unsigned int)DisplayDimmerType::NumTypes];
+
+	// Sticky Temps States (On/Off)
+	CSTRING stickyTemps[2];
 };
 
 const StringTable LanguageTables[NumLanguages] =
@@ -222,6 +225,12 @@ const StringTable LanguageTables[NumLanguages] =
 			"Never dim",
 			"Dim if idle",
 			"Always dim"
+		},
+
+		// Sticky Temp States
+		{
+			"Sticky Temps Off",
+			"Sticky Temps On",
 		}
  	},
 
@@ -331,6 +340,12 @@ const StringTable LanguageTables[NumLanguages] =
 			"Dimmen aus",
 			"Dim bei idle",				//shortened due to space limitations, ideally "Nur im Standby dimmen"
 			"Dimmen ein"
+		},
+
+		// Sticky Temp States
+		{
+			"Klebrige temps aus",
+			"Klebrige temps an",
 		}
 	},
 
@@ -440,6 +455,12 @@ const StringTable LanguageTables[NumLanguages] =
 			"Jamais Dim",
 			"Idle Dim",
 			"Toujours Dim"
+		},
+
+		// Sticky Temp States
+		{
+			"Temps collant off",
+			"Temps collant sur",
 		}
 	},
 
@@ -550,6 +571,12 @@ const StringTable LanguageTables[NumLanguages] =
 			"Atenuar en espera",
 			"Siempre Atenuar",
 		},
+
+		// Sticky Temp States
+		{
+			"Temps pegajoso apagado",
+			"Temps pegajoso en",
+		}
 	},
 
 #if DISPLAY_X == 800
@@ -659,6 +686,12 @@ const StringTable LanguageTables[NumLanguages] =
 			"Nikdy nezměníme",
 			"Idle Dim",
 			"Vždy Dim"
+		},
+
+		// Sticky Temp States
+		{
+			"Lepkavé temps off",
+			"Lepkavé temps on",
 		}
 	}
 #endif

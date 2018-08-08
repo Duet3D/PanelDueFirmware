@@ -130,7 +130,7 @@ struct FlashData
 {
 	// The magic value should be changed whenever the layout of the NVRAM changes
 	// We now use a different magic value for each display size, to force the "touch the spot" screen to be displayed when you change the display size
-	static const uint32_t magicVal = 0x3AB629F1 + DISPLAY_TYPE;
+	static const uint32_t magicVal = 0x3AB629F2 + DISPLAY_TYPE;
 	static const uint32_t muggleVal = 0xFFFFFFFF;
 
 	uint32_t magic;
@@ -147,7 +147,8 @@ struct FlashData
 	uint32_t brightness;
 	uint8_t displayDimmerType;
 	int8_t macroColumns;
-	uint8_t padding[2];
+	uint8_t stickyTemps;
+	uint8_t padding[1];
 	char dummy;								// must be at a multiple of 4 bytes from the start because flash is read/written in whole dwords
 	
 	FlashData() : magic(muggleVal) { }
@@ -256,7 +257,8 @@ bool FlashData::operator==(const FlashData& other)
 		&& colourScheme == other.colourScheme
 		&& brightness == other.brightness
 		&& displayDimmerType == other.displayDimmerType
-		&& macroColumns == other.macroColumns;
+		&& macroColumns == other.macroColumns
+		&& stickyTemps == other.stickyTemps;
 }
 
 void FlashData::SetDefaults()
@@ -274,6 +276,7 @@ void FlashData::SetDefaults()
 	colourScheme = 0;
 	displayDimmerType = (uint8_t)DisplayDimmerType::always;
 	macroColumns = -1;
+	stickyTemps = 0;
 	magic = magicVal;
 }
 
@@ -572,6 +575,16 @@ void SetMacroColumns(int8_t columns)
 int GetMacroColumns()
 {
 	return (int)nvData.macroColumns;
+}
+
+void SetStickyTemps(uint8_t save)
+{
+	nvData.stickyTemps = save;
+}
+
+bool GetStickyTemps()
+{
+	return (bool)nvData.stickyTemps;
 }
 
 // Factory reset

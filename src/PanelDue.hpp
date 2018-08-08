@@ -61,6 +61,8 @@ extern void Reconnect();
 extern void Delay(uint32_t milliSeconds);
 extern void SetMacroColumns(int8_t columns);
 extern int GetMacroColumns();
+extern void SetStickyTemps(uint8_t save);
+extern bool GetStickyTemps();
 
 // Global data in PanelDue.cpp that is used elsewhere
 extern UTFT lcd;
