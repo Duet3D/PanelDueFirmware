@@ -17,8 +17,9 @@
 namespace MessageLog
 {
 	const unsigned int MaxCharsPerRow = 80;
-	const unsigned int MaxCharsPerMessage = 256;
-	const unsigned int MaxNewMessageLines = 3;
+
+	const unsigned int MaxCharsPerMessage = 400;
+	const unsigned int MaxNewMessageLines = 5;
 
 	struct Message
 	{
@@ -104,56 +105,47 @@ namespace MessageLog
 	}
 
 	// Add a message to the end of the list
+	// Call this only with a non empty message having no leading whitespace
 	void AppendMessage(const char* array data)
 	{
-		// Skip any leading spaces, we don't have room on the display to waste
-		while (*data == ' ' || *data == '\n')
+		bool split;
+		unsigned int numLines = 0;
+		do
 		{
-			++data;
-		}
-		
-		// Discard empty messages
-		if (*data != 0)
-		{
-			bool split;
-			unsigned int numLines = 0;
-			do
-			{
-				size_t msgRow = (messageStartRow + numLines) % numMessageRows;
-				++numLines;
-				size_t splitPoint;
-			
-				// See if the rest of the message will fit on one line
-				if (numLines == numMessageRows)
-				{
-					split = false;		// if we have printed the maximum number of rows (unlikely), don't split any more, just truncate
-				}
-				else
-				{
-					splitPoint = FindSplitPoint(data, MaxCharsPerRow, messageTextWidth);
-					split = data[splitPoint] != '\0';
-				}
-			
-				if (split)
-				{
-					safeStrncpy(messages[msgRow].msg, data, splitPoint + 1);
-					data += splitPoint;
-					if (data[0] == ' ')
-					{
-						++data;			// if we split just before a space, don't show the space
-					}
-				}
-				else
-				{
-					safeStrncpy(messages[msgRow].msg, data, MaxCharsPerRow + 1);
-				}
-			
-				messages[msgRow].receivedTime = (numLines == 1) ? SystemTick::GetTickCount() : 0;
-			} while (split && data[0] != '\0');
+			size_t msgRow = (messageStartRow + numLines) % numMessageRows;
+			++numLines;
+			size_t splitPoint;
 
-			messageStartRow = (messageStartRow + numLines) % numMessageRows;
-			UpdateMessages(true);
-		}
+			// See if the rest of the message will fit on one line
+			if (numLines == numMessageRows)
+			{
+				split = false;		// if we have printed the maximum number of rows (unlikely), don't split any more, just truncate
+			}
+			else
+			{
+				splitPoint = FindSplitPoint(data, MaxCharsPerRow, messageTextWidth);
+				split = data[splitPoint] != '\0';
+			}
+		
+			if (split)
+			{
+				safeStrncpy(messages[msgRow].msg, data, splitPoint + 1);
+				data += splitPoint;
+				if (data[0] == ' ')
+				{
+					++data;			// if we split just before a space, don't show the space
+				}
+			}
+			else
+			{
+				safeStrncpy(messages[msgRow].msg, data, MaxCharsPerRow + 1);
+			}
+
+			messages[msgRow].receivedTime = (numLines == 1) ? SystemTick::GetTickCount() : 0;
+		} while (split && data[0] != '\0');
+
+		messageStartRow = (messageStartRow + numLines) % numMessageRows;
+		UpdateMessages(true);
 	}
 
 	// Save a message for possible display later
@@ -167,7 +159,19 @@ namespace MessageLog
 	{
 		if (!newMessage.isEmpty())
 		{
-			AppendMessage(newMessage.c_str());
+			const char * array msg = newMessage.c_str();
+			// Skip any leading spaces, we don't have room on the display to waste
+			while (*msg == ' ' || *msg == '\n')
+			{
+				++msg;
+			}
+
+			// Discard empty messages
+			if (*msg != 0)
+			{
+				AppendMessage(msg);
+				UI::NewResponseReceived(msg);
+			}
 			newMessage.clear();
 		}
 	}

@@ -68,7 +68,8 @@ class ColourScheme;
 extern const ColourScheme *colours;
 
 const size_t MIN_AXES = 3;					// the minimum number of axes we support
-const size_t alertTextLength = 110;			// maximum characters in the alert text
+
+const size_t alertTextLength = 165;			// maximum characters in the alert text
 const size_t alertTitleLength = 50;			// maximum characters in the alert title
 
 struct Alert

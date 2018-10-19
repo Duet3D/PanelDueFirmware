@@ -130,7 +130,7 @@ struct FlashData
 {
 	// The magic value should be changed whenever the layout of the NVRAM changes
 	// We now use a different magic value for each display size, to force the "touch the spot" screen to be displayed when you change the display size
-	static const uint32_t magicVal = 0x3AB629F0 + DISPLAY_TYPE;
+	static const uint32_t magicVal = 0x3AB62A10 + DISPLAY_TYPE;
 	static const uint32_t muggleVal = 0xFFFFFFFF;
 
 	uint32_t magic;
@@ -362,7 +362,7 @@ ReceivedDataEvent bsearch(const ReceiveDataTableEntry array table[], size_t numE
 // We don't want to send these when the printer is busy with a previous command, because they will block normal status requests.
 bool OkToSend()
 {
-	return status == PrinterStatus::idle || status == PrinterStatus::printing || status == PrinterStatus::paused;
+	return status == PrinterStatus::idle || status == PrinterStatus::printing || status == PrinterStatus::paused || status == PrinterStatus::off;
 }
 
 // Return the printer status
@@ -474,13 +474,13 @@ bool IsSaveNeeded()
 
 void MirrorDisplay()
 {
-	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | InvertBitmap));
+	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ ReverseX);
 	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);
 }
 
 void InvertDisplay()
 {
-	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | ReverseY | InvertText | InvertBitmap));
+	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | ReverseY));
 	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);
 }
 
@@ -588,7 +588,10 @@ void SetStatus(char c)
 	
 	if (newStatus != status)
 	{
-		RestoreBrightness();
+		if (GetDisplayDimmerType() != DisplayDimmerType::always)
+		{
+			RestoreBrightness();
+		}
 		UI::ChangeStatus(status, newStatus);
 		
 		if (status == PrinterStatus::configuring || (status == PrinterStatus::connecting && newStatus != PrinterStatus::configuring))
@@ -1145,7 +1148,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 // Update those fields that display debug information
 void UpdateDebugInfo()
 {
-	freeMem->SetValue(getFreeMemory());
+	freeMem->SetValue(GetFreeMemory());
 }
 
 #if 0
@@ -1181,8 +1184,9 @@ void SelfTest()
  */
 int main(void)
 {
-    SystemInit();						// set up the clock etc.	
-	
+    SystemInit();						// set up the clock etc.
+    InitMemory();
+
 	matrix_set_system_io(CCFG_SYSIO_SYSIO4 | CCFG_SYSIO_SYSIO5 | CCFG_SYSIO_SYSIO6 | CCFG_SYSIO_SYSIO7);	// enable PB4-PB7 pins
 	pmc_enable_periph_clk(ID_PIOA);		// enable the PIO clock
 	pmc_enable_periph_clk(ID_PIOB);		// enable the PIO clock

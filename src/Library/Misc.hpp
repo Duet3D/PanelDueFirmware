@@ -10,6 +10,7 @@
 #define MISC_H_
 
 #include <cstddef>
+#include <ecv.h>
 
 #undef min
 #undef max

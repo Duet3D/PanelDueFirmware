@@ -17,13 +17,8 @@ enum DisplayOrientation {
 	SwapXY = 0x01,
 	ReverseX = 0x02,
 	ReverseY = 0x04,
-	InvertText = 0x08,
-	InvertBitmap = 0x10,
-	
-	Portrait = Default,
-	Landscape = SwapXY | ReverseY | InvertBitmap,
-	InvPortrait = ReverseX | ReverseY | InvertText | InvertBitmap,
-	InvLandscape = SwapXY | ReverseX | InvertText
+	InvertText = ReverseY,
+	InvertBitmap = ReverseX
 };
 
 #endif /* DISPLAYORIENTATION_H_ */

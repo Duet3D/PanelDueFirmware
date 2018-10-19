@@ -143,7 +143,6 @@ public:
 	void drawCompressedBitmapBottomToTop(int x, int y, int sx, int sy, const uint16_t *data);
 	void lcdOff();
 	void lcdOn();
-	void setContrast(uint8_t c);
 	uint16_t getDisplayXSize() const;
 	uint16_t getDisplayYSize() const;
 	uint16_t getTextX() const { return textXpos; }
@@ -181,7 +180,6 @@ private:
 	void LCD_Write_DATA16(uint16_t VHL);
 	void LCD_Write_Repeated_DATA16(uint16_t VHL, uint32_t num);
 	void LCD_Write_COM_DATA16(uint8_t com1, uint16_t dat1);
-	void LCD_Write_COM_DATA8(uint8_t com1, uint8_t dat1);
 		
 	void drawHLine(int x, int y, int len);
 	void drawVLine(int x, int y, int len);

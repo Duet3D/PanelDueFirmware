@@ -86,6 +86,7 @@ struct StringTable
 	CSTRING message;
 	CSTRING messages;
 	CSTRING firmwareVersion;
+	CSTRING response;
 
 	// File popup
 	CSTRING filesOnCard;
@@ -175,6 +176,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Message",
 		"Messages",
 		"Panel Due firmware version ",	// note space at end
+		"Response",
 
 		// File popup
 		"Files on card ",				// note the space on the end
@@ -248,7 +250,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Restzeit: ",
 		"Datei ",							// note space at end
 		", Filament ",						// note space at end
-		", Schicht ",						// note space at end
+		", Layer ",							// note space at end. "Schicht" is too long.
 		"n/v",
 		"Pause",
 		"Einzelschritt",
@@ -283,6 +285,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Nachricht",
 		"Nachrichten",
 		"Panel Due Firmwareversion ",	// note space at end
+		"Antwort",
 
 		// File popup
 		"Dateien auf Karte ",			// note the space on the end
@@ -391,6 +394,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Message",
 		"Messages",
 		"Version du firmware du Panel Due ",	// note space at end
+		"Réponse",
 
 		// File popup
 		"Fichier sur carte ",					// note the space on the end
@@ -499,6 +503,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Mensaje",
 		"Mensajes",
 		"Panel Due versión de firmware ",	// note space at end
+		"Respuesta",
 
 		// File popup
 		"Archivos en la tarjeta ",			// note the space on the end
@@ -608,6 +613,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Zpráva",
 		"Zprávy",
 		"Verze firmware Panel Due ",	// note space at end
+		"Odpověď",
 
 		// File popup
 		"Soubory na kartě ",			// note the space on the end
