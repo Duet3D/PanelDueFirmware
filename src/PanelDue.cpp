@@ -506,7 +506,7 @@ extern void RestoreBrightness()
 extern void DimBrightness()
 {
 	if (   (GetDisplayDimmerType() == DisplayDimmerType::always)
-		|| (GetDisplayDimmerType() == DisplayDimmerType::onIdle && status == PrinterStatus::idle)
+		|| (GetDisplayDimmerType() == DisplayDimmerType::onIdle && (status == PrinterStatus::idle) || (status == PrinterStatus::off))
 	   )
 	{
 		Buzzer::SetBacklight(nvData.brightness/8);
