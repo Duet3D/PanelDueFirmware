@@ -59,7 +59,7 @@
 [fixed buffer overflow, test before release] Test extrusion factors are working, we have a report that they get reset to 100 on T3
 
 Bugs in 1.22, to be fixed in 1.22.1:
-- [done, test] Extrusion rates don't match the buttons, only 1 of 2 tables was updated
+- [done, ok] Extrusion rates don't match the buttons, only 1 of 2 tables was updated
 - [done] for dimming, treat printer Off the same as Idle
 - [done, ok] babystepping sends M290 M290 S0.02
 - [done, ok] can't cancel a message popup that appears on top of a babystepping popup
@@ -69,6 +69,7 @@ Bugs in 1.22, to be fixed in 1.22.1:
 
 Remaining:
 
+PanelDue to tell RRF its screen size and firmware version
 Display IP address in top bar?
 Max length of console input too short for some M587 commands. need horizontal scrolling?
 Investigate M291 axis parameters don't work, https://forum.duet3d.com/topic/5812/macro-for-calibrating-z-probe-issues/1
