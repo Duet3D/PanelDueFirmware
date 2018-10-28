@@ -422,7 +422,7 @@ void CreateExtrudePopup(const ColourScheme& colours)
 {
 	static const char * array extrudeAmountValues[] = { "100", "50", "20", "10", "5",  "1" };
 	static const char * array extrudeSpeedValues[] = { "50", "20", "10", "5", "2" };
-	static const char * array extrudeSpeedParams[] = { "3000", "2400", "1200", "600", "300" };
+	static const char * array extrudeSpeedParams[] = { "3000", "1200", "600", "300", "120" };		// must be extrudeSpeedValues * 60
 
 	extrudePopup = new StandardPopupWindow(extrudePopupHeight, extrudePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->extrusionAmount);
 	PixelNumber ypos = popupTopMargin + buttonHeight + extrudeButtonRowSpacing;
@@ -666,7 +666,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 void CreateBabystepPopup(const ColourScheme& colours)
 {
 	static const char * array const babystepStrings[2] = { UP_ARROW " 0.02", DOWN_ARROW " 0.02" };
-	static const char * array const babystepCommands[2] = { "M290 S0.02", "M290 S-0.02" };
+	static const char * array const babystepAmounts[2] = { "0.02", "-0.02" };
 	babystepPopup = new StandardPopupWindow(babystepPopupHeight, babystepPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour,
 			strings->babyStepping);
 	PixelNumber ypos = popupTopMargin + babystepRowSpacing;
@@ -674,7 +674,7 @@ void CreateBabystepPopup(const ColourScheme& colours)
 	babystepPopup->AddField(babystepOffsetField = new FloatField(ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, TextAlignment::Left, 3, strings->currentZoffset, "mm"));
 	ypos += babystepRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.buttonImageBackColour);
-	CreateStringButtonRow(babystepPopup, ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, fieldSpacing, 2, babystepStrings, babystepCommands, evBabyStepAmount);
+	CreateStringButtonRow(babystepPopup, ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, fieldSpacing, 2, babystepStrings, babystepAmounts, evBabyStepAmount);
 }
 
 // Create the grid of heater icons and temperatures
@@ -1493,14 +1493,14 @@ namespace UI
 	// Process a new response. This is treated like a simple alert except that it times out and isn't cleared by a "clear alert" command from the host.
 	void NewResponseReceived(const char* array text)
 	{
-		if (alertMode < 2 && (currentTab == tabControl || currentTab == tabPrint))		// if the current alert doesn't require acknowledgement
+		if (alertMode < 2 && (currentTab == tabControl || currentTab == tabPrint))	// if the current alert doesn't require acknowledgement
 		{
 			alertPopup->Set(strings->response, text, 1, 0);
 			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
-			alertMode = -1;								// make sure that a call to ClearAlert doesn't clear us
+			alertMode = -1;															// make sure that a call to ClearAlert doesn't clear us
 			displayingResponse = true;
 			whenAlertReceived = SystemTick::GetTickCount();
-			alertTicks = 5000;							// timeout after 5 seconds
+			alertTicks = (stringStartsWith(text, "Error")) ? 0 : 5000;				// timeout after 5 seconds if it isn't an error message
 		}
 	}
 
@@ -1612,7 +1612,8 @@ namespace UI
 			{
 			case evEmergencyStop:
 				{
-					SerialIo::SendString("M112\n");
+					// We send M112 for the benefit of old firmware, and F0 0F (an invalid UTF8 sequence) for new firmware
+					SerialIo::SendString("M112 ;" "\xF0" "\x0F" "\n");
 					Delay(1000);
 					SerialIo::SendString("M999\n");
 					Reconnect();
@@ -1817,7 +1818,7 @@ namespace UI
 				break;
 
 			case evBabyStepAmount:
-				SerialIo::SendString("M290 ");
+				SerialIo::SendString("M290 Z");
 				SerialIo::SendString(bp.GetSParam());
 				SerialIo::SendChar('\n');
 				break;

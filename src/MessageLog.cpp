@@ -18,8 +18,8 @@ namespace MessageLog
 {
 	const unsigned int MaxCharsPerRow = 80;
 
-	const unsigned int MaxCharsPerMessage = 400;
-	const unsigned int MaxNewMessageLines = 5;
+	const unsigned int MaxCharsPerMessage = 300;		// variable fieldVal in module SerialIO must also be large enough for this
+	const unsigned int MaxNewMessageLines = 6;
 
 	struct Message
 	{

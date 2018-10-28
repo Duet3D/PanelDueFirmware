@@ -506,7 +506,7 @@ extern void RestoreBrightness()
 extern void DimBrightness()
 {
 	if (   (GetDisplayDimmerType() == DisplayDimmerType::always)
-		|| (GetDisplayDimmerType() == DisplayDimmerType::onIdle && status == PrinterStatus::idle)
+		|| (GetDisplayDimmerType() == DisplayDimmerType::onIdle && (status == PrinterStatus::idle || status == PrinterStatus::off))
 	   )
 	{
 		Buzzer::SetBacklight(nvData.brightness/8);
@@ -1243,7 +1243,7 @@ int main(void)
 	if (rstc_get_reset_cause(RSTC) != RSTC_SOFTWARE_RESET && _esplash[0] == DISPLAY_X && _esplash[1] == DISPLAY_Y)
 	{
 		lcd.fillScr(black);
-		lcd.drawCompressedBitmapBottomToTop(0, 0, DISPLAY_X, DISPLAY_Y, _esplash  + 2);
+		lcd.drawCompressedBitmapBottomToTop(0, 0, DISPLAY_X, DISPLAY_Y, _esplash + 2);
 		const uint32_t now = SystemTick::GetTickCount();
 		do
 		{

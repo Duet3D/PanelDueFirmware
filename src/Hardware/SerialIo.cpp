@@ -205,7 +205,7 @@ namespace SerialIo
 
 	// fieldId is the name of the field being received. A '^' character indicates the position of an array index, and a ':' character indicates a field separator.
 	String<50> fieldId;
-	String<160> fieldVal;	// long enough for about 3 lines of message
+	String<300> fieldVal;	// long enough for about 6 lines of message
 	size_t arrayIndices[MaxArrayNesting];
 	size_t arrayDepth = 0;
 	

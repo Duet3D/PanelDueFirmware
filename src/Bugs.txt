@@ -58,6 +58,15 @@
 [not done, image load is much faster now] Allow image load to be cancelled by touch, unless it is now much faster
 [fixed buffer overflow, test before release] Test extrusion factors are working, we have a report that they get reset to 100 on T3
 
+Bugs in 1.22, to be fixed in 1.22.1:
+- [done, test] Extrusion rates don't match the buttons, only 1 of 2 tables was updated
+- [done] for dimming, treat printer Off the same as Idle
+- [done, ok] babystepping sends M290 M290 S0.02
+- [done, ok] can't cancel a message popup that appears on top of a babystepping popup
+- [done, ok] don't timeout error messages
+- [done, ok] handle longer responses in Console window e.g. from M591
+- [done, ok] Send F0 0F on emergency stop
+
 Remaining:
 
 Display IP address in top bar?
