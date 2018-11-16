@@ -100,7 +100,7 @@ const PixelNumber popupFieldSpacing = 20;
 const PixelNumber axisLabelWidth = 40;
 const PixelNumber firstMessageRow = margin + rowHeight;		// adjust this to get a whole number of message rows below the keyboard
 
-const PixelNumber progressBarHeight = 16;
+const PixelNumber progressBarHeight = 20;
 const PixelNumber closeButtonWidth = 66;
 
 const PixelNumber touchCalibMargin = 22;
