@@ -1857,15 +1857,19 @@ namespace UI
 					}
 					else if (head < (int)MaxHeaters)
 					{
-						if (heaterStatus[head] == 2)		// if head is active
+						// pressing a evSeelctHead button in the middle of active printing is almost always accidental (and fatal to the print job)
+						if (GetStatus() != PrinterStatus::printing && GetStatus() != PrinterStatus::simulating)
 						{
-							SerialIo::SendString("T-1\n");
-						}
-						else
-						{
-							SerialIo::SendChar('T');
-							SerialIo::SendInt(head - 1);
-							SerialIo::SendChar('\n');
+							if (heaterStatus[head] == 2)		// if head is active
+							{
+								SerialIo::SendString("T-1\n");
+							}
+							else
+							{
+								SerialIo::SendChar('T');
+								SerialIo::SendInt(head - 1);
+								SerialIo::SendChar('\n');
+							}
 						}
 					}
 				}
