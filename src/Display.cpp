@@ -182,8 +182,8 @@ bool Window::Visible(const DisplayField *p) const
 // Get the field that has been touched, or nullptr if we can't find one
 ButtonPress Window::FindEvent(PixelNumber x, PixelNumber y)
 {
-	return (x < Xpos() || y < Ypos()) ? ButtonPress()
-			: (next != nullptr) ? next->FindEvent(x, y) 
+	return (next != nullptr) ? next->FindEvent(x, y)
+			: (x < Xpos() || y < Ypos()) ? ButtonPress()
 				: DisplayField::FindEvent(x - Xpos(), y - Ypos(), root);
 }
 

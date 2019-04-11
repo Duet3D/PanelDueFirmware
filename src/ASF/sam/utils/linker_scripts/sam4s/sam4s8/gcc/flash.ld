@@ -52,8 +52,7 @@ MEMORY
 	ram (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00020000 /* sram, 128K */
 }
 
-/* The stack size used by the application. NOTE: you need to adjust according to your application. */
-__stack_size__ = DEFINED(__stack_size__) ? __stack_size__ : 0x3000;
+__ram_start__ = ORIGIN(ram);
 __ram_end__ = ORIGIN(ram) + LENGTH(ram) - 4;
 __flash_start__ = ORIGIN(rom);
 __flash_end__ = ORIGIN(rom) + LENGTH(rom);
@@ -144,16 +143,21 @@ SECTIONS
         _ezero = .;
     } > ram
 
-    /* stack section */
-    .stack (NOLOAD):
-    {
-        . = ALIGN(8);
-         _sstack = .;
-        . = . + __stack_size__;
-        . = ALIGN(8);
-        _estack = .;
-    } > ram
-
     . = ALIGN(4);
     _end = . ;
+
+    /* .stack_dummy section doesn't contains any symbols. It is only
+       used for linker to calculate size of stack sections, and assign
+       values to stack symbols later */
+    .stack_dummy :
+    {
+        *(.stack*)
+    } > ram
+
+    /* Set stack top to end of ram, and stack limit move down by
+     * size of stack_dummy section */
+    __StackTop = ORIGIN(ram) + LENGTH(ram);
+    __StackLimit = __StackTop - SIZEOF(.stack_dummy);
+    PROVIDE(_sstack = __StackLimit);
+    PROVIDE(_estack = __StackTop);
 }

@@ -19,19 +19,6 @@ Further modified up by David Crocker
 
 #define FLASH_DATA_LENGTH   (64)			// 64 bytes of storage
 
-extern int __flash_start__,	__flash_end__;
-
-extern void PrintDebugText(const char*);
-
-// Choose a start address close to the top of the Flash memory space
-#define  FLASH_START  (((uint8_t *)&__flash_end__) - FLASH_DATA_LENGTH)
-//#define FLASH_START		((uint8_t *)(IFLASH_ADDR + IFLASH_SIZE - FLASH_DATA_LENGTH))
-
-//  FLASH_DEBUG can be enabled to get debugging information displayed.
-#define FLASH_DEBUG(x) PrintDebugText(x)
-//#define FLASH_DEBUG(x)
-
-
 //  FlashStorage is the main namespace for flash functions
 namespace FlashStorage
 {

@@ -48,6 +48,7 @@ namespace UI
 	extern void ProcessAlert(const Alert& alert);
 	extern void ClearAlert();
 	extern void ProcessSimpleAlert(const char* array text);
+	extern void NewResponseReceived(const char* array text);
 	extern bool CanDimDisplay();
 	extern void UpdateFileLastModifiedText(const char data[]);
 	extern void UpdateFileGeneratedByText(const char data[]);

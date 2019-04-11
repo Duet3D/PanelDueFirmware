@@ -79,6 +79,7 @@ UTFT::UTFT(DisplayType model, unsigned int RS, unsigned int WR, unsigned int CS,
 { 
 	switch (model)
 	{
+#if 0
 		case HX8347A:
 		case SSD1289:
 		case ILI9325C:
@@ -106,17 +107,20 @@ UTFT::UTFT(DisplayType model, unsigned int RS, unsigned int WR, unsigned int CS,
 			disp_x_size=127;
 			disp_y_size=127;
 			break;
+#endif
 		case SSD1963_480:
-			disp_x_size=271;
-			disp_y_size=479;
+			disp_x_size=479;
+			disp_y_size=271;
 			break;
 		case SSD1963_800:
-			disp_x_size=479;
-			disp_y_size=799;
+			disp_x_size=799;
+			disp_y_size=479;
 			break;
 		case CPLD_800:
 			disp_x_size=799;
 			disp_y_size=479;
+			break;
+		default:
 			break;
 	}
 
@@ -172,16 +176,11 @@ void UTFT::LCD_Write_DATA8(uint8_t VL)
 	LCD_Write_Bus((uint16_t)VL);
 }
 
-void UTFT::LCD_Write_COM_DATA16(uint8_t com1, uint16_t dat1)
+// This one is used for setXY so we inline it
+inline void UTFT::LCD_Write_COM_DATA16(uint8_t com1, uint16_t dat1)
 {
      LCD_Write_COM(com1);
      LCD_Write_DATA16(dat1);
-}
-
-void UTFT::LCD_Write_COM_DATA8(uint8_t com1, uint8_t dat1)
-{
-     LCD_Write_COM(com1);
-     LCD_Write_DATA8(dat1);
 }
 
 void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
@@ -1140,7 +1139,20 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 		LCD_Write_DATA8(0x01);		//GPIO0 normal
 
 		LCD_Write_COM(0x36);		//rotation
-		LCD_Write_DATA8(0x22);
+		{
+			uint8_t rotation = (isER) ? 0x08 : 0x00;
+			if (orient & ReverseY)
+			{
+				rotation ^= (orient & SwapXY) ? 0x02 : 0x01;		// do the row reversal in hardware
+				orient = (DisplayOrientation)(orient & ~ReverseY);
+			}
+			if (orient & ReverseX)
+			{
+				rotation ^= (orient & SwapXY) ? 0x01 : 0x02;		// do the column reversal in hardware
+				orient = (DisplayOrientation)(orient & ~ReverseX);
+			}
+			LCD_Write_DATA8(rotation);
+		}
 
 		LCD_Write_COM(0xF0);		//pixel data interface
 		LCD_Write_DATA8(0x03);
@@ -1221,7 +1233,20 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 		LCD_Write_DATA8(0x01);		//GPIO0 normal
 
 		LCD_Write_COM(0x36);		//rotation
-		LCD_Write_DATA8((isER) ? 0x2A : 0x22);
+		{
+			uint8_t rotation = (isER) ? 0x08 : 0x00;
+			if (orient & ReverseY)
+			{
+				rotation ^= (orient & SwapXY) ? 0x02 : 0x01;		// do the row reversal in hardware
+				orient = (DisplayOrientation)(orient & ~ReverseY);
+			}
+			if (orient & ReverseX)
+			{
+				rotation ^= (orient & SwapXY) ? 0x01 : 0x02;		// do the column reversal in hardware
+				orient = (DisplayOrientation)(orient & ~ReverseX);
+			}
+			LCD_Write_DATA8(rotation);
+		}
 
 		LCD_Write_COM(0xF0);		//pixel data interface
 		LCD_Write_DATA8(0x03);
@@ -1375,11 +1400,11 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 		default:
 			// Optimised code supporting only the SSD1963
 			// In the following we use LCD_WRITE_BUS to write additional data without having to write RS again.
-			LCD_Write_COM_DATA16(0x2a, y1>>8);
+			LCD_Write_COM_DATA16(0x2b, y1>>8);
 			LCD_Write_Bus(y1);
 			LCD_Write_Bus(y2>>8);
 			LCD_Write_Bus(y2);
-			LCD_Write_COM_DATA16(0x2b, x1>>8);
+			LCD_Write_COM_DATA16(0x2a, x1>>8);
 			LCD_Write_Bus(x1);
 			LCD_Write_Bus(x2>>8);
 			LCD_Write_Bus(x2);
@@ -2190,39 +2215,60 @@ void UTFT::drawCompressedBitmapBottomToTop(int x, int y, int sx, int sy, const u
 	for (int ty = sy; ty != 0; )
 	{
 		--ty;
+		if ((orient & (ReverseX | SwapXY)) == 0)
+		{
+			// The orientation allows us to write pixels one after another, without resetting the pixel address between them
+			setXY(x, ty, sx - 1, ty);
+			for (int tx = x; tx < sx; tx++)
+			{
+				if (count == 0)
+				{
+					count = *data++;
+					col = *data++;
+				}
+				else
+				{
+					--count;
+				}
+				LCD_Write_DATA16(col);
+			}
+		}
+		else
+		{
 #if 0
-		// This algorithm is faster but results in a non-uniform speed
-		int tx = x;
-		while (tx < sx)
-		{
-			if (count == 0)
+			// This algorithm is faster but results in a non-uniform speed
+			int tx = x;
+			while (tx < sx)
 			{
-				count = (*data++) + 1;
-				col = *data++;
+				if (count == 0)
+				{
+					count = (*data++) + 1;
+					col = *data++;
+				}
+				const uint32_t thisCount = std::min<uint32_t>(count, sx - tx);
+				setXY(tx, ty, tx + thisCount - 1, ty);
+				LCD_Write_Repeated_DATA16(col, thisCount);
+				count -= thisCount;
+				tx += thisCount;
 			}
-			const uint32_t thisCount = std::min<uint32_t>(count, sx - tx);
-			setXY(tx, ty, tx + thisCount - 1, ty);
-			LCD_Write_Repeated_DATA16(col, thisCount);
-			count -= thisCount;
-			tx += thisCount;
-		}
 #else
-		// Original slow-but-steady algorithm
-		for (int tx = x; tx < sx; tx++)
-		{
-			if (count == 0)
+			// Original slow-but-steady algorithm
+			for (int tx = x; tx < sx; tx++)
 			{
-				count = *data++;
-				col = *data++;
+				if (count == 0)
+				{
+					count = *data++;
+					col = *data++;
+				}
+				else
+				{
+					--count;
+				}
+				setXY(tx, ty, tx, ty);
+				LCD_Write_DATA16(col);
 			}
-			else
-			{
-				--count;
-			}
-			setXY(tx, ty, tx, ty);
-			LCD_Write_DATA16(col);
-		}
 #endif
+		}
 	}
 	removeCS();
 }
@@ -2256,21 +2302,6 @@ void UTFT::lcdOn()
 	case CPLD_800:
 		LCD_Write_COM_DATA16(0x01, 0x0010);
 		LCD_Write_COM(0x0F);
-		break;
-	default:
-		break;
-	}
-	removeCS();
-}
-
-void UTFT::setContrast(uint8_t c)
-{
-	assertCS();
-	switch (displayModel)
-	{
-	case PCF8833:
-		if (c>64) c=64;
-		LCD_Write_COM_DATA8(0x25, c);
 		break;
 	default:
 		break;

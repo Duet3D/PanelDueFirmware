@@ -46,7 +46,7 @@ const size_t zprobeBufLength = 12;
 const size_t generatedByTextLength = 50;
 const size_t lastModifiedTextLength = 20;
 const size_t printTimeTextLength = 12;		// e.g. 11h 55m
-const size_t controlPageMacroTextLength = 20;
+const size_t controlPageMacroTextLength = 50;
 
 struct FileListButtons
 {
@@ -66,7 +66,7 @@ static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *ma
 static StaticTextField *areYouSureTextField, *areYouSureQueryField;
 static DisplayField *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
 static SingleButton *homeButtons[MaxAxes], *toolButtons[MaxHeaters], *homeAllButton, *bedCompButton;
-static FloatField *axisPos[MaxAxes];
+static FloatField *axisPos[3][MaxAxes]; // 0: ControlTab, 1: PrintTab, 2: MovePopup
 static FloatField *currentTemps[MaxHeaters];
 static FloatField *fpHeightField, *fpLayerHeightField, *babystepOffsetField;
 static IntegerField *fpSizeField, *fpFilamentField, *filePopupTitleField;
@@ -78,7 +78,7 @@ static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPri
 static StaticTextField *moveAxisRows[MaxAxes];
 static StaticTextField *nameField, *statusField;
 static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
-static IntegerButton *spd, *extrusionFactors[MaxHeaters - 1], *fanSpeed, *baudRateButton, *volumeButton;
+static IntegerButton *spd, *extrusionFactors[MaxExtruders], *fanSpeed, *baudRateButton, *volumeButton;
 static TextButton *languageButton, *coloursButton, *dimmingTypeButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
@@ -119,9 +119,10 @@ const StringTable * strings = &LanguageTables[0];
 static bool keyboardIsDisplayed = false;
 static bool keyboardShifted = false;
 
-int32_t alertMode = -1;
+int32_t alertMode = -1;									// the mode of the current alert, or -1 if no alert displayed
 uint32_t alertTicks = 0;
 uint32_t whenAlertReceived;
+bool displayingResponse = false;						// true if displaying a response
 
 class StandardPopupWindow : public PopupWindow
 {
@@ -142,7 +143,7 @@ public:
 
 private:
 	TextButton *okButton, *cancelButton, *zUpCourseButton, *zUpMedButton, *zUpFineButton, *zDownCourseButton, *zDownMedButton, *zDownFineButton;
-	String<alertTextLength/2> alertText1, alertText2;
+	String<alertTextLength/3> alertText1, alertText2, alertText3;
 	String<alertTitleLength> alertTitle;
 };
 
@@ -172,6 +173,7 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	titleField->SetValue(alertTitle.c_str());
 	AddField(new StaticTextField(popupTopMargin + 2 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText1.c_str()));
 	AddField(new StaticTextField(popupTopMargin + 3 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText2.c_str()));
+	AddField(new StaticTextField(popupTopMargin + 4 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText3.c_str()));
 
 	// Calculate the button positions
 	constexpr unsigned int numButtons = 6;
@@ -184,26 +186,32 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	constexpr PixelNumber hOffset = popupSideMargin + (alertPopupWidth - 2 * popupSideMargin - totalUnits * unitWidth)/2;
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	AddField(zUpCourseButton =   new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset,				  buttonWidth, UP_ARROW "2.0", evMoveZ, "2.0"));
-	AddField(zUpMedButton =      new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + buttonStep,     buttonWidth, UP_ARROW "0.2", evMoveZ, "0.2"));
-	AddField(zUpFineButton =     new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, UP_ARROW "0.02", evMoveZ, "0.02"));
-	AddField(zDownFineButton =   new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, DOWN_ARROW "0.02", evMoveZ, "-0.02"));
-	AddField(zDownMedButton =    new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, DOWN_ARROW "0.2", evMoveZ, "-0.2"));
-	AddField(zDownCourseButton = new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, DOWN_ARROW "2.0", evMoveZ, "-2.0"));
+	AddField(zUpCourseButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset,				  buttonWidth, UP_ARROW "2.0", evMoveZ, "2.0"));
+	AddField(zUpMedButton =      new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + buttonStep,     buttonWidth, UP_ARROW "0.2", evMoveZ, "0.2"));
+	AddField(zUpFineButton =     new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, UP_ARROW "0.02", evMoveZ, "0.02"));
+	AddField(zDownFineButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, DOWN_ARROW "0.02", evMoveZ, "-0.02"));
+	AddField(zDownMedButton =    new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, DOWN_ARROW "0.2", evMoveZ, "-0.2"));
+	AddField(zDownCourseButton = new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, DOWN_ARROW "2.0", evMoveZ, "-2.0"));
 
-	AddField(okButton =          new TextButton(popupTopMargin + 5 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + buttonStep,     buttonWidth + buttonStep, "OK", evCloseAlert, "M292 P0"));
-	AddField(cancelButton =      new TextButton(popupTopMargin + 5 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + 3 * buttonStep, buttonWidth + buttonStep, "Cancel", evCloseAlert, "M292 P1"));
+	AddField(okButton =          new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + buttonStep,     buttonWidth + buttonStep, "OK", evCloseAlert, "M292 P0"));
+	AddField(cancelButton =      new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + 3 * buttonStep, buttonWidth + buttonStep, "Cancel", evCloseAlert, "M292 P1"));
 }
 
 void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t controls)
 {
 	alertTitle.copy(title);
 
-	// Split the alert text into 2 lines
-	const size_t splitPoint = MessageLog::FindSplitPoint(text, alertText1.capacity(), GetWidth() - 2 * popupSideMargin);
+	// Split the alert text into 3 lines
+	size_t splitPoint = MessageLog::FindSplitPoint(text, alertText1.capacity(), GetWidth() - 2 * popupSideMargin);
 	alertText1.copy(text);
 	alertText1.truncate(splitPoint);
-	alertText2.copy(text + splitPoint);
+	text += splitPoint;
+	splitPoint = MessageLog::FindSplitPoint(text, alertText2.capacity(), GetWidth() - 2 * popupSideMargin);
+	alertText2.copy(text);
+	alertText2.truncate(splitPoint);
+	text += splitPoint;
+	alertText3.copy(text);
+
 	closeButton->Show(mode == 1);
 	okButton->Show(mode >= 2);
 	cancelButton->Show(mode == 3);
@@ -391,6 +399,9 @@ void CreateMovePopup(const ColourScheme& colours)
 	PixelNumber ypos = popupTopMargin + buttonHeight + moveButtonRowSpacing;
 	const PixelNumber xpos = popupSideMargin + axisLabelWidth;
 	Event e = evMoveX;
+	PixelNumber column = margin;
+	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxAxes * fieldSpacing))/(MaxAxes + 1);
+
 	for (size_t i = 0; i < MaxAxes; ++i)
 	{
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
@@ -404,6 +415,17 @@ void CreateMovePopup(const ColourScheme& colours)
 		moveAxisRows[i] = tf;
 		UI::ShowAxis(i, i < MIN_AXES);
 
+		if (MaxAxes < 5)
+		{
+			DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupInfoBackColour);
+			FloatField *f = new FloatField(row7, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
+			axisPos[2][i] = f;
+			f->SetValue(0.0);
+			movePopup->AddField(f);
+			f->Show(i < MIN_AXES);
+			column += xyFieldWidth + fieldSpacing;
+		}
+
 		ypos += buttonHeight + moveButtonRowSpacing;
 		e = (Event)((uint8_t)e + 1);
 	}
@@ -413,8 +435,8 @@ void CreateMovePopup(const ColourScheme& colours)
 void CreateExtrudePopup(const ColourScheme& colours)
 {
 	static const char * array extrudeAmountValues[] = { "100", "50", "20", "10", "5",  "1" };
-	static const char * array extrudeSpeedValues[] = { "50", "40", "20", "10", "5" };
-	static const char * array extrudeSpeedParams[] = { "3000", "2400", "1200", "600", "300" };
+	static const char * array extrudeSpeedValues[] = { "50", "20", "10", "5", "2" };
+	static const char * array extrudeSpeedParams[] = { "3000", "1200", "600", "300", "120" };		// must be extrudeSpeedValues * 60
 
 	extrudePopup = new StandardPopupWindow(extrudePopupHeight, extrudePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->extrusionAmount);
 	PixelNumber ypos = popupTopMargin + buttonHeight + extrudeButtonRowSpacing;
@@ -658,7 +680,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 void CreateBabystepPopup(const ColourScheme& colours)
 {
 	static const char * array const babystepStrings[2] = { UP_ARROW " 0.02", DOWN_ARROW " 0.02" };
-	static const char * array const babystepCommands[2] = { "M290 S0.02", "M290 S-0.02" };
+	static const char * array const babystepAmounts[2] = { "0.02", "-0.02" };
 	babystepPopup = new StandardPopupWindow(babystepPopupHeight, babystepPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour,
 			strings->babyStepping);
 	PixelNumber ypos = popupTopMargin + babystepRowSpacing;
@@ -666,7 +688,7 @@ void CreateBabystepPopup(const ColourScheme& colours)
 	babystepPopup->AddField(babystepOffsetField = new FloatField(ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, TextAlignment::Left, 3, strings->currentZoffset, "mm"));
 	ypos += babystepRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.buttonImageBackColour);
-	CreateStringButtonRow(babystepPopup, ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, fieldSpacing, 2, babystepStrings, babystepCommands, evBabyStepAmount);
+	CreateStringButtonRow(babystepPopup, ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, fieldSpacing, 2, babystepStrings, babystepAmounts, evBabyStepAmount);
 }
 
 // Create the grid of heater icons and temperatures
@@ -733,7 +755,7 @@ void CreateControlTabFields(const ColourScheme& colours)
 	for (size_t i = 0; i < MaxAxes; ++i)
 	{
 		FloatField *f = new FloatField(row6p3 + labelRowAdjust, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
-		axisPos[i] = f;
+		axisPos[0][i] = f;
 		f->SetValue(0.0);
 		mgr.AddField(f);
 		f->Show(i < MIN_AXES);
@@ -791,15 +813,15 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 
 	// Extrusion factor buttons
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	for (unsigned int i = 1; i < MaxHeaters; ++i)
+	for (unsigned int i = 0; i < MaxExtruders; ++i)
 	{
-		PixelNumber column = ((tempButtonWidth + fieldSpacing) * i) + bedColumn;
+		PixelNumber column = ((tempButtonWidth + fieldSpacing) * (i + 1)) + bedColumn;
 
 		IntegerButton *ib = new IntegerButton(row6, column, tempButtonWidth);
 		ib->SetValue(100);
-		ib->SetEvent(evExtrusionFactor, i - 1);
+		ib->SetEvent(evExtrusionFactor, i);
 		ib->Show(false);
-		extrusionFactors[i - 1] = ib;
+		extrusionFactors[i] = ib;
 		mgr.AddField(ib);
 	}
 
@@ -829,15 +851,29 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 	resetButton = new TextButton(row7, cancelColumn, DisplayX - cancelColumn - margin, strings->cancel, evReset, "M0");
 	mgr.AddField(resetButton);
 
-	//		DisplayField::SetDefaultColours(labelTextColour, defaultBackColour);
-	//		mgr.AddField(printingField = new TextField(row8, margin, DisplayX, TextAlignment::Left, "printing ", printingFile.c_str()));
+	PixelNumber offset = 0;
+	#if DISPLAY_X == 800
+		offset = rowHeight - 20;
+		DisplayField::SetDefaultColours(colours.infoTextColour, colours.infoBackColour);
+		PixelNumber column = margin;
+		PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxAxes * fieldSpacing))/(MaxAxes + 1);
+		for (size_t i = 0; i < MaxAxes; ++i)
+		{
+			FloatField *f = new FloatField(row8 + labelRowAdjust - 4, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
+			axisPos[1][i] = f;
+			f->SetValue(0.0);
+			mgr.AddField(f);
+			f->Show(i < MIN_AXES);
+			column += xyFieldWidth + fieldSpacing;
+		}
+	#endif
 
 	DisplayField::SetDefaultColours(colours.progressBarColour,colours. progressBarBackColour);
-	mgr.AddField(printProgressBar = new ProgressBar(row8 + (rowHeight - progressBarHeight)/2, margin, progressBarHeight, DisplayX - 2 * margin));
+	mgr.AddField(printProgressBar = new ProgressBar(row8 + offset + (rowHeight - progressBarHeight)/2, margin, progressBarHeight, DisplayX - 2 * margin));
 	mgr.Show(printProgressBar, false);
 
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
-	mgr.AddField(timeLeftField = new TextField(row9, margin, DisplayX - 2 * margin, TextAlignment::Left, strings->timeRemaining));
+	mgr.AddField(timeLeftField = new TextField(row9 + offset, margin, DisplayX - 2 * margin, TextAlignment::Left, strings->timeRemaining));
 	mgr.Show(timeLeftField, false);
 
 	printRoot = mgr.GetRoot();
@@ -989,6 +1025,8 @@ namespace UI
 		}
 	}
 
+	static void ClearAlertOrResponse();
+
 	// Return the number of supported languages
 	extern unsigned int GetNumLanguages()
 	{
@@ -1068,14 +1106,18 @@ namespace UI
 			f->Show(b);
 			f = f->next;
 		}
-		axisPos[axis]->Show(b);
+		axisPos[0][axis]->Show(b);
+		axisPos[1][axis]->Show(b);
+		axisPos[2][axis]->Show(b);
 	}
 
 	void UpdateAxisPosition(size_t axis, float fval)
 	{
-		if (axis < MaxAxes && axisPos[axis] != nullptr)
+		if (axis < MaxAxes && axisPos[0][axis] != nullptr)
 		{
-			axisPos[axis]->SetValue(fval);
+			axisPos[0][axis]->SetValue(fval);
+			axisPos[1][axis]->SetValue(fval);
+			axisPos[2][axis]->SetValue(fval);
 		}
 	}
 
@@ -1276,7 +1318,7 @@ namespace UI
 		}
 		if (alertTicks != 0 && SystemTick::GetTickCount() - whenAlertReceived >= alertTicks)
 		{
-			ClearAlert();
+			ClearAlertOrResponse();
 		}
 	}
 
@@ -1414,7 +1456,7 @@ namespace UI
 	// Update an extrusion factor
 	void UpdateExtrusionFactor(size_t index, int ival)
 	{
-		if (index < MaxHeaters)
+		if (index < MaxExtruders)
 		{
 			UpdateField(extrusionFactors[index], ival);
 		}
@@ -1429,12 +1471,13 @@ namespace UI
 	// Process a new message box alert, clearing any existing one
 	void ProcessAlert(const Alert& alert)
 	{
-		alertMode = alert.mode;
-		whenAlertReceived = SystemTick::GetTickCount();
-		alertTicks = (alertMode < 2) ? (uint32_t)(alert.timeout * 1000.0) : 0;
 		alertPopup->Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
 		mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
 		RestoreBrightness();
+		alertMode = alert.mode;
+		displayingResponse = false;
+		whenAlertReceived = SystemTick::GetTickCount();
+		alertTicks = (alertMode < 2) ? (uint32_t)(alert.timeout * 1000.0) : 0;
 	}
 
 	// Process a command to clear a message box alert
@@ -1448,6 +1491,18 @@ namespace UI
 		}
 	}
 
+	// Clear a message box alert or response. Called when the user presses the close button or the alert or response times out.
+	void ClearAlertOrResponse()
+	{
+		if (alertMode >= 0 || displayingResponse)
+		{
+			alertTicks = 0;
+			mgr.ClearPopup(true, alertPopup);
+			alertMode = -1;
+			displayingResponse = false;
+		}
+	}
+
 	bool CanDimDisplay()
 	{
 		return alertMode < 2;
@@ -1457,13 +1512,28 @@ namespace UI
 	{
 		if (alertMode < 2)								// if the current alert doesn't require acknowledgement
 		{
-			alertMode = -1;
-			whenAlertReceived = SystemTick::GetTickCount();
-			alertTicks = 0;								// no timeout
 			alertPopup->Set(strings->message, text, 1, 0);
 			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+			alertMode = 1;								// a simple alert is like a mode 1 alert without a title
+			displayingResponse = false;
+			whenAlertReceived = SystemTick::GetTickCount();
+			alertTicks = 0;								// no timeout
 		}
 		RestoreBrightness();
+	}
+
+	// Process a new response. This is treated like a simple alert except that it times out and isn't cleared by a "clear alert" command from the host.
+	void NewResponseReceived(const char* array text)
+	{
+		if (alertMode < 2 && (currentTab == tabControl || currentTab == tabPrint))	// if the current alert doesn't require acknowledgement
+		{
+			alertPopup->Set(strings->response, text, 1, 0);
+			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+			alertMode = -1;															// make sure that a call to ClearAlert doesn't clear us
+			displayingResponse = true;
+			whenAlertReceived = SystemTick::GetTickCount();
+			alertTicks = (stringStartsWith(text, "Error")) ? 0 : 5000;				// timeout after 5 seconds if it isn't an error message
+		}
 	}
 
 	// This is called when the user selects a new file from a list of SD card files
@@ -1574,7 +1644,8 @@ namespace UI
 			{
 			case evEmergencyStop:
 				{
-					SerialIo::SendString("M112\n");
+					// We send M112 for the benefit of old firmware, and F0 0F (an invalid UTF8 sequence) for new firmware
+					SerialIo::SendString("M112 ;" "\xF0" "\x0F" "\n");
 					Delay(1000);
 					SerialIo::SendString("M999\n");
 					Reconnect();
@@ -1762,7 +1833,7 @@ namespace UI
 			case evRetract:
 				if (currentExtrudeAmountPress.IsValid() && currentExtrudeRatePress.IsValid())
 				{
-					SerialIo::SendString("G92 E0\nG1 E");
+					SerialIo::SendString("M120\nM83\nG1 E");
 					if (ev == evRetract)
 					{
 						SerialIo::SendChar('-');
@@ -1770,7 +1841,7 @@ namespace UI
 					SerialIo::SendString(currentExtrudeAmountPress.GetSParam());
 					SerialIo::SendString(" F");
 					SerialIo::SendString(currentExtrudeRatePress.GetSParam());
-					SerialIo::SendChar('\n');
+					SerialIo::SendString("\nM121\n");
 				}
 				break;
 
@@ -1779,7 +1850,7 @@ namespace UI
 				break;
 
 			case evBabyStepAmount:
-				SerialIo::SendString("M290 ");
+				SerialIo::SendString("M290 Z");
 				SerialIo::SendString(bp.GetSParam());
 				SerialIo::SendChar('\n');
 				break;
@@ -1818,15 +1889,19 @@ namespace UI
 					}
 					else if (head < (int)MaxHeaters)
 					{
-						if (heaterStatus[head] == 2)		// if head is active
+						// pressing a evSeelctHead button in the middle of active printing is almost always accidental (and fatal to the print job)
+						if (GetStatus() != PrinterStatus::printing && GetStatus() != PrinterStatus::simulating)
 						{
-							SerialIo::SendString("T-1\n");
-						}
-						else
-						{
-							SerialIo::SendChar('T');
-							SerialIo::SendInt(head - 1);
-							SerialIo::SendChar('\n');
+							if (heaterStatus[head] == 2)		// if head is active
+							{
+								SerialIo::SendString("T-1\n");
+							}
+							else
+							{
+								SerialIo::SendChar('T');
+								SerialIo::SendInt(head - 1);
+								SerialIo::SendChar('\n');
+							}
 						}
 					}
 				}
@@ -2150,7 +2225,7 @@ namespace UI
 			case evCloseAlert:
 				SerialIo::SendString(bp.GetSParam());
 				SerialIo::SendChar('\n');
-				ClearAlert();
+				ClearAlertOrResponse();
 				break;
 
 			default:

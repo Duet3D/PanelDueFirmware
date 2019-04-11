@@ -21,10 +21,20 @@
 #define array _ecv_array
 #define result _ecv_result
 
+#if SAM4S
+// We have 64Kb SRAM on the SAM4S4B so we can support larger file lists
+constexpr size_t FileListSize = 4096;
+constexpr size_t MaxFiles = 200;
+#else
+// We have only 32Kb or 48Kb SRAM on the SAM3S2B or SAM3S4B
+constexpr size_t FileListSize = 2048;
+constexpr size_t MaxFiles = 100;
+#endif
+
 namespace FileManager
 {
-	typedef Vector<char, 2048> FileList;						// we use a Vector instead of a String because we store multiple null-terminated strings in it
-	typedef Vector<const char* array, 100> FileListIndex;
+	typedef Vector<char, FileListSize> FileList;				// we use a Vector instead of a String because we store multiple null-terminated strings in it
+	typedef Vector<const char* array, MaxFiles> FileListIndex;
 
 	const char * array filesRoot = "0:/gcodes";
 	const char * array macrosRoot = "0:/macros";

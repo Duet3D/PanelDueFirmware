@@ -39,8 +39,47 @@
 - [done] Add print time to file info popup
 - [done] Add colour gradient test pattern on setup page
 - [done] Add support for Marlin firmware type
-- [done] Settings are saved and restarts done automatically
+- [done] Settings are saved and restarts done automatically if needed when leaving the Setup page
 
+1.21.4 release for ER:
+[done] Increase file buffer size above 2K in version 3 builds (issue #18)
+[done] Increase PWM frequency to 20kHz for the integrated version
+
+1.22 release:
+[done] okToSend should allow PrinterStatus::off so that macros are displayed, see https://forum.duet3d.com/topic/5649/no-macros-on-paneldue
+[done, test, was sending G92 E0, now sends M120 M83 ... M121] Check that the Extrusion menu commands specify relative extrusion
+[done] Adjust extruder feed rate values, https://forum.duet3d.com/topic/6150/feedrate-adjustments (remove 40, add 2)
+[done] Fixed buffer overflow if there were more than 4 extruders when using a 4.3" screen or more than 6 using a 5" or 7" screen
+[done, test] On SAM3S read chip ID to find end of RAM and store NVDATA there, https://forum.duet3d.com/topic/6922/custom-splash-screen-garbled/8
+[done, was un-dimming on any status change] "Always dim" un-dims on tool change, https://forum.duet3d.com/topic/5665/panel-due-firmware-1-21-2-released/18
+[done, now 50] Allow longer macro names, https://forum.duet3d.com/topic/7176/bug-report-macro-name-length-on-paneldue
+[done, test] Faster image load, https://forum.duet3d.com/topic/4724/custom-splash-screen/10
+[done on SAM4S] Allow longer messages in log, on processors with enough RAM
+[not done, image load is much faster now] Allow image load to be cancelled by touch, unless it is now much faster
+[fixed buffer overflow, test before release] Test extrusion factors are working, we have a report that they get reset to 100 on T3
+
+Bugs in 1.22, to be fixed in 1.22.1:
+- [done, ok] Extrusion rates don't match the buttons, only 1 of 2 tables was updated
+- [done] for dimming, treat printer Off the same as Idle
+- [done, ok] babystepping sends M290 M290 S0.02
+- [done, ok] can't cancel a message popup that appears on top of a babystepping popup
+- [done, ok] don't timeout error messages
+- [done, ok] handle longer responses in Console window e.g. from M591
+- [done, ok] Send F0 0F on emergency stop
+
+Remaining:
+
+PanelDue to tell RRF its screen size and firmware version
+Display IP address in top bar?
+Max length of console input too short for some M587 commands. need horizontal scrolling?
+Investigate M291 axis parameters don't work, https://forum.duet3d.com/topic/5812/macro-for-calibrating-z-probe-issues/1
+Rework tool handling
+Check for PRs
+WiFi connection wizard
+Out-of-band emergency stop signal
+Look at suggestions https://forum.duet3d.com/topic/6989/suggest-screen-mods
+Test issue #7
+Test issue #9
 Optional PIN code for access (mrehorstdmd)
 Feature request: coordinates on the Move screen
 Handle no bed heater better?
@@ -49,6 +88,5 @@ Look at https://www.duet3d.com/forum/thread.php?pid=27861#p27861
 User requests: https://www.duet3d.com/forum/thread.php?pid=33908#p33908
 User request to display virtual heaters e.g. chamber, heatsink https://www.duet3d.com/forum/thread.php?pid=34123#p34123
 Bug: https://www.duet3d.com/forum/thread.php?pid=34772#p34772 (needs RRF fix too?)
-Test extrusion factor are working, we have a report that they get reset to 100 on T3
 User request: https://www.duet3d.com/forum/thread.php?pid=35713#p35713
 Sort files by date https://forum.duet3d.com/topic/598/gcode-files-sorting-backup-system/12
