@@ -46,4 +46,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-Release-*/
+# Directories created during build
+/Release-*
+/OEM*

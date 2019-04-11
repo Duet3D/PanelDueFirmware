@@ -118,7 +118,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Tools|src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -241,7 +241,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Tools|src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -364,7 +364,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Tools|src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -490,7 +490,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Tools|src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -616,7 +616,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Tools|src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -739,7 +739,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ASF/common/services/clock/sam3s|src/ASF/sam/utils/cmsis/sam3s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Tools|src/ASF/common/services/clock/sam3s|src/ASF/sam/utils/cmsis/sam3s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -862,7 +862,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ASF/common/services/clock/sam3s|src/ASF/sam/utils/cmsis/sam3s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Tools|src/ASF/common/services/clock/sam3s|src/ASF/sam/utils/cmsis/sam3s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -985,7 +985,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam3s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Tools|src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam3s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -1108,7 +1108,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Tools|src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam4s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -1231,7 +1231,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ASF/common/services/clock/sam3s|src/ASF/sam/utils/cmsis/sam3s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Tools|src/ASF/common/services/clock/sam3s|src/ASF/sam/utils/cmsis/sam3s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -1354,7 +1354,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam3s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Tools|src/ASF/common/services/clock/sam4s|src/ASF/sam/utils/cmsis/sam3s|src/OEM" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
