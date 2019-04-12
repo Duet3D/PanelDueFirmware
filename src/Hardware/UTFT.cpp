@@ -179,8 +179,8 @@ void UTFT::LCD_Write_DATA8(uint8_t VL)
 // This one is used for setXY so we inline it
 inline void UTFT::LCD_Write_COM_DATA16(uint8_t com1, uint16_t dat1)
 {
-     LCD_Write_COM(com1);
-     LCD_Write_DATA16(dat1);
+	LCD_Write_COM(com1);
+	LCD_Write_DATA16(dat1);
 }
 
 void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
@@ -1549,10 +1549,10 @@ void UTFT::drawRect(int x1, int y1, int x2, int y2)
 		swap(y1, y2);
 	}
 
-	drawHLine(x1, y1, x2-x1);
-	drawHLine(x1, y2, x2-x1);
-	drawVLine(x1, y1, y2-y1);
-	drawVLine(x2, y1, y2-y1);
+	drawHLine(x1, y1, x2-x1+1);
+	drawHLine(x1, y2, x2-x1+1);
+	drawVLine(x1, y1, y2-y1+1);
+	drawVLine(x2, y1, y2-y1+1);
 }
 
 void UTFT::drawRoundRect(int x1, int y1, int x2, int y2)
@@ -1571,10 +1571,10 @@ void UTFT::drawRoundRect(int x1, int y1, int x2, int y2)
 		drawPixel(x2-1, y1+1);
 		drawPixel(x1+1, y2-1);
 		drawPixel(x2-1, y2-1);
-		drawHLine(x1+2, y1, x2-x1-4);
-		drawHLine(x1+2, y2, x2-x1-4);
-		drawVLine(x1, y1+2, y2-y1-4);
-		drawVLine(x2, y1+2, y2-y1-4);
+		drawHLine(x1+2, y1, x2-x1-3);
+		drawHLine(x1+2, y2, x2-x1-3);
+		drawVLine(x1, y1+2, y2-y1-3);
+		drawVLine(x2, y1+2, y2-y1-3);
 	}
 }
 
@@ -1601,7 +1601,7 @@ void UTFT::fillRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gradCha
 	{
 		for (int i = x1; i <= x2; i++)
 		{
-			drawVLine(i, y1, y2-y1);
+			drawVLine(i, y1, y2-y1+1);
 			if (++gradCount == gradChange)
 			{
 				gradCount = 0;
@@ -1613,7 +1613,7 @@ void UTFT::fillRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gradCha
 	{
 		for (int i = y1; i <= y2; i++)
 		{
-			drawHLine(x1, i, x2-x1);
+			drawHLine(x1, i, x2-x1+1);
 			if (++gradCount == gradChange)
 			{
 				gradCount = 0;
@@ -1789,15 +1789,15 @@ void UTFT::drawLine(int x1, int y1, int x2, int y2)
 		{
 			swap(x1, x2);
 		}
-		drawHLine(x1, y1, x2-x1);
+		drawHLine(x1, y1, x2 - x1 + 1);
 	}
-	else if (x1==x2)
+	else if (x1 == x2)
 	{
-		if (y1>y2)
+		if (y1 > y2)
 		{
 			swap(y1, y2);
 		}
-		drawVLine(x1, y1, y2-y1);
+		drawVLine(x1, y1, y2 - y1 + 1);
 	}
 	else
 	{
@@ -1833,16 +1833,16 @@ void UTFT::drawLine(int x1, int y1, int x2, int y2)
 void UTFT::drawHLine(int x, int y, int len)
 {
 	assertCS();
-	setXY(x, y, x+len, y);
-	LCD_Write_Repeated_DATA16(fcolour, len + 1);
+	setXY(x, y, x+len-1, y);
+	LCD_Write_Repeated_DATA16(fcolour, len);
 	removeCS();
 }
 
 void UTFT::drawVLine(int x, int y, int len)
 {
 	assertCS();
-	setXY(x, y, x, y+len);
-	LCD_Write_Repeated_DATA16(fcolour, len + 1);
+	setXY(x, y, x, y+len-1);
+	LCD_Write_Repeated_DATA16(fcolour, len);
 	removeCS();
 }
 

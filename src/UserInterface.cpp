@@ -62,11 +62,14 @@ static TextButton *macroButtons[NumDisplayedMacros];
 static TextButton *controlPageMacroButtons[NumControlPageMacroButtons];
 static String<controlPageMacroTextLength> controlPageMacroText[NumControlPageMacroButtons];
 
-static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
+static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup,
+		*volumePopup, *infoTimeoutPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
 static StaticTextField *areYouSureTextField, *areYouSureQueryField;
 static DisplayField *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
 static SingleButton *homeButtons[MaxAxes], *toolButtons[MaxHeaters], *homeAllButton, *bedCompButton;
-static FloatField *axisPos[3][MaxAxes]; // 0: ControlTab, 1: PrintTab, 2: MovePopup
+static FloatField *controlTabAxisPos[MaxAxes];
+static FloatField *printTabAxisPos[MaxAxes];
+static FloatField *movePopupAxisPos[MaxAxes];
 static FloatField *currentTemps[MaxHeaters];
 static FloatField *fpHeightField, *fpLayerHeightField, *babystepOffsetField;
 static IntegerField *fpSizeField, *fpFilamentField, *filePopupTitleField;
@@ -78,7 +81,7 @@ static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPri
 static StaticTextField *moveAxisRows[MaxAxes];
 static StaticTextField *nameField, *statusField;
 static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
-static IntegerButton *spd, *extrusionFactors[MaxExtruders], *fanSpeed, *baudRateButton, *volumeButton;
+static IntegerButton *spd, *extrusionFactors[MaxExtruders], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton;
 static TextButton *languageButton, *coloursButton, *dimmingTypeButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
@@ -121,6 +124,7 @@ static bool keyboardShifted = false;
 
 int32_t alertMode = -1;									// the mode of the current alert, or -1 if no alert displayed
 uint32_t alertTicks = 0;
+uint32_t infoTimeout = DefaultInfoTimeout;				// info timeout in seconds, 0 means don't display into messages at all
 uint32_t whenAlertReceived;
 bool displayingResponse = false;						// true if displaying a response
 
@@ -186,12 +190,12 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	constexpr PixelNumber hOffset = popupSideMargin + (alertPopupWidth - 2 * popupSideMargin - totalUnits * unitWidth)/2;
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	AddField(zUpCourseButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset,				  buttonWidth, UP_ARROW "2.0", evMoveZ, "2.0"));
-	AddField(zUpMedButton =      new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + buttonStep,     buttonWidth, UP_ARROW "0.2", evMoveZ, "0.2"));
-	AddField(zUpFineButton =     new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, UP_ARROW "0.02", evMoveZ, "0.02"));
-	AddField(zDownFineButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, DOWN_ARROW "0.02", evMoveZ, "-0.02"));
-	AddField(zDownMedButton =    new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, DOWN_ARROW "0.2", evMoveZ, "-0.2"));
-	AddField(zDownCourseButton = new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, DOWN_ARROW "2.0", evMoveZ, "-2.0"));
+	AddField(zUpCourseButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset,				  buttonWidth, MORE_ARROW "2.0", evMoveZ, "2.0"));
+	AddField(zUpMedButton =      new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + buttonStep,     buttonWidth, MORE_ARROW "0.2", evMoveZ, "0.2"));
+	AddField(zUpFineButton =     new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, MORE_ARROW "0.02", evMoveZ, "0.02"));
+	AddField(zDownFineButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, LESS_ARROW "0.02", evMoveZ, "-0.02"));
+	AddField(zDownMedButton =    new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, LESS_ARROW "0.2", evMoveZ, "-0.2"));
+	AddField(zDownCourseButton = new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, LESS_ARROW "2.0", evMoveZ, "-2.0"));
 
 	AddField(okButton =          new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + buttonStep,     buttonWidth + buttonStep, "OK", evCloseAlert, "M292 P0"));
 	AddField(cancelButton =      new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + 3 * buttonStep, buttonWidth + buttonStep, "Cancel", evCloseAlert, "M292 P1"));
@@ -397,6 +401,7 @@ void CreateMovePopup(const ColourScheme& colours)
 
 	movePopup = new StandardPopupWindow(movePopupHeight, movePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->moveHead);
 	PixelNumber ypos = popupTopMargin + buttonHeight + moveButtonRowSpacing;
+	const PixelNumber axisPosYpos = ypos + (MaxAxes - 1) * (buttonHeight + moveButtonRowSpacing);
 	const PixelNumber xpos = popupSideMargin + axisLabelWidth;
 	Event e = evMoveX;
 	PixelNumber column = margin;
@@ -415,16 +420,13 @@ void CreateMovePopup(const ColourScheme& colours)
 		moveAxisRows[i] = tf;
 		UI::ShowAxis(i, i < MIN_AXES);
 
-		if (MaxAxes < 5)
-		{
-			DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupInfoBackColour);
-			FloatField *f = new FloatField(row7, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
-			axisPos[2][i] = f;
-			f->SetValue(0.0);
-			movePopup->AddField(f);
-			f->Show(i < MIN_AXES);
-			column += xyFieldWidth + fieldSpacing;
-		}
+		DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupInfoBackColour);
+		FloatField *f = new FloatField(axisPosYpos, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
+		movePopupAxisPos[i] = f;
+		f->SetValue(0.0);
+		movePopup->AddField(f);
+		f->Show(i < MIN_AXES);
+		column += xyFieldWidth + fieldSpacing;
 
 		ypos += buttonHeight + moveButtonRowSpacing;
 		e = (Event)((uint8_t)e + 1);
@@ -578,7 +580,15 @@ void CreateVolumePopup(const ColourScheme& colours)
 {
 	static_assert(Buzzer::MaxVolume == 5, "MaxVolume assumed to be 5 here");
 	static const char* const volumePopupText[Buzzer::MaxVolume + 1] = { "0", "1", "2", "3", "4", "5" };
-	volumePopup = CreateIntPopupBar(colours, fullPopupWidth, Buzzer::MaxVolume + 1, volumePopupText, nullptr, evAdjustVolume, evAdjustVolume);
+	volumePopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(volumePopupText), volumePopupText, nullptr, evAdjustVolume, evAdjustVolume);
+}
+
+// Create the volume adjustment popup
+void CreateInfoTimeoutPopup(const ColourScheme& colours)
+{
+	static const char* const infoTimeoutPopupText[Buzzer::MaxVolume + 1] = { "0", "2", "5", "10" };
+	static const int values[] = { 0, 2, 5, 10 };
+	infoTimeoutPopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(infoTimeoutPopupText), infoTimeoutPopupText, values, evAdjustInfoTimeout, evAdjustInfoTimeout);
 }
 
 // Create the colour scheme change popup
@@ -679,8 +689,8 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 // Create the babystep popup
 void CreateBabystepPopup(const ColourScheme& colours)
 {
-	static const char * array const babystepStrings[2] = { UP_ARROW " 0.02", DOWN_ARROW " 0.02" };
-	static const char * array const babystepAmounts[2] = { "0.02", "-0.02" };
+	static const char * array const babystepStrings[2] = { MORE_ARROW " 0.02", LESS_ARROW " 0.02" };
+	static const char * array const babystepAmounts[2] = { "+0.02", "-0.02" };
 	babystepPopup = new StandardPopupWindow(babystepPopupHeight, babystepPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour,
 			strings->babyStepping);
 	PixelNumber ypos = popupTopMargin + babystepRowSpacing;
@@ -708,18 +718,18 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 	// Add the grid
 	for (unsigned int i = 0; i < MaxHeaters; ++i)
 	{
-		PixelNumber column = ((tempButtonWidth + fieldSpacing) * i) + bedColumn;
+		const PixelNumber column = ((tempButtonWidth + fieldSpacing) * i) + bedColumn;
 
 		// Add the icon button
 		DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
-		SingleButton *b = new IconButton(row2, column, tempButtonWidth, heaterIcons[i], evSelectHead, i);
+		SingleButton * const b = new IconButton(row2, column, tempButtonWidth, heaterIcons[i], evSelectHead, i);
 		b->Show(false);
 		toolButtons[i] = b;
 		mgr.AddField(b);
 
 		// Add the current temperature field
 		DisplayField::SetDefaultColours(colours.infoTextColour, colours.defaultBackColour);
-		FloatField *f = new FloatField(row3 + labelRowAdjust, column, tempButtonWidth, TextAlignment::Centre, 1);
+		FloatField * const f = new FloatField(row3 + labelRowAdjust, column, tempButtonWidth, TextAlignment::Centre, 1);
 		f->SetValue(0.0);
 		f->Show(false);
 		currentTemps[i] = f;
@@ -754,8 +764,8 @@ void CreateControlTabFields(const ColourScheme& colours)
 	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxAxes * fieldSpacing))/(MaxAxes + 1);
 	for (size_t i = 0; i < MaxAxes; ++i)
 	{
-		FloatField *f = new FloatField(row6p3 + labelRowAdjust, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
-		axisPos[0][i] = f;
+		FloatField * const f = new FloatField(row6p3 + labelRowAdjust, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
+		controlTabAxisPos[i] = f;
 		f->SetValue(0.0);
 		mgr.AddField(f);
 		f->Show(i < MIN_AXES);
@@ -794,7 +804,7 @@ void CreateControlTabFields(const ColourScheme& colours)
 	for (size_t i = 0; i < NumControlPageMacroButtons; ++i)
 	{
 		// The position and width of the buttons will get corrected when we know how many tools we have
-		TextButton *b = controlPageMacroButtons[i] = new TextButton(row2 + i * rowHeight, 999, 99, nullptr, evNull);
+		TextButton * const b = controlPageMacroButtons[i] = new TextButton(row2 + i * rowHeight, 999, 99, nullptr, evNull);
 		b->Show(false);			// hide them until we have loaded the macros
 		mgr.AddField(b);
 	}
@@ -815,9 +825,9 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	for (unsigned int i = 0; i < MaxExtruders; ++i)
 	{
-		PixelNumber column = ((tempButtonWidth + fieldSpacing) * (i + 1)) + bedColumn;
+		const PixelNumber column = ((tempButtonWidth + fieldSpacing) * (i + 1)) + bedColumn;
 
-		IntegerButton *ib = new IntegerButton(row6, column, tempButtonWidth);
+		IntegerButton * const ib = new IntegerButton(row6, column, tempButtonWidth);
 		ib->SetValue(100);
 		ib->SetEvent(evExtrusionFactor, i);
 		ib->Show(false);
@@ -851,22 +861,24 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 	resetButton = new TextButton(row7, cancelColumn, DisplayX - cancelColumn - margin, strings->cancel, evReset, "M0");
 	mgr.AddField(resetButton);
 
-	PixelNumber offset = 0;
-	#if DISPLAY_X == 800
-		offset = rowHeight - 20;
-		DisplayField::SetDefaultColours(colours.infoTextColour, colours.infoBackColour);
-		PixelNumber column = margin;
-		PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxAxes * fieldSpacing))/(MaxAxes + 1);
-		for (size_t i = 0; i < MaxAxes; ++i)
-		{
-			FloatField *f = new FloatField(row8 + labelRowAdjust - 4, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
-			axisPos[1][i] = f;
-			f->SetValue(0.0);
-			mgr.AddField(f);
-			f->Show(i < MIN_AXES);
-			column += xyFieldWidth + fieldSpacing;
-		}
-	#endif
+#if DISPLAY_X == 800
+	// On 5" and 7" screens there is room to show the current position on the Print page
+	const PixelNumber offset = rowHeight - 20;
+	DisplayField::SetDefaultColours(colours.infoTextColour, colours.infoBackColour);
+	PixelNumber column = margin;
+	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxAxes * fieldSpacing))/(MaxAxes + 1);
+	for (size_t i = 0; i < MaxAxes; ++i)
+	{
+		FloatField * const f = new FloatField(row8 + labelRowAdjust - 4, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
+		printTabAxisPos[i] = f;
+		f->SetValue(0.0);
+		mgr.AddField(f);
+		f->Show(i < MIN_AXES);
+		column += xyFieldWidth + fieldSpacing;
+	}
+#else
+	const PixelNumber offset = 0;
+#endif
 
 	DisplayField::SetDefaultColours(colours.progressBarColour,colours. progressBarBackColour);
 	mgr.AddField(printProgressBar = new ProgressBar(row8 + offset + (rowHeight - progressBarHeight)/2, margin, progressBarHeight, DisplayX - 2 * margin));
@@ -909,6 +921,7 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	// The firmware version field doubles up as an area for displaying debug messages, so make it the full width of the display
 	mgr.AddField(fwVersionField = new TextField(row1, margin, DisplayX, TextAlignment::Left, strings->firmwareVersion, VERSION_TEXT));
 	mgr.AddField(freeMem = new IntegerField(row2, margin, DisplayX/2 - margin, TextAlignment::Left, "Free RAM: "));
+	mgr.AddField(new ColourGradientField(ColourGradientTopPos, ColourGradientLeftPos, ColourGradientWidth, ColourGradientHeight));
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	baudRateButton = AddIntegerButton(row3, 0, 3, nullptr, " baud", evSetBaudRate);
@@ -923,42 +936,10 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	AddTextButton(row5, 1, 3, strings->brightnessDown, evDimmer, nullptr);
 	AddTextButton(row5, 2, 3, strings->brightnessUp, evBrighter, nullptr);
 	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()], evSetDimmingType, nullptr);
+	infoTimeoutButton = AddIntegerButton(row6, 1, 3, strings->infoTimeout, nullptr, evSetInfoTimeout);
+	infoTimeoutButton->SetValue(infoTimeout);
 	AddTextButton(row6, 2, 3, strings->clearSettings, evFactoryReset, nullptr);
 	setupRoot = mgr.GetRoot();
-}
-
-// Display a colour gradient so we can check for correct colours during testing
-void DisplayColourGradient()
-{
-	PixelNumber x = ColourGradientLeftPos;
-	const PixelNumber lineRepeat = (DISPLAY_X - ColourGradientLeftPos)/128;
-	for (PixelNumber i = 0; i < 32; ++i)
-	{
-		lcd.setColor(i << 11);
-		for (PixelNumber j = 0; j < lineRepeat; ++j)
-		{
-			lcd.drawLine(x, ColourGradientTopPos, x, ColourGradientTopPos + ColourGradientHeight);
-			++x;
-		}
-	}
-	for (PixelNumber i = 0; i < 64; ++i)
-	{
-		lcd.setColor(i << 5);
-		for (PixelNumber j = 0; j < lineRepeat; ++j)
-		{
-			lcd.drawLine(x, ColourGradientTopPos, x, ColourGradientTopPos + ColourGradientHeight);
-			++x;
-		}
-	}
-	for (PixelNumber i = 0; i < 32; ++i)
-	{
-		lcd.setColor(i);
-		for (PixelNumber j = 0; j < lineRepeat; ++j)
-		{
-			lcd.drawLine(x, ColourGradientTopPos, x, ColourGradientTopPos + ColourGradientHeight);
-			++x;
-		}
-	}
 }
 
 // Create the fields that are displayed on all pages
@@ -1034,8 +1015,10 @@ namespace UI
 	}
 
 	// Create all the fields we ever display
-	void CreateFields(uint32_t language, const ColourScheme& colours)
+	void CreateFields(uint32_t language, const ColourScheme& colours, uint32_t p_infoTimeout)
 	{
+		infoTimeout = p_infoTimeout;
+
 		// Set up default colours and margins
 		mgr.Init(colours.defaultBackColour);
 		DisplayField::SetDefaultFont(DEFAULT_FONT);
@@ -1055,6 +1038,7 @@ namespace UI
 		macrosPopup = CreateFileListPopup(macrosListButtons, macroButtons, NumMacroRows, NumMacroColumns, colours, false);
 		CreateFileActionPopup(colours);
 		CreateVolumePopup(colours);
+		CreateInfoTimeoutPopup(colours);
 		CreateBaudRatePopup(colours);
 		CreateColoursPopup(colours);
 		CreateAreYouSurePopup(colours);
@@ -1106,18 +1090,27 @@ namespace UI
 			f->Show(b);
 			f = f->next;
 		}
-		axisPos[0][axis]->Show(b);
-		axisPos[1][axis]->Show(b);
-		axisPos[2][axis]->Show(b);
+		controlTabAxisPos[axis]->Show(b);
+		printTabAxisPos[axis]->Show(b);
+		movePopupAxisPos[axis]->Show(b && numAxes < MaxAxes);		// the move popup axis positions occupy the last axis row of the move popu[p
 	}
 
 	void UpdateAxisPosition(size_t axis, float fval)
 	{
-		if (axis < MaxAxes && axisPos[0][axis] != nullptr)
+		if (axis < MaxAxes)
 		{
-			axisPos[0][axis]->SetValue(fval);
-			axisPos[1][axis]->SetValue(fval);
-			axisPos[2][axis]->SetValue(fval);
+			if (controlTabAxisPos[axis] != nullptr)
+			{
+				controlTabAxisPos[axis]->SetValue(fval);
+			}
+			if (printTabAxisPos[axis] != nullptr)
+			{
+				printTabAxisPos[axis]->SetValue(fval);
+			}
+			if (movePopupAxisPos[axis] != nullptr)
+			{
+				movePopupAxisPos[axis]->SetValue(fval);
+			}
 		}
 	}
 
@@ -1510,14 +1503,14 @@ namespace UI
 
 	void ProcessSimpleAlert(const char* array text)
 	{
-		if (alertMode < 2)								// if the current alert doesn't require acknowledgement
+		if (alertMode < 2)												// if the current alert doesn't require acknowledgement
 		{
 			alertPopup->Set(strings->message, text, 1, 0);
 			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
-			alertMode = 1;								// a simple alert is like a mode 1 alert without a title
+			alertMode = 1;												// a simple alert is like a mode 1 alert without a title
 			displayingResponse = false;
 			whenAlertReceived = SystemTick::GetTickCount();
-			alertTicks = 0;								// no timeout
+			alertTicks = 0;												// no timeout
 		}
 		RestoreBrightness();
 	}
@@ -1525,14 +1518,18 @@ namespace UI
 	// Process a new response. This is treated like a simple alert except that it times out and isn't cleared by a "clear alert" command from the host.
 	void NewResponseReceived(const char* array text)
 	{
-		if (alertMode < 2 && (currentTab == tabControl || currentTab == tabPrint))	// if the current alert doesn't require acknowledgement
+		const bool isErrorMessage = stringStartsWith(text, "Error");
+		if (   alertMode < 2											// if the current alert doesn't require acknowledgement
+			&& (currentTab == tabControl || currentTab == tabPrint)
+			&& (isErrorMessage || infoTimeout != 0)
+		   )
 		{
 			alertPopup->Set(strings->response, text, 1, 0);
 			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
-			alertMode = -1;															// make sure that a call to ClearAlert doesn't clear us
+			alertMode = -1;												// make sure that a call to ClearAlert doesn't clear us
 			displayingResponse = true;
 			whenAlertReceived = SystemTick::GetTickCount();
-			alertTicks = (stringStartsWith(text, "Error")) ? 0 : 5000;				// timeout after 5 seconds if it isn't an error message
+			alertTicks = isErrorMessage ? 0 : infoTimeout * SystemTick::TicksPerSecond;				// time out if it isn't an error message
 		}
 	}
 
@@ -1631,6 +1628,16 @@ namespace UI
 		}
 	}
 
+	static void DoEmergencyStop()
+	{
+		// We send M112 for the benefit of old firmware, and F0 0F (an invalid UTF8 sequence) for new firmware
+		SerialIo::SendString("M112 ;" "\xF0" "\x0F" "\n");
+		TouchBeep();											// needed when we are called from ProcessTouchOutsidePopup
+		Delay(1000);
+		SerialIo::SendString("M999\n");
+		Reconnect();
+	}
+
 	// Process a touch event
 	void ProcessTouch(ButtonPress bp)
 	{
@@ -1643,29 +1650,16 @@ namespace UI
 			switch(ev)
 			{
 			case evEmergencyStop:
-				{
-					// We send M112 for the benefit of old firmware, and F0 0F (an invalid UTF8 sequence) for new firmware
-					SerialIo::SendString("M112 ;" "\xF0" "\x0F" "\n");
-					Delay(1000);
-					SerialIo::SendString("M999\n");
-					Reconnect();
-				}
+				DoEmergencyStop();
 				break;
 
 			case evTabControl:
 			case evTabPrint:
 			case evTabMsg:
-				if (ChangePage(f))
-				{
-					currentButton.Clear();						// keep the button highlighted after it is released
-				}
-				break;
-
 			case evTabSetup:
 				if (ChangePage(f))
 				{
 					currentButton.Clear();						// keep the button highlighted after it is released
-					DisplayColourGradient();
 				}
 				break;
 
@@ -2056,6 +2050,11 @@ namespace UI
 				mgr.SetPopup(volumePopup, AutoPlace, popupY);
 				break;
 
+			case evSetInfoTimeout:
+				Adjusting(bp);
+				mgr.SetPopup(infoTimeoutPopup, AutoPlace, popupY);
+				break;
+
 			case evSetColours:
 				if (coloursPopup != nullptr)
 				{
@@ -2075,6 +2074,15 @@ namespace UI
 					const int newVolume = bp.GetIParam();
 					SetVolume(newVolume);
 					volumeButton->SetValue(newVolume);
+				}
+				TouchBeep();									// give audible feedback of the touch at the new volume level
+				break;
+
+			case evAdjustInfoTimeout:
+				{
+					infoTimeout = bp.GetIParam();
+					SetInfoTimeout(infoTimeout);
+					infoTimeoutButton->SetValue(infoTimeout);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
 				break;
@@ -2255,6 +2263,7 @@ namespace UI
 			case evAdjustStandbyTemp:
 			case evSetBaudRate:
 			case evSetVolume:
+			case evSetInfoTimeout:
 			case evSetColours:
 				mgr.ClearPopup();
 				StopAdjusting();
@@ -2270,6 +2279,12 @@ namespace UI
 		{
 			switch(bp.GetEvent())
 			{
+			case evEmergencyStop:
+				mgr.Press(bp, true);
+				DoEmergencyStop();
+				mgr.Press(bp, false);
+				break;
+
 			case evTabControl:
 			case evTabPrint:
 			case evTabMsg:
@@ -2288,6 +2303,7 @@ namespace UI
 
 			case evSetBaudRate:
 			case evSetVolume:
+			case evSetInfoTimeout:
 			case evSetColours:
 			case evSetLanguage:
 			case evCalTouch:

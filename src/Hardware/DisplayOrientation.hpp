@@ -12,7 +12,7 @@
 // Enumeration to define the orientation of the display.
 // To keep the code small and fast, we use individual bits to say what needs to be done on the display.
 // Then we define the supported orientations in terms of those bits.
-enum DisplayOrientation {
+enum DisplayOrientation : uint8_t {
 	Default = 0x00,
 	SwapXY = 0x01,
 	ReverseX = 0x02,

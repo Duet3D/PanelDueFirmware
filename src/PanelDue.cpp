@@ -130,7 +130,7 @@ struct FlashData
 {
 	// The magic value should be changed whenever the layout of the NVRAM changes
 	// We now use a different magic value for each display size, to force the "touch the spot" screen to be displayed when you change the display size
-	static const uint32_t magicVal = 0x3AB62A10 + DISPLAY_TYPE;
+	static const uint32_t magicVal = 0x3AB62A20 + DISPLAY_TYPE;
 	static const uint32_t muggleVal = 0xFFFFFFFF;
 
 	uint32_t magic;
@@ -141,12 +141,13 @@ struct FlashData
 	uint16_t ymax;
 	DisplayOrientation lcdOrientation;
 	DisplayOrientation touchOrientation;
-	uint32_t touchVolume;
-	uint32_t language;
-	uint32_t colourScheme;
-	uint32_t brightness;
-	uint8_t displayDimmerType;
-	uint8_t padding[3];
+	uint8_t touchVolume;
+	uint8_t language;
+	uint8_t colourScheme;
+	uint8_t brightness;
+	DisplayDimmerType displayDimmerType;
+	uint8_t infoTimeout;
+	//uint8_t padding[4];
 	char dummy;								// must be at a multiple of 4 bytes from the start because flash is read/written in whole dwords
 	
 	FlashData() : magic(muggleVal) { }
@@ -235,7 +236,7 @@ bool FlashData::IsValid() const
 		&& brightness <= Buzzer::MaxBrightness
 		&& language < UI::GetNumLanguages()
 		&& colourScheme < NumColourSchemes
-		&& displayDimmerType < (uint8_t)DisplayDimmerType::NumTypes;
+		&& displayDimmerType < DisplayDimmerType::NumTypes;
 }
 
 bool FlashData::operator==(const FlashData& other)
@@ -252,7 +253,8 @@ bool FlashData::operator==(const FlashData& other)
 		&& language == other.language
 		&& colourScheme == other.colourScheme
 		&& brightness == other.brightness
-		&& displayDimmerType == other.displayDimmerType;
+		&& displayDimmerType == other.displayDimmerType
+		&& infoTimeout == other.infoTimeout;
 }
 
 void FlashData::SetDefaults()
@@ -268,7 +270,8 @@ void FlashData::SetDefaults()
 	brightness = Buzzer::DefaultBrightness;
 	language = 0;
 	colourScheme = 0;
-	displayDimmerType = (uint8_t)DisplayDimmerType::always;
+	displayDimmerType = DisplayDimmerType::always;
+	infoTimeout = DefaultInfoTimeout;
 	magic = magicVal;
 }
 
@@ -371,14 +374,15 @@ PrinterStatus GetStatus()
 	return status;
 }
 
-void InitLcd(DisplayOrientation dor, uint32_t language, uint32_t colourScheme)
+// Initialise the LCD and user interface. The non-volatile data must be set up before calling this.
+void InitLcd()
 {
-	lcd.InitLCD(dor, IS_24BIT, IS_ER);								// set up the LCD
-	colours = &colourSchemes[colourScheme];
-	UI::CreateFields(language, *colours);							// create all the fields
-	lcd.fillScr(black);												// make sure the memory is clear
-	Delay(100);														// give the LCD time to update
-	RestoreBrightness();											// turn the display on
+	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);				// set up the LCD
+	colours = &colourSchemes[nvData.colourScheme];
+	UI::CreateFields(nvData.language, *colours, nvData.infoTimeout);	// create all the fields
+	lcd.fillScr(black);													// make sure the memory is clear
+	Delay(100);															// give the LCD time to update
+	RestoreBrightness();												// turn the display on
 }
 
 // Ignore touches for a long time
@@ -505,8 +509,8 @@ extern void RestoreBrightness()
 
 extern void DimBrightness()
 {
-	if (   (GetDisplayDimmerType() == DisplayDimmerType::always)
-		|| (GetDisplayDimmerType() == DisplayDimmerType::onIdle && (status == PrinterStatus::idle || status == PrinterStatus::off))
+	if (   (nvData.displayDimmerType == DisplayDimmerType::always)
+		|| (nvData.displayDimmerType == DisplayDimmerType::onIdle && (status == PrinterStatus::idle || status == PrinterStatus::off))
 	   )
 	{
 		Buzzer::SetBacklight(nvData.brightness/8);
@@ -516,20 +520,25 @@ extern void DimBrightness()
 
 DisplayDimmerType GetDisplayDimmerType()
 {
-	return (DisplayDimmerType)nvData.displayDimmerType;
+	return nvData.displayDimmerType;
 }
 
 void SetDisplayDimmerType(DisplayDimmerType newType)
 {
-	nvData.displayDimmerType = (uint8_t)newType;
+	nvData.displayDimmerType = newType;
 }
 
-void SetVolume(uint32_t newVolume)
+void SetVolume(uint8_t newVolume)
 {
 	nvData.touchVolume = newVolume;
 }
 
-bool SetColourScheme(uint32_t newColours)
+void SetInfoTimeout(uint8_t newInfoTimeout)
+{
+	nvData.infoTimeout = newInfoTimeout;
+}
+
+bool SetColourScheme(uint8_t newColours)
 {
 	const bool ret = (newColours != nvData.colourScheme);
 	nvData.colourScheme = newColours;
@@ -537,7 +546,7 @@ bool SetColourScheme(uint32_t newColours)
 }
 
 // Set the language, returning true if it has changed
-bool SetLanguage(uint32_t newLanguage)
+bool SetLanguage(uint8_t newLanguage)
 {
 	const bool ret = (newLanguage != nvData.language);
 	nvData.language = newLanguage;
@@ -1210,7 +1219,7 @@ int main(void)
 	if (nvData.IsValid())
 	{
 		// The touch panel has already been calibrated
-		InitLcd(nvData.lcdOrientation, nvData.language, nvData.colourScheme);
+		InitLcd();
 		touch.init(DisplayX, DisplayY, nvData.touchOrientation);
 		touch.calibrate(nvData.xmin, nvData.xmax, nvData.ymin, nvData.ymax, touchCalibMargin);
 		savedNvData = nvData;
@@ -1219,7 +1228,7 @@ int main(void)
 	{
 		// The touch panel has not been calibrated, and we do not know which way up it is
 		nvData.SetDefaults();
-		InitLcd(nvData.lcdOrientation, nvData.language, nvData.colourScheme);
+		InitLcd();
 		CalibrateTouch();							// this includes the touch driver initialisation
 		SaveSettings();
 	}

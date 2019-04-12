@@ -11,6 +11,8 @@
 
 namespace SystemTick
 {
+	constexpr uint32_t TicksPerSecond = 1000;
+
 	uint32_t GetTickCount();		// get the number of milliseconds since we started
 }
 

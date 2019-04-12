@@ -437,6 +437,43 @@ bool PopupWindow::Contains(PixelNumber xmin, PixelNumber ymin, PixelNumber xmax,
 	return xPos + 2 <= xmin && yPos + 2 <= ymin && xPos + width >= xmax + 3 && yPos + height >= ymax + 3;
 }
 
+void ColourGradientField::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
+{
+	if (full)
+	{
+		PixelNumber px = x + xOffset;
+		const PixelNumber py = y + yOffset;
+		const PixelNumber lineRepeat = width/128;
+		for (PixelNumber i = 0; i < 32; ++i)
+		{
+			lcd.setColor(i << 11);
+			for (PixelNumber j = 0; j < lineRepeat; ++j)
+			{
+				lcd.drawLine(px, py, px, py + height - 1);
+				++px;
+			}
+		}
+		for (PixelNumber i = 0; i < 64; ++i)
+		{
+			lcd.setColor(i << 5);
+			for (PixelNumber j = 0; j < lineRepeat; ++j)
+			{
+				lcd.drawLine(px, py, px, py + height - 1);
+				++px;
+			}
+		}
+		for (PixelNumber i = 0; i < 32; ++i)
+		{
+			lcd.setColor(i);
+			for (PixelNumber j = 0; j < lineRepeat; ++j)
+			{
+				lcd.drawLine(px, py, px, py + height - 1);
+				++px;
+			}
+		}
+	}
+}
+
 PixelNumber FieldWithText::GetHeight() const
 {
 	PixelNumber height = UTFT::GetFontHeight(font) * textRows;

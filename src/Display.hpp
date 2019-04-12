@@ -32,6 +32,8 @@ typedef const uint8_t * array Icon;
 #define UP_ARROW		"\xC2\x82"		// Unicode control character, code point 0x82, we use it as up arrow
 #define RIGHT_ARROW		"\xC2\x83"		// Unicode control character, code point 0x83, we use it as down arrow
 #define DOWN_ARROW		"\xC2\x84"		// Unicode control character, code point 0x84, we use it as down arrow
+#define MORE_ARROW		"\xC2\x85"
+#define LESS_ARROW		"\xC2\x86"
 
 const uint8_t buttonGradStep = 12;
 const PixelNumber AutoPlace = 0xFFFF;
@@ -72,7 +74,7 @@ class DisplayField
 {
 protected:
 	PixelNumber y, x;							// Coordinates of top left pixel, counting from the top left corner
-	PixelNumber width;							// number of pixels occupied in each direction
+	PixelNumber width;							// number of pixels wide
 	Colour fcolour, bcolour;					// foreground and background colours
 	uint16_t changed : 1,
 			visible : 1,
@@ -184,6 +186,22 @@ public:
 	void Refresh(bool full) override;
 	void SetPos(PixelNumber px, PixelNumber py) { xPos = px; yPos = py; }
 	bool Contains(PixelNumber xmin, PixelNumber ymin, PixelNumber xmax, PixelNumber ymax) const override;
+};
+
+class ColourGradientField : public DisplayField
+{
+	PixelNumber height;
+
+protected:
+	PixelNumber GetHeight() const override { return height; }
+
+public:
+	ColourGradientField(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ph)
+		: DisplayField(py, px, pw), height(ph)
+	{
+	}
+
+	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override;
 };
 
 // Base class for fields displaying text

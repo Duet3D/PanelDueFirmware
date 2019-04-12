@@ -473,7 +473,6 @@ namespace SerialIo
 						if (InArray())
 						{
 							EndArray();			// empty array
-							RemoveLastIdChar();
 							state = jsEndVal;
 						}
 						else
@@ -587,7 +586,6 @@ namespace SerialIo
 							ProcessField();
 							++arrayIndices[arrayDepth - 1];
 							EndArray();
-							RemoveLastIdChar();
 							state = jsEndVal;
 						}
 						else

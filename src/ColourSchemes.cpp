@@ -62,7 +62,7 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 		.stopButtonBackColour = UTFT::fromRGB(255, 32, 32)			// need enough G and B to allow for the gradient
 	},
 	
-	// Dark colour scheme
+	// Dark colour scheme #1
 
 	{
 		.index = 1,
@@ -108,6 +108,55 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 		.progressBarColour = midGreen,
 		.progressBarBackColour = black,
 
+		.stopButtonTextColour = white,
+		.stopButtonBackColour = red
+	},
+
+	// Dark colour scheme #2
+
+	{
+		.index = 2,
+		.pal = IconPaletteDark,
+
+		.titleBarTextColour = white,
+		.titleBarBackColour = midGrey,
+		.labelTextColour = white,
+		.infoTextColour = white,
+		.infoBackColour = veryDarkGrey,
+		.defaultBackColour = veryDarkGrey,
+		.activeBackColour = red,
+		.standbyBackColour = yellow,
+		.tuningBackColour = darkGrey,
+		.errorTextColour = white,
+		.errorBackColour = veryDarkGrey,
+
+		.popupBorderColour = darkGrey,
+		.popupBackColour = darkGrey,
+		.popupTextColour = white,
+		.popupButtonTextColour = white,
+		.popupButtonBackColour = veryDarkGrey,
+		.popupInfoTextColour = white,
+		.popupInfoBackColour = darkGrey,
+
+		.alertPopupBackColour = darkGrey,
+		.alertPopupTextColour = white,
+
+		.buttonTextColour = white,
+		.buttonPressedTextColour = white,
+		.buttonTextBackColour = midGrey,
+		.buttonImageBackColour = grey,
+		.buttonGradColour = 0,	//UTFT::fromRGB(8, 4, 8),
+		.buttonPressedBackColour = grey,
+		.buttonPressedGradColour = 0,	//UTFT::fromRGB(8, 8, 8),
+		.buttonBorderColour = midGrey,
+		.homedButtonBackColour = midGrey,
+		.notHomedButtonBackColour = orange,
+		.pauseButtonBackColour = darkOrange,
+		.resumeButtonBackColour = darkYellow,
+		.resetButtonBackColour = darkRed,
+
+		.progressBarColour = midGrey,
+		.progressBarBackColour = veryDarkGrey,
 		.stopButtonTextColour = white,
 		.stopButtonBackColour = red
 	}

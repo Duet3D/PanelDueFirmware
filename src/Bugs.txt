@@ -58,25 +58,39 @@
 [not done, image load is much faster now] Allow image load to be cancelled by touch, unless it is now much faster
 [fixed buffer overflow, test before release] Test extrusion factors are working, we have a report that they get reset to 100 on T3
 
-Bugs in 1.22, to be fixed in 1.22.1:
-- [done, ok] Extrusion rates don't match the buttons, only 1 of 2 tables was updated
-- [done] for dimming, treat printer Off the same as Idle
-- [done, ok] babystepping sends M290 M290 S0.02
-- [done, ok] can't cancel a message popup that appears on top of a babystepping popup
-- [done, ok] don't timeout error messages
-- [done, ok] handle longer responses in Console window e.g. from M591
-- [done, ok] Send F0 0F on emergency stop
+Bugs in 1.22, fixed in 1.22.1:
+[done] for dimming, treat printer Off the same as Idle
+[done, ok] babystepping sends M290 M290 S0.02
+[done, ok] can't cancel a message popup that appears on top of a babystepping popup
+[done, ok] don't timeout error messages
+[done, ok] handle longer responses in Console window e.g. from M591
+[done, ok] Send F0 0F on emergency stop
+
+Done in 1.23:
+[done, ok] New Duet3D logo
+[done, ok] Builds that used to have Escher3D logo now have Duet3D logo
+[done, ok] Up/down arrows are confusing in M291 Z stepping and baby stepping, https://forum.duet3d.com/topic/9493/paneldue-request-m291-z-jogmenue-please-add-to-arrows, https://forum.duet3d.com/topic/9480/paneldue-request-m291-x-y-jogmenue-like-in-webinterface
+[done, ok] STOP button should work even when there is a popup menu, if it is not completely obscured
+[done, ok] Added another dark theme
+[done, ok] Czech language now available in 4.3" build
+[done, ok] Wider colour gradient on 4.3" build
+[done, ok] Configurable timeout on popup messages, https://forum.duet3d.com/topic/8606/panel-due-request-configurable-time-delay-on-message-boxes
+[done, ok] Display current coordinates on Move popup and Print page
 
 Remaining:
 
+Two tools with 1 heater, wrong display https://forum.duet3d.com/topic/8933/paneldue-two-tools-same-heater-one-pair-of-temp-buttons
+Better CNC support, https://forum.duet3d.com/topic/9156/cnc-firmware-for-the-paneldue
+M291 axes other than Z
+Investigate M291 axis parameters don't work, https://forum.duet3d.com/topic/5812/macro-for-calibrating-z-probe-issues/1 , https://forum.duet3d.com/topic/9480/paneldue-request-m291-x-y-jogmenue-like-in-webinterface
+
+Add a queue of beeps pending so that tunes can be played
 PanelDue to tell RRF its screen size and firmware version
 Display IP address in top bar?
 Max length of console input too short for some M587 commands. need horizontal scrolling?
-Investigate M291 axis parameters don't work, https://forum.duet3d.com/topic/5812/macro-for-calibrating-z-probe-issues/1
 Rework tool handling
 Check for PRs
 WiFi connection wizard
-Out-of-band emergency stop signal
 Look at suggestions https://forum.duet3d.com/topic/6989/suggest-screen-mods
 Test issue #7
 Test issue #9

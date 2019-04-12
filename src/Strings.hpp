@@ -17,14 +17,7 @@
 #define Newline			"\n"
 #define DegreeSymbol	"\u00B0"
 
-// The font characters from 0x0100 to 0x180 are ot correct in the font for the 4.3" panel, so only include Czech on the larger panels
-constexpr unsigned int NumLanguages =
-#if DISPLAY_X == 800
-		5
-#else
-		4
-#endif
-		;
+constexpr unsigned int NumLanguages = 5;
 
 struct StringTable
 {
@@ -70,6 +63,7 @@ struct StringTable
 	CSTRING saveSettings;
 	CSTRING clearSettings;
 	CSTRING saveAndRestart;
+	CSTRING infoTimeout;
 
 	// Misc
 	CSTRING confirmFactoryReset;
@@ -118,8 +112,8 @@ const StringTable LanguageTables[NumLanguages] =
 {
 	// English
 	{
-		// Language name
-		"English",
+		// ISO-639.1 language code
+		"en",
 
 		// Main page strings
 		"Control",
@@ -160,6 +154,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Save settings",
 		"Clear settings",
 		"Save & Restart",
+		"Info timeout ",					// note space at end
 
 		// Misc
 		"Confirm factory reset",
@@ -214,7 +209,8 @@ const StringTable LanguageTables[NumLanguages] =
 		// Theme names
 		{
 			"Light theme",
-			"Dark theme"
+			"Dark theme 1",
+			"Dark theme 2"
 		},
 
 		// Display dimming types
@@ -227,8 +223,8 @@ const StringTable LanguageTables[NumLanguages] =
 
 	// German
 	{
-		// Language name
-		"Deutsch",
+		// ISO-639.1 language code
+		"de",
 
 		// Main page strings
 		"Steuerung",
@@ -269,6 +265,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Einstllgen sichern",
 		"Werks-Reset",
 		"Sichern & Reboot",
+		"Info timeout ",					// note space at end
 
 		// Misc
 		"Alle Einstellungen zurücksetzen",
@@ -323,21 +320,22 @@ const StringTable LanguageTables[NumLanguages] =
 		// Theme names
 		{
 			"Anzeige hell",
-			"Anzeige invertiert"
+			"Anzeige inv. 1",
+			"Anzeige inv. 2"
 		},
 
 		// Display dimming types
 		{
 			"Dimmen aus",
-			"Dim bei idle",				//shortened due to space limitations, ideally "Nur im Standby dimmen"
+			"Dim bei idle",				// shortened due to space limitations, ideally "Nur im Standby dimmen"
 			"Dimmen ein"
 		}
 	},
 
 	// French
 	{
-		// Language name
-		"Français",
+		// ISO-639.1 language code
+		"fr",
 
 		// Main page strings
 		"Contrôle",
@@ -378,6 +376,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Sauver paramêtres",
 		"Effacer paramêtres",
 		"Sauvegarde & Redémarrage",
+		"Info timeout ",						// note space at end
 
 		// Misc
 		"Confirmer le réinitialisation de l'imprimante",
@@ -432,7 +431,8 @@ const StringTable LanguageTables[NumLanguages] =
 		// Theme names
 		{
 			"Fond Blanc",
-			"Fond Noir"
+			"Fond Noir 1",
+			"Fond Noir 2"
 		},
 
 		// Display dimming types
@@ -445,8 +445,8 @@ const StringTable LanguageTables[NumLanguages] =
 
 	// Spanish
 	{
-		// Language name
-		"Español",
+		// ISO-639.1 language code
+		"es",
 
 		// Main page strings
 		"Control",
@@ -487,6 +487,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Guardar parámetros",
 		"Borrar parámetros",
 		"Guardar y Reiniciar",
+		"Info timeout ",					// note space at end
 
 		// Misc
 		"Confirma restablecimiento de fábrica",
@@ -541,7 +542,8 @@ const StringTable LanguageTables[NumLanguages] =
 		// Theme names
 		{
 			"Claro",
-			"Oscuro"
+			"Oscuro 1",
+			"Oscuro 2"
 		},
 
 		// Display dimming types
@@ -552,11 +554,10 @@ const StringTable LanguageTables[NumLanguages] =
 		},
 	},
 
-#if DISPLAY_X == 800
 	// Czech
 	{
-		// Language name
-		"Čeština",
+		// ISO-639.1 language code
+		"cs",
 
 		// Main page strings
 		"Ovládání",
@@ -597,6 +598,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Uložit nastavení",
 		"Smazat nastavení",
 		"Uložit a Restart",
+		"Info timeout ",					// note space at end
 
 		// Misc
 		"Skutečně obnovit tovární nastavení?",
@@ -651,7 +653,8 @@ const StringTable LanguageTables[NumLanguages] =
 		// Theme names
 		{
 			"Světlý",
-			"Tmavý"
+			"Tmavý 1",
+			"Tmavý 2"
 		},
 
 		// Display dimming types
@@ -661,8 +664,6 @@ const StringTable LanguageTables[NumLanguages] =
 			"Vždy Dim"
 		}
 	}
-#endif
-
 };
 
 #endif /* SRC_STRINGS_HPP_ */

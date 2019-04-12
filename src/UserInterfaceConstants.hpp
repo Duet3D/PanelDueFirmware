@@ -11,7 +11,7 @@
 #include "Configuration.hpp"
 #include "DisplaySize.hpp"
 
-const size_t NumColourSchemes = 2;
+const size_t NumColourSchemes = 3;
 
 #ifdef OEM_LAYOUT
 
@@ -61,6 +61,8 @@ const PixelNumber closeButtonWidth = 40;
 
 const PixelNumber touchCalibMargin = 15;
 
+const PixelNumber ColourGradientWidth = 2 * 128;
+
 extern uint8_t glcd19x21[];				// declare which fonts we will be using
 #define DEFAULT_FONT	glcd19x21
 
@@ -105,6 +107,8 @@ const PixelNumber closeButtonWidth = 66;
 
 const PixelNumber touchCalibMargin = 22;
 
+const PixelNumber ColourGradientWidth = 3 * 128;
+
 extern uint8_t glcd28x32[];				// declare which fonts we will be using
 #define DEFAULT_FONT	glcd28x32
 
@@ -134,9 +138,9 @@ const PixelNumber row9 = row8 + rowHeight;
 const PixelNumber rowTabs = DisplayY - rowTextHeight;			// place at bottom of screen with no margin
 const PixelNumber labelRowAdjust = 2;							// how much to drop non-button fields to line up with buttons
 
+const PixelNumber ColourGradientLeftPos = DISPLAY_X - ColourGradientWidth - margin;
 const PixelNumber ColourGradientTopPos = row2;
 const PixelNumber ColourGradientHeight = rowTextHeight;
-const PixelNumber ColourGradientLeftPos = DISPLAY_X/2;
 
 const PixelNumber speedColumn = margin;
 const PixelNumber fanColumn = DISPLAY_X/4 + 20;

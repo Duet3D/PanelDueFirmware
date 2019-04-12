@@ -43,7 +43,7 @@ enum Event : uint8_t
 	evKeyboard,
 
 	// Setup functions
-	evCalTouch, evSetBaudRate, evInvertX, evInvertY, evAdjustBaudRate, evSetVolume, evAdjustVolume, evReset,
+	evCalTouch, evSetBaudRate, evInvertX, evInvertY, evAdjustBaudRate, evSetVolume, evAdjustVolume, evSetInfoTimeout, evAdjustInfoTimeout, evReset,
 
 	evYes,
 	evCancel,
