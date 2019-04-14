@@ -190,12 +190,12 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	constexpr PixelNumber hOffset = popupSideMargin + (alertPopupWidth - 2 * popupSideMargin - totalUnits * unitWidth)/2;
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	AddField(zUpCourseButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset,				  buttonWidth, MORE_ARROW "2.0", evMoveZ, "2.0"));
-	AddField(zUpMedButton =      new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + buttonStep,     buttonWidth, MORE_ARROW "0.2", evMoveZ, "0.2"));
-	AddField(zUpFineButton =     new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, MORE_ARROW "0.02", evMoveZ, "0.02"));
-	AddField(zDownFineButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, LESS_ARROW "0.02", evMoveZ, "-0.02"));
-	AddField(zDownMedButton =    new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, LESS_ARROW "0.2", evMoveZ, "-0.2"));
-	AddField(zDownCourseButton = new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, LESS_ARROW "2.0", evMoveZ, "-2.0"));
+	AddField(zUpCourseButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset,				  buttonWidth, LESS_ARROW "2.0", evMoveZ, "-2.0"));
+	AddField(zUpMedButton =      new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + buttonStep,     buttonWidth, LESS_ARROW "0.2", evMoveZ, "-0.2"));
+	AddField(zUpFineButton =     new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, LESS_ARROW "0.02", evMoveZ, "-0.02"));
+	AddField(zDownFineButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, MORE_ARROW "0.02", evMoveZ, "0.02"));
+	AddField(zDownMedButton =    new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, MORE_ARROW "0.2", evMoveZ, "0.2"));
+	AddField(zDownCourseButton = new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, MORE_ARROW "2.0", evMoveZ, "2.0"));
 
 	AddField(okButton =          new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + buttonStep,     buttonWidth + buttonStep, "OK", evCloseAlert, "M292 P0"));
 	AddField(cancelButton =      new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + 3 * buttonStep, buttonWidth + buttonStep, "Cancel", evCloseAlert, "M292 P1"));
@@ -689,8 +689,8 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 // Create the babystep popup
 void CreateBabystepPopup(const ColourScheme& colours)
 {
-	static const char * array const babystepStrings[2] = { MORE_ARROW " 0.02", LESS_ARROW " 0.02" };
-	static const char * array const babystepAmounts[2] = { "+0.02", "-0.02" };
+	static const char * array const babystepStrings[2] = { LESS_ARROW " 0.02", MORE_ARROW " 0.02" };
+	static const char * array const babystepAmounts[2] = { "-0.02", "+0.02" };
 	babystepPopup = new StandardPopupWindow(babystepPopupHeight, babystepPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour,
 			strings->babyStepping);
 	PixelNumber ypos = popupTopMargin + babystepRowSpacing;
