@@ -116,7 +116,7 @@ public:
 	void InitLCD(DisplayOrientation po, bool is24bit, bool isER);
 	void fillScr(Colour c, uint16_t leftMargin = 0);
 	void drawPixel(int x, int y);
-	void drawLine(int x1, int y1, int x2, int y2);
+	void drawLine(int x1, int y1, int x2, int y2);			// Draw a straight line from points (x1,y1) to (x2,y2) inclusive
 	void drawRect(int x1, int y1, int x2, int y2);
 	void drawRoundRect(int x1, int y1, int x2, int y2);
 	void fillRect(int x1, int y1, int x2, int y2, Colour grad = 0, uint8_t gradChange = 1);

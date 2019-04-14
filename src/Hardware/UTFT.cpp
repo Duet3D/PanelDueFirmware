@@ -1640,14 +1640,14 @@ void UTFT::fillRoundRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gr
 		Colour fcolourSave = fcolour;
 		uint8_t gradCount = 0;
 
-		drawHLine(x1+2, y1, x2-x1-4);
+		drawHLine(x1+2, y1, x2-x1-3);
 		++y1;
 		if (++gradCount == gradChange)
 		{
 			gradCount = 0;
 			applyGradient(grad);
 		}
-		drawHLine(x1+1, y1, x2-x1-2);
+		drawHLine(x1+1, y1, x2-x1-1);
 		++y1;
 		if (++gradCount == gradChange)
 		{
@@ -1656,7 +1656,7 @@ void UTFT::fillRoundRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gr
 		}
 		while (y1 + 1 < y2)
 		{
-			drawHLine(x1, y1, x2-x1);
+			drawHLine(x1, y1, x2-x1+1);
 			++y1;
 			if (++gradCount == gradChange)
 			{
@@ -1664,14 +1664,14 @@ void UTFT::fillRoundRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gr
 				applyGradient(grad);
 			}
 		}
-		drawHLine(x1+1, y1, x2-x1-2);
+		drawHLine(x1+1, y1, x2-x1-1);
 		++y1;
 		if (++gradCount == gradChange)
 		{
 			gradCount = 0;
 			applyGradient(grad);
 		}
-		drawHLine(x1+2, y1, x2-x1-4);
+		drawHLine(x1+2, y1, x2-x1-3);
 		
 		fcolour = fcolourSave;
 	}
@@ -1781,6 +1781,7 @@ void UTFT::drawPixel(int x, int y)
 	removeCS();
 }
 
+// Draw a straight line from points (x1,y1) to (x2,y2) inclusive
 void UTFT::drawLine(int x1, int y1, int x2, int y2)
 {
 	if (y1 == y2)
