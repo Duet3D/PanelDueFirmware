@@ -32,6 +32,8 @@ typedef const uint8_t * array Icon;
 #define UP_ARROW		"\xC2\x82"		// Unicode control character, code point 0x82, we use it as up arrow
 #define RIGHT_ARROW		"\xC2\x83"		// Unicode control character, code point 0x83, we use it as down arrow
 #define DOWN_ARROW		"\xC2\x84"		// Unicode control character, code point 0x84, we use it as down arrow
+#define MORE_ARROW		"\xC2\x85"
+#define LESS_ARROW		"\xC2\x86"
 
 const uint8_t buttonGradStep = 12;
 const PixelNumber AutoPlace = 0xFFFF;
@@ -72,7 +74,7 @@ class DisplayField
 {
 protected:
 	PixelNumber y, x;							// Coordinates of top left pixel, counting from the top left corner
-	PixelNumber width;							// number of pixels occupied in each direction
+	PixelNumber width;							// number of pixels wide
 	Colour fcolour, bcolour;					// foreground and background colours
 	uint16_t changed : 1,
 			visible : 1,
@@ -96,16 +98,19 @@ public:
 	DisplayField * null next;					// link to next field in list
 
 	virtual bool IsButton() const { return false; }
-	bool IsVisible() const { return visible; }
+	virtual bool IsVisible() const { return visible; }
 	void Show(bool v);
 	virtual void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) = 0;
 	void SetColours(Colour pf, Colour pb);
 	void SetChanged() { changed = true; }
+	bool HasChanged() const { return changed; }
 	PixelNumber GetMinX() const { return x; }
 	PixelNumber GetMaxX() const { return x + width - 1; }
 	PixelNumber GetMinY() const { return y; }
 	PixelNumber GetMaxY() const { return y + GetHeight() - 1; }
-		
+
+	void SetPositionAndWidth(PixelNumber newX, PixelNumber newWidth);
+
 	virtual event_t GetEvent() const { return nullEvent; }
 
 	static void SetDefaultColours(Colour pf, Colour pb) { defaultFcolour = pf; defaultBcolour = pb; }
@@ -181,6 +186,22 @@ public:
 	void Refresh(bool full) override;
 	void SetPos(PixelNumber px, PixelNumber py) { xPos = px; yPos = py; }
 	bool Contains(PixelNumber xmin, PixelNumber ymin, PixelNumber xmax, PixelNumber ymax) const override;
+};
+
+class ColourGradientField : public DisplayField
+{
+	PixelNumber height;
+
+protected:
+	PixelNumber GetHeight() const override { return height; }
+
+public:
+	ColourGradientField(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ph)
+		: DisplayField(py, px, pw), height(ph)
+	{
+	}
+
+	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override;
 };
 
 // Base class for fields displaying text
@@ -449,23 +470,14 @@ public:
 	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, int param = 0);
 	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, const char * array param);
 
+	// Hide any text buttons with null text
+	bool IsVisible() const override { return text != nullptr && DisplayField::IsVisible(); }
+
 	void SetText(const char* array null pt)
 	{
 		text = pt;
 		changed = true;
 	}
-};
-
-// Button to shadow a standard text button
-class ShadowTextButton : public ButtonWithText
-{
-	TextButton *shadowedButton;
-
-protected:
-	size_t PrintText(size_t offset) const override;
-
-public:
-	ShadowTextButton(PixelNumber py, PixelNumber px, PixelNumber pw, TextButton *b);
 };
 
 // Standard button with an icon

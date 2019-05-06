@@ -25,15 +25,15 @@ const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientati
 #elif DISPLAY_TYPE == DISPLAY_TYPE_ITDB02_43
 
 # define DISPLAY_CONTROLLER		SSD1963_480
-const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseX | InvertBitmap);
+const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(Default);
 const DisplayOrientation DefaultTouchOrientAdjust = SwapXY;
 # define DISPLAY_X				(480)
 # define DISPLAY_Y				(272)
 
-#elif (DISPLAY_TYPE == DISPLAY_TYPE_ITDB02_50) || (DISPLAY_TYPE == DISPLAY_TYPE_ER_70)
+#elif (DISPLAY_TYPE == DISPLAY_TYPE_ITDB02_50) || (DISPLAY_TYPE == DISPLAY_TYPE_ER_50_70)
 
 # define DISPLAY_CONTROLLER		SSD1963_800
-const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseX | InvertBitmap);
+const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(Default);
 const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseY);
 # define DISPLAY_X				(800)
 # define DISPLAY_Y				(480)
@@ -41,7 +41,7 @@ const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientati
 #elif DISPLAY_TYPE == DISPLAY_TYPE_ITDB02_70
 
 # define DISPLAY_CONTROLLER		SSD1963_800
-const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseX | ReverseY | InvertText | InvertBitmap);
+const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(ReverseY);
 const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseY);
 # define DISPLAY_X				(800)
 # define DISPLAY_Y				(480)

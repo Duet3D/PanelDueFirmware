@@ -7,6 +7,7 @@
 
 #include "ecv.h"
 #include "Misc.hpp"
+#include <cctype>
 
 // Safe version of strncpy that ensures that the destination is always null-terminated on return
 void safeStrncpy(char* array dst, const char* array src, size_t n)
@@ -30,6 +31,21 @@ bool stringStartsWith(const char* array a, const char* array b)
 		}
 	}
 	return true;
+}
+
+// If the text starts with decimal digits followed by underscore, skip that bit
+const char * array SkipDigitsAndUnderscore(const char * array text)
+{
+	const char * const array originalText = text;
+	if (isdigit(*text))
+	{
+		do
+		{
+			++text;
+		} while (isdigit(*text));
+		return (*text == '_') ? text + 1 : originalText;
+	}
+	return originalText;
 }
 
 // End

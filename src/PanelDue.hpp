@@ -22,6 +22,14 @@ extern void StartReceivedMessage();
 extern void EndReceivedMessage();
 
 // Functions called from module UserInterface
+enum class DisplayDimmerType : uint8_t
+{
+	never = 0,				// never dim the display
+	onIdle, 				// only display when printer status is idle
+	always,					// default - always dim
+	NumTypes
+};
+
 extern bool PrintInProgress();
 extern PrinterStatus GetStatus();
 extern void DelayTouchLong();
@@ -33,18 +41,21 @@ extern void CalibrateTouch();
 // Functions called from module UserInterface to manipulate non-volatile settings and associated hardware
 extern void FactoryReset();
 extern void SaveSettings();
-extern bool IsSaveAndRestartNeeded();
 extern bool IsSaveNeeded();
 extern void MirrorDisplay();
 extern void InvertDisplay();
 extern void SetBaudRate(uint32_t rate);
-extern void SetBrightness (int percent);
-extern void SetVolume(uint32_t newVolume);
-extern void SetColourScheme(uint32_t newColours);
-extern void SetLanguage(uint32_t newLanguage);
+extern void SetBrightness(int percent);
+extern void RestoreBrightness();
+extern void SetVolume(uint8_t newVolume);
+extern void SetInfoTimeout(uint8_t newInfoTimeout);
+extern bool SetColourScheme(uint8_t newColours);
+extern bool SetLanguage(uint8_t newLanguage);
 extern uint32_t GetBaudRate();
 extern int GetBrightness();
 extern uint32_t GetVolume();
+extern DisplayDimmerType GetDisplayDimmerType();
+extern void SetDisplayDimmerType(DisplayDimmerType newType);
 extern FirmwareFeatures GetFirmwareFeatures();
 extern const char* array CondStripDrive(const char* array arg);
 extern void Reconnect();
@@ -58,7 +69,8 @@ class ColourScheme;
 extern const ColourScheme *colours;
 
 const size_t MIN_AXES = 3;					// the minimum number of axes we support
-const size_t alertTextLength = 110;			// maximum characters in the alert text
+
+const size_t alertTextLength = 165;			// maximum characters in the alert text
 const size_t alertTitleLength = 50;			// maximum characters in the alert title
 
 struct Alert

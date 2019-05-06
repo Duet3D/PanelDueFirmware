@@ -22,7 +22,11 @@ enum class PrinterStatus
 	pausing = 7,
 	resuming = 8,
 	flashing = 9,
-	toolChange = 10
+	toolChange = 10,
+	simulating = 11,
+	off = 12
 };
+
+const char * const StatusLetters = "IPSCABDRFTMO";	// status letter codes corresponding to the above, except for the first one
 
 #endif /* SRC_PRINTERSTATUS_HPP_ */

@@ -1,28 +1,106 @@
-[done, test] Extrusion factor command sends parameter P instead of D
-[done, test] Send M408 S1 occasionally instead of M408 S0
-[done, test] Use bigger brightness up/down steps
-[done, test] Support simulating files
+1.20RC1:
+[checked, ok] Check fan command - should send M106 without a fan number
 [done] Change format of workspace paths, use quotes - issue #3
-[done, test] Keys on keyboard no longer show they are pressed
 [done, ok] Support new message box
 [done, ok] More characters on keyboard, in particular " and '
+[done, test] Extrusion factor command sends parameter P instead of D
+[done, ok] Use bigger brightness up/down steps
+[done, test] Send M408 S1 occasionally instead of M408 S0
+[done, test] Support simulating files
+[done, test] Keys on keyboard no longer show they are pressed
+[done] Send file names in quotes
+
+1.20RC4:
 [done, test] Skip leading digits followed by underscore in macro names
 [done] Characters beyond U+00FF
 [done] Reduce babystepping to 0.02mm
-[checked, ok] Check fan command - should send M106 without a fan number
-[done] Send file names in quotes
+[done] Correct german translation of "Invert display" and replace translation of "Speed" which is too long
+[done, test] Handle status M (simulating)
+[done, test] Pressing Control should close the extrusion or Move popup
+[done, test] Concatenate splash screen with the binary, load it if present
+[done, test] Cancel splash screen if screen is touched
+[done, test] Dim screen after no activity
+[done, test] Fix for setting standby bed temperature
+[done, test] Set extrusion factor not working, test with DWC active too
 
-Entire keyboard gets redrawn when a key is pressed
+1.20 release:
+- don't dim while a message needs to be acknowledged
+- [done, test] restore brightness when status changes
+- [done, test] when restoring brightness due to message etc. restart dimmer timer, https://www.duet3d.com/forum/thread.php?pid=41171#p41171
+- [done, ok] issues when tools are deleted, https://www.duet3d.com/forum/thread.php?pid=41124#p41124
+- [done] Invisible space bar
+- [done] Directories with only a few files, https://www.duet3d.com/forum/thread.php?pid=42305#p42305
+
+1.21 release:
+- [done] Light/Dark popup covers Save & Restart button, https://www.duet3d.com/forum/thread.php?pid=42495#p42495
+- [done] If you use macro subfolders then Control page macros are displayed incorrectly if you go into a macro subfolder, https://www.duet3d.com/forum/thread.php?pid=44644#p44644
+- [done] Support new status letter 'O' (powered off)
+- [done] Add last modified date/time to file info popup (have a PR for this)
+- [done] Add print time to file info popup
+- [done] Add colour gradient test pattern on setup page
+- [done] Add support for Marlin firmware type
+- [done] Settings are saved and restarts done automatically if needed when leaving the Setup page
+
+1.21.4 release for ER:
+[done] Increase file buffer size above 2K in version 3 builds (issue #18)
+[done] Increase PWM frequency to 20kHz for the integrated version
+
+1.22 release:
+[done] okToSend should allow PrinterStatus::off so that macros are displayed, see https://forum.duet3d.com/topic/5649/no-macros-on-paneldue
+[done, test, was sending G92 E0, now sends M120 M83 ... M121] Check that the Extrusion menu commands specify relative extrusion
+[done] Adjust extruder feed rate values, https://forum.duet3d.com/topic/6150/feedrate-adjustments (remove 40, add 2)
+[done] Fixed buffer overflow if there were more than 4 extruders when using a 4.3" screen or more than 6 using a 5" or 7" screen
+[done, test] On SAM3S read chip ID to find end of RAM and store NVDATA there, https://forum.duet3d.com/topic/6922/custom-splash-screen-garbled/8
+[done, was un-dimming on any status change] "Always dim" un-dims on tool change, https://forum.duet3d.com/topic/5665/panel-due-firmware-1-21-2-released/18
+[done, now 50] Allow longer macro names, https://forum.duet3d.com/topic/7176/bug-report-macro-name-length-on-paneldue
+[done, test] Faster image load, https://forum.duet3d.com/topic/4724/custom-splash-screen/10
+[done on SAM4S] Allow longer messages in log, on processors with enough RAM
+[not done, image load is much faster now] Allow image load to be cancelled by touch, unless it is now much faster
+[fixed buffer overflow, test before release] Test extrusion factors are working, we have a report that they get reset to 100 on T3
+
+Bugs in 1.22, fixed in 1.22.1:
+[done] for dimming, treat printer Off the same as Idle
+[done, ok] babystepping sends M290 M290 S0.02
+[done, ok] can't cancel a message popup that appears on top of a babystepping popup
+[done, ok] don't timeout error messages
+[done, ok] handle longer responses in Console window e.g. from M591
+[done, ok] Send F0 0F on emergency stop
+
+Done in 1.23:
+[done, ok] New Duet3D logo
+[done, ok] Builds that used to have Escher3D logo now have Duet3D logo
+[done, ok] Up/down arrows are confusing in M291 Z stepping and baby stepping, https://forum.duet3d.com/topic/9493/paneldue-request-m291-z-jogmenue-please-add-to-arrows, https://forum.duet3d.com/topic/9480/paneldue-request-m291-x-y-jogmenue-like-in-webinterface
+[done, ok] STOP button should work even when there is a popup menu, if it is not completely obscured
+[done, ok] Added another dark theme
+[done, ok] Czech language now available in 4.3" build
+[done, ok] Wider colour gradient on 4.3" build
+[done, ok] Configurable timeout on popup messages, https://forum.duet3d.com/topic/8606/panel-due-request-configurable-time-delay-on-message-boxes
+[done, ok] Display current coordinates on Move popup and Print page
+
+Remaining:
+
+Two tools with 1 heater, wrong display https://forum.duet3d.com/topic/8933/paneldue-two-tools-same-heater-one-pair-of-temp-buttons
+Better CNC support, https://forum.duet3d.com/topic/9156/cnc-firmware-for-the-paneldue
+M291 axes other than Z
+Investigate M291 axis parameters don't work, https://forum.duet3d.com/topic/5812/macro-for-calibrating-z-probe-issues/1 , https://forum.duet3d.com/topic/9480/paneldue-request-m291-x-y-jogmenue-like-in-webinterface
+
+Add a queue of beeps pending so that tunes can be played
+PanelDue to tell RRF its screen size and firmware version
+Display IP address in top bar?
+Max length of console input too short for some M587 commands. need horizontal scrolling?
+Rework tool handling
+Check for PRs
+WiFi connection wizard
+Look at suggestions https://forum.duet3d.com/topic/6989/suggest-screen-mods
+Test issue #7
+Test issue #9
+Optional PIN code for access (mrehorstdmd)
+Feature request: coordinates on the Move screen
 Handle no bed heater better?
 Improve visual appearance?
-Load splash screen separately at a specific address? Or concatenate with binary?
-Cancel splash screen if screen is touched
 Look at https://www.duet3d.com/forum/thread.php?pid=27861#p27861
-Dim screen after no activity?
 User requests: https://www.duet3d.com/forum/thread.php?pid=33908#p33908
 User request to display virtual heaters e.g. chamber, heatsink https://www.duet3d.com/forum/thread.php?pid=34123#p34123
 Bug: https://www.duet3d.com/forum/thread.php?pid=34772#p34772 (needs RRF fix too?)
-Bug: standby temps not settable, see https://duet3d.com/wiki/Test_the_Z_probe
 User request: https://www.duet3d.com/forum/thread.php?pid=35713#p35713
-Pressing Control should close the extrusion or Move popup
-When older firmware sends popups, it displays some Z adjustment buttons
+Sort files by date https://forum.duet3d.com/topic/598/gcode-files-sorting-backup-system/12

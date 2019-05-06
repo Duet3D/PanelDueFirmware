@@ -57,6 +57,8 @@
 # endif
 #endif
 
+extern uint16_t _esplash[];							// defined in linker script
+
 #define DEBUG	(0)
 
 // Controlling constants
@@ -82,7 +84,8 @@ const HostFirmwareType firmwareTypes[] =
 {
 	{ "RepRapFirmware", quoteFilenames },
 	{ "Smoothie", noGcodesFolder | noStandbyTemps | noG10Temps | noDriveNumber | noM20M36 },
-	{ "Repetier", noGcodesFolder | noStandbyTemps | noG10Temps }
+	{ "Repetier", noGcodesFolder | noStandbyTemps | noG10Temps },
+	{ "Marlin", noGcodesFolder | noStandbyTemps | noG10Temps }
 };
 
 // Variables
@@ -107,13 +110,14 @@ static uint32_t lastTouchTime;
 static uint32_t ignoreTouchTime;
 static uint32_t lastPollTime;
 static uint32_t lastResponseTime = 0;
+static uint32_t lastActionTime = 0;							// the last time anything significant happened
 static FirmwareFeatures firmwareFeatures = 0;
+static bool isDimmed = false;								// true if we have dimmed the display
 static bool isDelta = false;
-static bool axisHomed[MAX_AXES] = {false, false, false};
+static bool axisHomed[MaxAxes] = {false, false, false};
 static bool allAxesHomed = false;
 static size_t numAxes = MIN_AXES;
 static int32_t beepFrequency = 0, beepLength = 0;
-static unsigned int numHeads = 1;
 static uint32_t messageSeq = 0;
 static uint32_t newMessageSeq = 0;
 
@@ -124,8 +128,9 @@ uint32_t lastAlertSeq = 0;
 
 struct FlashData
 {
+	// The magic value should be changed whenever the layout of the NVRAM changes
 	// We now use a different magic value for each display size, to force the "touch the spot" screen to be displayed when you change the display size
-	static const uint32_t magicVal = 0x3AB629E0 + DISPLAY_TYPE;
+	static const uint32_t magicVal = 0x3AB62A20 + DISPLAY_TYPE;
 	static const uint32_t muggleVal = 0xFFFFFFFF;
 
 	uint32_t magic;
@@ -136,11 +141,14 @@ struct FlashData
 	uint16_t ymax;
 	DisplayOrientation lcdOrientation;
 	DisplayOrientation touchOrientation;
-	uint32_t touchVolume;
-	uint32_t language;
-	uint32_t colourScheme;
-	uint32_t brightness;
-	char dummy;
+	uint8_t touchVolume;
+	uint8_t language;
+	uint8_t colourScheme;
+	uint8_t brightness;
+	DisplayDimmerType displayDimmerType;
+	uint8_t infoTimeout;
+	//uint8_t padding[4];
+	char dummy;								// must be at a multiple of 4 bytes from the start because flash is read/written in whole dwords
 	
 	FlashData() : magic(muggleVal) { }
 	bool operator==(const FlashData& other);
@@ -188,6 +196,7 @@ enum ReceivedDataEvent
 	rcvGeneratedBy,
 	rcvGeometry,
 	rcvHeight,
+	rcvLastModified,
 	rcvLayerHeight,
 	rcvMessage,
 	rcvMboxMode,
@@ -197,10 +206,12 @@ enum ReceivedDataEvent
 	rcvMboxTitle,
 	rcvMboxSeq,
 	rcvMyName,
+	rcvPrintTime,
 	rcvProbe,
 	rcvResponse,
 	rcvSeq,
 	rcvSfactor,
+	rcvSimulatedTime,
 	rcvSize,
 	rcvStatus,
 	rcvTimesLeft,
@@ -224,7 +235,8 @@ bool FlashData::IsValid() const
 		&& brightness >= Buzzer::MinBrightness
 		&& brightness <= Buzzer::MaxBrightness
 		&& language < UI::GetNumLanguages()
-		&& colourScheme < NumColourSchemes;
+		&& colourScheme < NumColourSchemes
+		&& displayDimmerType < DisplayDimmerType::NumTypes;
 }
 
 bool FlashData::operator==(const FlashData& other)
@@ -240,7 +252,9 @@ bool FlashData::operator==(const FlashData& other)
 		&& touchVolume == other.touchVolume
 		&& language == other.language
 		&& colourScheme == other.colourScheme
-		&& brightness == other.brightness;
+		&& brightness == other.brightness
+		&& displayDimmerType == other.displayDimmerType
+		&& infoTimeout == other.infoTimeout;
 }
 
 void FlashData::SetDefaults()
@@ -256,6 +270,8 @@ void FlashData::SetDefaults()
 	brightness = Buzzer::DefaultBrightness;
 	language = 0;
 	colourScheme = 0;
+	displayDimmerType = DisplayDimmerType::always;
+	infoTimeout = DefaultInfoTimeout;
 	magic = magicVal;
 }
 
@@ -318,7 +334,7 @@ void Delay(uint32_t milliSeconds)
 
 bool PrintInProgress()
 {
-	return status == PrinterStatus::printing || status == PrinterStatus::paused || status == PrinterStatus::pausing || status == PrinterStatus::resuming;
+	return status == PrinterStatus::printing || status == PrinterStatus::paused || status == PrinterStatus::pausing || status == PrinterStatus::resuming || status == PrinterStatus::simulating;
 }
 
 // Search an ordered table for a matching string
@@ -349,7 +365,7 @@ ReceivedDataEvent bsearch(const ReceiveDataTableEntry array table[], size_t numE
 // We don't want to send these when the printer is busy with a previous command, because they will block normal status requests.
 bool OkToSend()
 {
-	return status == PrinterStatus::idle || status == PrinterStatus::printing || status == PrinterStatus::paused;
+	return status == PrinterStatus::idle || status == PrinterStatus::printing || status == PrinterStatus::paused || status == PrinterStatus::off;
 }
 
 // Return the printer status
@@ -358,14 +374,15 @@ PrinterStatus GetStatus()
 	return status;
 }
 
-void InitLcd(DisplayOrientation dor, uint32_t language, uint32_t colourScheme)
+// Initialise the LCD and user interface. The non-volatile data must be set up before calling this.
+void InitLcd()
 {
-	lcd.InitLCD(dor, IS_24BIT, IS_ER);									// set up the LCD
-	colours = &colourSchemes[colourScheme];
-	UI::CreateFields(language, *colours);							// create all the fields
-	lcd.fillScr(black);												// make sure the memory is clear
-	Delay(100);														// give the LCD time to update
-	Buzzer::SetBacklight(nvData.brightness);						// turn the display on
+	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);				// set up the LCD
+	colours = &colourSchemes[nvData.colourScheme];
+	UI::CreateFields(nvData.language, *colours, nvData.infoTimeout);	// create all the fields
+	lcd.fillScr(black);													// make sure the memory is clear
+	Delay(100);															// give the LCD time to update
+	RestoreBrightness();												// turn the display on
 }
 
 // Ignore touches for a long time
@@ -454,11 +471,6 @@ void CalibrateTouch()
 	mgr.Refresh(true);
 }
 
-bool IsSaveAndRestartNeeded()
-{
-	return nvData.language != savedNvData.language || nvData.colourScheme != savedNvData.colourScheme;
-}
-
 bool IsSaveNeeded()
 {
 	return nvData != savedNvData;
@@ -466,13 +478,13 @@ bool IsSaveNeeded()
 
 void MirrorDisplay()
 {
-	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | InvertBitmap));
+	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ ReverseX);
 	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);
 }
 
 void InvertDisplay()
 {
-	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | ReverseY | InvertText | InvertBitmap));
+	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | ReverseY));
 	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);
 }
 
@@ -482,25 +494,63 @@ void SetBaudRate(uint32_t rate)
 	SerialIo::Init(rate);
 }
 
-extern void SetBrightness (int percent)
+extern void SetBrightness(int percent)
 {
 	nvData.brightness = constrain<int>(percent, Buzzer::MinBrightness, Buzzer::MaxBrightness);
-	Buzzer::SetBacklight(nvData.brightness);
+	RestoreBrightness();
 }
 
-void SetVolume(uint32_t newVolume)
+extern void RestoreBrightness()
+{
+	Buzzer::SetBacklight(nvData.brightness);
+	lastActionTime = SystemTick::GetTickCount();
+	isDimmed = false;
+}
+
+extern void DimBrightness()
+{
+	if (   (nvData.displayDimmerType == DisplayDimmerType::always)
+		|| (nvData.displayDimmerType == DisplayDimmerType::onIdle && (status == PrinterStatus::idle || status == PrinterStatus::off))
+	   )
+	{
+		Buzzer::SetBacklight(nvData.brightness/8);
+		isDimmed = true;
+	}
+}
+
+DisplayDimmerType GetDisplayDimmerType()
+{
+	return nvData.displayDimmerType;
+}
+
+void SetDisplayDimmerType(DisplayDimmerType newType)
+{
+	nvData.displayDimmerType = newType;
+}
+
+void SetVolume(uint8_t newVolume)
 {
 	nvData.touchVolume = newVolume;
 }
 
-void SetColourScheme(uint32_t newColours)
+void SetInfoTimeout(uint8_t newInfoTimeout)
 {
-	nvData.colourScheme = newColours;
+	nvData.infoTimeout = newInfoTimeout;
 }
 
-void SetLanguage(uint32_t newLanguage)
+bool SetColourScheme(uint8_t newColours)
 {
+	const bool ret = (newColours != nvData.colourScheme);
+	nvData.colourScheme = newColours;
+	return ret;
+}
+
+// Set the language, returning true if it has changed
+bool SetLanguage(uint8_t newLanguage)
+{
+	const bool ret = (newLanguage != nvData.language);
 	nvData.language = newLanguage;
+	return ret;
 }
 
 uint32_t GetBaudRate()
@@ -537,52 +587,20 @@ void SaveSettings()
 	nvData.Save();
 	// To make sure it worked, load the settings again
 	savedNvData.Load();
-	UI::CheckSettingsAreSaved();
 }
 
 // This is called when the status changes
 void SetStatus(char c)
 {
-	PrinterStatus newStatus;
-	switch(c)
-	{
-	case 'A':
-		newStatus = PrinterStatus::paused;
-		break;
-	case 'B':
-		newStatus = PrinterStatus::busy;
-		break;
-	case 'C':
-		newStatus = PrinterStatus::configuring;
-		break;
-	case 'D':
-		newStatus = PrinterStatus::pausing;
-		break;
-	case 'F':
-		newStatus = PrinterStatus::flashing;
-		break;
-	case 'I':
-		newStatus = PrinterStatus::idle;
-		break;
-	case 'P':
-		newStatus = PrinterStatus::printing;
-		break;
-	case 'R':
-		newStatus = PrinterStatus::resuming;
-		break;
-	case 'S':
-		newStatus = PrinterStatus::stopped;
-		break;
-	case 'T':
-		newStatus = PrinterStatus::toolChange;
-		break;
-	default:
-		newStatus = status;		// leave the status alone if we don't recognise it
-		break;
-	}
+	const char * const p = strchr(StatusLetters, c);
+	const PrinterStatus newStatus = (p != nullptr) ? (PrinterStatus)(p - StatusLetters + 1) : status;
 	
 	if (newStatus != status)
 	{
+		if (GetDisplayDimmerType() != DisplayDimmerType::always)
+		{
+			RestoreBrightness();
+		}
 		UI::ChangeStatus(status, newStatus);
 		
 		if (status == PrinterStatus::configuring || (status == PrinterStatus::connecting && newStatus != PrinterStatus::configuring))
@@ -670,6 +688,7 @@ const ReceiveDataTableEntry fieldTable[] =
 	{ rcvHeight,		"height" },
 	{ rcvHomed,			"homed^" },
 	{ rcvHstat,			"hstat^" },
+	{ rcvLastModified,	"lastModified" },
 	{ rcvLayerHeight,	"layerHeight" },
 	{ rcvMessage,		"message" },
 	{ rcvMboxControls,	"msgBox.controls" },
@@ -681,10 +700,12 @@ const ReceiveDataTableEntry fieldTable[] =
 	{ rcvMyName,		"myName" },
 	{ rcvNumTools,		"numTools" },
 	{ rcvPos,			"pos^" },
+	{ rcvPrintTime,		"printTime" },
 	{ rcvProbe,			"probe" },
 	{ rcvResponse,		"resp" },
 	{ rcvSeq,			"seq" },
 	{ rcvSfactor,		"sfactor" },
+	{ rcvSimulatedTime,	"simulatedTime" },
 	{ rcvSize,			"size" },
 	{ rcvStandby,		"standby^" },
 	{ rcvStatus,		"status" },
@@ -712,7 +733,7 @@ void EndReceivedMessage()
 		messageSeq = newMessageSeq;
 		MessageLog::DisplayNewMessage();
 	}	
-	FileManager::EndReceivedMessage(UI::IsDisplayingFileInfo());
+	FileManager::EndReceivedMessage();
 	if ((currentAlert.flags & Alert::GotMode) != 0 && currentAlert.mode < 0)
 	{
 		UI::ClearAlert();
@@ -729,13 +750,14 @@ void EndReceivedMessage()
 void ProcessReceivedValue(const char id[], const char data[], const size_t indices[])
 {
 	ShowLine;
-	switch(bsearch(fieldTable, sizeof(fieldTable)/sizeof(fieldTable[0]), id))
+	const ReceivedDataEvent rde = bsearch(fieldTable, sizeof(fieldTable)/sizeof(fieldTable[0]), id);
+	switch (rde)
 	{
 	case rcvActive:
 		ShowLine;
 		{
 			int32_t ival;
-			if (GetInteger(data, ival) && indices[0] < maxHeaters)
+			if (GetInteger(data, ival))
 			{
 				UI::UpdateActiveTemperature(indices[0], ival);
 			}
@@ -746,7 +768,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		ShowLine;
 		{
 			int32_t ival;
-			if (GetInteger(data, ival) && indices[0] < (int)maxHeaters && indices[0] != 0)
+			if (GetInteger(data, ival))
 			{
 				UI::UpdateStandbyTemperature(indices[0], ival);
 			}
@@ -755,26 +777,18 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 
 	case rcvHeaters:
 		ShowLine;
-		if (indices[0] < maxHeaters)
 		{
 			float fval;
 			if (GetFloat(data, fval))
 			{
 				ShowLine;
 				UI::UpdateCurrentTemperature(indices[0], fval);
-				if (indices[0] == numHeads + 1)
-				{
-					ShowLine;
-					UI::ShowHeater(indices[0], true);
-					++numHeads;
-				}
 			}
 		}
 		break;
 
 	case rcvHstat:
 		ShowLine;
-		if (indices[0] < maxHeaters)
 		{
 			int32_t ival;
 			if (GetInteger(data, ival))
@@ -799,7 +813,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		ShowLine;
 		{
 			int32_t ival;
-			if (GetInteger(data, ival) && indices[0] + 1 < (int)maxHeaters)
+			if (GetInteger(data, ival))
 			{
 				UI::UpdateExtrusionFactor(indices[0], ival);
 			}
@@ -836,7 +850,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		ShowLine;
 		{
 			int32_t ival;
-			if (indices[0] < MAX_AXES && GetInteger(data, ival) && ival >= 0 && ival < 2)
+			if (indices[0] < MaxAxes && GetInteger(data, ival) && ival >= 0 && ival < 2)
 			{
 				bool isHomed = (ival == 1);
 				if (isHomed != axisHomed[indices[0]])
@@ -932,6 +946,21 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		}
 		break;
 
+	case rcvLastModified:
+		UI::UpdateFileLastModifiedText(data);
+		break;
+
+	case rcvPrintTime:
+	case rcvSimulatedTime:
+		{
+			int32_t sz;
+			if (GetInteger(data, sz) && sz > 0)
+			{
+				UI::UpdatePrintTimeText((uint32_t)sz, rde == rcvSimulatedTime);
+			}
+		}
+		break;
+
 	case rcvLayerHeight:
 		{
 			float f;
@@ -983,7 +1012,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		{
 			uint32_t n = MIN_AXES;
 			GetUnsignedInteger(data, n);
-			numAxes = constrain<unsigned int>(n, MIN_AXES, MAX_AXES);
+			numAxes = constrain<unsigned int>(n, MIN_AXES, MaxAxes);
 			UI::UpdateGeometry(numAxes, isDelta);
 		}
 		break;
@@ -1119,12 +1148,16 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	{
 		FileManager::BeginReceivingFiles();				// received an empty file list - need to tell the file manager about it
 	}
+	if (strcmp(id, "heaters^") == 0)
+	{
+		UI::SetNumHeaters(indices[0]);					// tell the user interface how many heaters there are
+	}
 }
 
 // Update those fields that display debug information
 void UpdateDebugInfo()
 {
-	freeMem->SetValue(getFreeMemory());
+	freeMem->SetValue(GetFreeMemory());
 }
 
 #if 0
@@ -1160,8 +1193,9 @@ void SelfTest()
  */
 int main(void)
 {
-    SystemInit();						// set up the clock etc.	
-	
+    SystemInit();						// set up the clock etc.
+    InitMemory();
+
 	matrix_set_system_io(CCFG_SYSIO_SYSIO4 | CCFG_SYSIO_SYSIO5 | CCFG_SYSIO_SYSIO6 | CCFG_SYSIO_SYSIO7);	// enable PB4-PB7 pins
 	pmc_enable_periph_clk(ID_PIOA);		// enable the PIO clock
 	pmc_enable_periph_clk(ID_PIOB);		// enable the PIO clock
@@ -1185,7 +1219,7 @@ int main(void)
 	if (nvData.IsValid())
 	{
 		// The touch panel has already been calibrated
-		InitLcd(nvData.lcdOrientation, nvData.language, nvData.colourScheme);
+		InitLcd();
 		touch.init(DisplayX, DisplayY, nvData.touchOrientation);
 		touch.calibrate(nvData.xmin, nvData.xmax, nvData.ymin, nvData.ymax, touchCalibMargin);
 		savedNvData = nvData;
@@ -1194,7 +1228,7 @@ int main(void)
 	{
 		// The touch panel has not been calibrated, and we do not know which way up it is
 		nvData.SetDefaults();
-		InitLcd(nvData.lcdOrientation, nvData.language, nvData.colourScheme);
+		InitLcd();
 		CalibrateTouch();							// this includes the touch driver initialisation
 		SaveSettings();
 	}
@@ -1212,6 +1246,23 @@ int main(void)
 		lcd.drawCompressedBitmapBottomToTop(0, 0, DISPLAY_X, DISPLAY_Y, splashScreenImage);
 		Delay(5000);								// hold it there for 5 seconds
 	}
+#else
+	// Display the splash screen if one has been appended to the file, unless it was a software reset (we use software reset to change the language or colour scheme)
+	// The splash screen data comprises the number of X pixels, then the number of Y pixels, then the data
+	if (rstc_get_reset_cause(RSTC) != RSTC_SOFTWARE_RESET && _esplash[0] == DISPLAY_X && _esplash[1] == DISPLAY_Y)
+	{
+		lcd.fillScr(black);
+		lcd.drawCompressedBitmapBottomToTop(0, 0, DISPLAY_X, DISPLAY_Y, _esplash + 2);
+		const uint32_t now = SystemTick::GetTickCount();
+		do
+		{
+			uint16_t x, y;
+			if (touch.read(x, y))
+			{
+				break;
+			}
+		} while (SystemTick::GetTickCount() - now < 5000);		// hold it there for 5 seconds or until touched
+	}
 #endif
 
 	mgr.Refresh(true);								// draw the screen for the first time
@@ -1220,10 +1271,8 @@ int main(void)
 	lastPollTime = SystemTick::GetTickCount() - printerPollInterval;	// allow a poll immediately
 	
 	// Hide the Head 2+ parameters until we know we have a second head
-	for (unsigned int i = 2; i < maxHeaters; ++i)
-	{
-		UI::ShowHeater(i, false);
-	}
+	UI::SetNumHeaters(2);
+	UI::SetNumTools(1);
 	
 	debugField->Show(DEBUG != 0);					// show the debug field only if debugging is enabled
 
@@ -1232,6 +1281,7 @@ int main(void)
 	lastResponseTime = SystemTick::GetTickCount();	// pretend we just received a response
 	
 	machineConfigTimer.SetPending();				// we need to fetch the machine name and configuration
+	lastActionTime = SystemTick::GetTickCount();
 
 	for (;;)
 	{
@@ -1258,25 +1308,38 @@ int main(void)
 				touchX->SetValue((int)x);	//debug
 				touchY->SetValue((int)y);	//debug
 #endif
-				ButtonPress bp = mgr.FindEvent(x, y);
-				if (bp.IsValid())
+				if (isDimmed)
 				{
-					DelayTouchLong();		// by default, ignore further touches for a long time
-					if (bp.GetEvent() != evAdjustVolume)
-					{
-						TouchBeep();		// give audible feedback of the touch, unless adjusting the volume	
-					}
-					UI::ProcessTouch(bp);
+					RestoreBrightness();
+					DelayTouchLong();			// ignore further touches for a while
 				}
 				else
 				{
-					bp = mgr.FindEventOutsidePopup(x, y);
+					lastActionTime = SystemTick::GetTickCount();
+					ButtonPress bp = mgr.FindEvent(x, y);
 					if (bp.IsValid())
 					{
-						UI::ProcessTouchOutsidePopup(bp);
+						DelayTouchLong();		// by default, ignore further touches for a long time
+						if (bp.GetEvent() != evAdjustVolume)
+						{
+							TouchBeep();		// give audible feedback of the touch, unless adjusting the volume
+						}
+						UI::ProcessTouch(bp);
+					}
+					else
+					{
+						bp = mgr.FindEventOutsidePopup(x, y);
+						if (bp.IsValid())
+						{
+							UI::ProcessTouchOutsidePopup(bp);
+						}
 					}
 				}
 			}
+			else if (!isDimmed && SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout && UI::CanDimDisplay())
+			{
+				DimBrightness();				// it might not actually dim the display, depending on various flags
+ 			}
 		}
 		ShowLine;
 		

@@ -21,46 +21,68 @@
 #include "Hardware/SerialIo.hpp"
 #include "Hardware/SysTick.hpp"
 #include "Strings.hpp"
+#include "Version.hpp"
 
-const unsigned int numLanguages = 4;
-static_assert(ARRAY_SIZE(LanguageTables) == numLanguages, "Wrong number of languages in LanguageTable");
 static const char* array const axisNames[] = { "X", "Y", "Z", "U", "V", "W" };
 
 #if DISPLAY_X == 800
-const Icon heaterIcons[maxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNozzle3, IconNozzle4, IconNozzle5, IconNozzle6 };
+const Icon heaterIcons[MaxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNozzle3, IconNozzle4, IconNozzle5, IconNozzle6 };
 #else
-const Icon heaterIcons[maxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNozzle3, IconNozzle4 };
+const Icon heaterIcons[MaxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNozzle3, IconNozzle4 };
 #endif
 
 // Public fields
 TextField *fwVersionField, *userCommandField;
-IntegerField *freeMem, *touchX, *touchY;
-TextButton *filenameButtons[numDisplayedFiles];
+IntegerField *freeMem;
 StaticTextField *touchCalibInstruction, *debugField;
 StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
 
 // Private fields
 class AlertPopup;
 
-static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *filePopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
-static SingleButton *scrollFilesLeftButton, *scrollFilesRightButton, *filesUpButton, *changeCardButton;
-static StaticTextField *areYouSureTextField, *areYouSureQueryField, *macroPopupTitleField;
+const size_t machineNameLength = 30;
+const size_t printingFileLength = 40;
+const size_t zprobeBufLength = 12;
+const size_t generatedByTextLength = 50;
+const size_t lastModifiedTextLength = 20;
+const size_t printTimeTextLength = 12;		// e.g. 11h 55m
+const size_t controlPageMacroTextLength = 50;
+
+struct FileListButtons
+{
+	SingleButton *scrollLeftButton, *scrollRightButton, *folderUpButton;
+	IntegerField *errorField;
+};
+
+static FileListButtons filesListButtons, macrosListButtons;
+static SingleButton *changeCardButton;
+
+static TextButton *filenameButtons[NumDisplayedFiles];
+static TextButton *macroButtons[NumDisplayedMacros];
+static TextButton *controlPageMacroButtons[NumControlPageMacroButtons];
+static String<controlPageMacroTextLength> controlPageMacroText[NumControlPageMacroButtons];
+
+static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup,
+		*volumePopup, *infoTimeoutPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
+static StaticTextField *areYouSureTextField, *areYouSureQueryField;
 static DisplayField *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
-static SingleButton *homeButtons[MAX_AXES], *toolButtons[maxHeaters], *homeAllButton, *bedCompButton;
-static FloatField *axisPos[MAX_AXES];
-static FloatField *currentTemps[maxHeaters];
+static SingleButton *homeButtons[MaxAxes], *toolButtons[MaxHeaters], *homeAllButton, *bedCompButton;
+static FloatField *controlTabAxisPos[MaxAxes];
+static FloatField *printTabAxisPos[MaxAxes];
+static FloatField *movePopupAxisPos[MaxAxes];
+static FloatField *currentTemps[MaxHeaters];
 static FloatField *fpHeightField, *fpLayerHeightField, *babystepOffsetField;
-static IntegerField *fpSizeField, *fpFilamentField, *fileListErrorField, *filePopupTitleField;
+static IntegerField *fpSizeField, *fpFilamentField, *filePopupTitleField;
 static ProgressBar *printProgressBar;
 static SingleButton *tabControl, *tabPrint, *tabMsg, *tabSetup;
 static ButtonBase *filesButton, *pauseButton, *resumeButton, *resetButton, *babystepButton;
 static TextField *timeLeftField, *zProbe;
-static TextField *fpNameField, *fpGeneratedByField;
-static StaticTextField *moveAxisRows[MAX_AXES];
-static StaticTextField *nameField, *statusField, *settingsNotSavedField;
-static IntegerButton *activeTemps[maxHeaters], *standbyTemps[maxHeaters];
-static IntegerButton *spd, *extrusionFactors[maxHeaters - 1], *fanSpeed, *baudRateButton, *volumeButton;
-static TextButton *languageButton, *coloursButton;
+static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
+static StaticTextField *moveAxisRows[MaxAxes];
+static StaticTextField *nameField, *statusField;
+static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
+static IntegerButton *spd, *extrusionFactors[MaxExtruders], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton;
+static TextButton *languageButton, *coloursButton, *dimmingTypeButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
 static AlertPopup *alertPopup;
@@ -73,15 +95,12 @@ static ButtonPress currentButton;
 static ButtonPress fieldBeingAdjusted;
 static ButtonPress currentExtrudeRatePress, currentExtrudeAmountPress;
 
-const size_t machineNameLength = 30;
-const size_t printingFileLength = 40;
-const size_t zprobeBufLength = 12;
-const size_t generatedByTextLength = 50;
-
 static String<machineNameLength> machineName;
 static String<printingFileLength> printingFile;
 static String<zprobeBufLength> zprobeBuf;
 static String<generatedByTextLength> generatedByText;
+static String<lastModifiedTextLength> lastModifiedText;
+static String<printTimeTextLength> printTimeText;
 
 const size_t maxUserCommandLength = 40;					// max length of a user gcode command
 const size_t numUserCommandBuffers = 6;					// number of command history buffers plus one
@@ -89,19 +108,25 @@ const size_t numUserCommandBuffers = 6;					// number of command history buffers
 static String<maxUserCommandLength> userCommandBuffers[numUserCommandBuffers];
 static size_t currentUserCommandBuffer = 0, currentHistoryBuffer = 0;
 
+static unsigned int numTools = 0;
+static unsigned int numHeaters = 0;
+static unsigned int numHeaterAndToolColumns = 0;
 static int oldIntValue;
-static bool restartNeeded = false;
-int heaterStatus[maxHeaters];
+int heaterStatus[MaxHeaters];
 static Event eventToConfirm = evNull;
+static unsigned int numAxes = 0;						// initialise to 0 so we refresh the macros list when we receive the number of axes
+static bool isDelta = false;
 
 const char* array null currentFile = nullptr;			// file whose info is displayed in the file info popup
 const StringTable * strings = &LanguageTables[0];
 static bool keyboardIsDisplayed = false;
 static bool keyboardShifted = false;
 
-int32_t alertMode = -1;
+int32_t alertMode = -1;									// the mode of the current alert, or -1 if no alert displayed
 uint32_t alertTicks = 0;
+uint32_t infoTimeout = DefaultInfoTimeout;				// info timeout in seconds, 0 means don't display into messages at all
 uint32_t whenAlertReceived;
+bool displayingResponse = false;						// true if displaying a response
 
 class StandardPopupWindow : public PopupWindow
 {
@@ -122,7 +147,7 @@ public:
 
 private:
 	TextButton *okButton, *cancelButton, *zUpCourseButton, *zUpMedButton, *zUpFineButton, *zDownCourseButton, *zDownMedButton, *zDownFineButton;
-	String<alertTextLength/2> alertText1, alertText2;
+	String<alertTextLength/3> alertText1, alertText2, alertText3;
 	String<alertTitleLength> alertTitle;
 };
 
@@ -152,6 +177,7 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	titleField->SetValue(alertTitle.c_str());
 	AddField(new StaticTextField(popupTopMargin + 2 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText1.c_str()));
 	AddField(new StaticTextField(popupTopMargin + 3 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText2.c_str()));
+	AddField(new StaticTextField(popupTopMargin + 4 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText3.c_str()));
 
 	// Calculate the button positions
 	constexpr unsigned int numButtons = 6;
@@ -164,26 +190,32 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	constexpr PixelNumber hOffset = popupSideMargin + (alertPopupWidth - 2 * popupSideMargin - totalUnits * unitWidth)/2;
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	AddField(zUpCourseButton =   new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset,				  buttonWidth, UP_ARROW "2.0", evMoveZ, "2.0"));
-	AddField(zUpMedButton =      new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + buttonStep,     buttonWidth, UP_ARROW "0.2", evMoveZ, "0.2"));
-	AddField(zUpFineButton =     new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, UP_ARROW "0.02", evMoveZ, "0.02"));
-	AddField(zDownFineButton =   new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, DOWN_ARROW "0.02", evMoveZ, "-0.02"));
-	AddField(zDownMedButton =    new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, DOWN_ARROW "0.2", evMoveZ, "-0.2"));
-	AddField(zDownCourseButton = new TextButton(popupTopMargin + 5 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, DOWN_ARROW "2.0", evMoveZ, "-2.0"));
+	AddField(zUpCourseButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset,				  buttonWidth, LESS_ARROW "2.0", evMoveZ, "-2.0"));
+	AddField(zUpMedButton =      new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + buttonStep,     buttonWidth, LESS_ARROW "0.2", evMoveZ, "-0.2"));
+	AddField(zUpFineButton =     new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, LESS_ARROW "0.02", evMoveZ, "-0.02"));
+	AddField(zDownFineButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, MORE_ARROW "0.02", evMoveZ, "0.02"));
+	AddField(zDownMedButton =    new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, MORE_ARROW "0.2", evMoveZ, "0.2"));
+	AddField(zDownCourseButton = new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, MORE_ARROW "2.0", evMoveZ, "2.0"));
 
-	AddField(okButton =          new TextButton(popupTopMargin + 5 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + buttonStep,     buttonWidth + buttonStep, "OK", evCloseAlert, "M292 P0"));
-	AddField(cancelButton =      new TextButton(popupTopMargin + 5 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + 3 * buttonStep, buttonWidth + buttonStep, "Cancel", evCloseAlert, "M292 P1"));
+	AddField(okButton =          new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + buttonStep,     buttonWidth + buttonStep, "OK", evCloseAlert, "M292 P0"));
+	AddField(cancelButton =      new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + 3 * buttonStep, buttonWidth + buttonStep, "Cancel", evCloseAlert, "M292 P1"));
 }
 
 void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t controls)
 {
 	alertTitle.copy(title);
 
-	// Split the alert text into 2 lines
-	const size_t splitPoint = MessageLog::FindSplitPoint(text, alertText1.capacity(), GetWidth() - 2 * popupSideMargin);
+	// Split the alert text into 3 lines
+	size_t splitPoint = MessageLog::FindSplitPoint(text, alertText1.capacity(), GetWidth() - 2 * popupSideMargin);
 	alertText1.copy(text);
 	alertText1.truncate(splitPoint);
-	alertText2.copy(text + splitPoint);
+	text += splitPoint;
+	splitPoint = MessageLog::FindSplitPoint(text, alertText2.capacity(), GetWidth() - 2 * popupSideMargin);
+	alertText2.copy(text);
+	alertText2.truncate(splitPoint);
+	text += splitPoint;
+	alertText3.copy(text);
+
 	closeButton->Show(mode == 1);
 	okButton->Show(mode >= 2);
 	cancelButton->Show(mode == 3);
@@ -324,6 +356,17 @@ void ChangeBrightness(bool up)
 	SetBrightness(GetBrightness() + adjust);
 }
 
+// Cycle through available display dimmer types
+void ChangeDisplayDimmerType()
+{
+	DisplayDimmerType newType = (DisplayDimmerType) ((uint8_t)GetDisplayDimmerType() + 1);
+	if (newType == DisplayDimmerType::NumTypes)
+	{
+		newType = (DisplayDimmerType)0;
+	}
+	SetDisplayDimmerType(newType);
+}
+
 // Update an integer field, provided it isn't the one being adjusted
 // Don't update it if the value hasn't changed, because that makes the display flicker unnecessarily
 void UpdateField(IntegerButton *f, int val)
@@ -342,11 +385,6 @@ void PopupAreYouSure(Event ev, const char* text, const char* query = strings->ar
 	mgr.SetPopup(areYouSurePopup, AutoPlace, AutoPlace);
 }
 
-void PopupRestart()
-{
-	PopupAreYouSure(evRestart, strings->restartRequired, strings->restartNow);
-}
-
 void CreateIntegerAdjustPopup(const ColourScheme& colours)
 {
 	// Create the popup window used to adjust temperatures, fan speed, extrusion factor etc.
@@ -363,9 +401,13 @@ void CreateMovePopup(const ColourScheme& colours)
 
 	movePopup = new StandardPopupWindow(movePopupHeight, movePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->moveHead);
 	PixelNumber ypos = popupTopMargin + buttonHeight + moveButtonRowSpacing;
+	const PixelNumber axisPosYpos = ypos + (MaxAxes - 1) * (buttonHeight + moveButtonRowSpacing);
 	const PixelNumber xpos = popupSideMargin + axisLabelWidth;
 	Event e = evMoveX;
-	for (size_t i = 0; i < MAX_AXES; ++i)
+	PixelNumber column = margin;
+	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxAxes * fieldSpacing))/(MaxAxes + 1);
+
+	for (size_t i = 0; i < MaxAxes; ++i)
 	{
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 		const char * array const * array values = (axisNames[i][0] == 'Z') ? zJogValues : xyJogValues;
@@ -378,6 +420,14 @@ void CreateMovePopup(const ColourScheme& colours)
 		moveAxisRows[i] = tf;
 		UI::ShowAxis(i, i < MIN_AXES);
 
+		DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupInfoBackColour);
+		FloatField *f = new FloatField(axisPosYpos, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
+		movePopupAxisPos[i] = f;
+		f->SetValue(0.0);
+		movePopup->AddField(f);
+		f->Show(i < MIN_AXES);
+		column += xyFieldWidth + fieldSpacing;
+
 		ypos += buttonHeight + moveButtonRowSpacing;
 		e = (Event)((uint8_t)e + 1);
 	}
@@ -387,8 +437,8 @@ void CreateMovePopup(const ColourScheme& colours)
 void CreateExtrudePopup(const ColourScheme& colours)
 {
 	static const char * array extrudeAmountValues[] = { "100", "50", "20", "10", "5",  "1" };
-	static const char * array extrudeSpeedValues[] = { "50", "40", "20", "10", "5" };
-	static const char * array extrudeSpeedParams[] = { "3000", "2400", "1200", "600", "300" };
+	static const char * array extrudeSpeedValues[] = { "50", "20", "10", "5", "2" };
+	static const char * array extrudeSpeedParams[] = { "3000", "1200", "600", "300", "120" };		// must be extrudeSpeedValues * 60
 
 	extrudePopup = new StandardPopupWindow(extrudePopupHeight, extrudePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->extrusionAmount);
 	PixelNumber ypos = popupTopMargin + buttonHeight + extrudeButtonRowSpacing;
@@ -405,10 +455,11 @@ void CreateExtrudePopup(const ColourScheme& colours)
 	extrudePopup->AddField(new TextButton(ypos, (2 * extrudePopupWidth)/3 + popupSideMargin, extrudePopupWidth/3 - 2 * popupSideMargin, strings->retract, evRetract));
 }
 
-// Create the popup used to list files and macros
-void CreateFileListPopup(const ColourScheme& colours)
+// Create a popup used to list files pr macros
+PopupWindow *CreateFileListPopup(FileListButtons& controlButtons, TextButton ** array fileButtons, unsigned int numRows, unsigned int numCols, const ColourScheme& colours, bool filesNotMacros)
+pre(fileButtons.lim == numRows * numCols)
 {
-	fileListPopup = new StandardPopupWindow(fileListPopupHeight, fileListPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, nullptr);
+	PopupWindow * const popup = new StandardPopupWindow(fileListPopupHeight, fileListPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, nullptr);
 	const PixelNumber closeButtonPos = fileListPopupWidth - closeButtonWidth - popupSideMargin;
 	const PixelNumber navButtonWidth = (closeButtonPos - popupSideMargin)/7;
 	const PixelNumber upButtonPos = closeButtonPos - navButtonWidth - fieldSpacing;
@@ -418,45 +469,57 @@ void CreateFileListPopup(const ColourScheme& colours)
 	const PixelNumber changeButtonPos = popupSideMargin;
 
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
-	fileListPopup->AddField(filePopupTitleField = new IntegerField(popupTopMargin + labelRowAdjust, textPos, leftButtonPos - textPos, TextAlignment::Centre, strings->filesOnCard, nullptr));
-	fileListPopup->AddField(macroPopupTitleField = new StaticTextField(popupTopMargin + labelRowAdjust, textPos, leftButtonPos - textPos, TextAlignment::Centre, strings->macros));
+	if (filesNotMacros)
+	{
+		popup->AddField(filePopupTitleField = new IntegerField(popupTopMargin + labelRowAdjust, textPos, leftButtonPos - textPos, TextAlignment::Centre, strings->filesOnCard, nullptr));
+	}
+	else
+	{
+		popup->AddField(new StaticTextField(popupTopMargin + labelRowAdjust, textPos, leftButtonPos - textPos, TextAlignment::Centre, strings->macros));
+	}
 
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.buttonImageBackColour);
-	fileListPopup->AddField(changeCardButton = new IconButton(popupTopMargin, changeButtonPos, navButtonWidth, IconFiles, evChangeCard, 0));
-	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	fileListPopup->AddField(scrollFilesLeftButton = new TextButton(popupTopMargin, leftButtonPos, navButtonWidth, LEFT_ARROW, evScrollFiles, -1));
-	scrollFilesLeftButton->Show(false);
-	fileListPopup->AddField(scrollFilesRightButton = new TextButton(popupTopMargin, rightButtonPos, navButtonWidth, RIGHT_ARROW, evScrollFiles, 1));
-	scrollFilesRightButton->Show(false);
-	fileListPopup->AddField(filesUpButton = new TextButton(popupTopMargin, upButtonPos, navButtonWidth, UP_ARROW, evNull));
-	filesUpButton->Show(false);
+	if (filesNotMacros)
+	{
+		popup->AddField(changeCardButton = new IconButton(popupTopMargin, changeButtonPos, navButtonWidth, IconFiles, evChangeCard, 0));
+	}
 
-	const PixelNumber fileFieldWidth = (fileListPopupWidth + fieldSpacing - (2 * popupSideMargin))/numFileColumns;
-	unsigned int fileNum = 0;
-	for (unsigned int c = 0; c < numFileColumns; ++c)
+	const Event scrollEvent = (filesNotMacros) ? evScrollFiles : evScrollMacros;
+
+	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
+	popup->AddField(controlButtons.scrollLeftButton = new TextButton(popupTopMargin, leftButtonPos, navButtonWidth, LEFT_ARROW, scrollEvent, -1));
+	controlButtons.scrollLeftButton->Show(false);
+	popup->AddField(controlButtons.scrollRightButton = new TextButton(popupTopMargin, rightButtonPos, navButtonWidth, RIGHT_ARROW, scrollEvent, 1));
+	controlButtons.scrollRightButton->Show(false);
+	popup->AddField(controlButtons.folderUpButton = new TextButton(popupTopMargin, upButtonPos, navButtonWidth, UP_ARROW, (filesNotMacros) ? evFilesUp : evMacrosUp));
+	controlButtons.folderUpButton->Show(false);
+
+	const PixelNumber fileFieldWidth = (fileListPopupWidth + fieldSpacing - (2 * popupSideMargin))/numCols;
+	for (unsigned int c = 0; c < numCols; ++c)
 	{
 		PixelNumber row = popupTopMargin;
-		for (unsigned int r = 0; r < numFileRows; ++r)
+		for (unsigned int r = 0; r < numRows; ++r)
 		{
 			row += buttonHeight + fileButtonRowSpacing;
 			TextButton *t = new TextButton(row, (fileFieldWidth * c) + popupSideMargin, fileFieldWidth - fieldSpacing, nullptr, evNull);
 			t->Show(false);
-			fileListPopup->AddField(t);
-			filenameButtons[fileNum] = t;
-			++fileNum;
+			popup->AddField(t);
+			*fileButtons = t;
+			++fileButtons;
 		}
 	}
 
-	fileListErrorField = new IntegerField(popupTopMargin + 2 * (buttonHeight + fileButtonRowSpacing), popupSideMargin, fileListPopupWidth - (2 * popupSideMargin),
+	controlButtons.errorField = new IntegerField(popupTopMargin + 2 * (buttonHeight + fileButtonRowSpacing), popupSideMargin, fileListPopupWidth - (2 * popupSideMargin),
 							TextAlignment::Centre, strings->error, strings->accessingSdCard);
-	fileListErrorField->Show(false);
-	fileListPopup->AddField(fileListErrorField);
+	controlButtons.errorField->Show(false);
+	popup->AddField(controlButtons.errorField);
+	return popup;
 }
 
 // Create the popup window used to display the file dialog
 void CreateFileActionPopup(const ColourScheme& colours)
 {
-	filePopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
+	fileDetailPopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
 	PixelNumber ypos = popupTopMargin + (3 * rowTextHeight)/2;
 	fpNameField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->fileName);
@@ -470,18 +533,25 @@ void CreateFileActionPopup(const ColourScheme& colours)
 	fpFilamentField = new IntegerField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->filamentNeeded, "mm");
 	ypos += rowTextHeight;
 	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
-	filePopup->AddField(fpNameField);
-	filePopup->AddField(fpSizeField);
-	filePopup->AddField(fpLayerHeightField);
-	filePopup->AddField(fpHeightField);
-	filePopup->AddField(fpFilamentField);
-	filePopup->AddField(fpGeneratedByField);
+	ypos += rowTextHeight;
+	fpLastModifiedField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->lastModified, lastModifiedText.c_str());
+	ypos += rowTextHeight;
+	fpPrintTimeField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->estimatedPrintTime, printTimeText.c_str());
+
+	fileDetailPopup->AddField(fpNameField);
+	fileDetailPopup->AddField(fpSizeField);
+	fileDetailPopup->AddField(fpLayerHeightField);
+	fileDetailPopup->AddField(fpHeightField);
+	fileDetailPopup->AddField(fpFilamentField);
+	fileDetailPopup->AddField(fpGeneratedByField);
+	fileDetailPopup->AddField(fpLastModifiedField);
+	fileDetailPopup->AddField(fpPrintTimeField);
 
 	// Add the buttons
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	filePopup->AddField(new TextButton(popupTopMargin + 8 * rowTextHeight, popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->print, evPrintFile));
-	filePopup->AddField(new TextButton(popupTopMargin + 8 * rowTextHeight, fileInfoPopupWidth/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->simulate, evSimulateFile));
-	filePopup->AddField(new IconButton(popupTopMargin + 8 * rowTextHeight, (2 * fileInfoPopupWidth)/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, IconTrash, evDeleteFile));
+	fileDetailPopup->AddField(new TextButton(popupTopMargin + 10 * rowTextHeight, popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->print, evPrintFile));
+	fileDetailPopup->AddField(new TextButton(popupTopMargin + 10 * rowTextHeight, fileInfoPopupWidth/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, strings->simulate, evSimulateFile));
+	fileDetailPopup->AddField(new IconButton(popupTopMargin + 10 * rowTextHeight, (2 * fileInfoPopupWidth)/3 + popupSideMargin, fileInfoPopupWidth/3 - 2 * popupSideMargin, IconTrash, evDeleteFile));
 }
 
 // Create the "Are you sure?" popup
@@ -510,7 +580,15 @@ void CreateVolumePopup(const ColourScheme& colours)
 {
 	static_assert(Buzzer::MaxVolume == 5, "MaxVolume assumed to be 5 here");
 	static const char* const volumePopupText[Buzzer::MaxVolume + 1] = { "0", "1", "2", "3", "4", "5" };
-	volumePopup = CreateIntPopupBar(colours, fullPopupWidth, Buzzer::MaxVolume + 1, volumePopupText, nullptr, evAdjustVolume, evAdjustVolume);
+	volumePopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(volumePopupText), volumePopupText, nullptr, evAdjustVolume, evAdjustVolume);
+}
+
+// Create the volume adjustment popup
+void CreateInfoTimeoutPopup(const ColourScheme& colours)
+{
+	static const char* const infoTimeoutPopupText[Buzzer::MaxVolume + 1] = { "0", "2", "5", "10" };
+	static const int values[] = { 0, 2, 5, 10 };
+	infoTimeoutPopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(infoTimeoutPopupText), infoTimeoutPopupText, values, evAdjustInfoTimeout, evAdjustInfoTimeout);
 }
 
 // Create the colour scheme change popup
@@ -537,8 +615,8 @@ void CreateLanguagePopup(const ColourScheme& colours)
 {
 	languagePopup = new PopupWindow(popupBarHeight, fullPopupWidth, colours.popupBackColour, colours.popupBorderColour);
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	PixelNumber step = (fullPopupWidth - 2 * popupSideMargin + popupFieldSpacing)/numLanguages;
-	for (unsigned int i = 0; i < numLanguages; ++i)
+	PixelNumber step = (fullPopupWidth - 2 * popupSideMargin + popupFieldSpacing)/NumLanguages;
+	for (unsigned int i = 0; i < NumLanguages; ++i)
 	{
 		languagePopup->AddField(new TextButton(popupSideMargin, popupSideMargin + i * step, step - popupFieldSpacing, LanguageTables[i].languageName, evAdjustLanguage, i));
 	}
@@ -550,7 +628,9 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	static const char* array const keysEN[8] = { "1234567890-+", "QWERTYUIOP[]", "ASDFGHJKL:@", "ZXCVBNM,./", "!\"#$%^&*()_=", "qwertyuiop{}", "asdfghjkl;'", "zxcvbnm<>?" };
 	static const char* array const keysDE[8] = { "1234567890-+", "QWERTZUIOP[]", "ASDFGHJKL:@", "YXCVBNM,./", "!\"#$%^&*()_=", "qwertzuiop{}", "asdfghjkl;'", "yxcvbnm<>?" };
 	static const char* array const keysFR[8] = { "1234567890-+", "AZERTWUIOP[]", "QSDFGHJKLM@", "YXCVBN.,:/", "!\"#$%^&*()_=", "azertwuiop{}", "qsdfghjklm'", "yxcvbn<>;?" };
-	static const char* array const * const keyboards[numLanguages] = { keysEN, keysDE, keysFR, keysEN /*, keysEN */ };		// Spain and Czech keyboard layout is same as English
+	static const char* array const * const keyboards[] = { keysEN, keysDE, keysFR, keysEN, keysEN };		// Spain and Czech keyboard layout is same as English
+
+	static_assert(ARRAY_SIZE(keyboards) >= NumLanguages, "Wrong number of keyboard entries");
 
 	keyboardPopup = new StandardPopupWindow(keyboardPopupHeight, keyboardPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupInfoTextColour, colours.buttonImageBackColour, nullptr, keyboardTopMargin);
 
@@ -560,7 +640,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	userCommandField->SetLabel(userCommandBuffers[currentUserCommandBuffer].c_str());	// set up to display the current user command
 	keyboardPopup->AddField(userCommandField);
 
-	if (language >= numLanguages)
+	if (language >= NumLanguages)
 	{
 		language = 0;
 	}
@@ -571,22 +651,10 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	for (size_t i = 0; i < 4; ++i)
 	{
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-#if 1
 		// New code using CharButtonRow to economise on RAM at the expense of more flash memory usage
 		const PixelNumber column = popupSideMargin + (i * keyButtonHStep)/3;
 		keyboardRows[i] = new CharButtonRow(row, column, keyButtonWidth, keyButtonHStep, currentKeyboard[i], evKey);
 		keyboardPopup->AddField(keyboardRows[i]);
-#else
-		// Old code using individual buttons
-		PixelNumber column = popupSideMargin + (i * keyButtonHStep)/3;
-		const char * s = keys[i];
-		while (*s != 0)
-		{
-			keyboardPopup->AddField(new CharButton(row, column, keyButtonWidth, *s, evKey));
-			++s;
-			column += keyButtonHStep;
-		}
-#endif
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.buttonImageBackColour);
 		switch (i)
 		{
@@ -613,7 +681,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	const PixelNumber wideKeyButtonWidth = (keyboardPopupWidth - 2 * popupSideMargin - 2 * keyButtonHSpace)/5;
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 	keyboardPopup->AddField(new TextButton(row, popupSideMargin, wideKeyButtonWidth, "Shift", evShift, 0));
-	keyboardPopup->AddField(new TextButton(row, popupSideMargin + wideKeyButtonWidth + keyButtonHSpace, 2 * wideKeyButtonWidth, nullptr, evKey, (int)' '));
+	keyboardPopup->AddField(new TextButton(row, popupSideMargin + wideKeyButtonWidth + keyButtonHSpace, 2 * wideKeyButtonWidth, "", evKey, (int)' '));
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.buttonImageBackColour);
 	keyboardPopup->AddField(new IconButton(row, popupSideMargin + 3 * wideKeyButtonWidth + 2 * keyButtonHSpace, wideKeyButtonWidth, IconEnter, evSendKeyboardCommand));
 }
@@ -621,8 +689,8 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 // Create the babystep popup
 void CreateBabystepPopup(const ColourScheme& colours)
 {
-	static const char * array const babystepStrings[2] = { UP_ARROW " 0.02", DOWN_ARROW " 0.02" };
-	static const char * array const babystepCommands[2] = { "M290 S0.02", "M290 S-0.02" };
+	static const char * array const babystepStrings[2] = { LESS_ARROW " 0.02", MORE_ARROW " 0.02" };
+	static const char * array const babystepAmounts[2] = { "-0.02", "+0.02" };
 	babystepPopup = new StandardPopupWindow(babystepPopupHeight, babystepPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour,
 			strings->babyStepping);
 	PixelNumber ypos = popupTopMargin + babystepRowSpacing;
@@ -630,7 +698,7 @@ void CreateBabystepPopup(const ColourScheme& colours)
 	babystepPopup->AddField(babystepOffsetField = new FloatField(ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, TextAlignment::Left, 3, strings->currentZoffset, "mm"));
 	ypos += babystepRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.buttonImageBackColour);
-	CreateStringButtonRow(babystepPopup, ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, fieldSpacing, 2, babystepStrings, babystepCommands, evBabyStepAmount);
+	CreateStringButtonRow(babystepPopup, ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, fieldSpacing, 2, babystepStrings, babystepAmounts, evBabyStepAmount);
 }
 
 // Create the grid of heater icons and temperatures
@@ -648,20 +716,22 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 	mgr.AddField(new StaticTextField(row5 + labelRowAdjust, margin, bedColumn - fieldSpacing - margin, TextAlignment::Right, strings->standby));
 
 	// Add the grid
-	for (unsigned int i = 0; i < maxHeaters; ++i)
+	for (unsigned int i = 0; i < MaxHeaters; ++i)
 	{
-		PixelNumber column = ((tempButtonWidth + fieldSpacing) * i) + bedColumn;
+		const PixelNumber column = ((tempButtonWidth + fieldSpacing) * i) + bedColumn;
 
 		// Add the icon button
 		DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
-		SingleButton *b = new IconButton(row2, column, tempButtonWidth, heaterIcons[i], evSelectHead, i);
+		SingleButton * const b = new IconButton(row2, column, tempButtonWidth, heaterIcons[i], evSelectHead, i);
+		b->Show(false);
 		toolButtons[i] = b;
 		mgr.AddField(b);
 
 		// Add the current temperature field
 		DisplayField::SetDefaultColours(colours.infoTextColour, colours.defaultBackColour);
-		FloatField *f = new FloatField(row3 + labelRowAdjust, column, tempButtonWidth, TextAlignment::Centre, 1);
+		FloatField * const f = new FloatField(row3 + labelRowAdjust, column, tempButtonWidth, TextAlignment::Centre, 1);
 		f->SetValue(0.0);
+		f->Show(false);
 		currentTemps[i] = f;
 		mgr.AddField(f);
 
@@ -670,6 +740,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 		IntegerButton *ib = new IntegerButton(row4, column, tempButtonWidth);
 		ib->SetEvent(evAdjustActiveTemp, i);
 		ib->SetValue(0);
+		ib->Show(false);
 		activeTemps[i] = ib;
 		mgr.AddField(ib);
 
@@ -677,6 +748,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 		ib = new IntegerButton(row5, column, tempButtonWidth);
 		ib->SetEvent(evAdjustStandbyTemp, i);
 		ib->SetValue(0);
+		ib->Show(false);
 		standbyTemps[i] = ib;
 		mgr.AddField(ib);
 	}
@@ -689,11 +761,11 @@ void CreateControlTabFields(const ColourScheme& colours)
 
 	DisplayField::SetDefaultColours(colours.infoTextColour, colours.infoBackColour);
 	PixelNumber column = margin;
-	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MAX_AXES * fieldSpacing))/(MAX_AXES + 1);
-	for (size_t i = 0; i < MAX_AXES; ++i)
+	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxAxes * fieldSpacing))/(MaxAxes + 1);
+	for (size_t i = 0; i < MaxAxes; ++i)
 	{
-		FloatField *f = new FloatField(row6p3 + labelRowAdjust, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
-		axisPos[i] = f;
+		FloatField * const f = new FloatField(row6p3 + labelRowAdjust, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
+		controlTabAxisPos[i] = f;
 		f->SetValue(0.0);
 		mgr.AddField(f);
 		f->Show(i < MIN_AXES);
@@ -703,30 +775,39 @@ void CreateControlTabFields(const ColourScheme& colours)
 	mgr.AddField(zProbe = new TextField(row6p3 + labelRowAdjust, column, DISPLAY_X - column - margin, TextAlignment::Left, "P", zprobeBuf.c_str()));
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.notHomedButtonBackColour);
-	homeAllButton = AddIconButton(row7p7, 0, MAX_AXES + 2, IconHomeAll, evSendCommand, "G28");
-	homeButtons[0] = AddIconButton(row7p7, 1, MAX_AXES + 2, IconHomeX, evSendCommand, "G28 X0");
-	homeButtons[1] = AddIconButton(row7p7, 2, MAX_AXES + 2, IconHomeY, evSendCommand, "G28 Y0");
-	homeButtons[2] = AddIconButton(row7p7, 3, MAX_AXES + 2, IconHomeZ, evSendCommand, "G28 Z0");
-#if MAX_AXES > 3
-	homeButtons[3] = AddIconButton(row7p7, 4, MAX_AXES + 2, IconHomeU, evSendCommand, "G28 U0");
+	homeAllButton = AddIconButton(row7p7, 0, MaxAxes + 2, IconHomeAll, evSendCommand, "G28");
+	homeButtons[0] = AddIconButton(row7p7, 1, MaxAxes + 2, IconHomeX, evSendCommand, "G28 X0");
+	homeButtons[1] = AddIconButton(row7p7, 2, MaxAxes + 2, IconHomeY, evSendCommand, "G28 Y0");
+	homeButtons[2] = AddIconButton(row7p7, 3, MaxAxes + 2, IconHomeZ, evSendCommand, "G28 Z0");
+#if MaxAxes > 3
+	homeButtons[3] = AddIconButton(row7p7, 4, MaxAxes + 2, IconHomeU, evSendCommand, "G28 U0");
 	homeButtons[3]->Show(false);
 #endif
-#if MAX_AXES > 4
-	homeButtons[4] = AddIconButton(row7p7, 5, MAX_AXES + 2, IconHomeV, evSendCommand, "G28 V0");
+#if MaxAxes > 4
+	homeButtons[4] = AddIconButton(row7p7, 5, MaxAxes + 2, IconHomeV, evSendCommand, "G28 V0");
 	homeButtons[4]->Show(false);
 #endif
-#if MAX_AXES > 5
-	homeButtons[5] = AddIconButton(row7p7, 6, MAX_AXES + 2, IconHomeW, evSendCommand, "G28 W0");
+#if MaxAxes > 5
+	homeButtons[5] = AddIconButton(row7p7, 6, MaxAxes + 2, IconHomeW, evSendCommand, "G28 W0");
 	homeButtons[5]->Show(false);
 #endif
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
-	bedCompButton = AddIconButton(row7p7, MAX_AXES + 1, MAX_AXES + 2, IconBedComp, evSendCommand, "G32");
+	bedCompButton = AddIconButton(row7p7, MaxAxes + 1, MaxAxes + 2, IconBedComp, evSendCommand, "G32");
 
 	filesButton = AddIconButton(row8p7, 0, 4, IconFiles, evListFiles, nullptr);
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	moveButton = AddTextButton(row8p7, 1, 4, strings->move, evMovePopup, nullptr);
 	extrudeButton = AddTextButton(row8p7, 2, 4, strings->extrusion, evExtrudePopup, nullptr);
 	macroButton = AddTextButton(row8p7, 3, 4, strings->macro, evListMacros, nullptr);
+
+	// When there is room, we also display a few macro buttons on the right hand side
+	for (size_t i = 0; i < NumControlPageMacroButtons; ++i)
+	{
+		// The position and width of the buttons will get corrected when we know how many tools we have
+		TextButton * const b = controlPageMacroButtons[i] = new TextButton(row2 + i * rowHeight, 999, 99, nullptr, evNull);
+		b->Show(false);			// hide them until we have loaded the macros
+		mgr.AddField(b);
+	}
 
 	controlRoot = mgr.GetRoot();
 }
@@ -742,14 +823,15 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 
 	// Extrusion factor buttons
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	for (unsigned int i = 1; i < maxHeaters; ++i)
+	for (unsigned int i = 0; i < MaxExtruders; ++i)
 	{
-		PixelNumber column = ((tempButtonWidth + fieldSpacing) * i) + bedColumn;
+		const PixelNumber column = ((tempButtonWidth + fieldSpacing) * (i + 1)) + bedColumn;
 
-		IntegerButton *ib = new IntegerButton(row6, column, tempButtonWidth);
+		IntegerButton * const ib = new IntegerButton(row6, column, tempButtonWidth);
 		ib->SetValue(100);
 		ib->SetEvent(evExtrusionFactor, i);
-		extrusionFactors[i - 1] = ib;
+		ib->Show(false);
+		extrusionFactors[i] = ib;
 		mgr.AddField(ib);
 	}
 
@@ -779,15 +861,31 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 	resetButton = new TextButton(row7, cancelColumn, DisplayX - cancelColumn - margin, strings->cancel, evReset, "M0");
 	mgr.AddField(resetButton);
 
-	//		DisplayField::SetDefaultColours(labelTextColour, defaultBackColour);
-	//		mgr.AddField(printingField = new TextField(row8, margin, DisplayX, TextAlignment::Left, "printing ", printingFile.c_str()));
+#if DISPLAY_X == 800
+	// On 5" and 7" screens there is room to show the current position on the Print page
+	const PixelNumber offset = rowHeight - 20;
+	DisplayField::SetDefaultColours(colours.infoTextColour, colours.infoBackColour);
+	PixelNumber column = margin;
+	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxAxes * fieldSpacing))/(MaxAxes + 1);
+	for (size_t i = 0; i < MaxAxes; ++i)
+	{
+		FloatField * const f = new FloatField(row8 + labelRowAdjust - 4, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
+		printTabAxisPos[i] = f;
+		f->SetValue(0.0);
+		mgr.AddField(f);
+		f->Show(i < MIN_AXES);
+		column += xyFieldWidth + fieldSpacing;
+	}
+#else
+	const PixelNumber offset = 0;
+#endif
 
 	DisplayField::SetDefaultColours(colours.progressBarColour,colours. progressBarBackColour);
-	mgr.AddField(printProgressBar = new ProgressBar(row8 + (rowHeight - progressBarHeight)/2, margin, progressBarHeight, DisplayX - 2 * margin));
+	mgr.AddField(printProgressBar = new ProgressBar(row8 + offset + (rowHeight - progressBarHeight)/2, margin, progressBarHeight, DisplayX - 2 * margin));
 	mgr.Show(printProgressBar, false);
 
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
-	mgr.AddField(timeLeftField = new TextField(row9, margin, DisplayX - 2 * margin, TextAlignment::Left, strings->timeRemaining));
+	mgr.AddField(timeLeftField = new TextField(row9 + offset, margin, DisplayX - 2 * margin, TextAlignment::Left, strings->timeRemaining));
 	mgr.Show(timeLeftField, false);
 
 	printRoot = mgr.GetRoot();
@@ -823,29 +921,24 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	// The firmware version field doubles up as an area for displaying debug messages, so make it the full width of the display
 	mgr.AddField(fwVersionField = new TextField(row1, margin, DisplayX, TextAlignment::Left, strings->firmwareVersion, VERSION_TEXT));
 	mgr.AddField(freeMem = new IntegerField(row2, margin, DisplayX/2 - margin, TextAlignment::Left, "Free RAM: "));
-	mgr.AddField(touchX = new IntegerField(row2, DisplayX/2, DisplayX/4, TextAlignment::Left, "Touch: ", ","));
-	mgr.AddField(touchY = new IntegerField(row2, (DisplayX * 3)/4, DisplayX/4, TextAlignment::Left));
-
-	DisplayField::SetDefaultColours(colours.errorTextColour, colours.errorBackColour);
-	mgr.AddField(settingsNotSavedField = new StaticTextField(row3, margin, DisplayX - 2 * margin, TextAlignment::Left, strings->settingsNotSavedText));
-	settingsNotSavedField->Show(false);
+	mgr.AddField(new ColourGradientField(ColourGradientTopPos, ColourGradientLeftPos, ColourGradientWidth, ColourGradientHeight));
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	baudRateButton = AddIntegerButton(row4, 0, 3, nullptr, " baud", evSetBaudRate);
+	baudRateButton = AddIntegerButton(row3, 0, 3, nullptr, " baud", evSetBaudRate);
 	baudRateButton->SetValue(GetBaudRate());
-	volumeButton = AddIntegerButton(row4, 1, 3, strings->volume, nullptr, evSetVolume);
+	volumeButton = AddIntegerButton(row3, 1, 3, strings->volume, nullptr, evSetVolume);
 	volumeButton->SetValue(GetVolume());
-	languageButton = AddTextButton(row4, 2, 3, LanguageTables[language].languageName, evSetLanguage, nullptr);
-	AddTextButton(row5, 0, 3, strings->calibrateTouch, evCalTouch, nullptr);
-	AddTextButton(row5, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
-	AddTextButton(row5, 2, 3, strings->invertDisplay, evInvertY, nullptr);
-	coloursButton = AddTextButton(row6, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
-	coloursButton->SetText(strings->colourSchemeNames[colours.index]);
-	AddTextButton(row6, 1, 3, strings->brightnessDown, evDimmer, nullptr);
-	AddTextButton(row6, 2, 3, strings->brightnessUp, evBrighter, nullptr);
-	AddTextButton(row7, 0, 3, strings->saveSettings, evSaveSettings, nullptr);
-	AddTextButton(row7, 1, 3, strings->clearSettings, evFactoryReset, nullptr);
-	AddTextButton(row7, 2, 3, strings->saveAndRestart, evRestart, nullptr);
+	languageButton = AddTextButton(row3, 2, 3, LanguageTables[language].languageName, evSetLanguage, nullptr);
+	AddTextButton(row4, 0, 3, strings->calibrateTouch, evCalTouch, nullptr);
+	AddTextButton(row4, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
+	AddTextButton(row4, 2, 3, strings->invertDisplay, evInvertY, nullptr);
+	coloursButton = AddTextButton(row5, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
+	AddTextButton(row5, 1, 3, strings->brightnessDown, evDimmer, nullptr);
+	AddTextButton(row5, 2, 3, strings->brightnessUp, evBrighter, nullptr);
+	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()], evSetDimmingType, nullptr);
+	infoTimeoutButton = AddIntegerButton(row6, 1, 3, strings->infoTimeout, nullptr, evSetInfoTimeout);
+	infoTimeoutButton->SetValue(infoTimeout);
+	AddTextButton(row6, 2, 3, strings->clearSettings, evFactoryReset, nullptr);
 	setupRoot = mgr.GetRoot();
 }
 
@@ -913,15 +1006,19 @@ namespace UI
 		}
 	}
 
+	static void ClearAlertOrResponse();
+
 	// Return the number of supported languages
 	extern unsigned int GetNumLanguages()
 	{
-		return numLanguages;
+		return NumLanguages;
 	}
 
 	// Create all the fields we ever display
-	void CreateFields(uint32_t language, const ColourScheme& colours)
+	void CreateFields(uint32_t language, const ColourScheme& colours, uint32_t p_infoTimeout)
 	{
+		infoTimeout = p_infoTimeout;
+
 		// Set up default colours and margins
 		mgr.Init(colours.defaultBackColour);
 		DisplayField::SetDefaultFont(DEFAULT_FONT);
@@ -937,9 +1034,11 @@ namespace UI
 		CreateIntegerAdjustPopup(colours);
 		CreateMovePopup(colours);
 		CreateExtrudePopup(colours);
-		CreateFileListPopup(colours);
+		fileListPopup = CreateFileListPopup(filesListButtons, filenameButtons, NumFileRows, NumFileColumns, colours, true);
+		macrosPopup = CreateFileListPopup(macrosListButtons, macroButtons, NumMacroRows, NumMacroColumns, colours, false);
 		CreateFileActionPopup(colours);
 		CreateVolumePopup(colours);
+		CreateInfoTimeoutPopup(colours);
 		CreateBaudRatePopup(colours);
 		CreateColoursPopup(colours);
 		CreateAreYouSurePopup(colours);
@@ -952,25 +1051,6 @@ namespace UI
 		touchCalibInstruction = new StaticTextField(DisplayY/2 - 10, 0, DisplayX, TextAlignment::Centre, strings->touchTheSpot);
 
 		mgr.SetRoot(nullptr);
-	}
-
-	// Show or hide the field that warns about unsaved settings
-	void CheckSettingsAreSaved()
-	{
-		if (IsSaveAndRestartNeeded())
-		{
-			settingsNotSavedField->SetValue(strings->restartNeededText);
-			mgr.Show(settingsNotSavedField, true);
-		}
-		else if (IsSaveNeeded())
-		{
-			settingsNotSavedField->SetValue(strings->settingsNotSavedText);
-			mgr.Show(settingsNotSavedField, true);
-		}
-		else
-		{
-			mgr.Show(settingsNotSavedField, false);
-		}
 	}
 
 	void ShowFilesButton()
@@ -1010,44 +1090,52 @@ namespace UI
 			f->Show(b);
 			f = f->next;
 		}
-		axisPos[axis]->Show(b);
+		controlTabAxisPos[axis]->Show(b);
+		printTabAxisPos[axis]->Show(b);
+		movePopupAxisPos[axis]->Show(b && numAxes < MaxAxes);		// the move popup axis positions occupy the last axis row of the move popu[p
 	}
 
 	void UpdateAxisPosition(size_t axis, float fval)
 	{
-		if (axis < MAX_AXES && axisPos[axis] != nullptr)
+		if (axis < MaxAxes)
 		{
-			axisPos[axis]->SetValue(fval);
+			if (controlTabAxisPos[axis] != nullptr)
+			{
+				controlTabAxisPos[axis]->SetValue(fval);
+			}
+			if (printTabAxisPos[axis] != nullptr)
+			{
+				printTabAxisPos[axis]->SetValue(fval);
+			}
+			if (movePopupAxisPos[axis] != nullptr)
+			{
+				movePopupAxisPos[axis]->SetValue(fval);
+			}
 		}
 	}
 
 	void UpdateCurrentTemperature(size_t heater, float fval)
 	{
-		if (currentTemps[heater] != nullptr)
+		if (heater < MaxHeaters && currentTemps[heater] != nullptr)
 		{
 			currentTemps[heater]->SetValue(fval);
 		}
 	}
 
-	void ShowHeater(size_t heater, bool show)
-	{
-		mgr.Show(currentTemps[heater], show);
-		mgr.Show(activeTemps[heater], show);
-		mgr.Show(standbyTemps[heater], show);
-		mgr.Show(extrusionFactors[heater - 1], show);
-	}
-
 	void UpdateHeaterStatus(size_t heater, int ival)
 	{
-		heaterStatus[heater] = ival;
-		if (currentTemps[heater] != nullptr)
+		if (heater < MaxHeaters)
 		{
-			Colour c = (ival == 1) ? colours->standbyBackColour
-						: (ival == 2) ? colours->activeBackColour
-						: (ival == 3) ? colours->errorBackColour
-						: (ival == 4) ? colours->tuningBackColour
-						: colours->defaultBackColour;
-			currentTemps[heater]->SetColours((ival == 3) ? colours->errorTextColour : colours->infoTextColour, c);
+			heaterStatus[heater] = ival;
+			if (currentTemps[heater] != nullptr)
+			{
+				Colour c = (ival == 1) ? colours->standbyBackColour
+							: (ival == 2) ? colours->activeBackColour
+							: (ival == 3) ? colours->errorBackColour
+							: (ival == 4) ? colours->tuningBackColour
+							: colours->defaultBackColour;
+				currentTemps[heater]->SetColours((ival == 3) ? colours->errorTextColour : colours->infoTextColour, c);
+			}
 		}
 	}
 
@@ -1059,6 +1147,7 @@ namespace UI
 		switch (newStatus)
 		{
 		case PrinterStatus::printing:
+		case PrinterStatus::simulating:
 			if (oldStatus != PrinterStatus::paused && oldStatus != PrinterStatus::resuming)
 			{
 				// Starting a new print, so clear the times
@@ -1145,11 +1234,19 @@ namespace UI
 	// Change to the page indicated. Return true if the page has a permanently-visible button.
 	bool ChangePage(ButtonBase *newTab)
 	{
-		if (newTab != currentTab)
+		if (newTab == currentTab)
+		{
+			mgr.ClearAllPopups();						// if already on the correct page, just clear popups
+		}
+		else
 		{
 			if (currentTab != nullptr)
 			{
 				currentTab->Press(false, 0);			// remove highlighting from the old tab
+				if (currentTab->GetEvent() == evTabSetup && IsSaveNeeded())
+				{
+					SaveSettings();						// leaving the Control tab and we have changed settings, so save them
+				}
 			}
 			newTab->Press(true, 0);						// highlight the new tab
 			currentTab = newTab;
@@ -1214,7 +1311,7 @@ namespace UI
 		}
 		if (alertTicks != 0 && SystemTick::GetTickCount() - whenAlertReceived >= alertTicks)
 		{
-			ClearAlert();
+			ClearAlertOrResponse();
 		}
 	}
 
@@ -1246,7 +1343,7 @@ namespace UI
 	// Update the fields that are to do with the printing status
 	void UpdatePrintingFields()
 	{
-		if (GetStatus() == PrinterStatus::printing)
+		if (GetStatus() == PrinterStatus::printing || GetStatus() == PrinterStatus::simulating)
 		{
 			ShowPauseButton();
 		}
@@ -1278,12 +1375,18 @@ namespace UI
 	}
 
 	// Update the geometry or the number of axes
-	void UpdateGeometry(unsigned int numAxes, bool isDelta)
+	void UpdateGeometry(unsigned int p_numAxes, bool p_isDelta)
 	{
-		for (size_t i = 0; i < MAX_AXES; ++i)
+		if (p_numAxes != numAxes || p_isDelta != isDelta)
 		{
-			mgr.Show(homeButtons[i], !isDelta && i < numAxes);
-			ShowAxis(i, i < numAxes);
+			numAxes = p_numAxes;
+			isDelta = p_isDelta;
+			FileManager::RefreshMacrosList();
+			for (size_t i = 0; i < MaxAxes; ++i)
+			{
+				mgr.Show(homeButtons[i], !isDelta && i < numAxes);
+				ShowAxis(i, i < numAxes);
+			}
 		}
 	}
 
@@ -1295,7 +1398,7 @@ namespace UI
 		{
 			homeButton = homeAllButton;
 		}
-		else if (axis < MAX_AXES)
+		else if (axis < MaxAxes)
 		{
 			homeButton = homeButtons[axis];
 		}
@@ -1328,19 +1431,28 @@ namespace UI
 	// Update an active temperature
 	void UpdateActiveTemperature(size_t index, int ival)
 	{
-		UpdateField(activeTemps[index], ival);
+		if (index < MaxHeaters)
+		{
+			UpdateField(activeTemps[index], ival);
+		}
 	}
 
 	// Update a standby temperature
 	void UpdateStandbyTemperature(size_t index, int ival)
 	{
-		UpdateField(standbyTemps[index], ival);
+		if (index < MaxHeaters)
+		{
+			UpdateField(standbyTemps[index], ival);
+		}
 	}
 
 	// Update an extrusion factor
 	void UpdateExtrusionFactor(size_t index, int ival)
 	{
-		UpdateField(extrusionFactors[index], ival);
+		if (index < MaxExtruders)
+		{
+			UpdateField(extrusionFactors[index], ival);
+		}
 	}
 
 	// Update the print speed factor
@@ -1352,11 +1464,13 @@ namespace UI
 	// Process a new message box alert, clearing any existing one
 	void ProcessAlert(const Alert& alert)
 	{
-		alertMode = alert.mode;
-		whenAlertReceived = SystemTick::GetTickCount();
-		alertTicks = (alertMode < 2) ? (uint32_t)(alert.timeout * 1000.0) : 0;
 		alertPopup->Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
 		mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+		RestoreBrightness();
+		alertMode = alert.mode;
+		displayingResponse = false;
+		whenAlertReceived = SystemTick::GetTickCount();
+		alertTicks = (alertMode < 2) ? (uint32_t)(alert.timeout * 1000.0) : 0;
 	}
 
 	// Process a command to clear a message box alert
@@ -1370,15 +1484,52 @@ namespace UI
 		}
 	}
 
+	// Clear a message box alert or response. Called when the user presses the close button or the alert or response times out.
+	void ClearAlertOrResponse()
+	{
+		if (alertMode >= 0 || displayingResponse)
+		{
+			alertTicks = 0;
+			mgr.ClearPopup(true, alertPopup);
+			alertMode = -1;
+			displayingResponse = false;
+		}
+	}
+
+	bool CanDimDisplay()
+	{
+		return alertMode < 2;
+	}
+
 	void ProcessSimpleAlert(const char* array text)
 	{
-		if (alertMode < 2)								// if the current alert doesn't require acknowledgement
+		if (alertMode < 2)												// if the current alert doesn't require acknowledgement
 		{
-			alertMode = -1;
-			whenAlertReceived = SystemTick::GetTickCount();
-			alertTicks = 0;								// no timeout
 			alertPopup->Set(strings->message, text, 1, 0);
 			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+			alertMode = 1;												// a simple alert is like a mode 1 alert without a title
+			displayingResponse = false;
+			whenAlertReceived = SystemTick::GetTickCount();
+			alertTicks = 0;												// no timeout
+		}
+		RestoreBrightness();
+	}
+
+	// Process a new response. This is treated like a simple alert except that it times out and isn't cleared by a "clear alert" command from the host.
+	void NewResponseReceived(const char* array text)
+	{
+		const bool isErrorMessage = stringStartsWith(text, "Error");
+		if (   alertMode < 2											// if the current alert doesn't require acknowledgement
+			&& (currentTab == tabControl || currentTab == tabPrint)
+			&& (isErrorMessage || infoTimeout != 0)
+		   )
+		{
+			alertPopup->Set(strings->response, text, 1, 0);
+			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+			alertMode = -1;												// make sure that a call to ClearAlert doesn't clear us
+			displayingResponse = true;
+			whenAlertReceived = SystemTick::GetTickCount();
+			alertTicks = isErrorMessage ? 0 : infoTimeout * SystemTick::TicksPerSecond;				// time out if it isn't an error message
 		}
 	}
 
@@ -1393,6 +1544,10 @@ namespace UI
 		fpFilamentField->SetValue(0);					// would be better to make it blank
 		generatedByText.clear();
 		fpGeneratedByField->SetChanged();
+		lastModifiedText.clear();
+		fpLastModifiedField->SetChanged();
+		printTimeText.clear();
+		fpPrintTimeField->SetChanged();
 	}
 
 	// This is called when the "generated by" file information has been received
@@ -1400,6 +1555,37 @@ namespace UI
 	{
 		generatedByText.copy(data);
 		fpGeneratedByField->SetChanged();
+	}
+
+	// This is called when the "last modified" file information has been received
+	void UpdateFileLastModifiedText(const char data[])
+	{
+		lastModifiedText.copy(data);
+		lastModifiedText.replace('T', ' ');
+		fpLastModifiedField->SetChanged();
+	}
+
+	// This is called when the "last modified" file information has been received
+	void UpdatePrintTimeText(uint32_t seconds, bool isSimulated)
+	{
+		bool update = false;
+		if (isSimulated)
+		{
+			printTimeText.clear();					// prefer simulated to estimated print time
+			fpPrintTimeField->SetLabel(strings->simulatedPrintTime);
+			update = true;
+		}
+		else if (printTimeText.isEmpty())
+		{
+			fpPrintTimeField->SetLabel(strings->estimatedPrintTime);
+			update = true;
+		}
+		if (update)
+		{
+			unsigned int minutes = (seconds + 50)/60;
+			printTimeText.printf("%dh %02dm", minutes / 60, minutes % 60);
+			fpPrintTimeField->SetChanged();
+		}
 	}
 
 	// This is called when the object height information for the file has been received
@@ -1436,10 +1622,20 @@ namespace UI
 	void FirmwareFeaturesChanged(FirmwareFeatures newFeatures)
 	{
 		// Some firmwares don't support tool standby temperatures
-		for (size_t i = 0; i < maxHeaters; ++i)
+		for (size_t i = 0; i < MaxHeaters; ++i)
 		{
 			mgr.Show(standbyTemps[i], (newFeatures & noStandbyTemps) == 0);
 		}
+	}
+
+	static void DoEmergencyStop()
+	{
+		// We send M112 for the benefit of old firmware, and F0 0F (an invalid UTF8 sequence) for new firmware
+		SerialIo::SendString("M112 ;" "\xF0" "\x0F" "\n");
+		TouchBeep();											// needed when we are called from ProcessTouchOutsidePopup
+		Delay(1000);
+		SerialIo::SendString("M999\n");
+		Reconnect();
 	}
 
 	// Process a touch event
@@ -1454,12 +1650,7 @@ namespace UI
 			switch(ev)
 			{
 			case evEmergencyStop:
-				{
-					SerialIo::SendString("M112\n");
-					Delay(1000);
-					SerialIo::SendString("M999\n");
-					Reconnect();
-				}
+				DoEmergencyStop();
 				break;
 
 			case evTabControl:
@@ -1519,8 +1710,14 @@ namespace UI
 					case evAdjustStandbyTemp:
 						{
 							int heater = fieldBeingAdjusted.GetIParam();
-							if (heater > 0)
+							if (heater == 0)
 							{
+								SerialIo::SendString("M140 R");
+								SerialIo::SendInt(val);
+								SerialIo::SendChar('\n');
+							}
+							else
+ 							{
 								SerialIo::SendString("G10 P");
 								SerialIo::SendInt(heater - 1);
 								SerialIo::SendString(" R");
@@ -1630,7 +1827,7 @@ namespace UI
 			case evRetract:
 				if (currentExtrudeAmountPress.IsValid() && currentExtrudeRatePress.IsValid())
 				{
-					SerialIo::SendString("G92 E0\nG1 E");
+					SerialIo::SendString("M120\nM83\nG1 E");
 					if (ev == evRetract)
 					{
 						SerialIo::SendChar('-');
@@ -1638,7 +1835,7 @@ namespace UI
 					SerialIo::SendString(currentExtrudeAmountPress.GetSParam());
 					SerialIo::SendString(" F");
 					SerialIo::SendString(currentExtrudeRatePress.GetSParam());
-					SerialIo::SendChar('\n');
+					SerialIo::SendString("\nM121\n");
 				}
 				break;
 
@@ -1647,7 +1844,7 @@ namespace UI
 				break;
 
 			case evBabyStepAmount:
-				SerialIo::SendString("M290 ");
+				SerialIo::SendString("M290 Z");
 				SerialIo::SendString(bp.GetSParam());
 				SerialIo::SendChar('\n');
 				break;
@@ -1662,23 +1859,10 @@ namespace UI
 
 			case evCalTouch:
 				CalibrateTouch();
-				CheckSettingsAreSaved();
 				break;
 
 			case evFactoryReset:
 				PopupAreYouSure(ev, strings->confirmFactoryReset);
-				break;
-
-			case evRestart:
-				PopupAreYouSure(ev, strings->confirmRestart);
-				break;
-
-			case evSaveSettings:
-				SaveSettings();
-				if (restartNeeded)
-				{
-					PopupRestart();
-				}
 				break;
 
 			case evSelectHead:
@@ -1697,17 +1881,21 @@ namespace UI
 							SerialIo::SendChar('\n');
 						}
 					}
-					else if (head < (int)maxHeaters)
+					else if (head < (int)MaxHeaters)
 					{
-						if (heaterStatus[head] == 2)		// if head is active
+						// pressing a evSeelctHead button in the middle of active printing is almost always accidental (and fatal to the print job)
+						if (GetStatus() != PrinterStatus::printing && GetStatus() != PrinterStatus::simulating)
 						{
-							SerialIo::SendString("T-1\n");
-						}
-						else
-						{
-							SerialIo::SendChar('T');
-							SerialIo::SendInt(head - 1);
-							SerialIo::SendChar('\n');
+							if (heaterStatus[head] == 2)		// if head is active
+							{
+								SerialIo::SendString("T-1\n");
+							}
+							else
+							{
+								SerialIo::SendChar('T');
+								SerialIo::SendInt(head - 1);
+								SerialIo::SendChar('\n');
+							}
 						}
 					}
 				}
@@ -1732,7 +1920,7 @@ namespace UI
 							SerialIo::SendFilename(CondStripDrive(FileManager::GetFilesDir()), currentFile);
 							SerialIo::SendChar('\n');
 							FileSelected(currentFile);
-							mgr.SetPopup(filePopup, AutoPlace, AutoPlace);
+							mgr.SetPopup(fileDetailPopup, AutoPlace, AutoPlace);
 						}
 					}
 					else
@@ -1751,6 +1939,7 @@ namespace UI
 				break;
 
 			case evMacro:
+			case evMacroControlPage:
 				{
 					const char *fileName = bp.GetSParam();
 					if (fileName != nullptr)
@@ -1763,7 +1952,8 @@ namespace UI
 						else
 						{
 							SerialIo::SendString("M98 P");
-							SerialIo::SendFilename(CondStripDrive(FileManager::GetMacrosDir()), fileName);
+							const char * array const dir = (ev == evMacroControlPage) ? FileManager::GetMacrosRootDir() : FileManager::GetMacrosDir();
+							SerialIo::SendFilename(CondStripDrive(dir), fileName);
 							SerialIo::SendChar('\n');
 						}
 					}
@@ -1812,7 +2002,12 @@ namespace UI
 				break;
 
 			case evScrollFiles:
-				FileManager::Scroll(bp.GetIParam() * GetNumScrolledFiles());
+				FileManager::ScrollFiles(bp.GetIParam() * NumFileRows);
+				ShortenTouchDelay();
+				break;
+
+			case evScrollMacros:
+				FileManager::ScrollMacros(bp.GetIParam() * NumMacroRows);
 				ShortenTouchDelay();
 				break;
 
@@ -1827,13 +2022,11 @@ namespace UI
 			case evInvertX:
 				MirrorDisplay();
 				CalibrateTouch();
-				CheckSettingsAreSaved();
 				break;
 
 			case evInvertY:
 				InvertDisplay();
 				CalibrateTouch();
-				CheckSettingsAreSaved();
 				break;
 
 			case evSetBaudRate:
@@ -1847,7 +2040,6 @@ namespace UI
 					SetBaudRate(rate);
 					baudRateButton->SetValue(rate);
 				}
-				CheckSettingsAreSaved();
 				CurrentButtonReleased();
 				mgr.ClearPopup();
 				StopAdjusting();
@@ -1856,6 +2048,11 @@ namespace UI
 			case evSetVolume:
 				Adjusting(bp);
 				mgr.SetPopup(volumePopup, AutoPlace, popupY);
+				break;
+
+			case evSetInfoTimeout:
+				Adjusting(bp);
+				mgr.SetPopup(infoTimeoutPopup, AutoPlace, popupY);
 				break;
 
 			case evSetColours:
@@ -1869,7 +2066,6 @@ namespace UI
 			case evBrighter:
 			case evDimmer:
 				ChangeBrightness(ev == evBrighter);
-				CheckSettingsAreSaved();
 				ShortenTouchDelay();
 				break;
 
@@ -1880,16 +2076,27 @@ namespace UI
 					volumeButton->SetValue(newVolume);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
-				CheckSettingsAreSaved();
+				break;
+
+			case evAdjustInfoTimeout:
+				{
+					infoTimeout = bp.GetIParam();
+					SetInfoTimeout(infoTimeout);
+					infoTimeoutButton->SetValue(infoTimeout);
+				}
+				TouchBeep();									// give audible feedback of the touch at the new volume level
 				break;
 
 			case evAdjustColours:
 				{
-					const int newColours = bp.GetIParam();
-					SetColourScheme(newColours);
-					coloursButton->SetText(strings->colourSchemeNames[newColours]);
+					const unsigned int newColours = bp.GetIParam();
+					if (SetColourScheme(newColours))
+					{
+						SaveSettings();
+						Restart();
+					}
 				}
-				CheckSettingsAreSaved();
+				mgr.ClearPopup();
 				break;
 
 			case evSetLanguage:
@@ -1899,11 +2106,19 @@ namespace UI
 
 			case evAdjustLanguage:
 				{
-					const int newLanguage = bp.GetIParam();
-					SetLanguage(newLanguage);
-					languageButton->SetText(LanguageTables[newLanguage].languageName);
+					const unsigned int newLanguage = bp.GetIParam();
+					if (SetLanguage(newLanguage))
+					{
+						SaveSettings();
+						Restart();
+					}
 				}
-				CheckSettingsAreSaved();						// not sure we need this because we are going to reset anyway
+				mgr.ClearPopup();
+				break;
+
+			case evSetDimmingType:
+				ChangeDisplayDimmerType();
+				dimmingTypeButton->SetText(strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()]);
 				break;
 
 			case evYes:
@@ -1925,14 +2140,6 @@ namespace UI
 						FileManager::RefreshFilesList();
 						currentFile = nullptr;
 					}
-					break;
-
-				case evRestart:
-					if (IsSaveNeeded())
-					{
-						SaveSettings();
-					}
-					Restart();
 					break;
 
 				default:
@@ -2026,7 +2233,7 @@ namespace UI
 			case evCloseAlert:
 				SerialIo::SendString(bp.GetSParam());
 				SerialIo::SendChar('\n');
-				ClearAlert();
+				ClearAlertOrResponse();
 				break;
 
 			default:
@@ -2056,6 +2263,7 @@ namespace UI
 			case evAdjustStandbyTemp:
 			case evSetBaudRate:
 			case evSetVolume:
+			case evSetInfoTimeout:
 			case evSetColours:
 				mgr.ClearPopup();
 				StopAdjusting();
@@ -2064,11 +2272,6 @@ namespace UI
 			case evSetLanguage:
 				mgr.ClearPopup();
 				StopAdjusting();
-				if (IsSaveAndRestartNeeded())
-				{
-					restartNeeded = true;
-					PopupRestart();
-				}
 				break;
 			}
 		}
@@ -2076,6 +2279,12 @@ namespace UI
 		{
 			switch(bp.GetEvent())
 			{
+			case evEmergencyStop:
+				mgr.Press(bp, true);
+				DoEmergencyStop();
+				mgr.Press(bp, false);
+				break;
+
 			case evTabControl:
 			case evTabPrint:
 			case evTabMsg:
@@ -2094,14 +2303,13 @@ namespace UI
 
 			case evSetBaudRate:
 			case evSetVolume:
+			case evSetInfoTimeout:
 			case evSetColours:
 			case evSetLanguage:
 			case evCalTouch:
 			case evInvertX:
 			case evInvertY:
-			case evSaveSettings:
 			case evFactoryReset:
-			case evRestart:
 				// On the Setup tab, we allow any other button to be pressed to exit the current popup
 				StopAdjusting();
 				DelayTouchLong();	// by default, ignore further touches for a long time
@@ -2125,63 +2333,144 @@ namespace UI
 		}
 	}
 
-	void UpdateFilesListTitle(int cardNumber, unsigned int numVolumes, bool isFilesList)
+	void DisplayFilesOrMacrosList(bool filesNotMacros, int cardNumber, unsigned int numVolumes)
 	{
-		filePopupTitleField->SetValue(cardNumber);
-		filePopupTitleField->Show(isFilesList);
-		macroPopupTitleField->Show(!isFilesList);
-		changeCardButton->Show(isFilesList && numVolumes > 1);
-		filesUpButton->SetEvent((isFilesList) ? evFilesUp : evMacrosUp, nullptr);
-		mgr.SetPopup(fileListPopup, AutoPlace, AutoPlace);
+		if (filesNotMacros)
+		{
+			filePopupTitleField->SetValue(cardNumber);
+			changeCardButton->Show(numVolumes > 1);
+		}
+		mgr.SetPopup((filesNotMacros) ? fileListPopup : macrosPopup, AutoPlace, AutoPlace);
 	}
 
-	void FileListLoaded(int errCode)
+	void FileListLoaded(bool filesNotMacros, int errCode)
 	{
+		FileListButtons& buttons = (filesNotMacros) ? filesListButtons : macrosListButtons;
 		if (errCode == 0)
 		{
-			mgr.Show(fileListErrorField, false);
+			mgr.Show(buttons.errorField, false);
 		}
 		else
 		{
-			fileListErrorField->SetValue(errCode);
-			mgr.Show(fileListErrorField, true);
+			buttons.errorField->SetValue(errCode);
+			mgr.Show(buttons.errorField, true);
 		}
 	}
 
-	void EnableFileNavButtons(bool scrollEarlier, bool scrollLater, bool parentDir)
+	void EnableFileNavButtons(bool filesNotMacros, bool scrollEarlier, bool scrollLater, bool parentDir)
 	{
-		mgr.Show(scrollFilesLeftButton, scrollEarlier);
-		mgr.Show(scrollFilesRightButton, scrollLater);
-		mgr.Show(filesUpButton, parentDir);
+		FileListButtons& buttons = (filesNotMacros) ? filesListButtons : macrosListButtons;
+		mgr.Show(buttons.scrollLeftButton, scrollEarlier);
+		mgr.Show(buttons.scrollRightButton, scrollLater);
+		mgr.Show(buttons.folderUpButton, parentDir);
 	}
 
-	void ShowFileButton(unsigned int i, Event ev, const char *text, const char *param)
+	// Update the specified button in the file or macro buttons list. If 'text' is nullptr then hide the button, else display it.
+	void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * array null text, const char * array null param)
 	{
-		TextButton *f = filenameButtons[i];
+		TextButton * const f = ((filesNotMacros) ? filenameButtons : macroButtons)[buttonIndex];
 		f->SetText(text);
-		f->SetEvent(ev, param);
-		mgr.Show(f, true);
+		f->SetEvent((text == nullptr) ? evNull : (filesNotMacros) ? evFile : evMacro, param);
+		mgr.Show(f, text != nullptr);
 	}
 
-	void HideFileButton(unsigned int i)
+	// Update the specified button in the macro short list. If 'fileName' is nullptr then hide the button, else display it.
+	// Return true if this should be called again for the next button.
+	bool UpdateMacroShortList(unsigned int buttonIndex, const char * array null fileName)
 	{
-		TextButton *f = filenameButtons[i];
-		f->SetText("");
-		mgr.Show(f, false);
+		if (buttonIndex >= ARRAY_SIZE(controlPageMacroButtons) || controlPageMacroButtons[buttonIndex] == nullptr || numTools == 0 || numTools > MaxHeaters - 2)
+		{
+			return false;
+		}
+
+		String<controlPageMacroTextLength>& str = controlPageMacroText[buttonIndex];
+		str.clear();
+		const bool isFile = (fileName != nullptr);
+		if (isFile)
+		{
+			str.copy(fileName);
+		}
+		TextButton * const f = controlPageMacroButtons[buttonIndex];
+		f->SetText(SkipDigitsAndUnderscore(str.c_str()));
+		f->SetEvent((isFile) ? evMacroControlPage : evNull, str.c_str());
+		mgr.Show(f, isFile);
+		return true;
 	}
 
-	unsigned int GetNumScrolledFiles()
+	unsigned int GetNumScrolledFiles(bool filesNotMacros)
 	{
-		return numFileRows;
+		return (filesNotMacros) ? NumFileRows : NumMacroRows;
+	}
+
+	void AdjustControlPageMacroButtons()
+	{
+		const unsigned int n = max<unsigned int>(numHeaters, numTools + 1);
+
+		if (n != numHeaterAndToolColumns)
+		{
+			numHeaterAndToolColumns = n;
+
+			// Adjust the width of the control page macro buttons, or hide them completely if insufficient room
+			PixelNumber controlPageMacroButtonsColumn = ((tempButtonWidth + fieldSpacing) * n) + bedColumn + fieldSpacing;
+			PixelNumber controlPageMacroButtonsWidth = (controlPageMacroButtonsColumn >= DisplayX - margin) ? 0 : DisplayX - margin - controlPageMacroButtonsColumn;
+			if (controlPageMacroButtonsWidth > maxControlPageMacroButtonsWidth)
+			{
+				controlPageMacroButtonsColumn +=  controlPageMacroButtonsWidth - maxControlPageMacroButtonsWidth;
+				controlPageMacroButtonsWidth = maxControlPageMacroButtonsWidth;
+			}
+
+			bool showControlPageMacroButtons = controlPageMacroButtonsWidth >= minControlPageMacroButtonsWidth;
+
+			for (TextButton *& b : controlPageMacroButtons)
+			{
+				if (showControlPageMacroButtons)
+				{
+					b->SetPositionAndWidth(controlPageMacroButtonsColumn, controlPageMacroButtonsWidth);
+				}
+				mgr.Show(b, showControlPageMacroButtons);
+			}
+
+			if (currentTab == tabControl)
+			{
+				mgr.Refresh(true);
+			}
+		}
+	}
+
+	void SetNumHeaters(size_t nHeaters)
+	{
+		if (nHeaters > MaxHeaters)
+		{
+			nHeaters = MaxHeaters;
+		}
+
+		while (nHeaters < numHeaters)
+		{
+			--numHeaters;
+			mgr.Show(currentTemps[numHeaters], false);
+			mgr.Show(activeTemps[numHeaters], false);
+			mgr.Show(standbyTemps[numHeaters], false);
+			mgr.Show(extrusionFactors[numHeaters - 1], false);
+		}
+		while (numHeaters < nHeaters)
+		{
+			mgr.Show(currentTemps[numHeaters], true);
+			mgr.Show(activeTemps[numHeaters], true);
+			mgr.Show(standbyTemps[numHeaters], true);
+			mgr.Show(extrusionFactors[numHeaters - 1], true);
+			++numHeaters;
+		}
+		AdjustControlPageMacroButtons();
 	}
 
 	void SetNumTools(unsigned int n)
 	{
-		// Tool button 0 is the bed, hence we use <= instead of < in the following
-		for (size_t i = 1; i < maxHeaters; ++i)
+		numTools = n;
+		for (size_t i = 0; i < MaxHeaters; ++i)
 		{
-			mgr.Show(toolButtons[i], i <= n);
+			mgr.Show(toolButtons[i], i <= n);				// tool button 0 is the bed, hence we use <= instead of < in the following
 		}
+		AdjustControlPageMacroButtons();
 	}
 
 	void SetBabystepOffset(float f)

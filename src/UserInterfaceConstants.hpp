@@ -11,7 +11,7 @@
 #include "Configuration.hpp"
 #include "DisplaySize.hpp"
 
-const size_t NumColourSchemes = 2;
+const size_t NumColourSchemes = 3;
 
 #ifdef OEM_LAYOUT
 
@@ -21,8 +21,8 @@ const size_t NumColourSchemes = 2;
 
 #if DISPLAY_X == 480
 
-const unsigned int maxHeaters = 5;
-#define MAX_AXES	(4)
+const unsigned int MaxHeaters = 5;
+#define MaxAxes	(4)
 
 const PixelNumber margin = 2;
 const PixelNumber textButtonMargin = 1;
@@ -61,13 +61,15 @@ const PixelNumber closeButtonWidth = 40;
 
 const PixelNumber touchCalibMargin = 15;
 
+const PixelNumber ColourGradientWidth = 2 * 128;
+
 extern uint8_t glcd19x21[];				// declare which fonts we will be using
 #define DEFAULT_FONT	glcd19x21
 
 #elif DISPLAY_X == 800
 
-const unsigned int maxHeaters = 7;
-#define MAX_AXES (6)
+const unsigned int MaxHeaters = 7;
+#define MaxAxes (6)
 
 const PixelNumber margin = 4;
 const PixelNumber textButtonMargin = 1;
@@ -105,6 +107,8 @@ const PixelNumber closeButtonWidth = 66;
 
 const PixelNumber touchCalibMargin = 22;
 
+const PixelNumber ColourGradientWidth = 3 * 128;
+
 extern uint8_t glcd28x32[];				// declare which fonts we will be using
 #define DEFAULT_FONT	glcd28x32
 
@@ -114,8 +118,10 @@ extern uint8_t glcd28x32[];				// declare which fonts we will be using
 
 #endif
 
+const unsigned int MaxExtruders = MaxHeaters - 1;
+
 const PixelNumber buttonHeight = rowTextHeight + 4;
-const PixelNumber tempButtonWidth = (DISPLAY_X + fieldSpacing - bedColumn)/maxHeaters - fieldSpacing;
+const PixelNumber tempButtonWidth = (DISPLAY_X + fieldSpacing - bedColumn)/MaxHeaters - fieldSpacing;
 
 const PixelNumber row1 = 0;										// we don't need a top margin
 const PixelNumber row2 = row1 + rowHeight - 2;					// the top row never has buttons so it can be shorter
@@ -132,6 +138,10 @@ const PixelNumber row9 = row8 + rowHeight;
 const PixelNumber rowTabs = DisplayY - rowTextHeight;			// place at bottom of screen with no margin
 const PixelNumber labelRowAdjust = 2;							// how much to drop non-button fields to line up with buttons
 
+const PixelNumber ColourGradientLeftPos = DISPLAY_X - ColourGradientWidth - margin;
+const PixelNumber ColourGradientTopPos = row2;
+const PixelNumber ColourGradientHeight = rowTextHeight;
+
 const PixelNumber speedColumn = margin;
 const PixelNumber fanColumn = DISPLAY_X/4 + 20;
 
@@ -146,12 +156,12 @@ const PixelNumber popupBarHeight = buttonHeight + (2 * popupTopMargin);
 
 const PixelNumber tempPopupBarWidth = (3 * fullPopupWidth)/4;
 const PixelNumber fileInfoPopupWidth = fullPopupWidth - (4 * margin),
-				  fileInfoPopupHeight = (8 * rowTextHeight) + buttonHeight + (2 * popupTopMargin);
+				  fileInfoPopupHeight = (10 * rowTextHeight) + buttonHeight + (2 * popupTopMargin);
 const PixelNumber areYouSurePopupWidth = DisplayX - 80,
 				  areYouSurePopupHeight = (3 * rowHeight) + (2 * popupTopMargin);
 
 const PixelNumber movePopupWidth = fullPopupWidth;
-const PixelNumber movePopupHeight = ((MAX_AXES + 1) * buttonHeight) + (MAX_AXES * moveButtonRowSpacing) + (2 * popupTopMargin);
+const PixelNumber movePopupHeight = ((MaxAxes + 1) * buttonHeight) + (MaxAxes * moveButtonRowSpacing) + (2 * popupTopMargin);
 
 const PixelNumber extrudePopupWidth = fullPopupWidth;
 const PixelNumber extrudePopupHeight = (5 * buttonHeight) + (4 * extrudeButtonRowSpacing) + (2 * popupTopMargin);
@@ -164,18 +174,30 @@ const PixelNumber keyButtonVStep = buttonHeight + keyboardButtonRowSpacing;
 const PixelNumber keyboardPopupHeight = (5 * keyButtonVStep) + (2 * keyboardTopMargin) + buttonHeight;
 const PixelNumber keyboardPopupY = margin;
 
-const unsigned int numFileColumns = 1;
-const unsigned int numFileRows = (fullPopupHeight - (2 * popupTopMargin) + fileButtonRowSpacing)/(buttonHeight + fileButtonRowSpacing) - 1;
-const unsigned int numDisplayedFiles = numFileColumns * numFileRows;
-const PixelNumber fileListPopupWidth = fullPopupWidth;
-const PixelNumber fileListPopupHeight = ((numFileRows + 1) * buttonHeight) + (numFileRows * fileButtonRowSpacing) + (2 * popupTopMargin);
+const unsigned int NumFileColumns = 1;
+const unsigned int NumFileRows = (fullPopupHeight - (2 * popupTopMargin) + fileButtonRowSpacing)/(buttonHeight + fileButtonRowSpacing) - 1;
+const unsigned int NumDisplayedFiles = NumFileColumns * NumFileRows;
 
-const uint32_t numMessageRows = (rowTabs - margin - rowHeight)/rowTextHeight;
+const PixelNumber fileListPopupWidth = fullPopupWidth;
+const PixelNumber fileListPopupHeight = ((NumFileRows + 1) * buttonHeight) + (NumFileRows * fileButtonRowSpacing) + (2 * popupTopMargin);
+
+const unsigned int NumMacroColumns = 2;
+const unsigned int NumMacroRows = (fullPopupHeight - (2 * popupTopMargin) + fileButtonRowSpacing)/(buttonHeight + fileButtonRowSpacing) - 1;
+const unsigned int NumDisplayedMacros = NumMacroColumns * NumMacroRows;
+
+const PixelNumber MacroListPopupWidth = fullPopupWidth;
+const PixelNumber MacroListPopupHeight = ((NumMacroRows + 1) * buttonHeight) + (NumMacroRows * fileButtonRowSpacing) + (2 * popupTopMargin);
+
+const unsigned int numMessageRows = (rowTabs - margin - rowHeight)/rowTextHeight;
 const PixelNumber messageTextX = margin + messageTimeWidth + 2;
 const PixelNumber messageTextWidth = DisplayX - margin - messageTextX;
 
+const unsigned int NumControlPageMacroButtons = 4;
+const PixelNumber minControlPageMacroButtonsWidth = (tempButtonWidth * 3)/2;
+const PixelNumber maxControlPageMacroButtonsWidth = DisplayX/2 - 2 * margin;
+
 const PixelNumber alertPopupWidth = fullPopupWidth - 6 * margin;
-const PixelNumber alertPopupHeight = 2 * popupTopMargin + 5 * rowTextHeight + 2 * buttonHeight + moveButtonRowSpacing;
+const PixelNumber alertPopupHeight = 2 * popupTopMargin + 6 * rowTextHeight + 2 * buttonHeight + moveButtonRowSpacing;
 
 const PixelNumber babystepPopupWidth = (2 * fullPopupWidth)/3;
 const PixelNumber babystepPopupHeight = 3 * rowHeight + 2 * popupTopMargin;

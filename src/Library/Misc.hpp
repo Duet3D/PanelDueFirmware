@@ -10,6 +10,7 @@
 #define MISC_H_
 
 #include <cstddef>
+#include <ecv.h>
 
 #undef min
 #undef max
@@ -24,6 +25,9 @@ post(_ecv_isNullTerminated(dst));
 // Return true if string a is the same as or starts with string b
 bool stringStartsWith(const char* array a, const char* array b)
 pre(_ecv_isNullTerminated(a); _ecv_isNullTerminated(b));
+
+// If the text starts with decimal digits followed by underscore, skip that bit
+const char * array SkipDigitsAndUnderscore(const char * array text);
 
 template<class T> T min(const T& a, const T& b)
 {

@@ -54,6 +54,13 @@ void DisplayField::SetTextRows(const char * array null t)
 	textRows = rows;
 }
 
+void DisplayField::SetPositionAndWidth(PixelNumber newX, PixelNumber newWidth)
+{
+	x = newX;
+	width = newWidth;
+	changed = true;
+}
+
 /*static*/ void DisplayField::SetDefaultColours(Colour pf, Colour pb, Colour pbb, Colour pg, Colour pbp, Colour pgp, Palette pal)
 {
 	defaultFcolour = pf;
@@ -175,8 +182,8 @@ bool Window::Visible(const DisplayField *p) const
 // Get the field that has been touched, or nullptr if we can't find one
 ButtonPress Window::FindEvent(PixelNumber x, PixelNumber y)
 {
-	return (x < Xpos() || y < Ypos()) ? ButtonPress()
-			: (next != nullptr) ? next->FindEvent(x, y) 
+	return (next != nullptr) ? next->FindEvent(x, y)
+			: (x < Xpos() || y < Ypos()) ? ButtonPress()
 				: DisplayField::FindEvent(x - Xpos(), y - Ypos(), root);
 }
 
@@ -301,7 +308,7 @@ void Window::Redraw(DisplayField *f)
 
 void Window::Show(DisplayField * null f, bool v)
 {
-	if (f != nullptr && f->IsVisible() != v)
+	if (f != nullptr && (f->IsVisible() != v || f->HasChanged()))
 	{
 		f->Show(v);
 
@@ -428,6 +435,43 @@ void PopupWindow::Refresh(bool full)
 bool PopupWindow::Contains(PixelNumber xmin, PixelNumber ymin, PixelNumber xmax, PixelNumber ymax) const
 {
 	return xPos + 2 <= xmin && yPos + 2 <= ymin && xPos + width >= xmax + 3 && yPos + height >= ymax + 3;
+}
+
+void ColourGradientField::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
+{
+	if (full)
+	{
+		PixelNumber px = x + xOffset;
+		const PixelNumber py = y + yOffset;
+		const PixelNumber lineRepeat = width/128;
+		for (PixelNumber i = 0; i < 32; ++i)
+		{
+			lcd.setColor(i << 11);
+			for (PixelNumber j = 0; j < lineRepeat; ++j)
+			{
+				lcd.drawLine(px, py, px, py + height - 1);
+				++px;
+			}
+		}
+		for (PixelNumber i = 0; i < 64; ++i)
+		{
+			lcd.setColor(i << 5);
+			for (PixelNumber j = 0; j < lineRepeat; ++j)
+			{
+				lcd.drawLine(px, py, px, py + height - 1);
+				++px;
+			}
+		}
+		for (PixelNumber i = 0; i < 32; ++i)
+		{
+			lcd.setColor(i);
+			for (PixelNumber j = 0; j < lineRepeat; ++j)
+			{
+				lcd.drawLine(px, py, px, py + height - 1);
+				++px;
+			}
+		}
+	}
 }
 
 PixelNumber FieldWithText::GetHeight() const
@@ -597,7 +641,7 @@ void ButtonBase::DrawOutline(PixelNumber xOffset, PixelNumber yOffset, bool isPr
 
 void ButtonBase::CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) /*override*/
 {
-	if (visible && GetEvent() != nullEvent)
+	if (IsVisible() && GetEvent() != nullEvent)
 	{
 		const int xError = (x < GetMinX()) ? GetMinX() - x
 								: (x > GetMaxX()) ? x - GetMaxX()
@@ -703,17 +747,6 @@ size_t TextButton::PrintText(size_t offset) const
 		return lcd.print(text + offset);
 	}
 	return 0;
-}
-
-ShadowTextButton::ShadowTextButton(PixelNumber py, PixelNumber px, PixelNumber pw, TextButton *b)
-: ButtonWithText(py, px, pw), shadowedButton(b)
-{
-	SetEvent(b->GetEvent(), b->GetUParam());
-}
-
-size_t ShadowTextButton::PrintText(size_t offset) const
-{
-	return shadowedButton->PrintText(offset);
 }
 
 IconButton::IconButton(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int param)

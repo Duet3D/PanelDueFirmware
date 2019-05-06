@@ -32,18 +32,18 @@ enum Event : uint8_t
 	evSetInt,
 	evListFiles,
 
-	evFile, evMacro,
+	evFile, evMacro, evMacroControlPage,
 	evPrintFile,
 	evSendCommand,
 	evFactoryReset,
 	evAdjustSpeed,
 
-	evScrollFiles, evFilesUp, evMacrosUp, evChangeCard,
+	evScrollFiles, evScrollMacros, evFilesUp, evMacrosUp, evChangeCard,
 
 	evKeyboard,
 
 	// Setup functions
-	evCalTouch, evSetBaudRate, evInvertX, evInvertY, evAdjustBaudRate, evSetVolume, evSaveSettings, evAdjustVolume, evReset,
+	evCalTouch, evSetBaudRate, evInvertX, evInvertY, evAdjustBaudRate, evSetVolume, evAdjustVolume, evSetInfoTimeout, evAdjustInfoTimeout, evReset,
 
 	evYes,
 	evCancel,
@@ -58,8 +58,9 @@ enum Event : uint8_t
 	evAdjustLanguage, evSetLanguage,
 	evAdjustColours, evSetColours,
 	evBrighter, evDimmer,
+	evSetDimmingType,
 
-	evRestart, evEmergencyStop,
+	evEmergencyStop,
 
 	evJogZ, evCloseAlert
 

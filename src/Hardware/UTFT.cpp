@@ -79,6 +79,7 @@ UTFT::UTFT(DisplayType model, unsigned int RS, unsigned int WR, unsigned int CS,
 { 
 	switch (model)
 	{
+#if 0
 		case HX8347A:
 		case SSD1289:
 		case ILI9325C:
@@ -106,17 +107,20 @@ UTFT::UTFT(DisplayType model, unsigned int RS, unsigned int WR, unsigned int CS,
 			disp_x_size=127;
 			disp_y_size=127;
 			break;
+#endif
 		case SSD1963_480:
-			disp_x_size=271;
-			disp_y_size=479;
+			disp_x_size=479;
+			disp_y_size=271;
 			break;
 		case SSD1963_800:
-			disp_x_size=479;
-			disp_y_size=799;
+			disp_x_size=799;
+			disp_y_size=479;
 			break;
 		case CPLD_800:
 			disp_x_size=799;
 			disp_y_size=479;
+			break;
+		default:
 			break;
 	}
 
@@ -172,16 +176,11 @@ void UTFT::LCD_Write_DATA8(uint8_t VL)
 	LCD_Write_Bus((uint16_t)VL);
 }
 
-void UTFT::LCD_Write_COM_DATA16(uint8_t com1, uint16_t dat1)
+// This one is used for setXY so we inline it
+inline void UTFT::LCD_Write_COM_DATA16(uint8_t com1, uint16_t dat1)
 {
-     LCD_Write_COM(com1);
-     LCD_Write_DATA16(dat1);
-}
-
-void UTFT::LCD_Write_COM_DATA8(uint8_t com1, uint8_t dat1)
-{
-     LCD_Write_COM(com1);
-     LCD_Write_DATA8(dat1);
+	LCD_Write_COM(com1);
+	LCD_Write_DATA16(dat1);
 }
 
 void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
@@ -1140,11 +1139,23 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 		LCD_Write_DATA8(0x01);		//GPIO0 normal
 
 		LCD_Write_COM(0x36);		//rotation
-		LCD_Write_DATA8(0x22);
+		{
+			uint8_t rotation = (isER) ? 0x08 : 0x00;
+			if (orient & ReverseY)
+			{
+				rotation ^= (orient & SwapXY) ? 0x02 : 0x01;		// do the row reversal in hardware
+				orient = (DisplayOrientation)(orient & ~ReverseY);
+			}
+			if (orient & ReverseX)
+			{
+				rotation ^= (orient & SwapXY) ? 0x01 : 0x02;		// do the column reversal in hardware
+				orient = (DisplayOrientation)(orient & ~ReverseX);
+			}
+			LCD_Write_DATA8(rotation);
+		}
 
 		LCD_Write_COM(0xF0);		//pixel data interface
 		LCD_Write_DATA8(0x03);
-
 
 		delay_ms(1);
 
@@ -1168,7 +1179,7 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 #ifndef DISABLE_SSD1963_800
 	case SSD1963_800:
 		LCD_Write_COM(0xE2);		//PLL multiplier, set PLL clock to 120M
-		LCD_Write_DATA8(0x1E);	    //N=0x36 for 6.5M, 0x23 for 10M crystal
+		LCD_Write_DATA8(0x1E);	    //N=0x36 for 6.5M, 0x23 for 10M crystal (ER 5": 0x23)
 		LCD_Write_DATA8(0x02);
 		LCD_Write_DATA8(0x54);
 		LCD_Write_COM(0xE0);		// PLL enable
@@ -1181,11 +1192,13 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 		delay_ms(100);
 		LCD_Write_COM(0xE6);		//PLL setting for PCLK, depends on resolution
 		LCD_Write_DATA8(0x03);
-		LCD_Write_DATA8(0xFF);
-		LCD_Write_DATA8(0xFF);
+		LCD_Write_DATA8(0xFF);		// ER 5": 0x33
+		LCD_Write_DATA8(0xFF);		// ER 5": 0x33
 
 		LCD_Write_COM(0xB0);		//LCD SPECIFICATION
-		LCD_Write_DATA8((is24bit) ? 0x24 : 0x04);
+		LCD_Write_DATA8((isER) ? 0x20			// East Rising displays are 24-bit, data latched on falling edge
+						: (is24bit) ? 0x20		// other 5" displays are 24-bit, data latched on falling edge I assume (setting 0x24 for rising edge works too)
+							: 0x00);			// other 7" displays are 18-bit, data latched on falling edge (works better than setting rising edge)
 		LCD_Write_DATA8(0x00);
 		LCD_Write_DATA8(0x03);		//Set HDP	799
 		LCD_Write_DATA8(0x1F);
@@ -1194,23 +1207,23 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 		LCD_Write_DATA8(0x00);
 
 		LCD_Write_COM(0xB4);		//HSYNC
-		LCD_Write_DATA8(0x03);		//Set HT	928
-		LCD_Write_DATA8(0xA0);
+		LCD_Write_DATA8(0x03);		//Set HT	928 (ER 5": 0x04 = 1055)
+		LCD_Write_DATA8(0xA0);		// ER 5": 0x1f
 		LCD_Write_DATA8(0x00);		//Set HPS	46
-		LCD_Write_DATA8(0x2E);
+		LCD_Write_DATA8(0x2E);		// ER 5": 0xD2 = 210
 		LCD_Write_DATA8(0x30);		//Set HPW	48
-		LCD_Write_DATA8(0x00);		//Set LPS	15
-		LCD_Write_DATA8(0x0F);
+		LCD_Write_DATA8(0x00);		//Set LPS	15 (ER 5": 0)
+		LCD_Write_DATA8(0x0F);		// ER 5": 0
 		LCD_Write_DATA8(0x00);
 
 		LCD_Write_COM(0xB6);		//VSYNC
 		LCD_Write_DATA8(0x02);		//Set VT	525
-		LCD_Write_DATA8(0x0D);
+		LCD_Write_DATA8(0x0D);		// ER 5": 0x0c = 524
 		LCD_Write_DATA8(0x00);		//Set VPS	16
-		LCD_Write_DATA8(0x10);
-		LCD_Write_DATA8(0x10);		//Set VPW	16
+		LCD_Write_DATA8(0x10);		// ER 5": 0x22 = 34
+		LCD_Write_DATA8(0x10);		//Set VPW	16 (ER 5": 0x00 = 0)
 		LCD_Write_DATA8(0x00);		//Set FPS	8
-		LCD_Write_DATA8(0x08);
+		LCD_Write_DATA8(0x08);		// ER 5": 0x00 = 0
 
 		LCD_Write_COM(0xBA);
 		LCD_Write_DATA8(0x0F);		//GPIO[3:0] out 1
@@ -1220,7 +1233,20 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 		LCD_Write_DATA8(0x01);		//GPIO0 normal
 
 		LCD_Write_COM(0x36);		//rotation
-		LCD_Write_DATA8((isER) ? 0x2A : 0x22);
+		{
+			uint8_t rotation = (isER) ? 0x08 : 0x00;
+			if (orient & ReverseY)
+			{
+				rotation ^= (orient & SwapXY) ? 0x02 : 0x01;		// do the row reversal in hardware
+				orient = (DisplayOrientation)(orient & ~ReverseY);
+			}
+			if (orient & ReverseX)
+			{
+				rotation ^= (orient & SwapXY) ? 0x01 : 0x02;		// do the column reversal in hardware
+				orient = (DisplayOrientation)(orient & ~ReverseX);
+			}
+			LCD_Write_DATA8(rotation);
+		}
 
 		LCD_Write_COM(0xF0);		//pixel data interface
 		LCD_Write_DATA8(0x03);
@@ -1374,11 +1400,11 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 		default:
 			// Optimised code supporting only the SSD1963
 			// In the following we use LCD_WRITE_BUS to write additional data without having to write RS again.
-			LCD_Write_COM_DATA16(0x2a, y1>>8);
+			LCD_Write_COM_DATA16(0x2b, y1>>8);
 			LCD_Write_Bus(y1);
 			LCD_Write_Bus(y2>>8);
 			LCD_Write_Bus(y2);
-			LCD_Write_COM_DATA16(0x2b, x1>>8);
+			LCD_Write_COM_DATA16(0x2a, x1>>8);
 			LCD_Write_Bus(x1);
 			LCD_Write_Bus(x2>>8);
 			LCD_Write_Bus(x2);
@@ -1523,10 +1549,10 @@ void UTFT::drawRect(int x1, int y1, int x2, int y2)
 		swap(y1, y2);
 	}
 
-	drawHLine(x1, y1, x2-x1);
-	drawHLine(x1, y2, x2-x1);
-	drawVLine(x1, y1, y2-y1);
-	drawVLine(x2, y1, y2-y1);
+	drawHLine(x1, y1, x2-x1+1);
+	drawHLine(x1, y2, x2-x1+1);
+	drawVLine(x1, y1, y2-y1+1);
+	drawVLine(x2, y1, y2-y1+1);
 }
 
 void UTFT::drawRoundRect(int x1, int y1, int x2, int y2)
@@ -1545,10 +1571,10 @@ void UTFT::drawRoundRect(int x1, int y1, int x2, int y2)
 		drawPixel(x2-1, y1+1);
 		drawPixel(x1+1, y2-1);
 		drawPixel(x2-1, y2-1);
-		drawHLine(x1+2, y1, x2-x1-4);
-		drawHLine(x1+2, y2, x2-x1-4);
-		drawVLine(x1, y1+2, y2-y1-4);
-		drawVLine(x2, y1+2, y2-y1-4);
+		drawHLine(x1+2, y1, x2-x1-3);
+		drawHLine(x1+2, y2, x2-x1-3);
+		drawVLine(x1, y1+2, y2-y1-3);
+		drawVLine(x2, y1+2, y2-y1-3);
 	}
 }
 
@@ -1575,7 +1601,7 @@ void UTFT::fillRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gradCha
 	{
 		for (int i = x1; i <= x2; i++)
 		{
-			drawVLine(i, y1, y2-y1);
+			drawVLine(i, y1, y2-y1+1);
 			if (++gradCount == gradChange)
 			{
 				gradCount = 0;
@@ -1587,7 +1613,7 @@ void UTFT::fillRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gradCha
 	{
 		for (int i = y1; i <= y2; i++)
 		{
-			drawHLine(x1, i, x2-x1);
+			drawHLine(x1, i, x2-x1+1);
 			if (++gradCount == gradChange)
 			{
 				gradCount = 0;
@@ -1614,14 +1640,14 @@ void UTFT::fillRoundRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gr
 		Colour fcolourSave = fcolour;
 		uint8_t gradCount = 0;
 
-		drawHLine(x1+2, y1, x2-x1-4);
+		drawHLine(x1+2, y1, x2-x1-3);
 		++y1;
 		if (++gradCount == gradChange)
 		{
 			gradCount = 0;
 			applyGradient(grad);
 		}
-		drawHLine(x1+1, y1, x2-x1-2);
+		drawHLine(x1+1, y1, x2-x1-1);
 		++y1;
 		if (++gradCount == gradChange)
 		{
@@ -1630,7 +1656,7 @@ void UTFT::fillRoundRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gr
 		}
 		while (y1 + 1 < y2)
 		{
-			drawHLine(x1, y1, x2-x1);
+			drawHLine(x1, y1, x2-x1+1);
 			++y1;
 			if (++gradCount == gradChange)
 			{
@@ -1638,14 +1664,14 @@ void UTFT::fillRoundRect(int x1, int y1, int x2, int y2, Colour grad, uint8_t gr
 				applyGradient(grad);
 			}
 		}
-		drawHLine(x1+1, y1, x2-x1-2);
+		drawHLine(x1+1, y1, x2-x1-1);
 		++y1;
 		if (++gradCount == gradChange)
 		{
 			gradCount = 0;
 			applyGradient(grad);
 		}
-		drawHLine(x1+2, y1, x2-x1-4);
+		drawHLine(x1+2, y1, x2-x1-3);
 		
 		fcolour = fcolourSave;
 	}
@@ -1755,6 +1781,7 @@ void UTFT::drawPixel(int x, int y)
 	removeCS();
 }
 
+// Draw a straight line from points (x1,y1) to (x2,y2) inclusive
 void UTFT::drawLine(int x1, int y1, int x2, int y2)
 {
 	if (y1 == y2)
@@ -1763,15 +1790,15 @@ void UTFT::drawLine(int x1, int y1, int x2, int y2)
 		{
 			swap(x1, x2);
 		}
-		drawHLine(x1, y1, x2-x1);
+		drawHLine(x1, y1, x2 - x1 + 1);
 	}
-	else if (x1==x2)
+	else if (x1 == x2)
 	{
-		if (y1>y2)
+		if (y1 > y2)
 		{
 			swap(y1, y2);
 		}
-		drawVLine(x1, y1, y2-y1);
+		drawVLine(x1, y1, y2 - y1 + 1);
 	}
 	else
 	{
@@ -1807,16 +1834,16 @@ void UTFT::drawLine(int x1, int y1, int x2, int y2)
 void UTFT::drawHLine(int x, int y, int len)
 {
 	assertCS();
-	setXY(x, y, x+len, y);
-	LCD_Write_Repeated_DATA16(fcolour, len + 1);
+	setXY(x, y, x+len-1, y);
+	LCD_Write_Repeated_DATA16(fcolour, len);
 	removeCS();
 }
 
 void UTFT::drawVLine(int x, int y, int len)
 {
 	assertCS();
-	setXY(x, y, x, y+len);
-	LCD_Write_Repeated_DATA16(fcolour, len + 1);
+	setXY(x, y, x, y+len-1);
+	LCD_Write_Repeated_DATA16(fcolour, len);
 	removeCS();
 }
 
@@ -1959,7 +1986,7 @@ size_t UTFT::writeNative(uint16_t c)
 			thisCharColData = *(uint32_t*)(fontPtr + bytesPerColumn) & cmask;	// get the next column instead
 		}
 
-		bool kern = (numSpaces >= 2)
+		const bool kern = (numSpaces >= 2)
 						? ((thisCharColData & lastCharColData) == 0)
 						: (((thisCharColData | (thisCharColData << 1)) & (lastCharColData | (lastCharColData << 1))) == 0);
 		if (kern)
@@ -2189,39 +2216,60 @@ void UTFT::drawCompressedBitmapBottomToTop(int x, int y, int sx, int sy, const u
 	for (int ty = sy; ty != 0; )
 	{
 		--ty;
+		if ((orient & (ReverseX | SwapXY)) == 0)
+		{
+			// The orientation allows us to write pixels one after another, without resetting the pixel address between them
+			setXY(x, ty, sx - 1, ty);
+			for (int tx = x; tx < sx; tx++)
+			{
+				if (count == 0)
+				{
+					count = *data++;
+					col = *data++;
+				}
+				else
+				{
+					--count;
+				}
+				LCD_Write_DATA16(col);
+			}
+		}
+		else
+		{
 #if 0
-		// This algorithm is faster but results in a non-uniform speed
-		int tx = x;
-		while (tx < sx)
-		{
-			if (count == 0)
+			// This algorithm is faster but results in a non-uniform speed
+			int tx = x;
+			while (tx < sx)
 			{
-				count = (*data++) + 1;
-				col = *data++;
+				if (count == 0)
+				{
+					count = (*data++) + 1;
+					col = *data++;
+				}
+				const uint32_t thisCount = std::min<uint32_t>(count, sx - tx);
+				setXY(tx, ty, tx + thisCount - 1, ty);
+				LCD_Write_Repeated_DATA16(col, thisCount);
+				count -= thisCount;
+				tx += thisCount;
 			}
-			const uint32_t thisCount = std::min<uint32_t>(count, sx - tx);
-			setXY(tx, ty, tx + thisCount - 1, ty);
-			LCD_Write_Repeated_DATA16(col, thisCount);
-			count -= thisCount;
-			tx += thisCount;
-		}
 #else
-		// Original slow-but-steady algorithm
-		for (int tx = x; tx < sx; tx++)
-		{
-			if (count == 0)
+			// Original slow-but-steady algorithm
+			for (int tx = x; tx < sx; tx++)
 			{
-				count = *data++;
-				col = *data++;
+				if (count == 0)
+				{
+					count = *data++;
+					col = *data++;
+				}
+				else
+				{
+					--count;
+				}
+				setXY(tx, ty, tx, ty);
+				LCD_Write_DATA16(col);
 			}
-			else
-			{
-				--count;
-			}
-			setXY(tx, ty, tx, ty);
-			LCD_Write_DATA16(col);
-		}
 #endif
+		}
 	}
 	removeCS();
 }
@@ -2255,21 +2303,6 @@ void UTFT::lcdOn()
 	case CPLD_800:
 		LCD_Write_COM_DATA16(0x01, 0x0010);
 		LCD_Write_COM(0x0F);
-		break;
-	default:
-		break;
-	}
-	removeCS();
-}
-
-void UTFT::setContrast(uint8_t c)
-{
-	assertCS();
-	switch (displayModel)
-	{
-	case PCF8833:
-		if (c>64) c=64;
-		LCD_Write_COM_DATA8(0x25, c);
 		break;
 	default:
 		break;

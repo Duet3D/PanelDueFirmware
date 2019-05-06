@@ -23,14 +23,28 @@ const size_t MaxArrayNesting = 4;
 namespace SerialIo
 {
 	static unsigned int lineNumber = 0;
-	
-	const char* array trGrave =			"A\xC0" "E\xC8" "I\xCC"         "O\xD2" "U\xD9" "a\xE0" "e\xE8" "i\xEC" "o\xF2" "u\xF9"        ;
-	const char* array trAcute =			"A\xC1" "E\xC9" "I\xCD"         "O\xD3" "U\xDA" "a\xE1" "e\xE9" "i\xED" "o\xF3" "u\xFA" "y\xFD";
-	const char* array trCircumflex =	"A\xC2" "E\xCA" "I\xCE"         "O\xD4" "U\xDB" "a\xE2" "e\xEA" "i\xEE" "o\xF4" "u\xFB"        ;
-	const char* array trTilde =			"A\xC3"                 "N\xD1" "O\xD5"         "a\xE3"                 "o\xF5"                ;
-	const char* array trUmlaut =		"A\xC4" "E\xCB" "I\xCF"         "O\xD6" "U\xDC" "a\xE4" "e\xEB" "i\xEF" "o\xF6" "u\xFC" "y\xFF";
-	const char* array trCircle =		"A\xC5"                                         "a\xE5"                                        ;
-	const char* array trCedilla =		"C\xC7" "c\xE7";
+
+	// Translation tables for combining characters.
+	// The first character in each pair is the character that the combining mark is applied to.
+	// The second character is what is translates to if the value is >=0x80, else the value it translates to minus 0x0100.
+	const char* array const trGrave =		"A\xC0"			"E\xC8" 				"I\xCC"         "O\xD2" "U\xD9"
+											"a\xE0"			"e\xE8" 				"i\xEC"			"o\xF2" "u\xF9"			;
+	const char* array const trAcute =		"A\xC1" "C\x06" "E\xC9" 				"I\xCD" "L\x39" "N\x43" "O\xD3" "R\x54" "S\x5A" "U\xDA" "Y\xDD"	"Z\x79"
+											"a\xE1" "c\x07" "e\xE9" 				"i\xED" "l\x39"	"n\x44"	"o\xF3" "r\x55" "s\x5B" "u\xFA" "y\xFD" "z\x7a"	;
+	const char* array const trCircumflex =	"A\xC2" "C\x08" "E\xCA" "G\x1C" "H\x24" "I\xCE" "J\x34"	"O\xD4" "S\x5C" "U\xDB" "W\x74" "Y\x76"
+											"a\xE2" "c\x09" "e\xEA" "g\x1D" "h\x25" "i\xEE" "j\x35"	"o\xF4" "s\x5D" "u\xFB"	"w\x75"	"y\x77"	;
+	const char* array const trTilde =		"A\xC3"                 				"I\x28" "N\xD1" "O\xD5" "U\x68"
+											"a\xE3"                 				"i\x29"	"n\xF1"	"o\xF5"	"u\x69"			;
+	const char* array const trBreve =		"A\x02"			"E\x14" "G\x1E" 		"I\x2C"			"O\x4E" "U\x6c"
+											"a\x03"			"e\x15" "g\x1F" 		"i\x2D"			"o\x4F" "u\x6d"			;
+	const char* array const trUmlaut =		"A\xC4"			"E\xCB" 				"I\xCF"         "O\xD6" "U\xDC" "Y\x78"
+											"a\xE4"			"e\xEB" 				"i\xEF"			"o\xF6" "u\xFC" "y\xFF"	;
+	const char* array const trCircle =		"A\xC5"															"U\x6E"
+											"a\xE5"                                 						"u\x6F"			;
+	const char* array const trCaron =		"C\x0C"	"D\x0C" "E\x1A" "N\x47" "R\x58" "S\x60" "T\x64" "Z\x7D"
+											"c\x0D" "d\x0F" "e\x1B" "n\x48" "r\x59" "s\x61" "t\x65" "z\x7E"					;
+	const char* array const trCedilla =		"C\xC7"
+											"c\xE7"																			;
 
 	// Initialize the serial I/O subsystem, or re-initialize it with a new baud rate
 	void Init(uint32_t baudRate)
@@ -191,7 +205,7 @@ namespace SerialIo
 
 	// fieldId is the name of the field being received. A '^' character indicates the position of an array index, and a ':' character indicates a field separator.
 	String<50> fieldId;
-	String<160> fieldVal;	// long enough for about 3 lines of message
+	String<300> fieldVal;	// long enough for about 6 lines of message
 	size_t arrayIndices[MaxArrayNesting];
 	size_t arrayDepth = 0;
 	
@@ -294,11 +308,17 @@ namespace SerialIo
 					case 0x0303:	// tilde
 						trtab = trTilde;
 						break;
+					case 0x0306:	// breve
+						trtab = trBreve;
+						break;
 					case 0x0308:	// umlaut
 						trtab = trUmlaut;
 						break;
 					case 0x030A:	// small circle
 						trtab = trCircle;
+						break;
+					case 0x030C:	// caron
+						trtab = trCaron;
 						break;
 					case 0x0327:	// cedilla
 						trtab = trCedilla;
@@ -319,8 +339,12 @@ namespace SerialIo
 						}
 						if (*trtab != 0)
 						{
-							// Get he translated character and encode it as 2 ITF8 bytes
-							const unsigned char c3 = trtab[1];
+							// Get the translated character and encode it as 2 UTF8 bytes
+							uint16_t c3 = (uint16_t)(uint8_t)trtab[1];
+							if (c3 < 0x80)
+							{
+								c3 |= 0x0100;
+							}
 							fieldVal[i - 3] = (c3 >> 6) | 0xC0;
 							fieldVal[i - 2] = (c3 & 0x3F) | 0x80;
 							fieldVal.erase(i - 1);
@@ -449,7 +473,6 @@ namespace SerialIo
 						if (InArray())
 						{
 							EndArray();			// empty array
-							RemoveLastIdChar();
 							state = jsEndVal;
 						}
 						else
@@ -563,7 +586,6 @@ namespace SerialIo
 							ProcessField();
 							++arrayIndices[arrayDepth - 1];
 							EndArray();
-							RemoveLastIdChar();
 							state = jsEndVal;
 						}
 						else

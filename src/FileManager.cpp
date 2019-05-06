@@ -10,6 +10,7 @@
 #include "UserInterfaceConstants.hpp"
 #include "UserInterface.hpp"
 #include "Hardware/SerialIo.hpp"
+#include "Library/Misc.hpp"
 #include <cctype>
 
 #undef min
@@ -20,10 +21,20 @@
 #define array _ecv_array
 #define result _ecv_result
 
+#if SAM4S
+// We have 64Kb SRAM on the SAM4S4B so we can support larger file lists
+constexpr size_t FileListSize = 4096;
+constexpr size_t MaxFiles = 200;
+#else
+// We have only 32Kb or 48Kb SRAM on the SAM3S2B or SAM3S4B
+constexpr size_t FileListSize = 2048;
+constexpr size_t MaxFiles = 100;
+#endif
+
 namespace FileManager
 {
-	typedef Vector<char, 2048> FileList;						// we use a Vector instead of a String because we store multiple null-terminated strings in it
-	typedef Vector<const char* array, 100> FileListIndex;
+	typedef Vector<char, FileListSize> FileList;				// we use a Vector instead of a String because we store multiple null-terminated strings in it
+	typedef Vector<const char* array, MaxFiles> FileListIndex;
 
 	const char * array filesRoot = "0:/gcodes";
 	const char * array macrosRoot = "0:/macros";
@@ -35,8 +46,8 @@ namespace FileManager
 	static int newFileList = -1;								// which file list we received a new listing into
 	static int errorCode;
 	static Path fileDirectoryName;
-	static FileSet gcodeFilesList(evFile, filesRoot, true);
-	static FileSet macroFilesList(evMacro, macrosRoot, false);
+	static FileSet gcodeFilesList(filesRoot, NumDisplayedFiles, true);
+	static FileSet macroFilesList(macrosRoot, NumDisplayedMacros, false);
 	static FileSet * null displayedFileSet = nullptr;
 	static uint8_t numVolumes = 1;								// how many SD card sockets we have (normally 1 or 2)
 
@@ -46,8 +57,8 @@ namespace FileManager
 		return strcasecmp(a, b) > 0;
 	}
 
-	FileSet::FileSet(Event fe, const char * array rootDir, bool pIsFilesList)
-		: requestedPath(rootDir), currentPath(), timer(FileListRequestTimeout, "", requestedPath.c_str()), which(-1), fileEvent(fe), scrollOffset(0),
+	FileSet::FileSet(const char * array rootDir, unsigned int numDisp, bool pIsFilesList)
+		: numDisplayed(numDisp), requestedPath(rootDir), currentPath(), timer(FileListRequestTimeout, "", requestedPath.c_str()), whichList(-1), scrollOffset(0),
 		  isFilesList(pIsFilesList), cardNumber(0)
 	{
 	}
@@ -55,13 +66,13 @@ namespace FileManager
 	void FileSet::Display()
 	{
 		FileListUpdated();
-		UI::UpdateFilesListTitle(cardNumber, numVolumes, isFilesList);
+		UI::DisplayFilesOrMacrosList(isFilesList, cardNumber, numVolumes);
 		SetPending();							// refresh the list of files
 	}
 
 	void FileSet::Reload(int whichList, const Path& dir, int errCode)
 	{
-		UI::FileListLoaded(errCode);			// do this first to show/hide the error message
+		UI::FileListLoaded(isFilesList, errCode);			// do this first to show/hide the error message
 		if (errCode == 0)
 		{
 			SetIndex(whichList);
@@ -75,15 +86,39 @@ namespace FileManager
 		StopTimer();
 	}
 
+	// The macros list has just been updated. If this is for the root, update the short macro list, leaving out any subfolders.
+	void FileSet::ReloadMacroShortList(int errorCode)
+	{
+		unsigned int buttonNum = 0;
+		const FileListIndex& index = fileIndices[GetIndex()];
+		unsigned int fileNum = (errorCode == 0) ? 0 : index.size();
+		bool again;
+		do
+		{
+			// Find the next non-directory
+			while (fileNum < index.size() && index[fileNum][0] == '*')
+			{
+				++fileNum;
+			}
+			if (fileNum < index.size())
+			{
+				again = UI::UpdateMacroShortList(buttonNum, index[fileNum]);
+				++fileNum;
+			}
+			else
+			{
+				again = UI::UpdateMacroShortList(buttonNum, nullptr);
+			}
+			++buttonNum;
+		} while (again);
+	}
+
 	// Refresh the list of files or macros in the Files popup window
 	void FileSet::FileListUpdated()
 	{
-		if (which >= 0)
+		if (whichList >= 0)
 		{
-			FileListIndex& fileIndex = fileIndices[which];
-
-			// 1. Sort the file list
-			fileIndex.sort(StringGreaterThan);
+			FileListIndex& fileIndex = fileIndices[whichList];
 
 			// 2. Make sure the scroll position is still sensible
 			if (scrollOffset < 0 || fileIndex.size() == 0)
@@ -92,51 +127,34 @@ namespace FileManager
 			}
 			else if ((unsigned int)scrollOffset >= fileIndex.size())
 			{
-				const unsigned int scrollAmount = UI::GetNumScrolledFiles();
+				const unsigned int scrollAmount = UI::GetNumScrolledFiles(isFilesList);
 				scrollOffset = ((fileIndex.size() - 1)/scrollAmount) * scrollAmount;
 			}
 
 			// 3. Display the scroll buttons if needed
-			UI::EnableFileNavButtons(scrollOffset != 0, scrollOffset + numDisplayedFiles < fileIndex.size(), IsInSubdir());
+			UI::EnableFileNavButtons(isFilesList, scrollOffset != 0, scrollOffset + numDisplayed < fileIndex.size(), IsInSubdir());
 
 			// 4. Display the file list
-			for (size_t i = 0; i < numDisplayedFiles; ++i)
+			for (size_t i = 0; i < numDisplayed; ++i)
 			{
 				if (i + scrollOffset < fileIndex.size())
 				{
 					const char *text = fileIndex[i + scrollOffset];
-					const char * const param = text;
-					if (!isFilesList && isdigit(*text))
-					{
-						// If the text starts with decimal digits followed by underscore, skip that bit
-						do
-						{
-							++text;
-						} while (isdigit(*text));
-						if (*text == '_')
-						{
-							++text;
-						}
-						else
-						{
-							text = param;
-						}
-					}
-					UI::ShowFileButton(i, fileEvent, text, param);
+					UI::UpdateFileButton(isFilesList, i, (isFilesList) ? text : SkipDigitsAndUnderscore(text), text);
 				}
 				else
 				{
-					UI::HideFileButton(i);
+					UI::UpdateFileButton(isFilesList, i, nullptr, nullptr);
 				}
 			}
 			displayedFileSet = this;
 		}
 		else
 		{
-			UI::EnableFileNavButtons(false, false, false);
-			for (size_t i = 0; i < numDisplayedFiles; ++i)
+			UI::EnableFileNavButtons(isFilesList, false, false, false);
+			for (size_t i = 0; i < numDisplayed; ++i)
 			{
-				UI::HideFileButton(i);
+				UI::UpdateFileButton(isFilesList, i, nullptr, nullptr);
 			}
 		}
 	}
@@ -180,7 +198,7 @@ namespace FileManager
 	// Request the parent path
 	void FileSet::RequestParentDir()
 	{
-		which = -1;
+		whichList = -1;
 		FileListUpdated();									// this hides the file list until we receive a new one
 
 		size_t end = currentPath.size();
@@ -209,7 +227,7 @@ namespace FileManager
 	// Build a subdirectory of the current path
 	void FileSet::RequestSubdir(const char * array dir)
 	{
-		which = -1;
+		whichList = -1;
 		FileListUpdated();									// this hides the file list until we receive a new one
 
 		requestedPath.copy(currentPath);
@@ -250,8 +268,8 @@ namespace FileManager
 		if (isFilesList && cardNum < numVolumes)
 		{
 			cardNumber = cardNum;
-			UI::UpdateFilesListTitle(cardNumber, numVolumes, isFilesList);
-			which = -1;
+			UI::DisplayFilesOrMacrosList(isFilesList, cardNumber, numVolumes);
+			whichList = -1;
 			FileListUpdated();								// this hides the file list until we receive a new one
 
 			if (cardNumber == 0)
@@ -292,7 +310,7 @@ namespace FileManager
 	}
 
 	// This is called at the end of a JSON response
-	void EndReceivedMessage(bool displayingFileInfo)
+	void EndReceivedMessage()
 	{
 		if (newFileList >= 0)
 		{
@@ -319,11 +337,17 @@ namespace FileManager
 				temp.add(fileDirectoryName[i++]);
 			}
 
+			fileIndices[newFileList].sort(StringGreaterThan);		// put the index in alphabetical order
+
 			if (card0 && temp.equalsIgnoreCase("macros"))
 			{
 				macroFilesList.Reload(newFileList, fileDirectoryName, errorCode);
+				if (i + 1 >= fileDirectoryName.size())				// if in root of /macros
+				{
+					macroFilesList.ReloadMacroShortList(errorCode);
+				}
 			}
-			else if (!displayingFileInfo)
+			else if (!UI::IsDisplayingFileInfo())
 			{
 				gcodeFilesList.Reload(newFileList, fileDirectoryName, errorCode);
 			}
@@ -388,12 +412,14 @@ namespace FileManager
 		macroFilesList.Display();
 	}
 
-	void Scroll(int amount)
+	void ScrollFiles(int amount)
 	{
-		if (displayedFileSet != nullptr)
-		{
-			displayedFileSet->Scroll(amount);
-		}
+		gcodeFilesList.Scroll(amount);
+	}
+
+	void ScrollMacros(int amount)
+	{
+		macroFilesList.Scroll(amount);
 	}
 
 	void RequestFilesSubdir(const char * array dir)
@@ -426,9 +452,19 @@ namespace FileManager
 		return macroFilesList.GetPath();
 	}
 
+	const char * array GetMacrosRootDir()
+	{
+		return macrosRoot;
+	}
+
 	void RefreshFilesList()
 	{
 		gcodeFilesList.SetPending();
+	}
+
+	void RefreshMacrosList()
+	{
+		macroFilesList.SetPending();
 	}
 
 	// This is called from the main loop to check for timer events

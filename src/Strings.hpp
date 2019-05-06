@@ -17,6 +17,8 @@
 #define Newline			"\n"
 #define DegreeSymbol	"\u00B0"
 
+constexpr unsigned int NumLanguages = 5;
+
 struct StringTable
 {
 	// Language name
@@ -61,17 +63,13 @@ struct StringTable
 	CSTRING saveSettings;
 	CSTRING clearSettings;
 	CSTRING saveAndRestart;
+	CSTRING infoTimeout;
 
 	// Misc
 	CSTRING confirmFactoryReset;
-	CSTRING confirmRestart;
 	CSTRING confirmFileDelete;
 	CSTRING areYouSure;
 	CSTRING touchTheSpot;
-	CSTRING settingsNotSavedText;
-	CSTRING restartNeededText;
-	CSTRING restartRequired;
-	CSTRING restartNow;
 	CSTRING moveHead;
 	CSTRING extrusionAmount;
 	CSTRING extrusionSpeed;
@@ -82,6 +80,7 @@ struct StringTable
 	CSTRING message;
 	CSTRING messages;
 	CSTRING firmwareVersion;
+	CSTRING response;
 
 	// File popup
 	CSTRING filesOnCard;
@@ -94,21 +93,27 @@ struct StringTable
 	CSTRING objectHeight;
 	CSTRING filamentNeeded;
 	CSTRING generatedBy;
+	CSTRING lastModified;
+	CSTRING estimatedPrintTime;
+	CSTRING simulatedPrintTime;
 	CSTRING simulate;
 
 	// Printer status strings
-	CSTRING statusValues[11];
+	CSTRING statusValues[13];
 
 	// Colour theme names
 	CSTRING colourSchemeNames[NumColourSchemes];
+
+	// Display dimmer types
+	CSTRING displayDimmingNames[(unsigned int)DisplayDimmerType::NumTypes];
 };
 
-const StringTable LanguageTables[4] =
+const StringTable LanguageTables[NumLanguages] =
 {
 	// English
 	{
-		// Language name
-		"English",
+		// ISO-639.1 language code
+		"en",
 
 		// Main page strings
 		"Control",
@@ -149,17 +154,13 @@ const StringTable LanguageTables[4] =
 		"Save settings",
 		"Clear settings",
 		"Save & Restart",
+		"Info timeout ",					// note space at end
 
 		// Misc
 		"Confirm factory reset",
-		"Confirm restart",
 		"Confirm file delete",
 		"Are you sure?",
 		"Touch the spot",
-		"Some settings are not saved!",
-		"Touch Save & Restart to use new settings",
-		"Restart required",
-		"Restart now?",
 		"Move head",
 		"Extrusion amount (mm)",
 		"Speed (mm/s)",
@@ -170,6 +171,7 @@ const StringTable LanguageTables[4] =
 		"Message",
 		"Messages",
 		"Panel Due firmware version ",	// note space at end
+		"Response",
 
 		// File popup
 		"Files on card ",				// note the space on the end
@@ -182,6 +184,9 @@ const StringTable LanguageTables[4] =
 		"Object height: ",
 		"Filament needed: ",
 		"Sliced by: ",
+		"Last modified: ",
+		"Estimated print time: ",
+		"Simulated print time: ",
 		"Simulate",
 
 		// Printer status strings
@@ -196,45 +201,55 @@ const StringTable LanguageTables[4] =
 			"Pausing",
 			"Resuming",
 			"Firmware upload",
-			"Changing tool"
+			"Changing tool",
+			"Simulating",
+			"Standby"
 		},
 
 		// Theme names
 		{
-			"Light",
-			"Dark"
+			"Light theme",
+			"Dark theme 1",
+			"Dark theme 2"
+		},
+
+		// Display dimming types
+		{
+			"Never dim",
+			"Dim if idle",
+			"Always dim"
 		}
-	},
+ 	},
 
 	// German
 	{
-		// Language name
-		"Deutsch",
+		// ISO-639.1 language code
+		"de",
 
 		// Main page strings
 		"Steuerung",
 		"Druck",
 		"Konsole",
-		"Einrichtung",
-		"Aktuell" THIN_SPACE DEGREE_SYMBOL "C",
+		"Setup",
+		"Istwert" THIN_SPACE DEGREE_SYMBOL "C",
 		"Aktiv" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
 		"Bewegung",
 		"Extrusion",
 		"Makro",
-		"NOT-AUS",
+		"STOP",
 
 		// Print page
 		"Extruder" THIN_SPACE "%",
-		"Geschwindigkeit ",					// note space at end
+		"Tempo ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
 		"Lüfter ",							// note space at end
-		"Zeit übrig: ",
+		"Restzeit: ",
 		"Datei ",							// note space at end
 		", Filament ",						// note space at end
-		", Schicht ",						// note space at end
+		", Layer ",							// note space at end. "Schicht" is too long.
 		"n/v",
 		"Pause",
-		"Baby Step",
+		"Einzelschritt",
 		"Fortsetzen",
 		"Abbrechen",
 		"Set",
@@ -243,34 +258,31 @@ const StringTable LanguageTables[4] =
 		"Lautstärke ",						// note space at end
 		"Touch kalibrieren",
 		"Anzeige spiegeln",
-		"Farben invertieren",
-		"Thema",
-		"Helligkeit -",
-		"Helligkeit +",
-		"Einstellungen speichern",
-		"Einstellungen löschen",
-		"Speichern & Neustarten",
+		"Anzeige umkehren",
+		"Darstellung",
+		"Beleuchtung  -",
+		"Beleuchtung  +",
+		"Einstllgen sichern",
+		"Werks-Reset",
+		"Sichern & Reboot",
+		"Info timeout ",					// note space at end
 
 		// Misc
-		"Rücksetzen bestätigen",
-		"Neustart bestätigen",
-		"Löschen bestätigen",
+		"Alle Einstellungen zurücksetzen",
+		"Die Datei wird gelöscht",
 		"Sind sie sicher?",
-		"Berühren sie den Punkt",
-		"Einige Einstellungen sind nicht gespeichert!",
-		"Berühren sie Speichern & Neustarten um die neuen Einstellungen anzuwenden",
-		"Neustarten erforderlich",
-		"Neustarten jetzt?",
+		"Bitte auf den Punkt tippen",
 		"Kopf bewegen",
 		"Extrusionsmenge (mm)",
 		"Geschwindigkeit (mm/s)",
 		"Extrudieren",
 		"Zurückziehen",
-		"Babystepping",
+		"Einzelschritte",
 		"Aktueller Z-Versatz: ",
 		"Nachricht",
 		"Nachrichten",
 		"Panel Due Firmwareversion ",	// note space at end
+		"Antwort",
 
 		// File popup
 		"Dateien auf Karte ",			// note the space on the end
@@ -283,13 +295,16 @@ const StringTable LanguageTables[4] =
 		"Objekthöhe: ",
 		"Benötigtes Filament: ",
 		"Erzeugt mit: ",
+		"Letzte Änderung: ",
+		"Geschätzte Druckdauer: ",
+		"Errechnete Druckdauer: ",
 		"Simulieren",
 
 		// Printer status strings
 		{
 			"Verbinde",
 			"Leerlauf",
-			"Drucken",
+			"Druckt",
 			"Angehalten",
 			"Starte",
 			"Pausiert",
@@ -297,20 +312,30 @@ const StringTable LanguageTables[4] =
 			"Pausiere",
 			"Fortsetzen",
 			"Firmware-Upload",
-			"Wechsle Tool"
+			"Wechsle Tool",
+			"Simuliert",
+			"Stand-by"
 		},
 
 		// Theme names
 		{
-			"Hell",
-			"Dunkel"
+			"Anzeige hell",
+			"Anzeige inv. 1",
+			"Anzeige inv. 2"
+		},
+
+		// Display dimming types
+		{
+			"Dimmen aus",
+			"Dim bei idle",				// shortened due to space limitations, ideally "Nur im Standby dimmen"
+			"Dimmen ein"
 		}
 	},
 
 	// French
 	{
-		// Language name
-		"Français",
+		// ISO-639.1 language code
+		"fr",
 
 		// Main page strings
 		"Contrôle",
@@ -351,17 +376,13 @@ const StringTable LanguageTables[4] =
 		"Sauver paramêtres",
 		"Effacer paramêtres",
 		"Sauvegarde & Redémarrage",
+		"Info timeout ",						// note space at end
 
 		// Misc
 		"Confirmer le réinitialisation de l'imprimante",
-		"Confirm Redémarrage",
 		"Confirm suppression fichier",
 		"Vous êtes sûre?",
 		"Appuyer sur le point",
-		"Certains réglages ne sont pas sauvegardés!",
-		"Appuyer sur Sauvegarde et Redémarrage pour utiliser les nouveaux réglages",
-		"Restart required",
-		"Restart now?",
 		"Mouvement de la  tête",
 		"Quantité de Matiére extrudée (mm)",
 		"Vitesse (mm/s)",
@@ -372,6 +393,7 @@ const StringTable LanguageTables[4] =
 		"Message",
 		"Messages",
 		"Version du firmware du Panel Due ",	// note space at end
+		"Réponse",
 
 		// File popup
 		"Fichier sur carte ",					// note the space on the end
@@ -384,6 +406,9 @@ const StringTable LanguageTables[4] =
 		"Hauteur de l'objet: ",
 		"Filament requis: ",
 		"Sliced par: ",
+		"Dernière modification: ",
+		"Temps d'impression estimé: ",
+		"Temps d'impression simulé: ",
 		"Simuler",
 
 		// Printer status strings
@@ -398,196 +423,109 @@ const StringTable LanguageTables[4] =
 			"Pause",
 			"Reprise",
 			"Téleverser le firmware",
-			"Changement d'outil"
+			"Changement d'outil",
+			"Simuler",
+			"En veille"
 		},
 
 		// Theme names
 		{
 			"Fond Blanc",
-			"Fond Noir"
-		}
-	},
-	// Czech
-		{
-			// Language name
-			"Čeština",
-
-			// Main page strings
-			"Ovládání",
-			"Tisk",
-			"Konzole",
-			"Nastavení",
-			"Aktuální" THIN_SPACE DEGREE_SYMBOL "C",
-			"Aktivní" THIN_SPACE DEGREE_SYMBOL "C",
-			"Nečinná" THIN_SPACE DEGREE_SYMBOL "C",
-			"Pohyb",
-			"Extruder",
-			"Makra",
-			"STOP",
-
-			// Print page
-			"Extruder" THIN_SPACE "%",
-			"Rychl. ",							// note space at end
-			"Vent. ",							// note space at end
-			"Čas do konce: ",
-			"soubor ",							// note space at end
-			", materiál ",						// note space at end
-			", vrstva ",							// note space at end
-			"n/a",
-			"Pozastavit",
-			"Baby step",
-			"Pokračovat",
-			"Zrušit",
-			"OK",
-
-			// Setup page
-			"Hlasitost ",							// note space at end
-			"Kalibrace dotyku",
-			"Zrcadlit displej",
-			"Obrátit displej",
-			"Motiv",
-			"Podsvícení -",
-			"Podsvícení +",
-			"Uložit nastavení",
-			"Smazat nastavení",
-			"Uložit a Restart",
-
-			// Misc
-			"Skutečně obnovit tovární nastavení?",
-			"Restartovat?",
-			"Skutečně smazat?",
-			"Určitě?",
-			"Dotkněte se bodu",
-			"Některá nastavení nejsou uložena!",
-			"Zvolte Uložit a Restart pro dokončení",
-			"Vyžadován restart",
-			"Restartovat nyní?",
-			"Posun hlavy",
-			"Množství (mm)",
-			"Rychlost (mm/s)",
-			"Vytlačit (extr.)",
-			"Zatlačit (retr.)",
-			"Baby stepping",
-			"Aktuální Z offset: ",
-			"Zpráva",
-			"Zprávy",
-			"Verze firmware Panel Due ",	// note space at end
-			// File popup
-			"Soubory na kartě ",				// note the space on the end
-			"Makra",
-			"Chyba ",						// note the space at the end
-			" přístupu ke kartě",			// note the space at the start
-			"Název: ",
-			"Velikost: ",
-			"Výška vrstvy: ",
-			"Výška objektu: ",
-			"Spotřeba (mat.): ",
-			"Slicer: ",
-			"Simulace",
-
-			// Printer status strings
-			{
-				"Připojování",
-				"Nečinný",
-				"Tiskne",
-				"Zastaven",
-				"Startuje",
-				"Pozastaven",
-				"Zaneprázdněný",
-				"Pozastavuje se",
-				"Pokračuje",
-				"Nahrává firmware",
-				"Výměna nástroje"
-			},
-
-			// Theme names
-			{
-				"Světlý",
-				"Tmavý"
-			}
+			"Fond Noir 1",
+			"Fond Noir 2"
 		},
 
-#if 0	// Spanish not supported yet
+		// Display dimming types
+		{
+			"Jamais Dim",
+			"Idle Dim",
+			"Toujours Dim"
+		}
+	},
+
 	// Spanish
 	{
-		// Language name
-		"Espanol",
+		// ISO-639.1 language code
+		"es",
 
 		// Main page strings
 		"Control",
-		"Print",
-		"Console",
-		"Setup",
-		"Current" THIN_SPACE DEGREE_SYMBOL "C",
-		"Active" THIN_SPACE DEGREE_SYMBOL "C",
-		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
-		"Move",
-		"Extrusion",
+		"Imprimir",
+		"Consola",
+		"Configuración",
+		"Actual" THIN_SPACE DEGREE_SYMBOL "C",
+		"Activo" THIN_SPACE DEGREE_SYMBOL "C",
+		"Esperando" THIN_SPACE DEGREE_SYMBOL "C",
+		"Mover",
+		"Extrusión",
 		"Macro",
-		"STOP",
+		"PARADA",							// It could also be STOP, both are OK
 
 		// Print page
-		"Extruder" THIN_SPACE "%",
-		"Speed ",							// note space at end
-		"Fan ",								// note space at end
-		"Time left: ",
-		"file ",							// note space at end
-		", filament ",						// note space at end
-		", layer ",							// note space at end
-		"n/a",
-		"Pause",
-		"Baby step",
-		"Resume",
-		"Cancel",
+		"Extrusor" THIN_SPACE "%",
+		"Veloc. ",							// note space at end. "Velocidad" is too long.
+		"Ventil. ",							// note space at end. "Ventilador" is too lonh.
+		"Tiempo restante: ",
+		"archivo ",							// note space at end
+		", filamento ",						// note space at end
+		", capa ",							// note space at end
+		"n/d",								// Not available / no disponible
+		"Pausa",
+		"Micro paso",						// Literal translation of baby step it's very odd in spanish...
+		"Resumir",
+		"Cancelar",
+		"Fijar",							// "Establecer" would be more correct, but it's longer.
 
 		// Setup page
-		"Volume ",							// note space at end
-		"Calibrate touch",
-		"Mirror display",
-		"Invert display",
-		"Theme",
-		"Brightness -",
-		"Brightness +",
-		"Save settings",
-		"Clear settings",
-		"Save & Restart",
+		"Volumen ",							// note space at end
+		"Calibrar toque",					// this one is tricky because "touch" is very known in regard to screens...
+		"Espejar pantalla",
+		"Invertir pantalla",
+		"Tema",
+		"Brillo -",
+		"Brillo +",
+		"Guardar parámetros",
+		"Borrar parámetros",
+		"Guardar y Reiniciar",
+		"Info timeout ",					// note space at end
 
 		// Misc
-		"Confirm factory reset",
-		"Confirm restart",
-		"Confirm file delete",
-		"Are you sure?",
-		"Touch the spot",
-		"Some settings are not saved!",
-		"Touch Save & Restart to use new settings",
-		"Move head",
-		"Extrusion amount (mm)",
-		"Speed (mm/s)",
-		"Extrude",
-		"Retract",
-		"Baby stepping",
-		"Current Z offset: ",
-		"Message",
-		"Messages",
-		"Panel Due firmware version ",	// note space at end
+		"Confirma restablecimiento de fábrica",
+		"Confirma borrar archivo",
+		"Está seguro?",
+		"Tocar el punto",
+		"Mover cabezal",
+		"Cantidad de extrusión (mm)",
+		"Velocidad (mm/s)",
+		"Extruir",
+		"Retraer",
+		"Micro paso",
+		"Separación actual de Z: ",
+		"Mensaje",
+		"Mensajes",
+		"Panel Due versión de firmware ",	// note space at end
+		"Respuesta",
 
 		// File popup
-		"Files on card ",				// note the space on the end
+		"Archivos en la tarjeta ",			// note the space on the end
 		"Macros",
-		"Error ",						// note the space at the end
-		" accessing SD card",			// note the space at the start
-		"Filename: ",
-		"Size: ",
-		"Layer height: ",
-		"Object height: ",
-		"Filament needed: ",
-		"Sliced by: ",
-		"Simulate",
+		"Error ",							// note the space at the end
+		" accediendo a la tarjeta SD",		// note the space at the start
+		"Nombre de archivo: ",
+		"Tamaño: ",
+		"Altura de capa: ",
+		"Altura de objeto: ",
+		"Filamento necesario: ",
+		"Procesado por: ",					// there is no translation in spanish for this meaning, so I proposed to use "processed by" which is understandable
+		"Última modificación: ",
+		"Tiempo estimado de impresión: ",
+		"Tiempo de impresión simulado: ",
+		"Simular",
 
 		// Printer status strings
 		{
 			"conexión",
-			"ocioso",
+			"en espera",					// it's more frequently use "en espera" than "ocioso", it makes more sense for a machine
 			"imprimiendo",
 			"detuvo",
 			"empezando",
@@ -596,16 +534,136 @@ const StringTable LanguageTables[4] =
 			"pausando",
 			"reanudando",
 			"carga del firmware",
-			"herramienta de cambio"
+			"herramienta de cambio",
+			"simulando",
+			"en espera"
 		},
 
 		// Theme names
 		{
-			"Light",
-			"Dark"
-		}
+			"Claro",
+			"Oscuro 1",
+			"Oscuro 2"
+		},
+
+		// Display dimming types
+		{
+			"Nunca Atenuar",
+			"Atenuar en espera",
+			"Siempre Atenuar",
+		},
 	},
-#endif
+
+	// Czech
+	{
+		// ISO-639.1 language code
+		"cs",
+
+		// Main page strings
+		"Ovládání",
+		"Tisk",
+		"Konzole",
+		"Nastavení",
+		"Aktuální" THIN_SPACE DEGREE_SYMBOL "C",
+		"Aktivní" THIN_SPACE DEGREE_SYMBOL "C",
+		"Nečinná" THIN_SPACE DEGREE_SYMBOL "C",
+		"Pohyb",
+		"Extruder",
+		"Makra",
+		"STOP",
+
+		// Print page
+		"Extruder" THIN_SPACE "%",
+		"Rychl. ",							// note space at end
+		"Vent. ",							// note space at end
+		"Čas do konce: ",
+		"soubor ",							// note space at end
+		", materiál ",						// note space at end
+		", vrstva ",						// note space at end
+		"n/a",
+		"Pozastavit",
+		"Baby step",
+		"Pokračovat",
+		"Zrušit",
+		"OK",
+
+		// Setup page
+		"Hlasitost ",						// note space at end
+		"Kalibrace dotyku",
+		"Zrcadlit displej",
+		"Obrátit displej",
+		"Motiv",
+		"Podsvícení -",
+		"Podsvícení +",
+		"Uložit nastavení",
+		"Smazat nastavení",
+		"Uložit a Restart",
+		"Info timeout ",					// note space at end
+
+		// Misc
+		"Skutečně obnovit tovární nastavení?",
+		"Skutečně smazat?",
+		"Určitě?",
+		"Dotkněte se bodu",
+		"Posun hlavy",
+		"Množství (mm)",
+		"Rychlost (mm/s)",
+		"Vytlačit (extr.)",
+		"Zatlačit (retr.)",
+		"Baby stepping",
+		"Aktuální Z offset: ",
+		"Zpráva",
+		"Zprávy",
+		"Verze firmware Panel Due ",	// note space at end
+		"Odpověď",
+
+		// File popup
+		"Soubory na kartě ",			// note the space on the end
+		"Makra",
+		"Chyba ",						// note the space at the end
+		" přístupu ke kartě",			// note the space at the start
+		"Název: ",
+		"Velikost: ",
+		"Výška vrstvy: ",
+		"Výška objektu: ",
+		"Spotřeba (mat.): ",
+		"Slicer: ",
+		"Last modified: ",
+		"Estimated print time: ",
+		"Simulated print time: ",
+		"Simulace",
+
+		// Printer status strings
+		{
+			"Připojování",
+			"Nečinný",
+			"Tiskne",
+			"Zastaven",
+			"Startuje",
+			"Pozastaven",
+			"Zaneprázdněný",
+			"Pozastavuje se",
+			"Pokračuje",
+			"Nahrává firmware",
+			"Výměna nástroje",
+			"Simulace",
+			"Pohotovostní"
+		},
+
+		// Theme names
+		{
+			"Světlý",
+			"Tmavý 1",
+			"Tmavý 2"
+		},
+
+		// Display dimming types
+		{
+			"Nikdy nezměníme",
+			"Idle Dim",
+			"Vždy Dim"
+		}
+	}
 };
 
 #endif /* SRC_STRINGS_HPP_ */

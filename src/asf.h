@@ -82,7 +82,6 @@
 
 // From module: PMC - Power Management Controller
 #include <pmc.h>
-#include <sleep.h>
 
 // From module: PWM - Pulse Width Modulation
 #include <pwm.h>
