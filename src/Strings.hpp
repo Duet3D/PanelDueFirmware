@@ -628,9 +628,9 @@ const StringTable LanguageTables[NumLanguages] =
 		"Výška objektu: ",
 		"Spotřeba (mat.): ",
 		"Slicer: ",
-		"Last modified: ",
-		"Estimated print time: ",
-		"Simulated print time: ",
+		"Poslední úprava: ",
+		"Zbývající čas tisku: ",
+		"Simulovaný čas tisku: ",
 		"Simulace",
 
 		// Printer status strings
@@ -659,9 +659,9 @@ const StringTable LanguageTables[NumLanguages] =
 
 		// Display dimming types
 		{
-			"Nikdy nezměníme",
-			"Idle Dim",
-			"Vždy Dim"
+			"Nikdy neztlumit jas",
+			"Pohasnout při nečinnosti",
+			"Pohasnout vždy"
 		}
 	}
 };
