@@ -1365,7 +1365,8 @@ namespace UI
 			mgr.Show(timeLeftField, false);
 		}
 
-		statusField->SetValue(strings->statusValues[(unsigned int)GetStatus()]);
+		const unsigned int stat = (unsigned int)GetStatus();
+		statusField->SetValue((stat < NumStatusStrings) ? strings->statusValues[stat] : "unknown status");
 	}
 
 	// Set the percentage of print completed

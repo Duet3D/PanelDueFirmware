@@ -18,6 +18,7 @@
 #define DegreeSymbol	"\u00B0"
 
 constexpr unsigned int NumLanguages = 5;
+constexpr unsigned int NumStatusStrings = 13;
 
 struct StringTable
 {
@@ -99,7 +100,7 @@ struct StringTable
 	CSTRING simulate;
 
 	// Printer status strings
-	CSTRING statusValues[13];
+	CSTRING statusValues[NumStatusStrings];
 
 	// Colour theme names
 	CSTRING colourSchemeNames[NumColourSchemes];
@@ -353,7 +354,7 @@ const StringTable LanguageTables[NumLanguages] =
 		// Print page
 		"Extrudeuse" THIN_SPACE "%",
 		"Vitesse ",								// note space at end
-		"Ventilateur ",							// note space at end
+		"Ventilo ",								// note space at end. "Ventilateur 0%" was too long to fit.
 		"Temps Restant: ",
 		"Fichier ",								// note space at end
 		", filament ",							// note space at end
@@ -384,7 +385,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Vous êtes sûre?",
 		"Appuyer sur le point",
 		"Mouvement de la  tête",
-		"Quantité de Matiére extrudée (mm)",
+		"Quantité de Matière extrudée (mm)",
 		"Vitesse (mm/s)",
 		"Extruder",
 		"Retracter",
@@ -413,7 +414,7 @@ const StringTable LanguageTables[NumLanguages] =
 
 		// Printer status strings
 		{
-			"Connection en cours",
+			"Liaison en cours",					// "Connexion en cours" was too long
 			"Au repos",
 			"Impression",
 			"Arrêt",
@@ -422,8 +423,8 @@ const StringTable LanguageTables[NumLanguages] =
 			"Occupé"
 			"Pause",
 			"Reprise",
-			"Téleverser le firmware",
-			"Changement d'outil",
+			"Flasher firmware",
+			"Changer outil",
 			"Simuler",
 			"En veille"
 		},

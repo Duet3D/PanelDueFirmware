@@ -79,6 +79,8 @@ Done in 1.23:
 
 Remaining:
 
+Multiple status strings, https://forum.duet3d.com/post/97284 (I have already added a bounds check on the number of status strings)
+WiFi config dialog, https://github.com/MichaelM4/PanelDueFirmware
 Two tools with 1 heater, wrong display https://forum.duet3d.com/topic/8933/paneldue-two-tools-same-heater-one-pair-of-temp-buttons
 Better CNC support, https://forum.duet3d.com/topic/9156/cnc-firmware-for-the-paneldue
 M291 axes other than Z
