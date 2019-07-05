@@ -1,4 +1,14 @@
-                    GNU GENERAL PUBLIC LICENSE
+The source files in in this repository other than the ones in the /src/ASF
+folder and its subfolders are licensed under the GNU GPL version 3. The
+text of this license is included below.
+
+The source files in the /src/ASF folder and its subfolders are mostly
+copyright Microchip (formerly Atmel) and have a more restrictive license
+as found at the head of each file. In particular, they may only be used
+or redistributed in connection with an Atmel/Microchip processor, such as
+the ATSAM processors used in PanelDue hardware.
+ 
+                      GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
