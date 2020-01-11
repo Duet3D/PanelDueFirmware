@@ -113,6 +113,7 @@ static uint32_t lastResponseTime = 0;
 static uint32_t lastActionTime = 0;							// the last time anything significant happened
 static FirmwareFeatures firmwareFeatures = 0;
 static bool isDimmed = false;								// true if we have dimmed the display
+static bool isBlank = false;								// true if we have blanked the display
 static bool isDelta = false;
 static bool axisHomed[MaxAxes] = {false, false, false};
 static bool allAxesHomed = false;
@@ -503,8 +504,10 @@ extern void SetBrightness(int percent)
 extern void RestoreBrightness()
 {
 	Buzzer::SetBacklight(nvData.brightness);
+	mgr.Refresh(true);
 	lastActionTime = SystemTick::GetTickCount();
 	isDimmed = false;
+	isBlank = false;
 }
 
 extern void DimBrightness()
@@ -515,6 +518,13 @@ extern void DimBrightness()
 	{
 		Buzzer::SetBacklight(nvData.brightness/8);
 		isDimmed = true;
+	}
+	else if (nvData.displayDimmerType == DisplayDimmerType::blank)
+	{
+		Buzzer::SetBacklight(Buzzer::MinBrightness);
+		lcd.fillScr(black);
+		isDimmed = true;
+		isBlank  = true;
 	}
 }
 
@@ -597,7 +607,7 @@ void SetStatus(char c)
 	
 	if (newStatus != status)
 	{
-		if (GetDisplayDimmerType() != DisplayDimmerType::always)
+		if ((GetDisplayDimmerType() != DisplayDimmerType::always) && (GetDisplayDimmerType() != DisplayDimmerType::blank))
 		{
 			RestoreBrightness();
 		}
@@ -1342,10 +1352,13 @@ int main(void)
  			}
 		}
 		ShowLine;
-		
-		// 4. Refresh the display
+
+		// 4. Refresh the display if not blanked
 		UpdateDebugInfo();
-		mgr.Refresh(false);
+		if (!isBlank)
+		{
+			mgr.Refresh(false);
+		}
 		ShowLine;
 		
 		// 5. Generate a beep if asked to

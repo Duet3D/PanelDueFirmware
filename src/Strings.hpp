@@ -218,7 +218,8 @@ const StringTable LanguageTables[NumLanguages] =
 		{
 			"Never dim",
 			"Dim if idle",
-			"Always dim"
+			"Always dim",
+			"Blank screen"
 		}
  	},
 
@@ -329,7 +330,8 @@ const StringTable LanguageTables[NumLanguages] =
 		{
 			"Dimmen aus",
 			"Dim bei idle",				// shortened due to space limitations, ideally "Nur im Standby dimmen"
-			"Dimmen ein"
+			"Dimmen ein",
+			"Blank screen"
 		}
 	},
 
@@ -440,7 +442,8 @@ const StringTable LanguageTables[NumLanguages] =
 		{
 			"Jamais Dim",
 			"Idle Dim",
-			"Toujours Dim"
+			"Toujours Dim",
+			"Blank screen"
 		}
 	},
 
@@ -552,6 +555,7 @@ const StringTable LanguageTables[NumLanguages] =
 			"Nunca Atenuar",
 			"Atenuar en espera",
 			"Siempre Atenuar",
+			"Pantalla negra"
 		},
 	},
 
@@ -662,7 +666,8 @@ const StringTable LanguageTables[NumLanguages] =
 		{
 			"Nikdy nezměníme",
 			"Idle Dim",
-			"Vždy Dim"
+			"Vždy Dim",
+			"Blank screen"
 		}
 	}
 };

@@ -27,6 +27,7 @@ enum class DisplayDimmerType : uint8_t
 	never = 0,				// never dim the display
 	onIdle, 				// only display when printer status is idle
 	always,					// default - always dim
+	blank,					// Blank screen and and dim back light to minimum
 	NumTypes
 };
 
