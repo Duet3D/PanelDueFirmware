@@ -8,6 +8,12 @@
 #ifndef SRC_VERSION_HPP_
 #define SRC_VERSION_HPP_
 
-#define VERSION_TEXT		"1.23.2+1"
+#define VERSION_TEXT_MAIN		"1.23.2+1"
+
+#ifdef SUPPORT_ENCODER
+#define VERSION_TEXT	VERSION_TEXT_MAIN "+enc"
+#else
+#define VERSION_TEXT	VERSION_TEXT_MAIN
+#endif
 
 #endif /* SRC_VERSION_HPP_ */

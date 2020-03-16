@@ -79,12 +79,15 @@ Done in 1.23:
 
 Remaining:
 
-Multiple status strings, https://forum.duet3d.com/post/97284 (I have already added a bounds check on the number of status strings)
-WiFi config dialog, https://github.com/MichaelM4/PanelDueFirmware
+Incorrect toool/macro display, https://forum.duet3d.com/topic/11074/wrong-screen-on-7-inch-display/6
 Two tools with 1 heater, wrong display https://forum.duet3d.com/topic/8933/paneldue-two-tools-same-heater-one-pair-of-temp-buttons
+Multiple status strings, https://forum.duet3d.com/post/97284 (I added a bounds check on the number of status strings but problem still present)
+French translation, https://forum.duet3d.com/post/97812
+WiFi config dialog, https://github.com/MichaelM4/PanelDueFirmware
 Better CNC support, https://forum.duet3d.com/topic/9156/cnc-firmware-for-the-paneldue
 M291 axes other than Z
 Investigate M291 axis parameters don't work, https://forum.duet3d.com/topic/5812/macro-for-calibrating-z-probe-issues/1 , https://forum.duet3d.com/topic/9480/paneldue-request-m291-x-y-jogmenue-like-in-webinterface
+When reconnecting after emergency stop, refresh the macros list on the Control page
 
 Add a queue of beeps pending so that tunes can be played
 PanelDue to tell RRF its screen size and firmware version

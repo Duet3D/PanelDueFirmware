@@ -128,6 +128,14 @@ uint32_t infoTimeout = DefaultInfoTimeout;				// info timeout in seconds, 0 mean
 uint32_t whenAlertReceived;
 bool displayingResponse = false;						// true if displaying a response
 
+#ifdef SUPPORT_ENCODER
+
+# include "Hardware/RotaryEncoder.hpp"
+
+static RotaryEncoder *encoder;
+
+#endif
+
 class StandardPopupWindow : public PopupWindow
 {
 public:
@@ -206,7 +214,7 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 	alertTitle.copy(title);
 
 	// Split the alert text into 3 lines
-	size_t splitPoint = MessageLog::FindSplitPoint(text, alertText1.capacity(), GetWidth() - 2 * popupSideMargin);
+	size_t splitPoint = MessageLog::FindSplitPoint(text, alertText1.capacity(), (PixelNumber)(GetWidth() - 2 * popupSideMargin));
 	alertText1.copy(text);
 	alertText1.truncate(splitPoint);
 	text += splitPoint;
@@ -1051,6 +1059,11 @@ namespace UI
 		touchCalibInstruction = new StaticTextField(DisplayY/2 - 10, 0, DisplayX, TextAlignment::Centre, strings->touchTheSpot);
 
 		mgr.SetRoot(nullptr);
+
+#ifdef SUPPORT_ENCODER
+		encoder = new RotaryEncoder(2, 3, 32+6);
+		encoder->Init(2);
+#endif
 	}
 
 	void ShowFilesButton()
@@ -1305,6 +1318,18 @@ namespace UI
 	// This is called in the main spin loop
 	void Spin()
 	{
+#ifdef SUPPORT_ENCODER
+		encoder->Poll();
+		// Check encoder and command movement
+		const int ch = encoder->GetChange();
+		if (ch != 0)
+		{
+			SerialIo::SendString("G91\nG1 X");
+			SerialIo::SendInt(ch);
+			SerialIo::SendString(" F600\nG90\n");
+		}
+#endif
+
 		if (currentTab == tabMsg)
 		{
 			MessageLog::UpdateMessages(false);
@@ -2090,7 +2115,7 @@ namespace UI
 
 			case evAdjustColours:
 				{
-					const unsigned int newColours = bp.GetIParam();
+					const uint8_t newColours = (uint8_t)bp.GetIParam();
 					if (SetColourScheme(newColours))
 					{
 						SaveSettings();
@@ -2107,7 +2132,7 @@ namespace UI
 
 			case evAdjustLanguage:
 				{
-					const unsigned int newLanguage = bp.GetIParam();
+					const uint8_t newLanguage = (uint8_t)bp.GetIParam();
 					if (SetLanguage(newLanguage))
 					{
 						SaveSettings();
@@ -2412,11 +2437,11 @@ namespace UI
 			numHeaterAndToolColumns = n;
 
 			// Adjust the width of the control page macro buttons, or hide them completely if insufficient room
-			PixelNumber controlPageMacroButtonsColumn = ((tempButtonWidth + fieldSpacing) * n) + bedColumn + fieldSpacing;
-			PixelNumber controlPageMacroButtonsWidth = (controlPageMacroButtonsColumn >= DisplayX - margin) ? 0 : DisplayX - margin - controlPageMacroButtonsColumn;
+			PixelNumber controlPageMacroButtonsColumn = (PixelNumber)(((tempButtonWidth + fieldSpacing) * n) + bedColumn + fieldSpacing);
+			PixelNumber controlPageMacroButtonsWidth = (PixelNumber)((controlPageMacroButtonsColumn >= DisplayX - margin) ? 0 : DisplayX - margin - controlPageMacroButtonsColumn);
 			if (controlPageMacroButtonsWidth > maxControlPageMacroButtonsWidth)
 			{
-				controlPageMacroButtonsColumn +=  controlPageMacroButtonsWidth - maxControlPageMacroButtonsWidth;
+				controlPageMacroButtonsColumn += controlPageMacroButtonsWidth - maxControlPageMacroButtonsWidth;
 				controlPageMacroButtonsWidth = maxControlPageMacroButtonsWidth;
 			}
 

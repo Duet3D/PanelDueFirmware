@@ -12,7 +12,7 @@ OneBitPort::OneBitPort(unsigned int pin)
 {
 }
 	
-void OneBitPort::setMode(PortMode mode)
+void OneBitPort::setMode(PortMode mode) const
 {
 	pio_configure(port, (mode == Output) ? PIO_OUTPUT_0 : PIO_INPUT, mask, (mode == InputPullup) ? PIO_PULLUP : 0);
 }

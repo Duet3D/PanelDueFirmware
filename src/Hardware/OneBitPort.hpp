@@ -22,7 +22,7 @@ public:
 		
 	OneBitPort(unsigned int pin);
 		
-	void setMode(PortMode mode);
+	void setMode(PortMode mode) const;
 		
 	void setLow() const
 	{
