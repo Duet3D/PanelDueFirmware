@@ -9,6 +9,7 @@
 #include "asf.h"
 #include "SysTick.hpp"
 #include "Buzzer.hpp"
+#include "UserInterface.hpp"
 
 namespace SystemTick
 {
@@ -18,7 +19,6 @@ namespace SystemTick
 	{
 		return tickCount;
 	}
-
 }
 
 void SysTick_Handler()
@@ -26,6 +26,7 @@ void SysTick_Handler()
 	wdt_restart(WDT);
 	++SystemTick::tickCount;
 	Buzzer::Tick();
+	UI::Tick();
 }
 
 // End

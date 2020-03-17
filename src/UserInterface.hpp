@@ -35,6 +35,7 @@ namespace UI
 	extern void UpdateTimesLeft(size_t index, unsigned int seconds);
 	extern bool ChangePage(ButtonBase *newTab);
 	extern bool DoPolling();
+	extern void Tick();
 	extern void Spin();
 	extern void PrintStarted();
 	extern void PrintingFilenameChanged(const char data[]);

@@ -133,6 +133,7 @@ bool displayingResponse = false;						// true if displaying a response
 # include "Hardware/RotaryEncoder.hpp"
 
 static RotaryEncoder *encoder;
+static uint32_t lastEncoderCommandSentAt = 0;
 
 #endif
 
@@ -1061,7 +1062,7 @@ namespace UI
 		mgr.SetRoot(nullptr);
 
 #ifdef SUPPORT_ENCODER
-		encoder = new RotaryEncoder(2, 3, 32+6);
+		encoder = new RotaryEncoder(2, 3, 32+6);			// PA2, PA3 and PB6
 		encoder->Init(2);
 #endif
 	}
@@ -1315,18 +1316,28 @@ namespace UI
 		return currentTab != tabSetup;			// don't poll while we are on the Setup page
 	}
 
+	void Tick()
+	{
+#ifdef SUPPORT_ENCODER
+		encoder->Poll();
+#endif
+	}
+
 	// This is called in the main spin loop
 	void Spin()
 	{
 #ifdef SUPPORT_ENCODER
-		encoder->Poll();
-		// Check encoder and command movement
-		const int ch = encoder->GetChange();
-		if (ch != 0)
+		if (SystemTick::GetTickCount() - lastEncoderCommandSentAt >= MinimumEncoderCommandInterval)
 		{
-			SerialIo::SendString("G91\nG1 X");
-			SerialIo::SendInt(ch);
-			SerialIo::SendString(" F600\nG90\n");
+			// Check encoder and command movement
+			const int ch = encoder->GetChange();
+			if (ch != 0)
+			{
+				SerialIo::SendString("G91\nG1 X");
+				SerialIo::SendInt(ch);
+				SerialIo::SendString(" F600\nG90\n");
+			}
+			lastEncoderCommandSentAt = SystemTick::GetTickCount();
 		}
 #endif
 
