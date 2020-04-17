@@ -14,6 +14,7 @@ namespace SerialIo
 	void Init(uint32_t baudRate);
 	void SendChar(char c);
 	void SendString(const char * array s);
+	void SendQuoted(const char * array s);
 	void SendFilename(const char * array dir, const char * array name);
 	void SendInt(int i);
 	void CheckInput();

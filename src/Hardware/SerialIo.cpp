@@ -131,6 +131,13 @@ namespace SerialIo
 		}
 	}
 	
+	void SendQuoted(const char * array s)
+	{
+		SendChar('"');
+		SendString(s);
+		SendChar('"');
+	}
+
 	void SendFilename(const char * array dir, const char * array name)
 	{
 		if (GetFirmwareFeatures() & quoteFilenames)

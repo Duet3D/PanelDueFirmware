@@ -244,6 +244,7 @@ namespace FileManager
 	{
 		timer.SetCommand(((GetFirmwareFeatures() & noM20M36) != 0) ? "M408 S20 P" : "M20 S2 P");
 		timer.SetArgument(CondStripDrive(requestedPath.c_str()));
+		timer.SetQuoteArgument(GetFirmwareFeatures() & quoteFilenames);
 		timer.SetPending();
 	}
 
