@@ -21,8 +21,7 @@ class RequestTimer
 public:
 	RequestTimer(uint32_t del, const char * array cmd, const char * array null ex = nullptr);
 	void SetCommand(const char * array cmd) { command = cmd; }
-	void SetArgument(const char * array null arg) { extra = arg; }
-	void SetQuoteArgument(const bool arg) { quoteArgument = arg; }
+	void SetArgument(const char * array null arg, bool doQuote) { extra = arg; quoteArgument = doQuote; }
 	void SetPending() { timerState = ready; }
 	void Stop() { timerState = stopped; }
 	bool Process();

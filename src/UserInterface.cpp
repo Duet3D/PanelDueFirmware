@@ -1331,7 +1331,7 @@ namespace UI
 		{
 			// Check encoder and command movement
 			const int ch = encoder->GetChange();
-			if (ch != 0)
+			if (ch != 0 && currentTab != tabSetup)
 			{
 				SerialIo::SendString("G91\nG1 X");
 				SerialIo::SendInt(ch);
