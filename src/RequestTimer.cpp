@@ -14,7 +14,7 @@
 extern bool OkToSend();		// in PanelDue.cpp
 
 RequestTimer::RequestTimer(uint32_t del, const char * array cmd, const char * array null ex)
-	: delayTime(del), command(cmd), extra(ex)
+	: startTime(SystemTick::GetTickCount()), delayTime(del), command(cmd), extra(ex), quoteArgument(false)
 {
 	timerState = stopped;
 }
@@ -35,7 +35,14 @@ bool RequestTimer::Process()
 		SerialIo::SendString(command);
 		if (extra != nullptr)
 		{
-			SerialIo::SendString(not_null(extra));
+			if (quoteArgument)
+			{
+				SerialIo::SendQuoted(not_null(extra));
+			}
+			else
+			{
+				SerialIo::SendString(not_null(extra));
+			}
 		}
 		SerialIo::SendChar('\n');
 		startTime = SystemTick::GetTickCount();
