@@ -1599,6 +1599,8 @@ namespace UI
 	{
 		lastModifiedText.copy(data);
 		lastModifiedText.replace('T', ' ');
+		lastModifiedText.replace('+', '\0');		// ignore time zone if present
+		lastModifiedText.replace('.', '\0');		// ignore decimal seconds if present (DCS 2.0.0 sends them)
 		fpLastModifiedField->SetChanged();
 	}
 

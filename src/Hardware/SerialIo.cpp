@@ -205,6 +205,7 @@ namespace SerialIo
 		jsNegIntVal,		// had '-' so expecting a integer value
 		jsFracVal,			// receiving a fractional value
 		jsEndVal,			// had the end of a string or array value, expecting comma or ] or }
+		jsCharsVal,			// receiving an alphanumeric value such as true, false, null
 		jsError				// something went wrong
 	};
 	
@@ -241,6 +242,13 @@ namespace SerialIo
 
 	static void ProcessField()
 	{
+		if (state == jsCharsVal)
+		{
+			if (fieldVal.equals("null"))
+			{
+				fieldVal.clear();				// so that we can distinguish null from an empty string
+			}
+		}
 		ProcessReceivedValue(fieldId.c_str(), fieldVal.c_str(), arrayIndices);
 		fieldVal.clear();
 	}
@@ -368,6 +376,77 @@ namespace SerialIo
 		}
 	}
 
+	// Check whether the incoming character signals the end of the value. If it does, process it and return true.
+	static bool CheckValueCompleted(char c, bool doProcess)
+	{
+		switch(c)
+		{
+		case ',':
+			if (doProcess)
+			{
+				ProcessField();
+			}
+			if (InArray())
+			{
+				++arrayIndices[arrayDepth - 1];
+				fieldVal.clear();
+				state = jsVal;
+			}
+			else
+			{
+				RemoveLastId();
+				state = jsExpectId;
+			}
+			return true;
+
+		case ']':
+			if (InArray())
+			{
+				if (doProcess)
+				{
+					ProcessField();
+				}
+				++arrayIndices[arrayDepth - 1];
+				EndArray();
+				state = jsEndVal;
+			}
+			else
+			{
+				state = jsError;
+			}
+			return true;
+
+		case '}':
+			if (InArray())
+			{
+				state = jsError;
+			}
+			else
+			{
+				if (doProcess)
+				{
+					ProcessField();
+				}
+				RemoveLastId();
+				if (fieldId.size() == 0)
+				{
+					EndReceivedMessage();
+					state = jsBegin;
+				}
+				else
+				{
+					RemoveLastIdChar();
+					state = jsEndVal;
+				}
+			}
+			return true;
+
+		default:
+			return false;
+		}
+	}
+
+	// This is the JSON parser state machine
 	void CheckInput()
 	{
 		while (nextIn != nextOut)
@@ -489,7 +568,8 @@ namespace SerialIo
 						break;
 					case '-':
 						fieldVal.clear();
-						state = (fieldVal.add(c)) ? jsNegIntVal : jsError;
+						fieldVal.add(c);
+						state = jsNegIntVal;
 						break;
 					case '{':					// start of a nested object
 						state = (fieldId.add(':')) ? jsExpectId : jsError;
@@ -500,7 +580,12 @@ namespace SerialIo
 							fieldVal.clear();
 							fieldVal.add(c);	// must succeed because we just cleared fieldVal
 							state = jsIntVal;
-							break;
+						}
+						else if (c >= 'a' && c <= 'z')
+						{
+							fieldVal.clear();
+							fieldVal.add(c);	// must succeed because we just cleared fieldVal
+							state = jsCharsVal;
 						}
 						else
 						{
@@ -568,177 +653,52 @@ namespace SerialIo
 					break;
 					
 				case jsIntVal:			// receiving an integer value
-					switch(c)
+					if (CheckValueCompleted(c, true))
 					{
-					case '.':
+						break;
+					}
+
+					if (c == '.')
+					{
 						state = (fieldVal.add(c)) ? jsFracVal : jsError;
-						break;
-					case ',':
-						ProcessField();
-						if (InArray())
-						{
-							++arrayIndices[arrayDepth - 1];
-							fieldVal.clear();
-							state = jsVal;
-						}
-						else
-						{
-							RemoveLastId();
-							state = jsExpectId;
-						}
-						break;
-					case ']':
-						if (InArray())
-						{
-							ProcessField();
-							++arrayIndices[arrayDepth - 1];
-							EndArray();
-							state = jsEndVal;
-						}
-						else
-						{
-							state = jsError;
-						}
-						break;
-					case '}':
-						if (InArray())
-						{
-							state = jsError;
-						}
-						else
-						{
-							ProcessField();
-							RemoveLastId();
-							if (fieldId.size() == 0)
-							{
-								EndReceivedMessage();
-								state = jsBegin;
-							}
-							else
-							{
-								RemoveLastIdChar();
-								state = jsEndVal;
-							}
-						}
-						break;
-					default:
-						if  (!(c >= '0' && c <= '9' && fieldVal.add(c)))
-						{
-							state = jsError;
-						}
-						break;
+					}
+					else if (!(c >= '0' && c <= '9' && fieldVal.add(c)))
+					{
+						state = jsError;
 					}
 					break;
 
 				case jsFracVal:			// receiving a fractional value
-					switch(c)
+					if (CheckValueCompleted(c, true))
 					{
-					case ',':
-						ProcessField();
-						if (InArray())
-						{
-							++arrayIndices[arrayDepth - 1];
-							state = jsVal;
-						}
-						else
-						{
-							RemoveLastId();
-							state = jsExpectId;
-						}
 						break;
-					case ']':
-						if (InArray())
-						{
-							ProcessField();
-							++arrayIndices[arrayDepth - 1];
-							EndArray();
-							state = jsEndVal;
-						}
-						else
-						{
-							state = jsError;
-						}
+					}
+
+					if (!(c >= '0' && c <= '9' && fieldVal.add(c)))
+					{
+						state = jsError;
+					}
+					break;
+
+				case jsCharsVal:
+					if (CheckValueCompleted(c, true))
+					{
 						break;
-					case '}':
-						if (InArray())
-						{
-							state = jsError;
-						}
-						else
-						{
-							ProcessField();
-							RemoveLastId();
-							if (fieldId.size() == 0)
-							{
-								EndReceivedMessage();
-								state = jsBegin;
-							}
-							else
-							{
-								RemoveLastIdChar();
-								state = jsEndVal;
-							}
-						}
-						break;
-					default:
-						if (!(c >= '0' && c <= '9' && fieldVal.add(c)))
-						{
-							state = jsError;
-						}
-						break;
+					}
+
+					if (!(c >= 'a' && c <= 'z' && fieldVal.add(c)))
+					{
+						state = jsError;
 					}
 					break;
 
 				case jsEndVal:			// had the end of a string or array value, expecting comma or ] or }
-					switch (c)
+					if (CheckValueCompleted(c, false))
 					{
-					case ',':
-						if (InArray())
-						{
-							++arrayIndices[arrayDepth - 1];
-							fieldVal.clear();
-							state = jsVal;
-						}
-						else
-						{
-							RemoveLastId();
-							state = jsExpectId;
-						}
-						break;
-					case ']':
-						if (InArray())
-						{
-							++arrayIndices[arrayDepth - 1];
-							EndArray();
-						}
-						else
-						{
-							state = jsError;
-						}
-						break;
-					case '}':
-						if (InArray())
-						{
-							state = jsError;
-						}
-						else
-						{
-							RemoveLastId();
-							if (fieldId.size() == 0)
-							{
-								EndReceivedMessage();
-								state = jsBegin;
-							}
-							else
-							{
-								RemoveLastIdChar();
-								//state = jsEndVal;			// not needed, state == jsEndVal already
-							}
-						}
-						break;
-					default:
 						break;
 					}
+
+					state = jsError;
 					break;
 
 				case jsError:
