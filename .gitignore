@@ -49,3 +49,9 @@ Temporary Items
 # Directories created during build
 /Release-*
 /OEM*
+
+# Customer-specific folders
+/src/OEM
+
+# Misc
+.settings/language.settings.xml
