@@ -63,33 +63,33 @@ namespace MessageLog
 				uint32_t age = (SystemTick::GetTickCount() - tim)/1000;	// age of message in seconds
 				if (age < 10 * 60)
 				{
-					snprintf(p, Message::rttLen, "%lum%02lu", age/60, age%60);
+					SafeSnprintf(p, Message::rttLen, "%lum%02lu", age/60, age%60);
 				}
 				else
 				{
 					age /= 60;		// convert to minutes
 					if (age < 60)
 					{
-						snprintf(p, Message::rttLen, "%lum", age);
+						SafeSnprintf(p, Message::rttLen, "%lum", age);
 					}
 					else if (age < 10 * 60)
 					{
-						snprintf(p, Message::rttLen, "%luh%02lu", age/60, age%60);
+						SafeSnprintf(p, Message::rttLen, "%luh%02lu", age/60, age%60);
 					}
 					else
 					{
 						age /= 60;	// convert to hours
 						if (age < 10)
 						{
-							snprintf(p, Message::rttLen, "%luh", age);
+							SafeSnprintf(p, Message::rttLen, "%luh", age);
 						}
 						else if (age < 24 + 10)
 						{
-							snprintf(p, Message::rttLen, "%lud%02lu", age/24, age%24);
+							SafeSnprintf(p, Message::rttLen, "%lud%02lu", age/24, age%24);
 						}
 						else
 						{
-							snprintf(p, Message::rttLen, "%lud", age/24);
+							SafeSnprintf(p, Message::rttLen, "%lud", age/24);
 						}
 					}
 				}

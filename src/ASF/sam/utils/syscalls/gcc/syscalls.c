@@ -41,7 +41,7 @@
  *
  */
 
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -68,6 +68,8 @@ extern int _lseek(int file, int ptr, int dir);
 extern void _exit(int status);
 extern void _kill(int pid, int sig);
 extern int _getpid(void);
+extern int _read(int file, char *ptr, int len);
+extern int _write( int file, char *ptr, int len );
 
 extern caddr_t _sbrk(int incr)
 {
@@ -118,7 +120,7 @@ extern int _lseek(int file, int ptr, int dir)
 
 extern void _exit(int status)
 {
-	printf("Exiting with status %d.\n", status);
+//	printf("Exiting with status %d.\n", status);
 
 	for (;;);
 }
@@ -131,6 +133,16 @@ extern void _kill(int pid, int sig)
 extern int _getpid(void)
 {
 	return -1;
+}
+
+extern int _read(int file, char *ptr, int len)
+{
+    return 0 ;
+}
+
+extern int _write( int file, char *ptr, int len )
+{
+	return len;
 }
 
 /// @cond 0

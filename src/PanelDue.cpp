@@ -32,6 +32,7 @@
 #include "Hardware/Reset.hpp"
 #include "Library/Misc.hpp"
 #include "Library/Vector.hpp"
+#include "General/SafeStrtod.h"
 
 #if SAM4S
 #include "flash_efc.h"
@@ -626,13 +627,13 @@ bool GetInteger(const char s[], int32_t &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 
-	char* endptr;
-	rslt = (int) strtol(s, &endptr, 10);
+	const char* endptr;
+	rslt = (int) StrToI32(s, &endptr);
 	if (*endptr == 0) return true;			// we parsed an integer
 
 	if (strlen(s) > 10) return false;		// avoid strtod buggy behaviour on long input strings
 
-	const float d = strtof(s, &endptr);		// try parsing a floating point number
+	const float d = SafeStrtof(s, &endptr);		// try parsing a floating point number
 	if (*endptr == 0)
 	{
 		rslt = (int)((d < 0.0) ? d - 0.5 : d + 0.5);
@@ -645,8 +646,8 @@ bool GetInteger(const char s[], int32_t &rslt)
 bool GetUnsignedInteger(const char s[], uint32_t &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
-	char* endptr;
-	rslt = (int) strtoul(s, &endptr, 10);
+	const char* endptr;
+	rslt = (int) StrToU32(s, &endptr);
 	return *endptr == 0;
 }
 
@@ -659,8 +660,8 @@ bool GetFloat(const char s[], float &rslt)
 	// We presume strtof may be buggy too. Tame it by rejecting any strings that much longer than we expect to receive.
 	if (strlen(s) > 10) return false;
 
-	char* endptr;
-	rslt = strtof(s, &endptr);
+	const char* endptr;
+	rslt = SafeStrtof(s, &endptr);
 	return *endptr == 0;					// we parsed a float
 }
 
