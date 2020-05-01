@@ -1167,6 +1167,7 @@ namespace UI
 				// Starting a new print, so clear the times
 				timesLeft[0] = timesLeft[1] = timesLeft[2] = 0;
 			}
+			__attribute__ ((fallthrough));
 			// no break
 		case PrinterStatus::paused:
 		case PrinterStatus::pausing:
@@ -1184,6 +1185,7 @@ namespace UI
 		case PrinterStatus::idle:
 			printingFile.clear();
 			nameField->SetValue(machineName.c_str());		// if we are on the print tab then it may still be set to the file that was being printed
+			__attribute__ ((fallthrough));
 			// no break
 		case PrinterStatus::configuring:
 			if (oldStatus == PrinterStatus::flashing)

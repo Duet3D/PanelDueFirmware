@@ -8,6 +8,7 @@
 #include "Hardware/RotaryEncoder.hpp"
 #include "Hardware/SysTick.hpp"
 #include "Library/Misc.hpp"
+#include <cmath>
 
 RotaryEncoder::RotaryEncoder(unsigned int p0, unsigned int p1, unsigned int pb) noexcept
 	: pin0(p0), pin1(p1), pinButton(pb),

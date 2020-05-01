@@ -67,10 +67,16 @@
 
 #ifndef __ASSEMBLY__ // Not defined for assembling.
 
-//#include <stdio.h>
+#if 1	//dc42
+#include <stdbool.h>
+#include <stdint.h>
+#include <stddef.h>
+#else
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#endif
 
 #ifdef __ICCARM__
 /*! \name Compiler Keywords

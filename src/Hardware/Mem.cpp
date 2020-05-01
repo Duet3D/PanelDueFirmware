@@ -43,6 +43,7 @@ void* operator new(size_t objsize)
 }
 
 void operator delete(void* obj) { (void)obj; }
+void operator delete(void* obj, unsigned int) { (void)obj; }
 
 static const uint32_t SramSizes[] =
 {

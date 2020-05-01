@@ -54,8 +54,6 @@ extern "C" {
 /**INDENT-ON**/
 /// @endcond
 
-#undef errno
-extern int errno;
 extern int _end;
 extern int __ram_end__;
 

@@ -21,6 +21,7 @@
 
 #include <cstring>
 #include <cctype>
+#include <cmath>
 
 #include "Hardware/Mem.hpp"
 #include "Display.hpp"
