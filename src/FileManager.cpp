@@ -17,7 +17,7 @@
 #undef max
 #undef array
 #undef result
-#include <algorithm>
+//#include <algorithm>
 #define array _ecv_array
 #define result _ecv_result
 

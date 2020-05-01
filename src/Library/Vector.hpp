@@ -13,11 +13,7 @@
 #include <cstddef>		// for size_t
 #include <cstdarg>
 #include <cstring>
-#undef printf
-#undef scanf
-void printf();			// to keep gcc happy when we include cstdio
-void scanf();			// to keep gcc happy when we include cstdio
-#include <cstdio>
+#include "General/SafeVsnprintf.h"
 
 // Bounded vector class
 template<class T, size_t N> class Vector
@@ -257,7 +253,7 @@ template<size_t N> int String<N>::printf(const char *fmt, ...)
 {
 	va_list vargs;
 	va_start(vargs, fmt);
-	int ret = vsnprintf(this->storage, N + 1, fmt, vargs);
+	int ret = SafeVsnprintf(this->storage, N + 1, fmt, vargs);
 	va_end(vargs);
 
 	if (ret < 0)
@@ -280,7 +276,7 @@ template<size_t N> int String<N>::catf(const char *fmt, ...)
 {
 	va_list vargs;
 	va_start(vargs, fmt);
-	int ret = vsnprintf(this->storage + this->filled, N + 1 - this->filled, fmt, vargs);
+	int ret = SafeVsnprintf(this->storage + this->filled, N + 1 - this->filled, fmt, vargs);
 	va_end(vargs);
 	
 	if (ret < 0)

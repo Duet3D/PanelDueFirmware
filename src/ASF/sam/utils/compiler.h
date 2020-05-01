@@ -67,7 +67,7 @@
 
 #ifndef __ASSEMBLY__ // Not defined for assembling.
 
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -804,6 +804,7 @@ typedef struct
 
 // abs() is already defined by stdlib.h
 
+#if 0	//dc42 removed these, they are an abomination
 /*! \brief Takes the minimal value of \a a and \a b.
  *
  * \param a Input value.
@@ -825,6 +826,7 @@ typedef struct
  * \note More optimized if only used with values unknown at compile time.
  */
 #define max(a, b)   Max(a, b)
+#endif
 
 //! @}
 
