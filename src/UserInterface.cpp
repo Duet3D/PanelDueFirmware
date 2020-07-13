@@ -1167,8 +1167,7 @@ namespace UI
 				// Starting a new print, so clear the times
 				timesLeft[0] = timesLeft[1] = timesLeft[2] = 0;
 			}
-			__attribute__ ((fallthrough));
-			// no break
+			[[fallthrough]];
 		case PrinterStatus::paused:
 		case PrinterStatus::pausing:
 		case PrinterStatus::resuming:
