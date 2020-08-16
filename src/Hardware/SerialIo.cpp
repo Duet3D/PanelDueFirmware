@@ -183,7 +183,7 @@ namespace SerialIo
 	}
 
 	// Receive data processing
-	const size_t rxBufsize = 2048;
+	const size_t rxBufsize = 8192;
 	static volatile char rxBuffer[rxBufsize];
 	static volatile size_t nextIn = 0;
 	static size_t nextOut = 0;

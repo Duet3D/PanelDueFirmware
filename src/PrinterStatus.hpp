@@ -27,6 +27,27 @@ enum class PrinterStatus
 	off = 12
 };
 
-const char * const StatusLetters = "IPSCABDRFTMO";	// status letter codes corresponding to the above, except for the first one
+struct PrinterStatusMapEntry
+{
+	const char* key;
+	PrinterStatus val;
+};
+
+// This table must be kept in case-insensitive alphabetical order of the search string.
+const PrinterStatusMapEntry printerStatusMap[] =
+{
+	{"busy",		 	PrinterStatus::busy },
+	{"changingTool", 	PrinterStatus::toolChange },
+	{"halted",		 	PrinterStatus::stopped },
+	{"idle",			PrinterStatus::idle },
+	{"off", 			PrinterStatus::off },
+	{"paused", 			PrinterStatus::paused },
+	{"pausing", 		PrinterStatus::pausing },
+	{"processing", 		PrinterStatus::printing },
+	{"resuming", 		PrinterStatus::resuming },
+	{"simulating", 		PrinterStatus::simulating },
+	{"starting", 		PrinterStatus::configuring },
+	{"updating", 		PrinterStatus::flashing },
+};
 
 #endif /* SRC_PRINTERSTATUS_HPP_ */

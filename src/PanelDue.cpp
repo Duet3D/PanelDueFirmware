@@ -48,6 +48,7 @@
 #include "RequestTimer.hpp"
 #include "MessageLog.hpp"
 #include "Events.hpp"
+#include "HeaterStatus.hpp"
 #include "PrinterStatus.hpp"
 #include "UserInterface.hpp"
 
@@ -66,9 +67,8 @@ extern uint16_t _esplash[];							// defined in linker script
 // Controlling constants
 const uint32_t printerPollInterval = 1000;			// poll interval in milliseconds
 const uint32_t printerResponseInterval = 700;		// shortest time after a response that we send another poll (gives printer time to catch up)
-const uint32_t printerPollTimeout = 8000;			// poll timeout in milliseconds
+const uint32_t printerPollTimeout = 4000;			// poll timeout in milliseconds
 const uint32_t FileInfoRequestTimeout = 8000;		// file info request timeout in milliseconds
-const uint32_t MachineConfigRequestTimeout = 8000;	// machine configuration timeout in milliseconds
 const uint32_t touchBeepLength = 20;				// beep length in ms
 const uint32_t touchBeepFrequency = 4500;			// beep frequency in Hz. Resonant frequency of the piezo sounder is 4.5kHz.
 const uint32_t errorBeepLength = 100;
@@ -85,9 +85,9 @@ struct HostFirmwareType
 const HostFirmwareType firmwareTypes[] =
 {
 	{ "RepRapFirmware", quoteFilenames },
-	{ "Smoothie", noGcodesFolder | noStandbyTemps | noG10Temps | noDriveNumber | noM20M36 },
-	{ "Repetier", noGcodesFolder | noStandbyTemps | noG10Temps },
-	{ "Marlin", noGcodesFolder | noStandbyTemps | noG10Temps }
+	{ "Smoothie", 	noGcodesFolder | noStandbyTemps | noG10Temps | noDriveNumber | noM20M36 },
+	{ "Repetier", 	noGcodesFolder | noStandbyTemps | noG10Temps },
+	{ "Marlin",		noGcodesFolder | noStandbyTemps | noG10Temps }
 };
 
 // Variables
@@ -106,6 +106,21 @@ UTouch touch(23, 24, 22, 21, 20);
 
 #endif
 
+#define FETCH_BOARDS		(1)
+#define FETCH_DIRECTORIES	(0)
+#define FETCH_FANS			(1)
+#define FETCH_HEAT			(1)
+#define FETCH_INPUTS		(0)
+#define FETCH_JOB			(1)
+#define FETCH_MOVE			(1)
+#define FETCH_NETWORK		(1)
+#define FETCH_SCANNER		(0)
+#define FETCH_SENSORS		(1)
+#define FETCH_SPINDLES		(0)
+#define FETCH_STATE			(1)
+#define FETCH_TOOLS			(1)
+#define FETCH_VOLUMES		(1)
+
 MainWindow mgr;
 
 static uint32_t lastTouchTime;
@@ -122,6 +137,12 @@ static size_t numAxes = MIN_AXES;
 static int32_t beepFrequency = 0, beepLength = 0;
 static uint32_t messageSeq = 0;
 static uint32_t newMessageSeq = 0;
+static uint32_t fileSize = 0;
+static uint8_t visibleAxesCounted= 0;
+static uint8_t heatersCounted = 0;
+static uint8_t toolsCounted = 0;
+static uint8_t mountedVolumesCounted = 0;
+static uint32_t remoteUpTime = 0;
 
 const ColourScheme *colours = &colourSchemes[0];
 
@@ -177,58 +198,406 @@ static PrinterStatus status = PrinterStatus::connecting;
 enum ReceivedDataEvent
 {
 	rcvUnknown = 0,
-	rcvActive,
-	rcvAxes,
-	rcvDir,
-	rcvErr,
-	rcvEfactor,
-	rcvFilament,
-	rcvFiles,
-	rcvHeaters,
-	rcvHomed,
-	rcvHstat,
-	rcvPos,
-	rcvStandby,
-	rcvBeepFreq,
-	rcvBeepLength,
-	rcvFanPercent,
-	rcvFilename,
-	rcvFirmwareName,
-	rcvFraction,
-	rcvGeneratedBy,
-	rcvGeometry,
-	rcvHeight,
-	rcvLastModified,
-	rcvLayerHeight,
-	rcvMessage,
-	rcvMboxMode,
-	rcvMboxMsg,
-	rcvMboxControls,
-	rcvMboxTimeout,
-	rcvMboxTitle,
-	rcvMboxSeq,
-	rcvMyName,
-	rcvPrintTime,
-	rcvProbe,
-	rcvResponse,
-	rcvSeq,
-	rcvSfactor,
-	rcvSimulatedTime,
-	rcvSize,
-	rcvStatus,
-	rcvTimesLeft,
-	rcvVolumes,
-	rcvNumTools,
-	rcvBabystep
+
+	// Keys for push messages
+	rcvPushMessage,
+	rcvPushResponse,
+	rcvPushSeq,
+	rcvPushBeepDuration,
+	rcvPushBeepFrequency,
+
+	// Keys for M20 response
+	rcvM20Dir,
+	rcvM20Err,
+	rcvM20Files,
+
+	// Keys for M36 respons
+	rcvM36Filament,
+	rcvM36Filename,
+	rcvM36GeneratedBy,
+	rcvM36Height,
+	rcvM36LastModified,
+	rcvM36LayerHeight,
+	rcvM36PrintTime,
+	rcvM36SimulatedTime,
+	rcvM36Size,
+
+	// Keys for M409 response
+	rcvKey,
+	rcvFlags,
+	rcvResult,
+
+	// Available keys
+	rcvKeyNoKey,
+	rcvKeyBoards,
+	rcvKeyDirectories,
+	rcvKeyFans,
+	rcvKeyHeat,
+	rcvKeyInputs,
+	rcvKeyJob,
+	rcvKeyLimits,
+	rcvKeyMove,
+	rcvKeyNetwork,
+	rcvKeyReply,
+	rcvKeyScanner,
+	rcvKeySensors,
+	rcvKeySeqs,
+	rcvKeySpindles,
+	rcvKeyState,
+	rcvKeyTools,
+	rcvKeyVolumes,
+
+	// Keys in "live" response
+	rcvLiveFansActualValue,
+
+	rcvLiveHeatHeatersActive,
+	rcvLiveHeatHeatersCurrent,
+	rcvLiveHeatHeatersStandby,
+	rcvLiveHeatHeatersState,
+
+	rcvLiveJobFilePosition,
+	rcvLiveJobTimesLeftFilament,
+	rcvLiveJobTimesLeftFile,
+	rcvLiveJobTimesLeftLayer,
+
+	rcvLiveMoveAxesHomed,
+	rcvLiveMoveAxesMachinePosition,
+	rcvLiveMoveAxesUserPosition,
+
+	rcvLiveSensorsProbeValue,
+
+	rcvLiveSeqsBoards,
+	rcvLiveSeqsDirectories,
+	rcvLiveSeqsFans,
+	rcvLiveSeqsHeat,
+	rcvLiveSeqsInputs,
+	rcvLiveSeqsJob,
+	rcvLiveSeqsMove,
+	rcvLiveSeqsNetwork,
+	rcvLiveSeqsReply,
+	rcvLiveSeqsScanner,
+	rcvLiveSeqsSensors,
+	rcvLiveSeqsSpindles,
+	rcvLiveSeqsState,
+	rcvLiveSeqsTools,
+	rcvLiveSeqsVolumes,
+
+	rcvLiveStateCurrentTool,
+	rcvLiveStateStatus,
+	rcvLiveStateUptime,
+
+	// Keys for boards response
+	rcvBoardsFirmwareName,
+
+	// Keys for heat response
+	rcvHeatHeatersState,
+
+	// Keys for job response
+	rcvJobFileFilename,
+	rcvJobFileSize,
+
+	// Keys for move response
+	rcvMoveAxesBabystep,
+	rcvMoveAxesVisible,
+	rcvMoveExtrudersFactor,
+	rcvMoveKinematicsName,
+	rcvMoveSpeedFactor,
+
+	// Keys for network response
+	rcvNetworkName,
+
+	// Keys from state response
+	rcvStateMessageBoxAxisControls,
+	rcvStateMessageBoxMessage,
+	rcvStateMessageBoxMode,
+	rcvStateMessageBoxSeq,
+	rcvStateMessageBoxTimeout,
+	rcvStateMessageBoxTitle,
+
+	// Keys from tools response
+	rcvToolsNumber,
+
+	// Keys for volumes response
+	rcvVolumesMounted,
 };
 
-struct ReceiveDataTableEntry
+struct FieldTableEntry
 {
 	ReceivedDataEvent rde;
 	const char* varName;
 };
 
-RequestTimer machineConfigTimer(MachineConfigRequestTimeout, "M408 S1");
+// The following tables will be sorted once on startup so entries can be better grouped for code maintenance
+// A '^' character indicates the position of an array index, and a ':' character indicates the start of a sub-field name
+static FieldTableEntry fieldTable[] =
+{
+	// M409 common fields
+	{ rcvKey, 							"key" },
+
+	// M409 F"d99f" response
+	{ rcvLiveFansActualValue,			"result:fans^:actualValue" },
+
+	{ rcvLiveHeatHeatersActive,			"result:heat:heaters^:active" },
+	{ rcvLiveHeatHeatersCurrent,		"result:heat:heaters^:current" },
+	{ rcvLiveHeatHeatersStandby,		"result:heat:heaters^:standby" },
+	{ rcvLiveHeatHeatersState,			"result:heat:heaters^:state" },
+
+	{ rcvLiveJobFilePosition,			"result:job:filePosition" },
+	{ rcvLiveJobTimesLeftFilament,		"result:job:timesLeft:filament" },
+	{ rcvLiveJobTimesLeftFile,			"result:job:timesLeft:file" },
+	{ rcvLiveJobTimesLeftLayer,			"result:job:timesLeft:layer" },
+
+	{ rcvLiveMoveAxesHomed,				"result:move:axes^:homed" },
+	{ rcvLiveMoveAxesMachinePosition,	"result:move:axes^:machinePosition" },
+	{ rcvLiveMoveAxesUserPosition,		"result:move:axes^:userPosition" },
+
+	{ rcvLiveSensorsProbeValue,			"result:sensors:probes^:value^" },
+
+	{ rcvLiveSeqsBoards,				"result:seqs:boards" },
+	{ rcvLiveSeqsDirectories,			"result:seqs:directories" },
+	{ rcvLiveSeqsFans,					"result:seqs:fans" },
+	{ rcvLiveSeqsHeat,					"result:seqs:heat" },
+	{ rcvLiveSeqsInputs,				"result:seqs:inputs" },
+	{ rcvLiveSeqsJob,					"result:seqs:job" },
+	{ rcvLiveSeqsMove,					"result:seqs:move" },
+	{ rcvLiveSeqsNetwork,				"result:seqs:network" },
+	{ rcvLiveSeqsReply,					"result:seqs:reply" },
+	{ rcvLiveSeqsScanner,				"result:seqs:scanner" },
+	{ rcvLiveSeqsSensors,				"result:seqs:sensors" },
+	{ rcvLiveSeqsSpindles,				"result:seqs:spindles" },
+	{ rcvLiveSeqsState,					"result:seqs:state" },
+	{ rcvLiveSeqsTools,					"result:seqs:tools" },
+	{ rcvLiveSeqsVolumes,				"result:seqs:volumes" },
+
+	{ rcvLiveStateCurrentTool,			"result:state:currentTool" },
+	{ rcvLiveStateStatus,				"result:state:status" },
+	{ rcvLiveStateUptime,				"result:state:upTime" },
+
+	// M409 K"boards" response
+	{ rcvBoardsFirmwareName, 			"result^:firmwareName" },
+
+	// M409 K"heat" response
+	{ rcvHeatHeatersState,				"result:heaters^:state" },
+
+	// M409 K"job" response
+	{ rcvJobFileFilename, 				"result:file:fileName" },
+	{ rcvJobFileSize, 					"result:file:size" },
+
+	// M409 K"move" response
+	{ rcvMoveExtrudersFactor, 			"result:axes^:babystep" },
+	{ rcvMoveAxesVisible, 				"result:axes^:visible" },
+	{ rcvMoveExtrudersFactor, 			"result:extruders^:factor" },
+	{ rcvMoveKinematicsName, 			"result:kinematics:name" },
+	{ rcvMoveSpeedFactor, 				"result:speedFactor" },
+
+	// M409 K"network" response
+	{ rcvNetworkName, 					"result:name" },
+
+	// M409 K"state" response
+	{ rcvStateMessageBoxAxisControls,	"result:messageBox:axisControls" },
+	{ rcvStateMessageBoxMessage,		"result:messageBox:message" },
+	{ rcvStateMessageBoxMode,			"result:messageBox:mode" },
+	{ rcvStateMessageBoxSeq,			"result:messageBox:seq" },
+	{ rcvStateMessageBoxTimeout,		"result:messageBox:timeout" },
+	{ rcvStateMessageBoxTitle,			"result:messageBox:title" },
+
+	// M409 K"tools" response
+	{ rcvToolsNumber, 					"result^:number" },
+
+	// M409 K"volumes" response
+	{ rcvVolumesMounted, 				"result^:mounted" },
+
+	// M20 response
+	{ rcvM20Dir,						"dir" },
+	{ rcvM20Err,						"err" },
+	{ rcvM20Files,						"files^" },
+
+	// M36 response
+	{ rcvM36Filament,					"filament^" },
+	{ rcvM36Filename,					"fileName" },
+	{ rcvM36GeneratedBy,				"generatedBy" },
+	{ rcvM36Height,						"height" },
+	{ rcvM36LastModified,				"lastModified" },
+	{ rcvM36LayerHeight,				"layerHeight" },
+	{ rcvM36PrintTime,					"printTime" },
+	{ rcvM36SimulatedTime,				"simulatedTime" },
+	{ rcvM36Size,						"size" },
+
+	// Push messages
+	{ rcvPushMessage,					"message" },
+	{ rcvPushResponse,					"resp" },
+	{ rcvPushSeq,						"seq" },
+	{ rcvPushBeepDuration,				"beep_length" },
+	{ rcvPushBeepFrequency,				"beep_freq" },
+};
+
+// This table must be kept in case-insensitive alphabetical order of the search string.
+const FieldTableEntry keyResponseTypeTable[] =
+{
+	{ rcvKeyNoKey, 			"" },
+	{ rcvKeyBoards,			"boards" },
+	{ rcvKeyDirectories,	"directories" },
+	{ rcvKeyFans,			"fans" },
+	{ rcvKeyHeat,			"heat" },
+	{ rcvKeyInputs,			"inputs" },
+	{ rcvKeyJob,			"job" },
+	{ rcvKeyLimits,			"limits" },
+	{ rcvKeyMove,			"move" },
+	{ rcvKeyNetwork,		"network" },
+	{ rcvKeyReply,			"reply" },
+	{ rcvKeyScanner,		"scanner" },
+	{ rcvKeySensors,		"sensors" },
+	{ rcvKeySeqs,			"seqs" },
+	{ rcvKeySpindles,		"spindles" },
+	{ rcvKeyState,			"state" },
+	{ rcvKeyTools,			"tools" },
+	{ rcvKeyVolumes,		"volumes" },
+};
+
+
+static ReceivedDataEvent currentResponseType = rcvKeyNoKey;
+
+struct Seqs
+{
+	uint16_t boards 		= 0;
+	bool updateBoards		= false;
+	uint16_t directories	= 0;
+	bool updateDirectories	= false;
+	uint16_t fans 			= 0;
+	bool updateFans 		= false;
+	uint16_t heat 			= 0;
+	bool updateHeat 		= false;
+	uint16_t inputs 		= 0;
+	bool updateInputs 		= false;
+	uint16_t job 			= 0;
+	bool updateJob 			= false;
+	uint16_t move 			= 0;
+	bool updateMove 		= false;
+	uint16_t network 		= 0;
+	bool updateNetwork 		= false;
+	uint16_t scanner 		= 0;
+	bool updateScanner 		= false;
+	uint16_t sensors 		= 0;
+	bool updateSensors 		= false;
+	uint16_t spindles 		= 0;
+	bool updateSpindles 	= false;
+	uint16_t state 			= 0;
+	bool updateState 		= false;
+	uint16_t tools 			= 0;
+	bool updateTools 		= false;
+	uint16_t volumes 		= 0;
+	bool updateVolumes 		= false;
+} seqs;
+
+
+void resetSeqs()
+{
+	seqs.boards 			=
+	seqs.directories		=
+	seqs.fans 				=
+	seqs.heat 				=
+	seqs.inputs 			=
+	seqs.job 				=
+	seqs.move 				=
+	seqs.network 			=
+	seqs.scanner 			=
+	seqs.sensors 			=
+	seqs.spindles 			=
+	seqs.state 				=
+	seqs.tools 				=
+	seqs.volumes 			= 0;
+
+	seqs.updateBoards		=
+	seqs.updateDirectories	=
+	seqs.updateFans 		=
+	seqs.updateHeat 		=
+	seqs.updateInputs 		=
+	seqs.updateJob 			=
+	seqs.updateMove 		=
+	seqs.updateNetwork 		=
+	seqs.updateScanner 		=
+	seqs.updateSensors 		=
+	seqs.updateSpindles 	=
+	seqs.updateState 		=
+	seqs.updateTools 		=
+	seqs.updateVolumes 		= false;
+}
+
+const char * GetNextToPoll()
+{
+	if (seqs.updateBoards)
+	{
+		seqs.updateBoards = false;
+		return "boards";
+	}
+	if (seqs.updateDirectories)
+	{
+		seqs.updateDirectories = false;
+		return "directories";
+	}
+	if (seqs.updateFans)
+	{
+		seqs.updateFans = false;
+		return "fans";
+	}
+	if (seqs.updateHeat)
+	{
+		seqs.updateHeat = false;
+		return "heat";
+	}
+	if (seqs.updateInputs)
+	{
+		seqs.updateInputs = false;
+		return "inputs";
+	}
+	if (seqs.updateJob)
+	{
+		seqs.updateJob = false;
+		return "job";
+	}
+	if (seqs.updateMove)
+	{
+		seqs.updateMove = false;
+		return "move";
+	}
+	if (seqs.updateNetwork)
+	{
+		seqs.updateNetwork = false;
+		return "network";
+	}
+	if (seqs.updateScanner)
+	{
+		seqs.updateScanner = false;
+		return "scanner";
+	}
+	if (seqs.updateSensors)
+	{
+		seqs.updateSensors = false;
+		return "sensors";
+	}
+	if (seqs.updateSpindles)
+	{
+		seqs.updateSpindles = false;
+		return "spindles";
+	}
+	if (seqs.updateState)
+	{
+		seqs.updateState = false;
+		return "state";
+	}
+	if (seqs.updateTools)
+	{
+		seqs.updateTools = false;
+		return "tools";
+	}
+	if (seqs.updateVolumes)
+	{
+		seqs.updateVolumes = false;
+		return "volumes";
+	}
+
+	return nullptr;
+}
 
 bool FlashData::IsValid() const
 {
@@ -340,7 +709,7 @@ bool PrintInProgress()
 }
 
 // Search an ordered table for a matching string
-ReceivedDataEvent bsearch(const ReceiveDataTableEntry array table[], size_t numElems, const char* key)
+ReceivedDataEvent bsearch(const FieldTableEntry array table[], size_t numElems, const char* key)
 {
 	size_t low = 0u, high = numElems;
 	while (high > low)
@@ -592,10 +961,20 @@ void SaveSettings()
 }
 
 // This is called when the status changes
-void SetStatus(char c)
+void SetStatus(const char * sts)
 {
-	const char * const p = strchr(StatusLetters, c);
-	const PrinterStatus newStatus = (p != nullptr) ? (PrinterStatus)(p - StatusLetters + 1) : status;
+	const PrinterStatusMapEntry key = (PrinterStatusMapEntry) {sts, PrinterStatus::connecting};
+	const PrinterStatusMapEntry * statusFromMap =
+			(PrinterStatusMapEntry *) bsearch(
+					&key,
+					printerStatusMap,
+					ARRAY_SIZE(printerStatusMap),
+					sizeof(PrinterStatusMapEntry),
+					[](auto a, auto b)
+					{
+						return strcasecmp(((PrinterStatusMapEntry*) a)->key, ((PrinterStatusMapEntry*)b)->key);
+					});
+	const PrinterStatus newStatus = (statusFromMap != nullptr) ? statusFromMap->val : PrinterStatus::connecting;
 	
 	if (newStatus != status)
 	{
@@ -666,54 +1045,14 @@ bool GetFloat(const char s[], float &rslt)
 	return *endptr == 0;					// we parsed a float
 }
 
-// This table must be kept in case-insensitive alphabetical order of the search string.
-// A '^' character indicates the position of an array index, and a ':' character indicates the start of a sub-field name
-const ReceiveDataTableEntry fieldTable[] =
+// Try to get a bool value from a string.
+bool GetBool(const char s[], bool &rslt)
 {
-	{ rcvActive,		"active^" },
-	{ rcvAxes,			"axes" },
-	{ rcvBabystep,		"babystep" },
-	{ rcvBeepFreq,		"beep_freq" },
-	{ rcvBeepLength,	"beep_length" },
-	{ rcvDir,			"dir" },
-	{ rcvEfactor,		"efactor^" },
-	{ rcvErr,			"err" },
-	{ rcvFanPercent,	"fanPercent^" },
-	{ rcvFilament,		"filament^" },
-	{ rcvFilename,		"fileName" },
-	{ rcvFiles,			"files^" },
-	{ rcvFirmwareName,	"firmwareName" },
-	{ rcvFraction,		"fraction_printed" },
-	{ rcvGeneratedBy,	"generatedBy" },
-	{ rcvGeometry,		"geometry" },
-	{ rcvHeaters,		"heaters^" },
-	{ rcvHeight,		"height" },
-	{ rcvHomed,			"homed^" },
-	{ rcvHstat,			"hstat^" },
-	{ rcvLastModified,	"lastModified" },
-	{ rcvLayerHeight,	"layerHeight" },
-	{ rcvMessage,		"message" },
-	{ rcvMboxControls,	"msgBox.controls" },
-	{ rcvMboxMode,		"msgBox.mode" },
-	{ rcvMboxMsg,		"msgBox.msg" },
-	{ rcvMboxSeq,		"msgBox.seq" },
-	{ rcvMboxTimeout,	"msgBox.timeout" },
-	{ rcvMboxTitle,		"msgBox.title" },
-	{ rcvMyName,		"myName" },
-	{ rcvNumTools,		"numTools" },
-	{ rcvPos,			"pos^" },
-	{ rcvPrintTime,		"printTime" },
-	{ rcvProbe,			"probe" },
-	{ rcvResponse,		"resp" },
-	{ rcvSeq,			"seq" },
-	{ rcvSfactor,		"sfactor" },
-	{ rcvSimulatedTime,	"simulatedTime" },
-	{ rcvSize,			"size" },
-	{ rcvStandby,		"standby^" },
-	{ rcvStatus,		"status" },
-	{ rcvTimesLeft,		"timesLeft^" },
-	{ rcvVolumes,		"volumes" }
-};
+	if (s[0] == 0) return false;			// empty string
+
+	rslt = (strcasecmp(s, "true") == 0);
+	return true;
+}
 
 void StartReceivedMessage()
 {
@@ -748,81 +1087,198 @@ void EndReceivedMessage()
 	ShowLine;
 }
 
+void UpdateSeqs(const ReceivedDataEvent rde, const int32_t ival)
+{
+	switch (rde)
+	{
+#if FETCH_BOARDS
+	case rcvLiveSeqsBoards:
+		if (seqs.boards != ival)
+		{
+			seqs.boards = ival;
+			seqs.updateBoards = true;
+		}
+		break;
+#endif
+#if FETCH_DIRECTORIES
+	case rcvLiveSeqsDirectories:
+		if (seqs.directories != ival)
+		{
+			seqs.directories = ival;
+			seqs.updateDirectories = true;
+		}
+		break;
+#endif
+#if FETCH_FANS
+	case rcvLiveSeqsFans:
+		if (seqs.fans != ival)
+		{
+			seqs.fans = ival;
+			seqs.updateFans = true;
+		}
+		break;
+#endif
+#if FETCH_HEAT
+	case rcvLiveSeqsHeat:
+		if (seqs.heat != ival)
+		{
+			seqs.heat = ival;
+			seqs.updateHeat = true;
+		}
+		break;
+#endif
+#if FETCH_INPUTS
+	case rcvLiveSeqsInputs:
+		if (seqs.inputs != ival)
+		{
+			seqs.inputs = ival;
+			seqs.updateInputs = true;
+		}
+		break;
+#endif
+#if FETCH_JOB
+	case rcvLiveSeqsJob:
+		if (seqs.job != ival)
+		{
+			seqs.job = ival;
+			seqs.updateJob = true;
+		}
+		break;
+#endif
+#if FETCH_MOVE
+	case rcvLiveSeqsMove:
+		if (seqs.move != ival)
+		{
+			seqs.move = ival;
+			seqs.updateMove = true;
+		}
+		break;
+#endif
+#if FETCH_NETWORK
+	case rcvLiveSeqsNetwork:
+		if (seqs.network != ival)
+		{
+			seqs.network = ival;
+			seqs.updateNetwork = true;
+		}
+		break;
+#endif
+#if FETCH_SCANNER
+	case rcvLiveSeqsScanner:
+		if (seqs.scanner != ival)
+		{
+			seqs.scanner = ival;
+			seqs.updateScanner = true;
+		}
+		break;
+#endif
+#if FETCH_SENSORS
+	case rcvLiveSeqsSensors:
+		if (seqs.sensors != ival)
+		{
+			seqs.sensors = ival;
+			seqs.updateSensors = true;
+		}
+		break;
+#endif
+#if FETCH_SPINDLES
+	case rcvLiveSeqsSpindles:
+		if (seqs.spindles != ival)
+		{
+			seqs.spindles = ival;
+			seqs.updateSpindles = true;
+		}
+		break;
+#endif
+#if FETCH_STATE
+	case rcvLiveSeqsState:
+		if (seqs.state != ival)
+		{
+			seqs.state = ival;
+			seqs.updateState = true;
+		}
+		break;
+#endif
+#if FETCH_TOOLS
+	case rcvLiveSeqsTools:
+		if (seqs.tools != ival)
+		{
+			seqs.tools = ival;
+			seqs.updateTools = true;
+		}
+		break;
+#endif
+#if FETCH_VOLUMES
+	case rcvLiveSeqsVolumes:
+		if (seqs.volumes != ival)
+		{
+			seqs.volumes = ival;
+			seqs.updateVolumes = true;
+		}
+		break;
+#endif
+	default:
+		break;
+	}
+}
+
 // Public functions called by the SerialIo module
 void ProcessReceivedValue(const char id[], const char data[], const size_t indices[])
 {
-	ShowLine;
-	const ReceivedDataEvent rde = bsearch(fieldTable, sizeof(fieldTable)/sizeof(fieldTable[0]), id);
+	const ReceivedDataEvent rde = bsearch(fieldTable, ARRAY_SIZE(fieldTable), id);
 	switch (rde)
 	{
-	case rcvActive:
-		ShowLine;
+	// Push messages
+	case rcvPushResponse:
+		MessageLog::SaveMessage(data);
+		break;
+
+	case rcvPushMessage:
+		if (data[0] == 0)
 		{
-			int32_t ival;
-			if (GetInteger(data, ival))
+			UI::ClearAlert();
+		}
+		else
+		{
+			UI::ProcessSimpleAlert(data);
+		}
+		break;
+
+	case rcvPushSeq:
+		GetUnsignedInteger(data, newMessageSeq);
+		break;
+
+	case rcvPushBeepDuration:
+		GetInteger(data, beepLength);
+		break;
+
+	case rcvPushBeepFrequency:
+		GetInteger(data, beepFrequency);
+		break;
+
+	// M20 section
+	case rcvM20Dir:
+		FileManager::ReceiveDirectoryName(data);
+		break;
+
+	case rcvM20Err:
+		{
+			int32_t i;
+			if (GetInteger(data, i))
 			{
-				UI::UpdateActiveTemperature(indices[0], ival);
+				if (i >= 0)
+				{
+					FileManager::ReceiveErrorCode(i);
+				}
+				else if (i == -1)
+				{
+					// RRF ran out of buffers
+				}
 			}
 		}
 		break;
 
-	case rcvStandby:
-		ShowLine;
-		{
-			int32_t ival;
-			if (GetInteger(data, ival))
-			{
-				UI::UpdateStandbyTemperature(indices[0], ival);
-			}
-		}
-		break;
-
-	case rcvHeaters:
-		ShowLine;
-		{
-			float fval;
-			if (GetFloat(data, fval))
-			{
-				ShowLine;
-				UI::UpdateCurrentTemperature(indices[0], fval);
-			}
-		}
-		break;
-
-	case rcvHstat:
-		ShowLine;
-		{
-			int32_t ival;
-			if (GetInteger(data, ival))
-			{
-				UI::UpdateHeaterStatus(indices[0], ival);
-			}
-		}
-		break;
-
-	case rcvPos:
-		ShowLine;
-		{
-			float fval;
-			if (GetFloat(data, fval))
-			{
-				UI::UpdateAxisPosition(indices[0], fval);
-			}
-		}
-		break;
-
-	case rcvEfactor:
-		ShowLine;
-		{
-			int32_t ival;
-			if (GetInteger(data, ival))
-			{
-				UI::UpdateExtrusionFactor(indices[0], ival);
-			}
-		}
-		break;
-
-	case rcvFiles:
+	case rcvM20Files:
 		ShowLine;
 		if (indices[0] == 0)
 		{
@@ -831,7 +1287,8 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		FileManager::ReceiveFile(data);
 		break;
 
-	case rcvFilament:
+	// M36 section
+	case rcvM36Filament:
 		ShowLine;
 		{
 			static float totalFilament = 0.0;
@@ -847,14 +1304,182 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 			}
 		}
 		break;
+	case rcvM36Filename:
+		break;
 
-	case rcvHomed:
+	case rcvM36GeneratedBy:
+		UI::UpdateFileGeneratedByText(data);
+		break;
+
+	case rcvM36Height:
+		{
+			float f;
+			if (GetFloat(data, f))
+			{
+				UI::UpdateFileObjectHeight(f);
+			}
+		}
+		break;
+
+	case rcvM36LastModified:
+		UI::UpdateFileLastModifiedText(data);
+		break;
+
+	case rcvM36LayerHeight:
+		{
+			float f;
+			if (GetFloat(data, f))
+			{
+				UI::UpdateFileLayerHeight(f);
+			}
+		}
+		break;
+
+	case rcvM36PrintTime:
+	case rcvM36SimulatedTime:
+		{
+			int32_t sz;
+			if (GetInteger(data, sz) && sz > 0)
+			{
+				UI::UpdatePrintTimeText((uint32_t)sz, rde == rcvM36SimulatedTime);
+			}
+		}
+		break;
+
+	case rcvM36Size:
+		{
+			int32_t sz;
+			if (GetInteger(data, sz))
+			{
+				UI::UpdateFileSize(sz);
+			}
+		}
+		break;
+
+	// M409 section
+	case rcvKey:
+		ShowLine;
+		{
+			currentResponseType = bsearch(keyResponseTypeTable, ARRAY_SIZE(keyResponseTypeTable), data);
+			switch (currentResponseType) {
+			case rcvKeyHeat:
+				heatersCounted = 0;
+				break;
+			case rcvKeyMove:
+				visibleAxesCounted = 0;
+				break;
+			case rcvKeyTools:
+				toolsCounted = 0;
+				break;
+			case rcvKeyVolumes:
+				mountedVolumesCounted = 0;
+				break;
+			default:
+				break;
+			}
+		}
+		break;
+
+	// Live response
+	case rcvLiveFansActualValue:
+		ShowLine;
+		if (indices[0] == 0)			// currently we only handle one fan
+		{
+			float f;
+			bool b = GetFloat(data, f);
+			if (b && f >= 0.0 && f <= 1.0)
+			{
+				UI::UpdateFanPercent((int)((f * 100.0f) + 0.5f));
+			}
+		}
+		break;
+	case rcvLiveHeatHeatersActive:
 		ShowLine;
 		{
 			int32_t ival;
-			if (indices[0] < MaxAxes && GetInteger(data, ival) && ival >= 0 && ival < 2)
+			if (GetInteger(data, ival))
 			{
-				bool isHomed = (ival == 1);
+				UI::UpdateActiveTemperature(indices[0], ival);
+			}
+		}
+		break;
+
+	case rcvLiveHeatHeatersCurrent:
+		ShowLine;
+		{
+			float fval;
+			if (GetFloat(data, fval))
+			{
+				ShowLine;
+				UI::UpdateCurrentTemperature(indices[0], fval);
+			}
+		}
+		break;
+
+	case rcvLiveHeatHeatersStandby:
+		ShowLine;
+		{
+			int32_t ival;
+			if (GetInteger(data, ival))
+			{
+				UI::UpdateStandbyTemperature(indices[0], ival);
+			}
+		}
+		break;
+
+	case rcvLiveHeatHeatersState:
+		ShowLine;
+		{
+			const HeaterStatusMapEntry key = (HeaterStatusMapEntry) {data, HeaterStatus::off};
+			const HeaterStatusMapEntry * statusFromMap =
+					(HeaterStatusMapEntry *) bsearch(
+							&key,
+							heaterStatusMap,
+							ARRAY_SIZE(heaterStatusMap),
+							sizeof(HeaterStatusMapEntry),
+							[](auto a, auto b)
+							{
+								return strcasecmp(((HeaterStatusMapEntry*) a)->key, ((HeaterStatusMapEntry*)b)->key);
+							});
+			const HeaterStatus status = (statusFromMap != nullptr) ? statusFromMap->val : HeaterStatus::off;
+			UI::UpdateHeaterStatus(indices[0], (int) status);
+		}
+		break;
+
+	case rcvLiveJobFilePosition:
+		{
+			if (PrintInProgress() && fileSize > 0)
+			{
+				uint32_t ival;
+				if (GetUnsignedInteger(data, ival))
+				{
+					UI::SetPrintProgressPercent((unsigned int)(((ival*100.0f)/fileSize) + 0.5));
+				}
+
+			}
+		}
+		break;
+
+	case rcvLiveJobTimesLeftFilament:
+	case rcvLiveJobTimesLeftFile:
+	case rcvLiveJobTimesLeftLayer:
+		ShowLine;
+		{
+			int32_t i;
+			bool b = GetInteger(data, i);
+			if (b && i >= 0 && i < 10 * 24 * 60 * 60 && PrintInProgress())
+			{
+				UI::UpdateTimesLeft((rde == rcvLiveJobTimesLeftFilament) ? 1 : (rde == rcvLiveJobTimesLeftLayer) ? 2 : 0, i);
+			}
+		}
+		break;
+
+	case rcvLiveMoveAxesHomed:
+		ShowLine;
+		{
+			bool isHomed;
+			if (indices[0] < MaxAxes && GetBool(data, isHomed))
+			{
 				if (isHomed != axisHomed[indices[0]])
 				{
 					axisHomed[indices[0]] = isHomed;
@@ -878,131 +1503,155 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		}
 		break;
 
-	case rcvTimesLeft:
+	case rcvLiveMoveAxesUserPosition:
 		ShowLine;
 		{
-			int32_t i;
-			bool b = GetInteger(data, i);
-			if (b && i >= 0 && i < 10 * 24 * 60 * 60 && PrintInProgress())
+			float fval;
+			if (GetFloat(data, fval))
 			{
-				UI::UpdateTimesLeft(indices[0], i);
+				UI::UpdateAxisPosition(indices[0], fval);
 			}
 		}
 		break;
 
-	case rcvFanPercent:
-		ShowLine;
-		if (indices[0] == 0)			// currently we only handle one fan
+	case rcvLiveSensorsProbeValue:
 		{
-			float f;
-			bool b = GetFloat(data, f);
-			if (b && f >= 0.0 && f <= 100.0)
-			{
-				UI::UpdateFanPercent((int)(f + 0.5));
-			}
+			if (indices[0] == 0 && indices[1] == 0)			// currently we only handle one probe with one value
+			UI::UpdateZProbe(data);
 		}
 		break;
 
-	case rcvSfactor:
+	case rcvLiveSeqsBoards:
+	case rcvLiveSeqsDirectories:
+	case rcvLiveSeqsFans:
+	case rcvLiveSeqsHeat:
+	case rcvLiveSeqsInputs:
+	case rcvLiveSeqsJob:
+	case rcvLiveSeqsMove:
+	case rcvLiveSeqsNetwork:
+	case rcvLiveSeqsReply:
+	case rcvLiveSeqsScanner:
+	case rcvLiveSeqsSensors:
+	case rcvLiveSeqsSpindles:
+	case rcvLiveSeqsState:
+	case rcvLiveSeqsTools:
+	case rcvLiveSeqsVolumes:
+		ShowLine;
 		{
 			int32_t ival;
 			if (GetInteger(data, ival))
 			{
-				UI::UpdateSpeedPercent(ival);
+				UpdateSeqs(rde, ival);
 			}
+
 		}
 		break;
 
-	case rcvProbe:
-		UI::UpdateZProbe(data);
-		break;
-
-	case rcvMyName:
-		if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
+	case rcvLiveStateStatus:
+		ShowLine;
 		{
-			UI::UpdateMachineName(data);
+			SetStatus(data);
 		}
 		break;
 
-	case rcvFilename:
-		UI::PrintingFilenameChanged(data);
-		break;
-
-	case rcvSize:
+	case rcvLiveStateUptime:
+		ShowLine;
 		{
-			int32_t sz;
-			if (GetInteger(data, sz))
+			uint32_t uival;
+			if (GetUnsignedInteger(data, uival))
 			{
-				UI::UpdateFileSize(sz);
-			}
-		}
-		break;
-
-	case rcvHeight:
-		{
-			float f;
-			if (GetFloat(data, f))
-			{
-				UI::UpdateFileObjectHeight(f);
-			}
-		}
-		break;
-
-	case rcvLastModified:
-		UI::UpdateFileLastModifiedText(data);
-		break;
-
-	case rcvPrintTime:
-	case rcvSimulatedTime:
-		{
-			int32_t sz;
-			if (GetInteger(data, sz) && sz > 0)
-			{
-				UI::UpdatePrintTimeText((uint32_t)sz, rde == rcvSimulatedTime);
-			}
-		}
-		break;
-
-	case rcvLayerHeight:
-		{
-			float f;
-			if (GetFloat(data, f))
-			{
-				UI::UpdateFileLayerHeight(f);
-			}
-		}
-		break;
-
-	case rcvGeneratedBy:
-		UI::UpdateFileGeneratedByText(data);
-		break;
-
-	case rcvFraction:
-		{
-			float f;
-			if (GetFloat(data, f))
-			{
-				if (f >= 0.0 && f <= 1.0)
+				// Controller was restarted
+				if (uival < remoteUpTime)
 				{
-					UI::SetPrintProgressPercent((unsigned int)(100.0 * f) + 0.5);
+					resetSeqs();
+				}
+				remoteUpTime = uival;
+			}
+		}
+		break;
+
+	// Boards section
+	case rcvBoardsFirmwareName:
+		if (indices[0] == 0)			// currently we only handle the first board
+		{
+			for (size_t i = 0; i < ARRAY_SIZE(firmwareTypes); ++i)
+			{
+				if (stringStartsWith(data, firmwareTypes[i].name))
+				{
+					const FirmwareFeatures newFeatures = firmwareTypes[i].features;
+					if (newFeatures != firmwareFeatures)
+					{
+						firmwareFeatures = newFeatures;
+						UI::FirmwareFeaturesChanged(firmwareFeatures);
+						FileManager::FirmwareFeaturesChanged();
+					}
+					break;
 				}
 			}
 		}
 		break;
 
-	case rcvStatus:
-		SetStatus(data[0]);
+	// Heat section
+	case rcvHeatHeatersState:
+		++heatersCounted;			// Use this for now to filter null when counting
 		break;
 
-	case rcvBeepFreq:
-		GetInteger(data, beepFrequency);
+	// Job section
+	case rcvJobFileFilename:
+		UI::PrintingFilenameChanged(data);
 		break;
 
-	case rcvBeepLength:
-		GetInteger(data, beepLength);
+	case rcvJobFileSize:
+		{
+			uint32_t ival;
+			if (GetUnsignedInteger(data, ival))
+			{
+				fileSize = ival;
+			}
+			else
+			{
+				fileSize = 0;
+			}
+		}
 		break;
 
-	case rcvGeometry:
+	// Move section
+	case rcvMoveAxesBabystep:
+		{
+			// FIXME: Z could be a different axis than 2
+			if (indices[0] == 2)	// currently we only handle Z babystep
+			{
+				float f;
+				if (GetFloat(data, f))
+				{
+					UI::SetBabystepOffset(f);
+				}
+			}
+		}
+		break;
+
+	case rcvMoveAxesVisible:
+		{
+			bool visible;
+			if (GetBool(data, visible) && visible)
+			{
+				++visibleAxesCounted;
+			}
+		}
+		break;
+
+	case rcvMoveExtrudersFactor:
+		ShowLine;
+		{
+			float fval;
+			if (GetFloat(data, fval))
+			{
+				UI::UpdateExtrusionFactor(indices[0], (int)((fval * 100.0f) + 0.5));
+			}
+		}
+		break;
+
+	case rcvMoveKinematicsName:
 		if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
 		{
 			isDelta = (strcasecmp(data, "delta") == 0);
@@ -1010,129 +1659,75 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		}
 		break;
 
-	case rcvAxes:
+	case rcvMoveSpeedFactor:
 		{
-			uint32_t n = MIN_AXES;
-			GetUnsignedInteger(data, n);
-			numAxes = constrain<unsigned int>(n, MIN_AXES, MaxAxes);
-			UI::UpdateGeometry(numAxes, isDelta);
+			float fval;
+			if (GetFloat(data, fval))
+			{
+				UI::UpdateSpeedPercent((int) ((fval * 100.0f) + 0.5f));
+			}
 		}
 		break;
 
-	case rcvSeq:
-		GetUnsignedInteger(data, newMessageSeq);
-		break;
-
-	case rcvResponse:
-		MessageLog::SaveMessage(data);
-		break;
-
-	case rcvDir:
-		FileManager::ReceiveDirectoryName(data);
-		break;
-
-	case rcvMessage:
-		if (data[0] == 0)
+	// Network section
+	case rcvNetworkName:
+		if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
 		{
-			UI::ClearAlert();
-		}
-		else
-		{
-			UI::ProcessSimpleAlert(data);
+			UI::UpdateMachineName(data);
 		}
 		break;
 
-	case rcvMboxMode:
-		if (GetInteger(data, currentAlert.mode))
-		{
-			currentAlert.flags |= Alert::GotMode;
-		}
-		break;
-
-	case rcvMboxMsg:
-		currentAlert.text.copy(data);
-		currentAlert.flags |= Alert::GotText;
-		break;
-
-	case rcvMboxControls:
+	// State section
+	case rcvStateMessageBoxAxisControls:
 		if (GetUnsignedInteger(data, currentAlert.controls))
 		{
 			currentAlert.flags |= Alert::GotControls;
 		}
 		break;
 
-	case rcvMboxTimeout:
-		if (GetFloat(data, currentAlert.timeout))
+	case rcvStateMessageBoxMessage:
+		currentAlert.text.copy(data);
+		currentAlert.flags |= Alert::GotText;
+		break;
+
+	case rcvStateMessageBoxMode:
+		if (GetInteger(data, currentAlert.mode))
 		{
-			currentAlert.flags |= Alert::GotTimeout;
+			currentAlert.flags |= Alert::GotMode;
 		}
 		break;
 
-	case rcvMboxTitle:
-		currentAlert.title.copy(data);
-		currentAlert.flags |= Alert::GotTitle;
-		break;
-
-	case rcvMboxSeq:
+	case rcvStateMessageBoxSeq:
 		if (GetUnsignedInteger(data, currentAlert.seq))
 		{
 			currentAlert.flags |= Alert::GotSeq;
 		}
 		break;
 
-	case rcvErr:
+	case rcvStateMessageBoxTimeout:
+		if (GetFloat(data, currentAlert.timeout))
 		{
-			int32_t i;
-			if (GetInteger(data, i))
-			{
-				FileManager::ReceiveErrorCode(i);
-			}
+			currentAlert.flags |= Alert::GotTimeout;
 		}
 		break;
 
-	case rcvVolumes:
-		{
-			uint32_t i;
-			if (GetUnsignedInteger(data, i))
-			{
-				FileManager::SetNumVolumes(i);
-			}
-		}
+	case rcvStateMessageBoxTitle:
+		currentAlert.title.copy(data);
+		currentAlert.flags |= Alert::GotTitle;
 		break;
 
-	case rcvNumTools:
-		{
-			uint32_t i;
-			if (GetUnsignedInteger(data, i))
-			{
-				UI::SetNumTools(i);
-			}
-		}
+	// Tools section
+	case rcvToolsNumber:
+		++toolsCounted;			// Use this for now to filter null when counting
 		break;
 
-	case rcvFirmwareName:
-		for (size_t i = 0; i < ARRAY_SIZE(firmwareTypes); ++i)
+	// Volumes section
+	case rcvVolumesMounted:
 		{
-			if (stringStartsWith(data, firmwareTypes[i].name))
+			bool mounted;
+			if (GetBool(data, mounted) && mounted)
 			{
-				const FirmwareFeatures newFeatures = firmwareTypes[i].features;
-				if (newFeatures != firmwareFeatures)
-				{
-					firmwareFeatures = newFeatures;
-					UI::FirmwareFeaturesChanged(firmwareFeatures);
-					FileManager::FirmwareFeaturesChanged();
-				}
-				break;
-			}
-		}
-		break;
-
-	case rcvBabystep:
-		{
-			float f;
-			if (GetFloat(data, f))
-			{
-				UI::SetBabystepOffset(f);
+				++mountedVolumesCounted;
 			}
 		}
 		break;
@@ -1150,9 +1745,22 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	{
 		FileManager::BeginReceivingFiles();				// received an empty file list - need to tell the file manager about it
 	}
-	if (strcmp(id, "heaters^") == 0)
+	else if (currentResponseType == rcvKeyHeat && strcasecmp(id, "result:heaters^") == 0)
 	{
-		UI::SetNumHeaters(indices[0]);					// tell the user interface how many heaters there are
+		UI::SetNumHeaters(heatersCounted);					// tell the user interface how many heaters there are
+	}
+	else if (currentResponseType == rcvKeyMove && strcasecmp(id, "result:axes^") == 0)
+	{
+		numAxes = constrain<unsigned int>(visibleAxesCounted, MIN_AXES, MaxAxes);
+		UI::UpdateGeometry(numAxes, isDelta);
+	}
+	else if (currentResponseType == rcvKeyTools && strcasecmp(id, "result^") == 0)
+	{
+		UI::SetNumTools(toolsCounted);
+	}
+	else if (currentResponseType == rcvKeyVolumes && strcasecmp(id, "result^") == 0)
+	{
+		FileManager::SetNumVolumes(mountedVolumesCounted);
 	}
 }
 
@@ -1280,9 +1888,19 @@ int main(void)
 
 	// Display the Control tab. This also refreshes the display.
 	UI::ShowDefaultPage();
+
+	// Sort the fieldTable
+	qsort(
+			fieldTable,
+			ARRAY_SIZE(fieldTable),
+			sizeof(FieldTableEntry),
+			[](const void* a, const void* b)
+			{
+				return strcasecmp(((FieldTableEntry*) a)->varName, ((FieldTableEntry*) b)->varName);
+			});
+
 	lastResponseTime = SystemTick::GetTickCount();	// pretend we just received a response
 	
-	machineConfigTimer.SetPending();				// we need to fetch the machine name and configuration
 	lastActionTime = SystemTick::GetTickCount();
 
 	for (;;)
@@ -1376,27 +1994,30 @@ int main(void)
 		{
 			if (now - lastPollTime > now - lastResponseTime)		// if we've had a response since the last poll
 			{
-				// First check for specific info we need to fetch
-				bool done = machineConfigTimer.Process();
-				if (!done)
+				const char * nextToPoll = GetNextToPoll();
+				if (nextToPoll != nullptr)
 				{
-					done = FileManager::ProcessTimers();
+					SerialIo::SendString("M409 K\"");
+					SerialIo::SendString(nextToPoll);
+					SerialIo::SendString("\" F\"v\"\n");
 				}
-				
-				// Otherwise just send a normal poll command
-				if (!done)
-				{
-					SerialIo::SendString("M408 S0 R");
-					SerialIo::SendInt(messageSeq);
-					SerialIo::SendChar('\n');
+				else {
+					// First check for specific info we need to fetch
+					bool done = FileManager::ProcessTimers();
+
+					// Otherwise just send a normal poll command
+					if (!done)
+					{
+						SerialIo::SendString("M409 F\"d99f\"\n");
+					}
 				}
 				lastPollTime = SystemTick::GetTickCount();
 			}
-			else if (now - lastPollTime >= printerPollTimeout)		// if we're giving up on getting a response to the last poll
-			{
-				SerialIo::SendString("M408 S0\n");
-				lastPollTime = SystemTick::GetTickCount();
-			}
+            else if (now - lastPollTime >= printerPollTimeout)      // last response was most likely incomplete start over
+            {
+                SerialIo::SendString("M409 F\"d99f\"\n");
+                lastPollTime = SystemTick::GetTickCount();
+            }
 		}
 		ShowLine;
 	}
