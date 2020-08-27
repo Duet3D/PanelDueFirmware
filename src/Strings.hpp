@@ -18,7 +18,7 @@
 #define DegreeSymbol	"\u00B0"
 
 constexpr unsigned int NumLanguages = 5;
-constexpr unsigned int NumStatusStrings = 13;
+constexpr unsigned int NumStatusStrings = 14;
 
 struct StringTable
 {
@@ -204,7 +204,8 @@ const StringTable LanguageTables[NumLanguages] =
 			"Firmware upload",
 			"Changing tool",
 			"Simulating",
-			"Standby"
+			"Standby",
+			"Initializing",
 		},
 
 		// Theme names

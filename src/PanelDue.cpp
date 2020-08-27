@@ -50,6 +50,7 @@
 #include "Events.hpp"
 #include "HeaterStatus.hpp"
 #include "PrinterStatus.hpp"
+#include "ToolStatus.hpp"
 #include "UserInterface.hpp"
 
 #ifdef OEM
@@ -116,7 +117,7 @@ UTouch touch(23, 24, 22, 21, 20);
 #define FETCH_NETWORK		(1)
 #define FETCH_SCANNER		(0)
 #define FETCH_SENSORS		(1)
-#define FETCH_SPINDLES		(0)
+#define FETCH_SPINDLES		(1)
 #define FETCH_STATE			(1)
 #define FETCH_TOOLS			(1)
 #define FETCH_VOLUMES		(1)
@@ -131,18 +132,17 @@ static uint32_t lastActionTime = 0;							// the last time anything significant 
 static FirmwareFeatures firmwareFeatures = 0;
 static bool isDimmed = false;								// true if we have dimmed the display
 static bool isDelta = false;
-static bool axisHomed[MaxAxes] = {false, false, false};
-static bool allAxesHomed = false;
 static size_t numAxes = MIN_AXES;
 static int32_t beepFrequency = 0, beepLength = 0;
 static uint32_t messageSeq = 0;
 static uint32_t newMessageSeq = 0;
 static uint32_t fileSize = 0;
-static uint8_t visibleAxesCounted= 0;
-static uint8_t heatersCounted = 0;
-static uint8_t toolsCounted = 0;
+static uint8_t visibleAxesCounted = 0;
+static int8_t lastSpindle = -1;
+static int8_t lastTool = -1;
 static uint8_t mountedVolumesCounted = 0;
 static uint32_t remoteUpTime = 0;
+static bool initialized = false;
 
 const ColourScheme *colours = &colourSchemes[0];
 
@@ -172,11 +172,11 @@ struct FlashData
 	uint8_t infoTimeout;
 	//uint8_t padding[4];
 	char dummy;								// must be at a multiple of 4 bytes from the start because flash is read/written in whole dwords
-	
+
 	FlashData() : magic(muggleVal) { }
 	bool operator==(const FlashData& other);
 	bool operator!=(const FlashData& other) { return !operator==(other); }
-	bool IsValid() const; 
+	bool IsValid() const;
 	void SetInvalid() { magic = muggleVal; }
 	void SetDefaults();
 	void Load();
@@ -290,7 +290,8 @@ enum ReceivedDataEvent
 	rcvBoardsFirmwareName,
 
 	// Keys for heat response
-	rcvHeatHeatersState,
+	rcvHeatBedHeaters,
+	rcvHeatChamberHeaters,
 
 	// Keys for job response
 	rcvJobFileFilename,
@@ -298,6 +299,7 @@ enum ReceivedDataEvent
 
 	// Keys for move response
 	rcvMoveAxesBabystep,
+	rcvMoveAxesLetter,
 	rcvMoveAxesVisible,
 	rcvMoveExtrudersFactor,
 	rcvMoveKinematicsName,
@@ -305,6 +307,12 @@ enum ReceivedDataEvent
 
 	// Keys for network response
 	rcvNetworkName,
+
+	// Keys for spindles respons
+	rcvSpindlesActive,
+	rcvSpindlesCurrent,
+	rcvSpindlesMax,
+	rcvSpindlesTool,
 
 	// Keys from state response
 	rcvStateMessageBoxAxisControls,
@@ -315,7 +323,9 @@ enum ReceivedDataEvent
 	rcvStateMessageBoxTitle,
 
 	// Keys from tools response
+	rcvToolsHeaters,
 	rcvToolsNumber,
+	rcvLiveToolsState,
 
 	// Keys for volumes response
 	rcvVolumesMounted,
@@ -373,18 +383,22 @@ static FieldTableEntry fieldTable[] =
 	{ rcvLiveStateStatus,				"result:state:status" },
 	{ rcvLiveStateUptime,				"result:state:upTime" },
 
+	{ rcvLiveToolsState, 				"result:tools^:state" },
+
 	// M409 K"boards" response
 	{ rcvBoardsFirmwareName, 			"result^:firmwareName" },
 
 	// M409 K"heat" response
-	{ rcvHeatHeatersState,				"result:heaters^:state" },
+	{ rcvHeatBedHeaters,				"result:bedHeaters^" },
+	{ rcvHeatChamberHeaters,			"result:chamberHeaters^" },
 
 	// M409 K"job" response
 	{ rcvJobFileFilename, 				"result:file:fileName" },
 	{ rcvJobFileSize, 					"result:file:size" },
 
 	// M409 K"move" response
-	{ rcvMoveExtrudersFactor, 			"result:axes^:babystep" },
+	{ rcvMoveAxesBabystep, 				"result:axes^:babystep" },
+	{ rcvMoveAxesLetter,	 			"result:axes^:letter" },
 	{ rcvMoveAxesVisible, 				"result:axes^:visible" },
 	{ rcvMoveExtrudersFactor, 			"result:extruders^:factor" },
 	{ rcvMoveKinematicsName, 			"result:kinematics:name" },
@@ -392,6 +406,12 @@ static FieldTableEntry fieldTable[] =
 
 	// M409 K"network" response
 	{ rcvNetworkName, 					"result:name" },
+
+	// M409 K"spindles" response
+	{ rcvSpindlesActive, 				"result^:active" },
+	{ rcvSpindlesCurrent, 				"result^:current" },
+	{ rcvSpindlesMax, 					"result^:max" },
+	{ rcvSpindlesTool, 					"result^:tool" },
 
 	// M409 K"state" response
 	{ rcvStateMessageBoxAxisControls,	"result:messageBox:axisControls" },
@@ -402,6 +422,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvStateMessageBoxTitle,			"result:messageBox:title" },
 
 	// M409 K"tools" response
+	{ rcvToolsHeaters,					"result^:heaters^" },
 	{ rcvToolsNumber, 					"result^:number" },
 
 	// M409 K"volumes" response
@@ -459,34 +480,35 @@ static ReceivedDataEvent currentResponseType = rcvKeyNoKey;
 
 struct Seqs
 {
-	uint16_t boards 		= 0;
-	bool updateBoards		= false;
-	uint16_t directories	= 0;
-	bool updateDirectories	= false;
-	uint16_t fans 			= 0;
-	bool updateFans 		= false;
-	uint16_t heat 			= 0;
-	bool updateHeat 		= false;
-	uint16_t inputs 		= 0;
-	bool updateInputs 		= false;
-	uint16_t job 			= 0;
-	bool updateJob 			= false;
-	uint16_t move 			= 0;
-	bool updateMove 		= false;
-	uint16_t network 		= 0;
-	bool updateNetwork 		= false;
-	uint16_t scanner 		= 0;
-	bool updateScanner 		= false;
-	uint16_t sensors 		= 0;
-	bool updateSensors 		= false;
-	uint16_t spindles 		= 0;
-	bool updateSpindles 	= false;
-	uint16_t state 			= 0;
-	bool updateState 		= false;
-	uint16_t tools 			= 0;
-	bool updateTools 		= false;
-	uint16_t volumes 		= 0;
-	bool updateVolumes 		= false;
+	uint16_t boards;
+	uint16_t directories;
+	uint16_t fans;
+	uint16_t heat;
+	uint16_t inputs;
+	uint16_t job;
+	uint16_t move;
+	uint16_t network;
+	uint16_t scanner;
+	uint16_t sensors;
+	uint16_t spindles;
+	uint16_t state;
+	uint16_t tools;
+	uint16_t volumes;
+
+	uint16_t updateBoards	: 1,
+		 updateDirectories	: 1,
+		 updateFans			: 1,
+		 updateHeat			: 1,
+		 updateInputs		: 1,
+		 updateJob			: 1,
+		 updateMove			: 1,
+		 updateNetwork		: 1,
+		 updateScanner		: 1,
+		 updateSensors		: 1,
+		 updateSpindles		: 1,
+		 updateState		: 1,
+		 updateTools		: 1,
+		 updateVolumes		: 1;
 } seqs;
 
 
@@ -505,7 +527,7 @@ void resetSeqs()
 	seqs.spindles 			=
 	seqs.state 				=
 	seqs.tools 				=
-	seqs.volumes 			= 0;
+	seqs.volumes 			= (uint16_t)(1 << 16);
 
 	seqs.updateBoards		=
 	seqs.updateDirectories	=
@@ -521,78 +543,66 @@ void resetSeqs()
 	seqs.updateState 		=
 	seqs.updateTools 		=
 	seqs.updateVolumes 		= false;
+
+	Reconnect();
 }
 
 const char * GetNextToPoll()
 {
+	if (seqs.updateNetwork)
+	{
+		return "network";
+	}
 	if (seqs.updateBoards)
 	{
-		seqs.updateBoards = false;
 		return "boards";
+	}
+	if (seqs.updateMove)
+	{
+		return "move";
+	}
+	if (seqs.updateHeat)
+	{
+		return "heat";
+	}
+	if (seqs.updateTools)
+	{
+		return "tools";
+	}
+	if (seqs.updateSpindles)
+	{
+		return "spindles";
 	}
 	if (seqs.updateDirectories)
 	{
-		seqs.updateDirectories = false;
 		return "directories";
 	}
 	if (seqs.updateFans)
 	{
-		seqs.updateFans = false;
 		return "fans";
-	}
-	if (seqs.updateHeat)
-	{
-		seqs.updateHeat = false;
-		return "heat";
 	}
 	if (seqs.updateInputs)
 	{
-		seqs.updateInputs = false;
 		return "inputs";
 	}
 	if (seqs.updateJob)
 	{
-		seqs.updateJob = false;
 		return "job";
-	}
-	if (seqs.updateMove)
-	{
-		seqs.updateMove = false;
-		return "move";
-	}
-	if (seqs.updateNetwork)
-	{
-		seqs.updateNetwork = false;
-		return "network";
 	}
 	if (seqs.updateScanner)
 	{
-		seqs.updateScanner = false;
 		return "scanner";
 	}
 	if (seqs.updateSensors)
 	{
-		seqs.updateSensors = false;
 		return "sensors";
-	}
-	if (seqs.updateSpindles)
-	{
-		seqs.updateSpindles = false;
-		return "spindles";
 	}
 	if (seqs.updateState)
 	{
-		seqs.updateState = false;
 		return "state";
-	}
-	if (seqs.updateTools)
-	{
-		seqs.updateTools = false;
-		return "tools";
 	}
 	if (seqs.updateVolumes)
 	{
-		seqs.updateVolumes = false;
 		return "volumes";
 	}
 
@@ -771,7 +781,7 @@ void ShortenTouchDelay()
 
 void TouchBeep()
 {
-	Buzzer::Beep(touchBeepFrequency, touchBeepLength, nvData.touchVolume);	
+	Buzzer::Beep(touchBeepFrequency, touchBeepLength, nvData.touchVolume);
 }
 
 void ErrorBeep()
@@ -786,10 +796,10 @@ void DoTouchCalib(PixelNumber x, PixelNumber y, PixelNumber altX, PixelNumber al
 {
 	const PixelNumber touchCircleRadius = DisplayY/32;
 	const PixelNumber touchCalibMaxError = DisplayY/6;
-	
+
 	lcd.setColor(colours->labelTextColour);
 	lcd.fillCircle(x, y, touchCircleRadius);
-	
+
 	for (;;)
 	{
 		uint16_t tx, ty, rawX, rawY;
@@ -797,7 +807,7 @@ void DoTouchCalib(PixelNumber x, PixelNumber y, PixelNumber altX, PixelNumber al
 		{
 			if (   (abs((int)tx - (int)x) <= touchCalibMaxError || abs((int)tx - (int)altX) <= touchCalibMaxError)
 				&& (abs((int)ty - (int)y) <= touchCalibMaxError || abs((int)ty - (int)altY) <= touchCalibMaxError)
-			   ) 
+			   )
 			{
 				TouchBeep();
 				rawRslt = (wantY) ? rawY : rawX;
@@ -805,7 +815,7 @@ void DoTouchCalib(PixelNumber x, PixelNumber y, PixelNumber altX, PixelNumber al
 			}
 		}
 	}
-	
+
 	lcd.setColor(colours->defaultBackColour);
 	lcd.fillCircle(x, y, touchCircleRadius);
 }
@@ -817,7 +827,7 @@ void CalibrateTouch()
 	mgr.Refresh(true);
 
 	touch.init(DisplayX, DisplayY, DefaultTouchOrientAdjust);				// initialize the driver and clear any existing calibration
-	
+
 	// Draw spots on the edges of the screen, one at a time, and ask the user to touch them.
 	// For the first two, we allow for the touch panel being the wrong way round.
 	DoTouchCalib(DisplayX/2, touchCalibMargin, DisplayX/2, DisplayY - 1 - touchCalibMargin, true, nvData.ymin);
@@ -834,10 +844,10 @@ void CalibrateTouch()
 	}
 	DoTouchCalib(DisplayX/2, DisplayY - 1 - touchCalibMargin, DisplayX/2, DisplayY - 1 - touchCalibMargin, true, nvData.ymax);
 	DoTouchCalib(touchCalibMargin, DisplayY/2, touchCalibMargin, DisplayY/2, false, nvData.xmin);
-	
+
 	nvData.touchOrientation = touch.getOrientation();
 	touch.calibrate(nvData.xmin, nvData.xmax, nvData.ymin, nvData.ymax, touchCalibMargin);
-	
+
 	mgr.SetRoot(oldRoot);
 	mgr.Refresh(true);
 }
@@ -963,19 +973,30 @@ void SaveSettings()
 // This is called when the status changes
 void SetStatus(const char * sts)
 {
-	const PrinterStatusMapEntry key = (PrinterStatusMapEntry) {sts, PrinterStatus::connecting};
-	const PrinterStatusMapEntry * statusFromMap =
-			(PrinterStatusMapEntry *) bsearch(
-					&key,
-					printerStatusMap,
-					ARRAY_SIZE(printerStatusMap),
-					sizeof(PrinterStatusMapEntry),
-					[](auto a, auto b)
-					{
-						return strcasecmp(((PrinterStatusMapEntry*) a)->key, ((PrinterStatusMapEntry*)b)->key);
-					});
-	const PrinterStatus newStatus = (statusFromMap != nullptr) ? statusFromMap->val : PrinterStatus::connecting;
-	
+	PrinterStatus newStatus = PrinterStatus::connecting;
+	if (!initialized)
+	{
+		newStatus = PrinterStatus::panelInitializing;
+	}
+	else
+	{
+		const PrinterStatusMapEntry key = (PrinterStatusMapEntry) {sts, PrinterStatus::connecting};
+		const PrinterStatusMapEntry * statusFromMap =
+				(PrinterStatusMapEntry *) bsearch(
+						&key,
+						printerStatusMap,
+						ARRAY_SIZE(printerStatusMap),
+						sizeof(PrinterStatusMapEntry),
+						[](auto a, auto b)
+						{
+							return strcasecmp(((PrinterStatusMapEntry*) a)->key, ((PrinterStatusMapEntry*)b)->key);
+						});
+		if (statusFromMap != nullptr)
+		{
+			newStatus = statusFromMap->val;
+		}
+	}
+
 	if (newStatus != status)
 	{
 		if (GetDisplayDimmerType() != DisplayDimmerType::always)
@@ -983,12 +1004,12 @@ void SetStatus(const char * sts)
 			RestoreBrightness();
 		}
 		UI::ChangeStatus(status, newStatus);
-		
+
 		if (status == PrinterStatus::configuring || (status == PrinterStatus::connecting && newStatus != PrinterStatus::configuring))
 		{
 			MessageLog::AppendMessage("Connected");
 		}
-	
+
 		status = newStatus;
 		UI::UpdatePrintingFields();
 	}
@@ -1000,6 +1021,7 @@ void Reconnect()
 	UI::ChangeStatus(status, PrinterStatus::connecting);
 	status = PrinterStatus::connecting;
 	UI::UpdatePrintingFields();
+	initialized = false;
 }
 
 // Try to get an integer value from a string. If it is actually a floating point value, round it.
@@ -1010,8 +1032,6 @@ bool GetInteger(const char s[], int32_t &rslt)
 	const char* endptr;
 	rslt = (int) StrToI32(s, &endptr);
 	if (*endptr == 0) return true;			// we parsed an integer
-
-	if (strlen(s) > 10) return false;		// avoid strtod buggy behaviour on long input strings
 
 	const float d = SafeStrtof(s, &endptr);		// try parsing a floating point number
 	if (*endptr == 0)
@@ -1035,11 +1055,6 @@ bool GetUnsignedInteger(const char s[], uint32_t &rslt)
 bool GetFloat(const char s[], float &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
-
-	// GNU strtod is buggy, it's very slow for some long inputs, and some versions have a buffer overflow bug.
-	// We presume strtof may be buggy too. Tame it by rejecting any strings that much longer than we expect to receive.
-	if (strlen(s) > 10) return false;
-
 	const char* endptr;
 	rslt = SafeStrtof(s, &endptr);
 	return *endptr == 0;					// we parsed a float
@@ -1064,16 +1079,69 @@ void StartReceivedMessage()
 	ShowLine;
 }
 
+void SeqsRequestDone(const ReceivedDataEvent rde)
+{
+	switch (rde)
+	{
+	case rcvKeyBoards:
+		seqs.updateBoards = false;
+		break;
+	case rcvKeyDirectories:
+		seqs.updateDirectories = false;
+		break;
+	case rcvKeyFans:
+		seqs.updateFans = false;
+		break;
+	case rcvKeyHeat:
+		seqs.updateHeat = false;
+		break;
+	case rcvKeyInputs:
+		seqs.updateInputs = false;
+		break;
+	case rcvKeyJob:
+		seqs.updateJob = false;
+		break;
+	case rcvKeyMove:
+		seqs.updateMove = false;
+		break;
+	case rcvKeyNetwork:
+		seqs.updateNetwork = false;
+		break;
+	case rcvKeyScanner:
+		seqs.updateScanner = false;
+		break;
+	case rcvKeySensors:
+		seqs.updateSensors = false;
+		break;
+	case rcvKeySpindles:
+		seqs.updateSpindles = false;
+		break;
+	case rcvKeyState:
+		seqs.updateState = false;
+		break;
+	case rcvKeyTools:
+		seqs.updateTools = false;
+		break;
+	case rcvKeyVolumes:
+		seqs.updateVolumes = false;
+		break;
+	default:
+		break;
+
+	}
+}
+
 void EndReceivedMessage()
 {
 	ShowLine;
 	lastResponseTime = SystemTick::GetTickCount();
+	SeqsRequestDone(currentResponseType);
 
 	if (newMessageSeq != messageSeq)
 	{
 		messageSeq = newMessageSeq;
 		MessageLog::DisplayNewMessage();
-	}	
+	}
 	FileManager::EndReceivedMessage();
 	if ((currentAlert.flags & Alert::GotMode) != 0 && currentAlert.mode < 0)
 	{
@@ -1362,14 +1430,14 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		{
 			currentResponseType = bsearch(keyResponseTypeTable, ARRAY_SIZE(keyResponseTypeTable), data);
 			switch (currentResponseType) {
-			case rcvKeyHeat:
-				heatersCounted = 0;
-				break;
 			case rcvKeyMove:
 				visibleAxesCounted = 0;
 				break;
+			case rcvKeySpindles:
+				lastSpindle = -1;
+				break;
 			case rcvKeyTools:
-				toolsCounted = 0;
+				lastTool = -1;
 				break;
 			case rcvKeyVolumes:
 				mountedVolumesCounted = 0;
@@ -1442,7 +1510,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 								return strcasecmp(((HeaterStatusMapEntry*) a)->key, ((HeaterStatusMapEntry*)b)->key);
 							});
 			const HeaterStatus status = (statusFromMap != nullptr) ? statusFromMap->val : HeaterStatus::off;
-			UI::UpdateHeaterStatus(indices[0], (int) status);
+			UI::UpdateHeaterStatus(indices[0], status);
 		}
 		break;
 
@@ -1478,27 +1546,9 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		ShowLine;
 		{
 			bool isHomed;
-			if (indices[0] < MaxAxes && GetBool(data, isHomed))
+			if (indices[0] < MaxTotalAxes && GetBool(data, isHomed))
 			{
-				if (isHomed != axisHomed[indices[0]])
-				{
-					axisHomed[indices[0]] = isHomed;
-					UI::UpdateHomedStatus(indices[0], isHomed);
-					bool allHomed = true;
-					for (size_t i = 0; i < numAxes; ++i)
-					{
-						if (!axisHomed[i])
-						{
-							allHomed = false;
-							break;
-						}
-					}
-					if (allHomed != allAxesHomed)
-					{
-						allAxesHomed = allHomed;
-						UI::UpdateHomedStatus(-1, allHomed);
-					}
-				}
+				UI::UpdateHomedStatus(indices[0], isHomed);
 			}
 		}
 		break;
@@ -1547,6 +1597,16 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		}
 		break;
 
+	case rcvLiveStateCurrentTool:
+		{
+			int32_t tool;
+			if (GetInteger(data, tool))
+			{
+				UI::SetCurrentTool(tool);
+			}
+		}
+		break;
+
 	case rcvLiveStateStatus:
 		ShowLine;
 		{
@@ -1567,6 +1627,24 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 				}
 				remoteUpTime = uival;
 			}
+		}
+		break;
+
+	case rcvLiveToolsState:
+		{
+			const ToolStatusMapEntry key = (ToolStatusMapEntry) {data, ToolStatus::off};
+			const ToolStatusMapEntry * statusFromMap =
+					(ToolStatusMapEntry *) bsearch(
+							&key,
+							toolStatusMap,
+							ARRAY_SIZE(toolStatusMap),
+							sizeof(ToolStatusMapEntry),
+							[](auto a, auto b)
+							{
+								return strcasecmp(((ToolStatusMapEntry*) a)->key, ((ToolStatusMapEntry*)b)->key);
+							});
+			const ToolStatus status = (statusFromMap != nullptr) ? statusFromMap->val : ToolStatus::off;
+			UI::UpdateToolStatus(indices[0], status);
 		}
 		break;
 
@@ -1592,8 +1670,36 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		break;
 
 	// Heat section
-	case rcvHeatHeatersState:
-		++heatersCounted;			// Use this for now to filter null when counting
+	case rcvHeatBedHeaters:
+		{
+			static bool seen;
+			if (indices[0] == 0)
+			{
+				seen = false;
+			}
+			int32_t h;
+			if (!seen && GetInteger(data, h) && h > -1)
+			{
+				seen = true;
+				UI::SetBedOrChamberHeater(h, indices[0]);
+			}
+		}
+		break;
+
+	case rcvHeatChamberHeaters:
+		{
+			static bool seen;
+			if (indices[0] == 0)
+			{
+				seen = false;
+			}
+			int32_t h;
+			if (!seen && GetInteger(data, h) && h > -1)
+			{
+				seen = true;
+				UI::SetBedOrChamberHeater(h, indices[0], false);
+			}
+		}
 		break;
 
 	// Job section
@@ -1618,25 +1724,32 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 	// Move section
 	case rcvMoveAxesBabystep:
 		{
-			// FIXME: Z could be a different axis than 2
-			if (indices[0] == 2)	// currently we only handle Z babystep
+			float f;
+			if (GetFloat(data, f))
 			{
-				float f;
-				if (GetFloat(data, f))
-				{
-					UI::SetBabystepOffset(f);
-				}
+				UI::SetBabystepOffset(indices[0], f);
 			}
+		}
+		break;
+
+	case rcvMoveAxesLetter:
+		{
+			UI::SetAxisLetter(indices[0], data[0]);
 		}
 		break;
 
 	case rcvMoveAxesVisible:
 		{
 			bool visible;
-			if (GetBool(data, visible) && visible)
+			if (GetBool(data, visible))
 			{
-				++visibleAxesCounted;
+				UI::SetAxisVisible(indices[0], visible);
+				if (visible)
+				{
+					++visibleAxesCounted;
+				}
 			}
+
 		}
 		break;
 
@@ -1674,6 +1787,58 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
 		{
 			UI::UpdateMachineName(data);
+		}
+		break;
+
+	// Spindles section
+	case rcvSpindlesActive:
+		{
+			float active;
+			if (GetFloat(data, active))
+			{
+				UI::SetSpindleActive(indices[0], active);
+			}
+
+			for (size_t i = lastSpindle + 1; i < indices[0]; ++i)
+			{
+				UI::RemoveSpindle(i);
+			}
+			lastSpindle = indices[0];
+		}
+		break;
+
+	case rcvSpindlesCurrent:
+		{
+			float current;
+			if (GetFloat(data, current))
+			{
+				UI::SetSpindleCurrent(indices[0], current);
+			}
+		}
+		break;
+
+	case rcvSpindlesMax:
+		// fans also has a field "result^:max"
+		if (currentResponseType != rcvKeySpindles)
+		{
+			break;
+		}
+		{
+			float max;
+			if (GetFloat(data, max))
+			{
+				UI::SetSpindleMax(indices[0], max);
+			}
+		}
+		break;
+
+	case rcvSpindlesTool:
+		{
+			int32_t toolNumber;
+			if (GetInteger(data, toolNumber))
+			{
+				UI::SetSpindleTool(toolNumber, indices[0]);
+			}
 		}
 		break;
 
@@ -1717,8 +1882,28 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		break;
 
 	// Tools section
+	case rcvToolsHeaters:
+		{
+			if (indices[1] > 0)
+			{
+				return;
+			}
+			int32_t heater;
+			if (GetInteger(data, heater))
+			{
+				UI::SetToolHeater(indices[0], heater);
+			}
+		}
+		break;
+
 	case rcvToolsNumber:
-		++toolsCounted;			// Use this for now to filter null when counting
+		{
+			for (size_t i = lastTool + 1; i < indices[0]; ++i)
+			{
+				UI::RemoveTool(i);
+			}
+			lastTool = indices[0];
+		}
 		break;
 
 	// Volumes section
@@ -1745,18 +1930,29 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	{
 		FileManager::BeginReceivingFiles();				// received an empty file list - need to tell the file manager about it
 	}
-	else if (currentResponseType == rcvKeyHeat && strcasecmp(id, "result:heaters^") == 0)
-	{
-		UI::SetNumHeaters(heatersCounted);					// tell the user interface how many heaters there are
-	}
 	else if (currentResponseType == rcvKeyMove && strcasecmp(id, "result:axes^") == 0)
 	{
-		numAxes = constrain<unsigned int>(visibleAxesCounted, MIN_AXES, MaxAxes);
+		numAxes = constrain<unsigned int>(visibleAxesCounted, MIN_AXES, MaxTotalAxes);
 		UI::UpdateGeometry(numAxes, isDelta);
 	}
-	else if (currentResponseType == rcvKeyTools && strcasecmp(id, "result^") == 0)
+	else if (currentResponseType == rcvKeySpindles)
 	{
-		UI::SetNumTools(toolsCounted);
+		if (strcasecmp(id, "result^") == 0)
+		{
+			UI::RemoveSpindle(lastSpindle + 1, true);
+		}
+	}
+	else if (currentResponseType == rcvKeyTools)
+	{
+		if (strcasecmp(id, "result^") == 0)
+		{
+			UI::RemoveTool(lastTool + 1, true);
+			UI::AllToolsSeen();
+		}
+		else if (strcasecmp(id, "result^:heaters^") == 0 && indices[1] == 0)
+		{
+			UI::SetToolHeater(indices[0], -1);				// No heater defined for this tool
+		}
 	}
 	else if (currentResponseType == rcvKeyVolumes && strcasecmp(id, "result^") == 0)
 	{
@@ -1774,7 +1970,7 @@ void UpdateDebugInfo()
 void SelfTest()
 {
 	// Measure the 3.3V supply against the internal reference
-	
+
 	// Do internal and external loopback tests on the serial port
 
 	// Initialize fields with the widest expected values so that we can make sure they fit
@@ -1842,10 +2038,10 @@ int main(void)
 		CalibrateTouch();							// this includes the touch driver initialisation
 		SaveSettings();
 	}
-	
+
 	// Set up the baud rate
 	SerialIo::Init(nvData.baudRate);
-	
+
 	MessageLog::Init();
 
 #ifdef OEM
@@ -1878,12 +2074,12 @@ int main(void)
 	mgr.Refresh(true);								// draw the screen for the first time
 	UI::UpdatePrintingFields();
 
-	lastPollTime = SystemTick::GetTickCount() - printerPollInterval;	// allow a poll immediately
-	
-	// Hide the Head 2+ parameters until we know we have a second head
-	UI::SetNumHeaters(2);
-	UI::SetNumTools(1);
-	
+	SerialIo::SendString("M409 F\"d99f\"\n");		// Get initial status
+	lastPollTime = SystemTick::GetTickCount();
+
+	// Hide all tools and heater related columns initially
+	UI::AllToolsSeen();
+
 	debugField->Show(DEBUG != 0);					// show the debug field only if debugging is enabled
 
 	// Display the Control tab. This also refreshes the display.
@@ -1899,8 +2095,10 @@ int main(void)
 				return strcasecmp(((FieldTableEntry*) a)->varName, ((FieldTableEntry*) b)->varName);
 			});
 
-	lastResponseTime = SystemTick::GetTickCount();	// pretend we just received a response
-	
+	resetSeqs();
+
+//	lastResponseTime = SystemTick::GetTickCount();	// pretend we just received a response
+
 	lastActionTime = SystemTick::GetTickCount();
 
 	for (;;)
@@ -1911,11 +2109,11 @@ int main(void)
 		// This calls back into functions StartReceivedMessage, ProcessReceivedValue, ProcessArrayLength and EndReceivedMessage.
 		SerialIo::CheckInput();
 		ShowLine;
-		
+
 		// 2. if displaying the message log, update the times
 		UI::Spin();
 		ShowLine;
-		
+
 		// 3. Check for a touch on the touch panel.
 		if (SystemTick::GetTickCount() - lastTouchTime >= ignoreTouchTime)
 		{
@@ -1962,12 +2160,12 @@ int main(void)
  			}
 		}
 		ShowLine;
-		
+
 		// 4. Refresh the display
 		UpdateDebugInfo();
 		mgr.Refresh(false);
 		ShowLine;
-		
+
 		// 5. Generate a beep if asked to
 		if (beepFrequency != 0 && beepLength != 0)
 		{
@@ -2002,6 +2200,9 @@ int main(void)
 					SerialIo::SendString("\" F\"v\"\n");
 				}
 				else {
+					// Once we get here the first time we have worked all seqs once
+					initialized = true;
+
 					// First check for specific info we need to fetch
 					bool done = FileManager::ProcessTimers();
 

@@ -24,7 +24,8 @@ enum class PrinterStatus
 	flashing = 9,
 	toolChange = 10,
 	simulating = 11,
-	off = 12
+	off = 12,
+	panelInitializing = 13,
 };
 
 struct PrinterStatusMapEntry

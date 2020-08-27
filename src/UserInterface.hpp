@@ -13,6 +13,8 @@
 #include "Display.hpp"
 #include "FirmwareFeatures.hpp"
 #include "Events.hpp"
+#include "HeaterStatus.hpp"
+#include "ToolStatus.hpp"
 
 extern IntegerField *freeMem;
 extern StaticTextField *debugField;
@@ -29,8 +31,7 @@ namespace UI
 	extern void ShowAxis(size_t axis, bool b);
 	extern void UpdateAxisPosition(size_t axis, float fval);
 	extern void UpdateCurrentTemperature(size_t heater, float fval);
-	extern void SetNumHeaters(size_t nHeaters);
-	extern void UpdateHeaterStatus(size_t heater, int ival);
+	extern void UpdateHeaterStatus(const size_t heater, const HeaterStatus status);
 	extern void ChangeStatus(PrinterStatus oldStatus, PrinterStatus newStatus);
 	extern void UpdateTimesLeft(size_t index, unsigned int seconds);
 	extern bool ChangePage(ButtonBase *newTab);
@@ -43,7 +44,7 @@ namespace UI
 	extern void UpdatePrintingFields();
 	extern void SetPrintProgressPercent(unsigned int percent);
 	extern void UpdateGeometry(unsigned int p_numAxes, bool p_isDelta);
-	extern void UpdateHomedStatus(int axis, bool isHomed);
+	extern void UpdateHomedStatus(size_t axis, bool isHomed);
 	extern void UpdateZProbe(const char data[]);
 	extern void UpdateMachineName(const char data[]);
 	extern void ProcessAlert(const Alert& alert);
@@ -69,7 +70,7 @@ namespace UI
 	pre(bp.IsValid());
 	extern void OnButtonPressTimeout();
 	extern bool IsDisplayingFileInfo();
-	extern void SetNumTools(unsigned int n);
+	extern void AllToolsSeen();
 
 	extern void DisplayFilesOrMacrosList(bool filesNotMacros, int cardNumber, unsigned int numVolumes);
 	extern void FileListLoaded(bool filesNotMacros, int errCode);
@@ -78,7 +79,22 @@ namespace UI
 	extern unsigned int GetNumScrolledFiles(bool filesNotMacros);
 	extern bool UpdateMacroShortList(unsigned int buttonIndex, const char * array null fileName);
 
-	extern void SetBabystepOffset(float f);
+	extern void SetBabystepOffset(size_t index, float f);
+	extern void SetAxisLetter(size_t index, char l);
+	extern void SetAxisVisible(size_t index, bool v);
+
+	extern void SetCurrentTool(int32_t tool);
+	extern void UpdateToolStatus(size_t index, ToolStatus status);
+	extern void RemoveTool(size_t index, bool allFollowing = false);
+	extern void SetToolHeater(size_t toolIndex, int8_t heater);
+	extern void SetSpindleTool(int8_t toolIndex, int8_t spindle);
+
+	extern void SetBedOrChamberHeater(int8_t heaterNumber, uint8_t heaterIndex, bool bed = true);
+
+	extern void RemoveSpindle(size_t index, bool allFollowing = false);
+	extern void SetSpindleActive(size_t index, float active);
+	extern void SetSpindleCurrent(size_t index, float current);
+	extern void SetSpindleMax(size_t index, float max);
 }
 
 #endif /* SRC_USERINTERFACE_HPP_ */

@@ -18,12 +18,16 @@ enum Event : uint8_t
 	evTabControl, evTabPrint, evTabMsg, evTabSetup,
 
 	// Heater control
-	evSelectHead, evAdjustActiveTemp, evAdjustStandbyTemp,
+	evSelectHead, evSelectBed, evSelectChamber, evAdjustActiveTemp, evAdjustStandbyTemp,
+
+	// Spindle control
+	evAdjustActiveRPM,
 
 	// Control functions
 	evMovePopup, evExtrudePopup, evFan, evListMacros,
 	evMoveX, evMoveY, evMoveZ, evMoveU, evMoveV, evMoveW,	// these 6 must be contiguous and in this order
 	evExtrudeAmount, evExtrudeRate, evExtrude, evRetract,
+	evHomeAxis,
 
 	// Print functions
 	evExtrusionFactor,

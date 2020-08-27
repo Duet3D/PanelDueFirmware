@@ -10,6 +10,7 @@
 
 #include "Configuration.hpp"
 #include "DisplaySize.hpp"
+#include "Library/Misc.hpp"
 
 const size_t NumColourSchemes = 3;
 
@@ -19,10 +20,13 @@ const size_t NumColourSchemes = 3;
 
 #else
 
+static const char* array const axisNames[] = { "X", "Y", "Z", "U", "V", "W", "A", "B", "C", "D" };
+constexpr size_t MaxTotalAxes = ARRAY_SIZE(axisNames);
+
 #if DISPLAY_X == 480
 
 const unsigned int MaxHeaters = 5;
-#define MaxAxes	(4)
+#define MaxDisplayableAxes	(4)
 
 const PixelNumber margin = 2;
 const PixelNumber textButtonMargin = 1;
@@ -67,9 +71,8 @@ extern uint8_t glcd19x21[];				// declare which fonts we will be using
 #define DEFAULT_FONT	glcd19x21
 
 #elif DISPLAY_X == 800
-
 const unsigned int MaxHeaters = 7;
-#define MaxAxes (6)
+#define MaxDisplayableAxes (6)
 
 const PixelNumber margin = 4;
 const PixelNumber textButtonMargin = 1;
@@ -155,13 +158,14 @@ const PixelNumber fullPopupHeight = DisplayY - (2 * margin);
 const PixelNumber popupBarHeight = buttonHeight + (2 * popupTopMargin);
 
 const PixelNumber tempPopupBarWidth = (3 * fullPopupWidth)/4;
+const PixelNumber rpmPopupBarWidth = fullPopupWidth;
 const PixelNumber fileInfoPopupWidth = fullPopupWidth - (4 * margin),
 				  fileInfoPopupHeight = (10 * rowTextHeight) + buttonHeight + (2 * popupTopMargin);
 const PixelNumber areYouSurePopupWidth = DisplayX - 80,
 				  areYouSurePopupHeight = (3 * rowHeight) + (2 * popupTopMargin);
 
 const PixelNumber movePopupWidth = fullPopupWidth;
-const PixelNumber movePopupHeight = ((MaxAxes + 1) * buttonHeight) + (MaxAxes * moveButtonRowSpacing) + (2 * popupTopMargin);
+const PixelNumber movePopupHeight = ((MaxDisplayableAxes + 1) * buttonHeight) + (MaxDisplayableAxes * moveButtonRowSpacing) + (2 * popupTopMargin);
 
 const PixelNumber extrudePopupWidth = fullPopupWidth;
 const PixelNumber extrudePopupHeight = (5 * buttonHeight) + (4 * extrudeButtonRowSpacing) + (2 * popupTopMargin);

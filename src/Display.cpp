@@ -33,7 +33,7 @@ Palette DisplayField::defaultIconPalette = IconPaletteLight;
 
 DisplayField::DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw)
 	: y(py), x(px), width(pw), fcolour(defaultFcolour), bcolour(defaultBcolour),
-		changed(true), visible(true), underlined(false), textRows(1), next(nullptr)
+		changed(true), visible(true), underlined(false), border(false), textRows(1), next(nullptr)
 {
 }
 
@@ -56,6 +56,10 @@ void DisplayField::SetTextRows(const char * array null t)
 
 void DisplayField::SetPositionAndWidth(PixelNumber newX, PixelNumber newWidth)
 {
+	if (x == newX && width == newWidth)
+	{
+		return;
+	}
 	x = newX;
 	width = newWidth;
 	changed = true;
@@ -774,6 +778,72 @@ void IconButton::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 	}
 }
 
+IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, const char * text, int param)
+	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(text), val(0), printText(true)
+{
+}
+
+IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, const char * text, const char * array param)
+	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(text), val(0), printText(true)
+{
+}
+
+IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int textVal, int param)
+	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(nullptr), val(textVal), printText(true)
+{
+}
+
+IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int textVal, const char * array param)
+	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(nullptr), val(textVal), printText(true)
+{
+}
+
+size_t IconButtonWithText::PrintText() const
+{
+	size_t ret = 0;
+	if (!printText)
+	{
+		return ret;
+	}
+	if (text != nullptr)
+	{
+		ret += lcd.print(text);
+	}
+	else {
+		ret += lcd.print(val);
+	}
+	return ret;
+}
+
+void IconButtonWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
+{
+	if (full || changed)
+	{
+		DrawOutline(xOffset, yOffset);
+		const uint16_t sx = GetIconWidth(icon), sy = GetIconHeight(icon);
+
+		lcd.setFont(font);
+		lcd.setTextPos(0, 9999, width - 6);
+		PrintText();							// dummy print to get text width
+		const PixelNumber textWidth = lcd.getTextX() + 6;	// add three pixels on each side
+
+		// Print the icon
+		lcd.setTransparentBackground(true);
+		const PixelNumber iconXOffset = xOffset + x + (width - (sx+textWidth))/2;
+		lcd.drawBitmap4(iconXOffset, yOffset + y + iconMargin + 1, sx, sy, GetIconData(icon), defaultIconPalette);
+
+		// Print the text
+		const PixelNumber textX = iconXOffset + sx + 3;
+		const PixelNumber rowY = y + yOffset + textMargin + 1;
+		lcd.setTextPos(textX, rowY, textX + textWidth);
+		lcd.setColor(fcolour);
+		PrintText();
+		lcd.setTransparentBackground(false);
+
+		changed = false;
+	}
+}
+
 size_t IntegerButton::PrintText(size_t offset) const
 {
 	UNUSED(offset);
@@ -888,6 +958,10 @@ void CharButtonRow::Press(bool p, int index) /*override*/
 
 void CharButtonRow::ChangeText(const char* array s)
 {
+	if (strcmp(text, s) == 0)
+	{
+		return;
+	}
 	text = s;
 	changed = true;
 }

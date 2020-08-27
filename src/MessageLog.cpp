@@ -94,7 +94,7 @@ namespace MessageLog
 					}
 				}
 			}
-			messageTimeFields[i]->SetValue(p);
+			messageTimeFields[i]->SetValue(p, true);
 
 			if (all)
 			{
@@ -146,6 +146,16 @@ namespace MessageLog
 
 		messageStartRow = (messageStartRow + numLines) % numMessageRows;
 		UpdateMessages(true);
+	}
+
+	void AppendMessage(size_t maxLen, const char* format, ...)
+	{
+		char msg[maxLen];
+		va_list vargs;
+		va_start(vargs, format);
+		SafeVsnprintf(msg, maxLen, format, vargs);
+		va_end(vargs);
+		AppendMessage(msg);
 	}
 
 	// Save a message for possible display later

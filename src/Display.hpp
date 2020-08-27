@@ -12,6 +12,7 @@
 #include "ecv.h"
 #include "Hardware/UTFT.hpp"
 #include "DisplaySize.hpp"
+#include <math.h>
 
 #ifndef UNUSED
 # define UNUSED(_x)	(void)(_x)
@@ -37,6 +38,7 @@ typedef const uint8_t * array Icon;
 
 const uint8_t buttonGradStep = 12;
 const PixelNumber AutoPlace = 0xFFFF;
+constexpr float epsilon = 0.001f;
 
 typedef uint8_t event_t;
 const event_t nullEvent = 0;
@@ -245,12 +247,20 @@ public:
 
 	void SetValue(const char* array s)
 	{
+		if (strcmp(text, s) == 0)
+		{
+			return;
+		}
 		text = s;
 		changed = true;
 	}
 
 	void SetLabel(const char* array s)
 	{
+		if (strcmp(label, s) == 0)
+		{
+			return;
+		}
 		label = s;
 		changed = true;
 	}
@@ -276,7 +286,21 @@ public:
 
 	void SetValue(float v)
 	{
+		if (fabsf(val - v) < epsilon)
+		{
+			return;
+		}
 		val = v;
+		changed = true;
+	}
+
+	void SetLabel(const char* array s)
+	{
+		if (strcmp(label, s) == 0)
+		{
+			return;
+		}
+		label = s;
 		changed = true;
 	}
 };
@@ -300,6 +324,10 @@ public:
 
 	void SetValue(int v)
 	{
+		if (val == v)
+		{
+			return;
+		}
 		val = v;
 		changed = true;
 	}
@@ -321,8 +349,16 @@ public:
 	}
 
 	// Change the value
-	void SetValue(const char* array null pt)
+	void SetValue(const char* array null pt, bool forceUpdate = false)
 	{
+		if (strcmp(text, pt) == 0)
+		{
+			if (forceUpdate)
+			{
+				changed = true;
+			}
+			return;
+		}
 		text = pt;
 		SetTextRows(pt);
 		changed = true;
@@ -475,6 +511,10 @@ public:
 
 	void SetText(const char* array null pt)
 	{
+		if (strcmp(text, pt) == 0)
+		{
+			return;
+		}
 		text = pt;
 		changed = true;
 	}
@@ -483,16 +523,72 @@ public:
 // Standard button with an icon
 class IconButton : public SingleButton
 {
-	Icon icon;
 	
 protected:
+	Icon icon;
 	PixelNumber GetHeight() const override { return GetIconHeight(icon) + 2 * iconMargin + 2; }
 
 public:
 	IconButton(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int param = 0);
 	IconButton(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, const char * array param);
 
+	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override;
+};
+
+// Standard button with an icon
+class IconButtonWithText : public IconButton
+{
+	LcdFont font;
+	const char * array null text;
+	int val;
+	bool printText;
+
+protected:
+	size_t PrintText() const;
+
+public:
+	IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, const char * text, int param = 0);
+	IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, const char * text, const char * array param);
+	IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int textVal, int param = 0);
+	IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int textVal, const char * array param);
+
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override final;
+
+	void SetIcon(Icon newIcon)
+	{
+		if (icon == newIcon)
+		{
+			return;
+		}
+		icon = newIcon;
+		changed = true;
+	}
+
+	void SetText(const char * t)
+	{
+		if (strcmp(text, t) == 0)
+		{
+			return;
+		}
+		text = t;
+		changed = true;
+	}
+
+	void SetIntVal(int newVal)
+	{
+		if (newVal == val)
+		{
+			return;
+		}
+		val = newVal;
+		changed = true;
+	}
+
+	void SetPrintText(const bool pt)
+	{
+		printText = pt;
+		changed = true;
+	}
 };
 
 // Button that displays an integer value, optionally preceded by a label and followed by units
@@ -513,6 +609,10 @@ public:
 
 	void SetValue(int pv)
 	{
+		if (val == pv)
+		{
+			return;
+		}
 		val = pv;
 		changed = true;
 	}
@@ -542,6 +642,10 @@ public:
 
 	void SetValue(float pv)
 	{
+		if (fabsf(val - pv) < epsilon)
+		{
+			return;
+		}
 		val = pv;
 		changed = true;
 	}
@@ -571,6 +675,10 @@ public:
 
 	void SetPercent(uint8_t pc)
 	{
+		if (percent == pc)
+		{
+			return;
+		}
 		percent = pc;
 		changed = true;
 	}

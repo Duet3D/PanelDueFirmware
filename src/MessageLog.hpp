@@ -21,6 +21,9 @@ namespace MessageLog
 	// Add a message to the end of the list immediately
 	void AppendMessage(const char* data);
 
+	// Add a message via printf to the end of the list immediately (mainly for debugging)
+	void AppendMessage(size_t maxLen, const char* format, ...);
+
 	// Save a message for possible display later
 	void SaveMessage(const char* data);
 
