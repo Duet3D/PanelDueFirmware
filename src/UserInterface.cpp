@@ -74,7 +74,7 @@ static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPri
 static StaticTextField *moveAxisRows[MaxDisplayableAxes];
 static StaticTextField *nameField, *statusField;
 static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
-static IntegerButton *spd, *extrusionFactors[MaxExtruders], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton;
+static IntegerButton *spd, *extrusionFactors[MaxHeaters], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton;
 static TextButton *languageButton, *coloursButton, *dimmingTypeButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
@@ -159,8 +159,9 @@ static Spindle* spindles;
 struct Tool {
 	// tool number
 	uint8_t index = 0;
-	int8_t heater = -1;				// We only look at the first heater
-	Spindle* spindle = nullptr;		// Also only look at the first spindle
+	int8_t heater = -1;				// only look at the first heater as we only display one
+	int8_t extruder = -1;			// only look at the first extruder as we only display one
+	Spindle* spindle = nullptr;		// only look at the first spindle as we only display one
 	ToolStatus status = ToolStatus::off;
 	uint8_t slot;
 	Tool* next;
@@ -896,13 +897,13 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 
 	// Labels
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
-	mgr.AddField(new StaticTextField(row6 + labelRowAdjust, margin, bedColumn - fieldSpacing, TextAlignment::Right, strings->extruderPercent));
+	mgr.AddField(new StaticTextField(row6 + labelRowAdjust, margin, bedColumn - fieldSpacing - margin, TextAlignment::Right, strings->extruderPercent));
 
 	// Extrusion factor buttons
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	for (unsigned int i = 0; i < MaxExtruders; ++i)
+	for (unsigned int i = 0; i < MaxHeaters; ++i)
 	{
-		const PixelNumber column = ((tempButtonWidth + fieldSpacing) * (i + 1)) + bedColumn;
+		const PixelNumber column = ((tempButtonWidth + fieldSpacing) * i) + bedColumn;
 
 		IntegerButton * const ib = new IntegerButton(row6, column, tempButtonWidth);
 		ib->SetValue(100);
@@ -1292,8 +1293,32 @@ namespace UI
 		return ret;
 	}
 
-	int GetHeaterSlot(size_t heater)
+	Tool* GetToolForExtruder(size_t extruder)
 	{
+		for (auto tool = tools; tool != nullptr; tool = tool->next)
+		{
+			if (tool->extruder == (int)extruder)
+			{
+				return tool;
+			}
+		}
+		return nullptr;
+	}
+
+	Tool* GetToolForHeater(size_t heater)
+	{
+		for (auto tool = tools; tool != nullptr; tool = tool->next)
+		{
+			if (tool->heater == (int)heater)
+			{
+				return tool;
+			}
+		}
+		return nullptr;
+	}
+
+	int GetHeaterSlot(size_t heater)
+		{
 		if ((int)heater == bedHeater.heater)
 		{
 			return bedHeater.slot;
@@ -1302,14 +1327,8 @@ namespace UI
 		{
 			return chamberHeater.slot;
 		}
-		for (auto tool = tools; tool != nullptr; tool = tool->next)
-		{
-			if (tool->heater == (int)heater)
-			{
-				return tool->slot;
-			}
-		}
-		return -1;
+		auto tool = GetToolForHeater(heater);
+		return tool != nullptr ? tool->slot : -1;
 	}
 
 	void UpdateCurrentTemperature(size_t heater, float fval)
@@ -1719,9 +1738,13 @@ namespace UI
 	// Update an extrusion factor
 	void UpdateExtrusionFactor(size_t index, int ival)
 	{
-		if (index < MaxExtruders)
+		auto tool = GetToolForExtruder(index);
+		if (tool != nullptr)
 		{
-			UpdateField(extrusionFactors[index], ival);
+			if (tool->slot < MaxHeaters)
+			{
+				UpdateField(extrusionFactors[tool->slot], ival);
+			}
 		}
 	}
 
@@ -2824,10 +2847,13 @@ namespace UI
 			mgr.Show(currentTemps[slot], hasHeater || hasSpindle);
 			mgr.Show(activeTemps[slot], hasHeater || hasSpindle);
 			mgr.Show(standbyTemps[slot], hasHeater);
-			mgr.Show(extrusionFactors[slot - 1], hasHeater);
+			mgr.Show(extrusionFactors[slot], hasHeater);
 
 			// Set tool number for change event
-			activeTemps[slot]->SetEvent(evAdjustActiveTemp, tool->index);
+			const event_t evForActive = hasHeater ? evAdjustActiveTemp : hasSpindle ? evAdjustActiveRPM : evNull;
+			const int evActiveParam = hasSpindle ? tool->spindle->index : tool->index;
+
+			activeTemps[slot]->SetEvent(evForActive, evActiveParam);
 			standbyTemps[slot]->SetEvent(standbyTemps[slot]->GetEvent(), tool->index);
 			++slot;
 		}
@@ -2913,8 +2939,7 @@ namespace UI
 
 	void SetSpindleMax(size_t index, float max)
 	{
-		auto spindle = GetSpindle(index, true);
-		spindle->max = max;
+		GetSpindle(index, true)->max = max;
 	}
 
 	void RemoveTool(size_t index, bool allFollowing)
@@ -2960,10 +2985,14 @@ namespace UI
 		}
 	}
 
+	void SetToolExtruder(size_t toolIndex, int8_t extruder)
+	{
+		GetTool(toolIndex, true)->extruder = extruder;
+	}
+
 	void SetToolHeater(size_t toolIndex, int8_t heater)
 	{
-		auto tool = GetTool(toolIndex, true);
-		tool->heater = heater;
+		GetTool(toolIndex, true)->heater = heater;
 	}
 
 	void SetSpindleTool(int8_t toolIndex, int8_t spindle)
@@ -2982,18 +3011,7 @@ namespace UI
 		}
 		else
 		{
-			auto tool = GetTool(toolIndex, true);
-			tool->spindle = sp;
-			if (tool->slot < MaxHeaters)
-			{
-				const size_t slot = tool->slot;
-				toolButtons[slot]->SetIcon(IconSpindle);
-
-				activeTemps[slot]->SetEvent(evAdjustActiveRPM, spindle);
-
-				mgr.Show(currentTemps[slot], true);
-				mgr.Show(activeTemps[slot], true);
-			}
+			GetTool(toolIndex, true)->spindle = sp;
 		}
 	}
 

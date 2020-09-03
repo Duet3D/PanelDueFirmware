@@ -86,6 +86,7 @@ namespace UI
 	extern void SetCurrentTool(int32_t tool);
 	extern void UpdateToolStatus(size_t index, ToolStatus status);
 	extern void RemoveTool(size_t index, bool allFollowing = false);
+	extern void SetToolExtruder(size_t toolIndex, int8_t extruder);
 	extern void SetToolHeater(size_t toolIndex, int8_t heater);
 	extern void SetSpindleTool(int8_t toolIndex, int8_t spindle);
 

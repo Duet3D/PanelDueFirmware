@@ -282,6 +282,8 @@ enum ReceivedDataEvent
 	rcvLiveSeqsTools,
 	rcvLiveSeqsVolumes,
 
+	rcvLiveSpindlesCurrent,
+
 	rcvLiveStateCurrentTool,
 	rcvLiveStateStatus,
 	rcvLiveStateUptime,
@@ -310,7 +312,6 @@ enum ReceivedDataEvent
 
 	// Keys for spindles respons
 	rcvSpindlesActive,
-	rcvSpindlesCurrent,
 	rcvSpindlesMax,
 	rcvSpindlesTool,
 
@@ -323,6 +324,7 @@ enum ReceivedDataEvent
 	rcvStateMessageBoxTitle,
 
 	// Keys from tools response
+	rcvToolsExtruders,
 	rcvToolsHeaters,
 	rcvToolsNumber,
 	rcvLiveToolsState,
@@ -379,6 +381,8 @@ static FieldTableEntry fieldTable[] =
 	{ rcvLiveSeqsTools,					"result:seqs:tools" },
 	{ rcvLiveSeqsVolumes,				"result:seqs:volumes" },
 
+	{ rcvLiveSpindlesCurrent,			"result:spindles^:current" },
+
 	{ rcvLiveStateCurrentTool,			"result:state:currentTool" },
 	{ rcvLiveStateStatus,				"result:state:status" },
 	{ rcvLiveStateUptime,				"result:state:upTime" },
@@ -409,7 +413,6 @@ static FieldTableEntry fieldTable[] =
 
 	// M409 K"spindles" response
 	{ rcvSpindlesActive, 				"result^:active" },
-	{ rcvSpindlesCurrent, 				"result^:current" },
 	{ rcvSpindlesMax, 					"result^:max" },
 	{ rcvSpindlesTool, 					"result^:tool" },
 
@@ -422,6 +425,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvStateMessageBoxTitle,			"result:messageBox:title" },
 
 	// M409 K"tools" response
+	{ rcvToolsExtruders,				"result^:extruders^" },
 	{ rcvToolsHeaters,					"result^:heaters^" },
 	{ rcvToolsNumber, 					"result^:number" },
 
@@ -527,7 +531,7 @@ void resetSeqs()
 	seqs.spindles 			=
 	seqs.state 				=
 	seqs.tools 				=
-	seqs.volumes 			= (uint16_t)(1 << 16);
+	seqs.volumes 			= (uint16_t)((1 << 16)-1);
 
 	seqs.updateBoards		=
 	seqs.updateDirectories	=
@@ -1018,10 +1022,8 @@ void SetStatus(const char * sts)
 // Set the status back to "Connecting"
 void Reconnect()
 {
-	UI::ChangeStatus(status, PrinterStatus::connecting);
-	status = PrinterStatus::connecting;
-	UI::UpdatePrintingFields();
 	initialized = false;
+	SetStatus(nullptr);
 }
 
 // Try to get an integer value from a string. If it is actually a floating point value, round it.
@@ -1597,6 +1599,16 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		}
 		break;
 
+	case rcvLiveSpindlesCurrent:
+		{
+			float current;
+			if (GetFloat(data, current))
+			{
+				UI::SetSpindleCurrent(indices[0], current);
+			}
+		}
+		break;
+
 	case rcvLiveStateCurrentTool:
 		{
 			int32_t tool;
@@ -1807,16 +1819,6 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		}
 		break;
 
-	case rcvSpindlesCurrent:
-		{
-			float current;
-			if (GetFloat(data, current))
-			{
-				UI::SetSpindleCurrent(indices[0], current);
-			}
-		}
-		break;
-
 	case rcvSpindlesMax:
 		// fans also has a field "result^:max"
 		if (currentResponseType != rcvKeySpindles)
@@ -1882,6 +1884,20 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		break;
 
 	// Tools section
+	case rcvToolsExtruders:
+		{
+			if (indices[1] > 0)
+			{
+				return;
+			}
+			int32_t extruder;
+			if (GetInteger(data, extruder))
+			{
+				UI::SetToolExtruder(indices[0], extruder);
+			}
+		}
+		break;
+
 	case rcvToolsHeaters:
 		{
 			if (indices[1] > 0)
@@ -1940,6 +1956,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 		if (strcasecmp(id, "result^") == 0)
 		{
 			UI::RemoveSpindle(lastSpindle + 1, true);
+			UI::AllToolsSeen();
 		}
 	}
 	else if (currentResponseType == rcvKeyTools)
@@ -1948,6 +1965,10 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 		{
 			UI::RemoveTool(lastTool + 1, true);
 			UI::AllToolsSeen();
+		}
+		else if (strcasecmp(id, "result^:extruders^") == 0 && indices[1] == 0)
+		{
+			UI::SetToolExtruder(indices[0], -1);			// No extruder defined for this tool
 		}
 		else if (strcasecmp(id, "result^:heaters^") == 0 && indices[1] == 0)
 		{
@@ -2195,13 +2216,14 @@ int main(void)
 				const char * nextToPoll = GetNextToPoll();
 				if (nextToPoll != nullptr)
 				{
+					// Once we get here the first time we will work all seqs once
+					initialized = true;
+
 					SerialIo::SendString("M409 K\"");
 					SerialIo::SendString(nextToPoll);
 					SerialIo::SendString("\" F\"v\"\n");
 				}
 				else {
-					// Once we get here the first time we have worked all seqs once
-					initialized = true;
 
 					// First check for specific info we need to fetch
 					bool done = FileManager::ProcessTimers();
