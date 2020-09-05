@@ -303,6 +303,7 @@ enum ReceivedDataEvent
 	rcvMoveAxesBabystep,
 	rcvMoveAxesLetter,
 	rcvMoveAxesVisible,
+	rcvMoveAxesWorkplaceOffsets,
 	rcvMoveExtrudersFactor,
 	rcvMoveKinematicsName,
 	rcvMoveSpeedFactor,
@@ -326,6 +327,7 @@ enum ReceivedDataEvent
 	// Keys from tools response
 	rcvToolsExtruders,
 	rcvToolsHeaters,
+	rcvToolsOffsets,
 	rcvToolsNumber,
 	rcvLiveToolsState,
 
@@ -404,6 +406,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvMoveAxesBabystep, 				"result:axes^:babystep" },
 	{ rcvMoveAxesLetter,	 			"result:axes^:letter" },
 	{ rcvMoveAxesVisible, 				"result:axes^:visible" },
+	{ rcvMoveAxesWorkplaceOffsets, 		"result:axes^:workplaceOffsets^" },
 	{ rcvMoveExtrudersFactor, 			"result:extruders^:factor" },
 	{ rcvMoveKinematicsName, 			"result:kinematics:name" },
 	{ rcvMoveSpeedFactor, 				"result:speedFactor" },
@@ -428,6 +431,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvToolsExtruders,				"result^:extruders^" },
 	{ rcvToolsHeaters,					"result^:heaters^" },
 	{ rcvToolsNumber, 					"result^:number" },
+	{ rcvToolsOffsets, 					"result^:offsets^" },
 
 	// M409 K"volumes" response
 	{ rcvVolumesMounted, 				"result^:mounted" },
@@ -1610,6 +1614,10 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		break;
 
 	case rcvLiveStateCurrentTool:
+		if (status == PrinterStatus::connecting || status == PrinterStatus::panelInitializing)
+		{
+			break;
+		}
 		{
 			int32_t tool;
 			if (GetInteger(data, tool))
@@ -1765,6 +1773,16 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		}
 		break;
 
+	case rcvMoveAxesWorkplaceOffsets:
+		{
+			float offset;
+			if (GetFloat(data, offset))
+			{
+				UI::SetAxisWorkplaceOffset(indices[0], indices[1], offset);
+			}
+		}
+		break;
+
 	case rcvMoveExtrudersFactor:
 		ShowLine;
 		{
@@ -1839,7 +1857,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 			int32_t toolNumber;
 			if (GetInteger(data, toolNumber))
 			{
-				UI::SetSpindleTool(toolNumber, indices[0]);
+				UI::SetSpindleTool(indices[0], toolNumber);
 			}
 		}
 		break;
@@ -1919,6 +1937,16 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 				UI::RemoveTool(i);
 			}
 			lastTool = indices[0];
+		}
+		break;
+
+	case rcvToolsOffsets:
+		{
+			float offset;
+			if (GetFloat(data, offset))
+			{
+				UI::SetToolOffset(indices[0], indices[1], offset);
+			}
 		}
 		break;
 

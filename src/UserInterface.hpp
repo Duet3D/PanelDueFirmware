@@ -82,13 +82,14 @@ namespace UI
 	extern void SetBabystepOffset(size_t index, float f);
 	extern void SetAxisLetter(size_t index, char l);
 	extern void SetAxisVisible(size_t index, bool v);
+	extern void SetAxisWorkplaceOffset(size_t axisIndex, size_t workplaceIndex, float offset);
 
 	extern void SetCurrentTool(int32_t tool);
 	extern void UpdateToolStatus(size_t index, ToolStatus status);
 	extern void RemoveTool(size_t index, bool allFollowing = false);
 	extern void SetToolExtruder(size_t toolIndex, int8_t extruder);
 	extern void SetToolHeater(size_t toolIndex, int8_t heater);
-	extern void SetSpindleTool(int8_t toolIndex, int8_t spindle);
+	extern void SetToolOffset(size_t toolIndex, size_t axisIndex, float offset);
 
 	extern void SetBedOrChamberHeater(int8_t heaterNumber, uint8_t heaterIndex, bool bed = true);
 
@@ -96,6 +97,7 @@ namespace UI
 	extern void SetSpindleActive(size_t index, float active);
 	extern void SetSpindleCurrent(size_t index, float current);
 	extern void SetSpindleMax(size_t index, float max);
+	extern void SetSpindleTool(int8_t spindle, int8_t toolIndex);
 }
 
 #endif /* SRC_USERINTERFACE_HPP_ */
