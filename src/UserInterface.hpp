@@ -86,14 +86,12 @@ namespace UI
 
 	extern void SetCurrentTool(int32_t tool);
 	extern void UpdateToolStatus(size_t index, ToolStatus status);
-	extern void RemoveTool(size_t index, bool allFollowing = false);
 	extern void SetToolExtruder(size_t toolIndex, int8_t extruder);
 	extern void SetToolHeater(size_t toolIndex, int8_t heater);
 	extern void SetToolOffset(size_t toolIndex, size_t axisIndex, float offset);
 
 	extern void SetBedOrChamberHeater(int8_t heaterNumber, uint8_t heaterIndex, bool bed = true);
 
-	extern void RemoveSpindle(size_t index, bool allFollowing = false);
 	extern void SetSpindleActive(size_t index, float active);
 	extern void SetSpindleCurrent(size_t index, float current);
 	extern void SetSpindleMax(size_t index, float max);

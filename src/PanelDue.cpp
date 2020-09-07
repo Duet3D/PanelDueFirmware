@@ -52,6 +52,7 @@
 #include "PrinterStatus.hpp"
 #include "ToolStatus.hpp"
 #include "UserInterface.hpp"
+#include "ObjectModel.hpp"
 
 #ifdef OEM
 # if DISPLAY_X == 800
@@ -1831,7 +1832,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 
 			for (size_t i = lastSpindle + 1; i < indices[0]; ++i)
 			{
-				UI::RemoveSpindle(i);
+				OM::RemoveSpindle(i, false);
 			}
 			lastSpindle = indices[0];
 		}
@@ -1934,7 +1935,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		{
 			for (size_t i = lastTool + 1; i < indices[0]; ++i)
 			{
-				UI::RemoveTool(i);
+				OM::RemoveTool(i, false);
 			}
 			lastTool = indices[0];
 		}
@@ -1976,6 +1977,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 	else if (currentResponseType == rcvKeyMove && strcasecmp(id, "result:axes^") == 0)
 	{
+		OM::RemoveAxis(indices[0], true);
 		numAxes = constrain<unsigned int>(visibleAxesCounted, MIN_AXES, MaxTotalAxes);
 		UI::UpdateGeometry(numAxes, isDelta);
 	}
@@ -1983,7 +1985,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	{
 		if (strcasecmp(id, "result^") == 0)
 		{
-			UI::RemoveSpindle(lastSpindle + 1, true);
+			OM::RemoveSpindle(lastSpindle + 1, true);
 			UI::AllToolsSeen();
 		}
 	}
@@ -1991,7 +1993,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	{
 		if (strcasecmp(id, "result^") == 0)
 		{
-			UI::RemoveTool(lastTool + 1, true);
+			OM::RemoveTool(lastTool + 1, true);
 			UI::AllToolsSeen();
 		}
 		else if (strcasecmp(id, "result^:extruders^") == 0 && indices[1] == 0)
