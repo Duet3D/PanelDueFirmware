@@ -80,7 +80,9 @@ namespace OM {
 	typedef void (*AxisIterator)(Axis*);
 	typedef bool (*AxisIteratorWhile)(Axis*);
 
+	Axis* FindAxis(std::function<bool(Axis*)> filter);
 	Axis* GetAxis(size_t index);
+	Axis* GetAxisInSlot(size_t slot);
 	Axis* GetOrCreateAxis(size_t index);
 	void IterateAxes(std::function<void(Axis*)> func);
 	bool IterateAxesWhile(std::function<bool(Axis*)> func);

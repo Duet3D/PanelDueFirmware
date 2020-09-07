@@ -45,6 +45,19 @@ T* GetOrCreate(T*& start, size_t index, bool create)
 }
 
 template<typename T>
+T* Find(T*& start, std::function<bool(T*)> filter)
+{
+	for (auto elem = start; elem != nullptr; elem = elem->next)
+	{
+		if (filter(elem))
+		{
+			return elem;
+		}
+	}
+	return nullptr;
+}
+
+template<typename T>
 void Iterate(T*& start, std::function<void(T*)> func)
 {
 	for (auto elem = start; elem != nullptr; elem = elem->next)
@@ -119,6 +132,11 @@ namespace OM
 	static Spindle* spindles;
 	static Tool* tools;
 
+	Axis* FindAxis(std::function<bool(Axis*)> filter)
+	{
+		return Find(axes, filter);
+	}
+
 	Axis* GetAxis(size_t index)
 	{
 		if (index >= MaxTotalAxes)
@@ -126,6 +144,15 @@ namespace OM
 			return nullptr;
 		}
 		return GetOrCreate(axes, index, false);
+	}
+
+	Axis* GetAxisInSlot(size_t slot)
+	{
+		if (slot >= MaxTotalAxes)
+		{
+			return nullptr;
+		}
+		return Find<Axis>(axes, [slot](Axis* axis) { return axis->slot == slot; });
 	}
 
 	Axis* GetOrCreateAxis(size_t index)
@@ -204,38 +231,17 @@ namespace OM
 
 	Spindle* GetSpindleForTool(size_t toolNumber)
 	{
-		for (auto spindle = spindles; spindle != nullptr; spindle = spindle->next)
-		{
-			if (spindle->tool == (int)toolNumber)
-			{
-				return spindle;
-			}
-		}
-		return nullptr;
+		return Find<Spindle>(spindles, [toolNumber](Spindle* spindle) { return spindle->tool == (int)toolNumber; });
 	}
 
 	Tool* GetToolForExtruder(size_t extruder)
 	{
-		for (auto tool = tools; tool != nullptr; tool = tool->next)
-		{
-			if (tool->extruder == (int)extruder)
-			{
-				return tool;
-			}
-		}
-		return nullptr;
+		return Find<Tool>(tools, [extruder](Tool* tool) { return tool->extruder == (int)extruder; });
 	}
 
 	Tool* GetToolForHeater(size_t heater)
 	{
-		for (auto tool = tools; tool != nullptr; tool = tool->next)
-		{
-			if (tool->heater == (int)heater)
-			{
-				return tool;
-			}
-		}
-		return nullptr;
+		return Find<Tool>(tools, [heater](Tool* tool) { return tool->heater == (int)heater; });
 	}
 }
 

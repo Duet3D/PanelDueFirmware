@@ -25,7 +25,7 @@ enum Event : uint8_t
 
 	// Control functions
 	evMovePopup, evExtrudePopup, evFan, evListMacros,
-	evMoveX, evMoveY, evMoveZ, evMoveU, evMoveV, evMoveW,	// these 6 must be contiguous and in this order
+	evMoveAxis,
 	evExtrudeAmount, evExtrudeRate, evExtrude, evRetract,
 	evHomeAxis,
 

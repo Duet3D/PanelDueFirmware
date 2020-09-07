@@ -197,12 +197,19 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	constexpr PixelNumber hOffset = popupSideMargin + (alertPopupWidth - 2 * popupSideMargin - totalUnits * unitWidth)/2;
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	AddField(zUpCourseButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset,				  buttonWidth, LESS_ARROW "2.0", evMoveZ, "-2.0"));
-	AddField(zUpMedButton =      new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + buttonStep,     buttonWidth, LESS_ARROW "0.2", evMoveZ, "-0.2"));
-	AddField(zUpFineButton =     new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, LESS_ARROW "0.02", evMoveZ, "-0.02"));
-	AddField(zDownFineButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, MORE_ARROW "0.02", evMoveZ, "0.02"));
-	AddField(zDownMedButton =    new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, MORE_ARROW "0.2", evMoveZ, "0.2"));
-	AddField(zDownCourseButton = new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, MORE_ARROW "2.0", evMoveZ, "2.0"));
+	AddField(zUpCourseButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset,				  buttonWidth, LESS_ARROW "2.0", evMoveAxis, "-2.0"));
+	AddField(zUpMedButton =      new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + buttonStep,     buttonWidth, LESS_ARROW "0.2", evMoveAxis, "-0.2"));
+	AddField(zUpFineButton =     new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, LESS_ARROW "0.02", evMoveAxis, "-0.02"));
+	AddField(zDownFineButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, MORE_ARROW "0.02", evMoveAxis, "0.02"));
+	AddField(zDownMedButton =    new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, MORE_ARROW "0.2", evMoveAxis, "0.2"));
+	AddField(zDownCourseButton = new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, MORE_ARROW "2.0", evMoveAxis, "2.0"));
+	// TODO: Update these if order changes?
+	zUpCourseButton->SetEvent(evMoveAxis, 3);
+	zUpMedButton->SetEvent(evMoveAxis, 3);
+	zUpFineButton->SetEvent(evMoveAxis, 3);
+	zDownFineButton->SetEvent(evMoveAxis, 3);
+	zDownMedButton->SetEvent(evMoveAxis, 3);
+	zDownCourseButton->SetEvent(evMoveAxis, 3);
 
 	AddField(okButton =          new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + buttonStep,     buttonWidth + buttonStep, "OK", evCloseAlert, "M292 P0"));
 	AddField(cancelButton =      new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + 3 * buttonStep, buttonWidth + buttonStep, "Cancel", evCloseAlert, "M292 P1"));
@@ -235,21 +242,41 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 	zDownFineButton->Show(showZbuttons);
 }
 
-// Add a text button
-TextButton *AddTextButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* array text, Event evt, const char* param)
+inline PixelNumber CalcWidth(unsigned int numCols, PixelNumber displayWidth = DisplayX)
 {
-	PixelNumber width = (DisplayX - 2 * margin + fieldSpacing)/numCols - fieldSpacing;
-	PixelNumber xpos = col * (width + fieldSpacing) + margin;
+	return (displayWidth - 2 * margin + fieldSpacing)/numCols - fieldSpacing;
+}
+
+inline PixelNumber CalcXPos(unsigned int col, PixelNumber width, int offset = 0)
+{
+	return col * (width + fieldSpacing) + margin + offset;
+}
+
+// Add a text button with a string parameter
+TextButton *AddTextButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* array text, Event evt, const char* param, PixelNumber displayWidth = DisplayX)
+{
+	PixelNumber width = CalcWidth(numCols, displayWidth);
+	PixelNumber xpos = CalcXPos(col, width);
+	TextButton *f = new TextButton(row - 2, xpos, width, text, evt, param);
+	mgr.AddField(f);
+	return f;
+}
+
+// Add a text button with an int parameter
+TextButton *AddTextButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* array text, Event evt, int param, PixelNumber displayWidth = DisplayX)
+{
+	PixelNumber width = CalcWidth(numCols, displayWidth);
+	PixelNumber xpos = CalcXPos(col, width);
 	TextButton *f = new TextButton(row - 2, xpos, width, text, evt, param);
 	mgr.AddField(f);
 	return f;
 }
 
 // Add an integer button
-IntegerButton *AddIntegerButton(PixelNumber row, unsigned int col, unsigned int numCols, const char * array null label, const char * array null units, Event evt)
+IntegerButton *AddIntegerButton(PixelNumber row, unsigned int col, unsigned int numCols, const char * array null label, const char * array null units, Event evt, PixelNumber displayWidth = DisplayX)
 {
-	PixelNumber width = (DisplayX - 2 * margin + fieldSpacing)/numCols - fieldSpacing;
-	PixelNumber xpos = col * (width + fieldSpacing) + margin;
+	PixelNumber width = CalcWidth(numCols, displayWidth);
+	PixelNumber xpos = CalcXPos(col, width);
 	IntegerButton *f = new IntegerButton(row - 2, xpos, width, label, units);
 	f->SetEvent(evt, 0);
 	mgr.AddField(f);
@@ -257,20 +284,20 @@ IntegerButton *AddIntegerButton(PixelNumber row, unsigned int col, unsigned int 
 }
 
 // Add an icon button with a string parameter
-IconButton *AddIconButton(PixelNumber row, unsigned int col, unsigned int numCols, Icon icon, Event evt, const char* param)
+IconButton *AddIconButton(PixelNumber row, unsigned int col, unsigned int numCols, Icon icon, Event evt, const char* param, PixelNumber displayWidth = DisplayX)
 {
-	PixelNumber width = (DisplayX - 2 * margin + fieldSpacing)/numCols - fieldSpacing;
-	PixelNumber xpos = col * (width + fieldSpacing) + margin;
+	PixelNumber width = CalcWidth(numCols, displayWidth);
+	PixelNumber xpos = CalcXPos(col, width);
 	IconButton *f = new IconButton(row - 2, xpos, width, icon, evt, param);
 	mgr.AddField(f);
 	return f;
 }
 
 // Add an icon button with a string parameter
-IconButtonWithText *AddIconButtonWithText(PixelNumber row, unsigned int col, unsigned int numCols, Icon icon, Event evt, const char * text, const char* param)
+IconButtonWithText *AddIconButtonWithText(PixelNumber row, unsigned int col, unsigned int numCols, Icon icon, Event evt, const char * text, const char* param, PixelNumber displayWidth = DisplayX)
 {
-	PixelNumber width = (DisplayX - 2 * margin + fieldSpacing)/numCols - fieldSpacing;
-	PixelNumber xpos = col * (width + fieldSpacing) + margin;
+	PixelNumber width = CalcWidth(numCols, displayWidth);
+	PixelNumber xpos = CalcXPos(col, width);
 	IconButtonWithText *f = new IconButtonWithText(row - 2, xpos, width, icon, evt, text, param);
 	mgr.AddField(f);
 	return f;
@@ -428,7 +455,6 @@ void CreateMovePopup(const ColourScheme& colours)
 	PixelNumber ypos = popupTopMargin + buttonHeight + moveButtonRowSpacing;
 	const PixelNumber axisPosYpos = ypos + (MaxDisplayableAxes - 1) * (buttonHeight + moveButtonRowSpacing);
 	const PixelNumber xpos = popupSideMargin + axisLabelWidth;
-	Event e = evMoveX;
 	PixelNumber column = popupSideMargin + margin;
 	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxDisplayableAxes * fieldSpacing))/(MaxDisplayableAxes + 1);
 
@@ -436,7 +462,7 @@ void CreateMovePopup(const ColourScheme& colours)
 	{
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 		const char * array const * array values = (axisNames[i][0] == 'Z') ? zJogValues : xyJogValues;
-		CreateStringButtonRow(movePopup, ypos, xpos, movePopupWidth - xpos - popupSideMargin, fieldSpacing, 8, values, values, e);
+		CreateStringButtonRow(movePopup, ypos, xpos, movePopupWidth - xpos - popupSideMargin, fieldSpacing, 8, values, values, evMoveAxis);
 
 		// We create the label after the button row, so that the buttons follow it in the field order, which makes it easier to hide them
 		DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
@@ -454,7 +480,6 @@ void CreateMovePopup(const ColourScheme& colours)
 		column += xyFieldWidth + fieldSpacing;
 
 		ypos += buttonHeight + moveButtonRowSpacing;
-		e = (Event)((uint8_t)e + 1);
 	}
 }
 
@@ -1123,6 +1148,12 @@ namespace UI
 		for (int i = 0; i < 9 && f != nullptr; ++i)
 		{
 			f->Show(b);
+			if (i > 0) // actual move buttons
+			{
+				TextButton *textButton = static_cast<TextButton*>(f);
+				// Use int value with slot here because string value is already taken by amount
+				textButton->SetEvent(textButton->GetEvent(), (int)slot);
+			}
 			f = f->next;
 		}
 		controlTabAxisPos[slot]->Show(b);
@@ -1978,15 +2009,14 @@ namespace UI
 				mgr.SetPopup(movePopup, AutoPlace, AutoPlace);
 				break;
 
-			case evMoveX:
-			case evMoveY:
-			case evMoveZ:
-			case evMoveU:
-			case evMoveV:
-			case evMoveW:
+			case evMoveAxis:
 				{
-					const uint8_t axis = ev - evMoveX;
-					const char c = (axis < 3) ? 'X' + axis : ('U' - 3) + axis;
+					auto axis = OM::FindAxis([&bp](OM::Axis* axis) { return axis->slot == bp.GetIParam(); });
+					if (axis == nullptr)
+					{
+						break;
+					}
+					const char c = axis->letter[0];
 					SerialIo::SendString("G91\nG1 ");
 					SerialIo::SendChar(c);
 					SerialIo::SendString(bp.GetSParam());
