@@ -100,9 +100,9 @@ namespace OM {
 	void IterateTools(std::function<void(Tool*)> func);
 	bool IterateToolsWhile(std::function<bool(Tool*)> func);
 
-	void RemoveAxis(size_t index, bool allFollowing);
-	void RemoveSpindle(size_t index, bool allFollowing);
-	void RemoveTool(size_t index, bool allFollowing);
+	size_t RemoveAxis(size_t index, bool allFollowing);
+	size_t RemoveSpindle(size_t index, bool allFollowing);
+	size_t RemoveTool(size_t index, bool allFollowing);
 }
 
 

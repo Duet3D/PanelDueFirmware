@@ -80,50 +80,73 @@ bool IterateWhile(T*& start, std::function<bool(T*)> func)
 }
 
 template<typename T>
-void Remove(T*& start, size_t index, bool allFollowing)
+size_t Remove(T*& start, size_t index, bool allFollowing)
 {
-	// TODO: Unify if-else-block
-	if (start != nullptr && start->index >= index)
+	size_t removed = 0;
+	// Nothing to do on an empty list
+	if (start == nullptr)
 	{
-		if (allFollowing)
+		return removed;
+	}
+
+	if (!allFollowing)	// We are looking for an exact match
+	{
+		if (start->index == index)
+		{
+			auto toDelete = start;
+			start = start->next;
+			delete toDelete;
+			++removed;
+		}
+		else
+		{
+			T* toDelete = start;
+			T* prev;
+			do
+			{
+				prev = toDelete;
+				toDelete = toDelete->next;
+			} while (toDelete != nullptr && toDelete->index != index);
+
+			if (toDelete != nullptr)
+			{
+				prev->next = toDelete->next;
+				delete toDelete;
+				++removed;
+			}
+		}
+	}
+	else	// we want to delete eveything with elem->index >= index
+	{
+		// We need to delete the full list
+		if (start->index >= index)
 		{
 			for (auto toDelete = start; toDelete != nullptr; toDelete = start->next)
 			{
 				start = toDelete->next;
 				delete toDelete;
+				++removed;
 			}
 		}
 		else
 		{
-			auto toDelete = start;
-			start = start->next;
-			delete toDelete;
-		}
-	}
-	else
-	{
-		for (auto s = start; s != nullptr; s = s->next)
-		{
-			if (s->next == nullptr || s->next->index < index)
+			for (auto s = start; s != nullptr; s = s->next)
 			{
-				continue;
-			}
-			if (allFollowing)
-			{
+				if (s->next == nullptr || s->next->index < index)
+				{
+					continue;
+				}
+				// If we get here then s->next->index >= index
 				for (auto toDelete = s->next; toDelete != nullptr; toDelete = s->next)
 				{
 					s->next = toDelete->next;
 					delete toDelete;
+					++removed;
 				}
-			}
-			else
-			{
-				auto toDelete = s->next;
-				s->next = s->next->next;
-				delete toDelete;
 			}
 		}
 	}
+	return removed;
 }
 
 namespace OM
@@ -214,19 +237,19 @@ namespace OM
 		return IterateWhile(tools, func);
 	}
 
-	void RemoveAxis(size_t index, bool allFollowing)
+	size_t RemoveAxis(size_t index, bool allFollowing)
 	{
-		Remove(axes, index, allFollowing);
+		return Remove(axes, index, allFollowing);
 	}
 
-	void RemoveSpindle(size_t index, bool allFollowing)
+	size_t RemoveSpindle(size_t index, bool allFollowing)
 	{
-		Remove(spindles, index, allFollowing);
+		return Remove(spindles, index, allFollowing);
 	}
 
-	void RemoveTool(size_t index, bool allFollowing)
+	size_t RemoveTool(size_t index, bool allFollowing)
 	{
-		Remove(tools, index, allFollowing);
+		return Remove(tools, index, allFollowing);
 	}
 
 	Spindle* GetSpindleForTool(size_t toolNumber)
