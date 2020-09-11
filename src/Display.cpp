@@ -65,6 +65,17 @@ void DisplayField::SetPositionAndWidth(PixelNumber newX, PixelNumber newWidth)
 	changed = true;
 }
 
+void DisplayField::SetPosition(PixelNumber x, PixelNumber y)
+{
+	if (this->x == x && this->y == y)
+	{
+		return;
+	}
+	this->x = x;
+	this->y = y;
+	changed = true;
+}
+
 /*static*/ void DisplayField::SetDefaultColours(Colour pf, Colour pb, Colour pbb, Colour pg, Colour pbp, Colour pgp, Palette pal)
 {
 	defaultFcolour = pf;
@@ -78,6 +89,7 @@ void DisplayField::SetPositionAndWidth(PixelNumber newX, PixelNumber newWidth)
 
 /*static*/ PixelNumber DisplayField::GetTextWidth(const char* array s, PixelNumber maxWidth)
 {
+	lcd.setFont(DisplayField::defaultFont);
 	lcd.setTextPos(0, 9999, maxWidth);
 	lcd.print(s);						// dummy print to get text width
 	return lcd.getTextX();

@@ -112,6 +112,7 @@ public:
 	PixelNumber GetMaxY() const { return y + GetHeight() - 1; }
 
 	void SetPositionAndWidth(PixelNumber newX, PixelNumber newWidth);
+	void SetPosition(PixelNumber x, PixelNumber y);
 
 	virtual event_t GetEvent() const { return nullEvent; }
 

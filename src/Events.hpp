@@ -14,6 +14,8 @@ enum Event : uint8_t
 {
 	evNull = 0,						// value must match nullEvent declared in Display.hpp
 
+	evDefaultRoot, evScreensaverRoot,
+
 	// Page selection
 	evTabControl, evTabPrint, evTabMsg, evTabSetup,
 

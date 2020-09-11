@@ -58,7 +58,7 @@ static String<controlPageMacroTextLength> controlPageMacroText[NumControlPageMac
 static PopupWindow *setTempPopup, *setRPMPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup,
 		*volumePopup, *infoTimeoutPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
 static StaticTextField *areYouSureTextField, *areYouSureQueryField;
-static DisplayField *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
+static DisplayField *emptyRoot, *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot, *screensaverRoot;
 static SingleButton *homeAllButton, *bedCompButton;
 static IconButtonWithText *homeButtons[MaxDisplayableAxes], *toolButtons[MaxHeaters];
 static FloatField *controlTabAxisPos[MaxDisplayableAxes];
@@ -74,6 +74,7 @@ static TextField *timeLeftField, *zProbe;
 static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
 static StaticTextField *moveAxisRows[MaxDisplayableAxes];
 static StaticTextField *nameField, *statusField;
+static StaticTextField *screensaverText;
 static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
 static IntegerButton *spd, *extrusionFactors[MaxHeaters], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton;
 static TextButton *languageButton, *coloursButton, *dimmingTypeButton;
@@ -121,6 +122,9 @@ uint32_t alertTicks = 0;
 uint32_t infoTimeout = DefaultInfoTimeout;				// info timeout in seconds, 0 means don't display into messages at all
 uint32_t whenAlertReceived;
 bool displayingResponse = false;						// true if displaying a response
+
+static PixelNumber screensaverTextWidth = 0;
+static uint32_t lastScreensaverMoved = 0;
 
 static int32_t currentTool = -1;
 static OM::BedOrChamber bedHeater, chamberHeater;
@@ -1003,12 +1007,23 @@ void CreateCommonFields(const ColourScheme& colours)
 	tabSetup = AddTextButton(rowTabs, 3, 4, strings->setup, evTabSetup, nullptr);
 }
 
+void CreateScreensaverRoot()
+{
+	mgr.SetRoot(emptyRoot);
+	DisplayField::SetDefaultColours(white, black);
+	static const char * text = "Touch to wake up";
+	screensaverTextWidth = DisplayField::GetTextWidth(text, DisplayX);
+	mgr.AddField(screensaverText = new StaticTextField(row1, margin, screensaverTextWidth, TextAlignment::Left, text));
+	screensaverRoot = mgr.GetRoot();
+}
+
 void CreateMainPages(uint32_t language, const ColourScheme& colours)
 {
 	if (language >= ARRAY_SIZE(LanguageTables))
 	{
 		language = 0;
 	}
+	emptyRoot = mgr.GetRoot();
 	strings = &LanguageTables[language];
 	CreateCommonFields(colours);
 	baseRoot = mgr.GetRoot();		// save the root of fields that we usually display
@@ -1025,6 +1040,7 @@ void CreateMainPages(uint32_t language, const ColourScheme& colours)
 	CreatePrintingTabFields(colours);
 	CreateMessageTabFields(colours);
 	CreateSetupTabFields(language, colours);
+	CreateScreensaverRoot();
 }
 
 namespace UI
@@ -1336,6 +1352,33 @@ namespace UI
 		}
 	}
 
+	void SwitchToTab(ButtonBase *newTab) {
+		switch (newTab->GetEvent()) {
+		case evTabControl:
+			mgr.SetRoot(controlRoot);
+			nameField->SetValue(machineName.c_str());
+			break;
+		case evTabPrint:
+			mgr.SetRoot(printRoot);
+			nameField->SetValue(
+					PrintInProgress() ? printingFile.c_str() : machineName.c_str());
+			break;
+		case evTabMsg:
+			mgr.SetRoot(messageRoot);
+			if (keyboardIsDisplayed) {
+				mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY, false);
+			}
+			break;
+		case evTabSetup:
+			mgr.SetRoot(setupRoot);
+			break;
+		default:
+			mgr.SetRoot(commonRoot);
+			break;
+		}
+		mgr.Refresh(true);
+	}
+
 	// Change to the page indicated. Return true if the page has a permanently-visible button.
 	bool ChangePage(ButtonBase *newTab)
 	{
@@ -1356,33 +1399,37 @@ namespace UI
 			newTab->Press(true, 0);						// highlight the new tab
 			currentTab = newTab;
 			mgr.ClearAllPopups();
-			switch(newTab->GetEvent())
-			{
-			case evTabControl:
-				mgr.SetRoot(controlRoot);
-				nameField->SetValue(machineName.c_str());
-				break;
-			case evTabPrint:
-				mgr.SetRoot(printRoot);
-				nameField->SetValue(PrintInProgress() ? printingFile.c_str() : machineName.c_str());
-				break;
-			case evTabMsg:
-				mgr.SetRoot(messageRoot);
-				if (keyboardIsDisplayed)
-				{
-					mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY, false);
-				}
-				break;
-			case evTabSetup:
-				mgr.SetRoot(setupRoot);
-				break;
-			default:
-				mgr.SetRoot(commonRoot);
-				break;
-			}
-			mgr.Refresh(true);
+			SwitchToTab(newTab);
 		}
 		return true;
+	}
+
+	void ActivateScreensaver()
+	{
+		lcd.fillScr(black);
+		mgr.SetRoot(screensaverRoot);
+		mgr.Refresh(true);
+		lastScreensaverMoved = SystemTick::GetTickCount();
+	}
+
+	void DeactivateScreensaver()
+	{
+		SwitchToTab(currentTab);
+	}
+
+	void AnimateScreensaver()
+	{
+		if (SystemTick::GetTickCount() - lastScreensaverMoved >= ScreensaverMoveTime)
+		{
+			static unsigned int seed = SystemTick::GetTickCount();
+			const PixelNumber availableWidth = (DisplayX - 2*margin - screensaverTextWidth);
+			const PixelNumber availableHeight = (DisplayY - 2*margin - rowTextHeight);
+			const PixelNumber x = (rand_r(&seed) % availableWidth);
+			const PixelNumber y = (rand_r(&seed) % availableHeight);
+			lcd.fillScr(black);
+			screensaverText->SetPosition(x + margin, y + margin);
+			lastScreensaverMoved = SystemTick::GetTickCount();
+		}
 	}
 
 	// Pop up the keyboard

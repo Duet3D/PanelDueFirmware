@@ -132,6 +132,7 @@ static uint32_t lastResponseTime = 0;
 static uint32_t lastActionTime = 0;							// the last time anything significant happened
 static FirmwareFeatures firmwareFeatures = 0;
 static bool isDimmed = false;								// true if we have dimmed the display
+static bool screensaverActive = false;						// true if screensaver is active
 static bool isDelta = false;
 static size_t numAxes = MIN_AXES;
 static int32_t beepFrequency = 0, beepLength = 0;
@@ -895,6 +896,11 @@ extern void RestoreBrightness()
 	Buzzer::SetBacklight(nvData.brightness);
 	lastActionTime = SystemTick::GetTickCount();
 	isDimmed = false;
+	if (screensaverActive)
+	{
+		UI::DeactivateScreensaver();
+		screensaverActive = false;
+	}
 }
 
 extern void DimBrightness()
@@ -905,6 +911,24 @@ extern void DimBrightness()
 	{
 		Buzzer::SetBacklight(nvData.brightness/8);
 		isDimmed = true;
+	}
+}
+
+void ActivateScreensaver()
+{
+	if (!screensaverActive)
+	{
+		if (!isDimmed)
+		{
+			Buzzer::SetBacklight(nvData.brightness/4);	// If the user disabled dimming we do it still here
+			isDimmed = true;
+		}
+		screensaverActive = true;
+		UI::ActivateScreensaver();
+	}
+	else
+	{
+		UI::AnimateScreensaver();
 	}
 }
 
@@ -2177,7 +2201,7 @@ int main(void)
 				touchX->SetValue((int)x);	//debug
 				touchY->SetValue((int)y);	//debug
 #endif
-				if (isDimmed)
+				if (isDimmed || screensaverActive)
 				{
 					RestoreBrightness();
 					DelayTouchLong();			// ignore further touches for a while
@@ -2205,9 +2229,15 @@ int main(void)
 					}
 				}
 			}
-			else if (!isDimmed && SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout && UI::CanDimDisplay())
+			else if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
 			{
-				DimBrightness();				// it might not actually dim the display, depending on various flags
+				if (!isDimmed && UI::CanDimDisplay()){
+					DimBrightness();				// it might not actually dim the display, depending on various flags
+				}
+				if (SystemTick::GetTickCount() - lastActionTime >= ScreensaverTimeout)
+				{
+					ActivateScreensaver();
+				}
  			}
 		}
 		ShowLine;
