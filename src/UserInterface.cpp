@@ -2807,7 +2807,7 @@ namespace UI
 		AdjustControlPageMacroButtons();
 	}
 
-	void SetSpindleActive(size_t index, float active)
+	void SetSpindleActive(size_t index, uint16_t active)
 	{
 		auto spindle = OM::GetOrCreateSpindle(index);
 		spindle->active = active;
@@ -2821,7 +2821,7 @@ namespace UI
 		}
 	}
 
-	void SetSpindleCurrent(size_t index, float current)
+	void SetSpindleCurrent(size_t index, uint16_t current)
 	{
 		auto spindle = OM::GetOrCreateSpindle(index);
 		if (spindle->tool > -1)
@@ -2834,7 +2834,7 @@ namespace UI
 		}
 	}
 
-	void SetSpindleMax(size_t index, float max)
+	void SetSpindleMax(size_t index, uint16_t max)
 	{
 		OM::GetOrCreateSpindle(index)->max = max;
 	}

@@ -48,8 +48,8 @@ namespace OM {
 	{
 		// Index within configured spindles
 		uint8_t index = 0;
-		float active = 0.0;
-		float max = 0.0;
+		uint16_t active = 0;
+		uint16_t max = 0;
 		int8_t tool = -1;
 		Spindle* next = nullptr;
 	};

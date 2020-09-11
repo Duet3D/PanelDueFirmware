@@ -95,9 +95,9 @@ namespace UI
 
 	extern void SetBedOrChamberHeater(int8_t heaterNumber, uint8_t heaterIndex, bool bed = true);
 
-	extern void SetSpindleActive(size_t index, float active);
-	extern void SetSpindleCurrent(size_t index, float current);
-	extern void SetSpindleMax(size_t index, float max);
+	extern void SetSpindleActive(size_t index, uint16_t active);
+	extern void SetSpindleCurrent(size_t index, uint16_t current);
+	extern void SetSpindleMax(size_t index, uint16_t max);
 	extern void SetSpindleTool(int8_t spindle, int8_t toolIndex);
 }
 

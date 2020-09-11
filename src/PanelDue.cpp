@@ -1630,8 +1630,8 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 
 	case rcvLiveSpindlesCurrent:
 		{
-			float current;
-			if (GetFloat(data, current))
+			uint32_t current;
+			if (GetUnsignedInteger(data, current))
 			{
 				UI::SetSpindleCurrent(indices[0], current);
 			}
@@ -1848,8 +1848,8 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 	// Spindles section
 	case rcvSpindlesActive:
 		{
-			float active;
-			if (GetFloat(data, active))
+			uint32_t active;
+			if (GetUnsignedInteger(data, active))
 			{
 				UI::SetSpindleActive(indices[0], active);
 			}
@@ -1869,8 +1869,8 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 			break;
 		}
 		{
-			float max;
-			if (GetFloat(data, max))
+			uint32_t max;
+			if (GetUnsignedInteger(data, max))
 			{
 				UI::SetSpindleMax(indices[0], max);
 			}
