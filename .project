@@ -3,6 +3,7 @@
 	<name>PanelDue</name>
 	<comment></comment>
 	<projects>
+		<project>RRFLibraries</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
