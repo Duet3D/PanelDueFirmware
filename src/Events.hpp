@@ -64,7 +64,7 @@ enum Event : uint8_t
 	evAdjustLanguage, evSetLanguage,
 	evAdjustColours, evSetColours,
 	evBrighter, evDimmer,
-	evSetDimmingType,
+	evSetDimmingType, evSetScreensaverTimeout, evAdjustScreensaverTimeout,
 
 	evEmergencyStop,
 

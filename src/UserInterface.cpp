@@ -56,7 +56,7 @@ static TextButton *controlPageMacroButtons[NumControlPageMacroButtons];
 static String<controlPageMacroTextLength> controlPageMacroText[NumControlPageMacroButtons];
 
 static PopupWindow *setTempPopup, *setRPMPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup,
-		*volumePopup, *infoTimeoutPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
+		*volumePopup, *infoTimeoutPopup, *screensaverTimeoutPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
 static StaticTextField *areYouSureTextField, *areYouSureQueryField;
 static DisplayField *emptyRoot, *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot, *screensaverRoot;
 static SingleButton *homeAllButton, *bedCompButton;
@@ -76,7 +76,7 @@ static StaticTextField *moveAxisRows[MaxDisplayableAxes];
 static StaticTextField *nameField, *statusField;
 static StaticTextField *screensaverText;
 static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
-static IntegerButton *spd, *extrusionFactors[MaxHeaters], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton;
+static IntegerButton *spd, *extrusionFactors[MaxHeaters], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton, *screensaverTimeoutButton;
 static TextButton *languageButton, *coloursButton, *dimmingTypeButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
@@ -645,6 +645,14 @@ void CreateInfoTimeoutPopup(const ColourScheme& colours)
 	infoTimeoutPopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(infoTimeoutPopupText), infoTimeoutPopupText, values, evAdjustInfoTimeout, evAdjustInfoTimeout);
 }
 
+// Create the screensaver timeout adjustment popup
+void CreateScreensaverTimeoutPopup(const ColourScheme& colours)
+{
+	static const char* const screensaverTimeoutPopupText[Buzzer::MaxVolume + 1] = { "off", "60", "120", "180", "240", "300" };
+	static const int values[] = { 0, 60, 120, 180, 240, 300 };
+	screensaverTimeoutPopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(screensaverTimeoutPopupText), screensaverTimeoutPopupText, values, evAdjustScreensaverTimeout, evAdjustScreensaverTimeout);
+}
+
 // Create the colour scheme change popup
 void CreateColoursPopup(const ColourScheme& colours)
 {
@@ -993,6 +1001,8 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	infoTimeoutButton = AddIntegerButton(row6, 1, 3, strings->infoTimeout, nullptr, evSetInfoTimeout);
 	infoTimeoutButton->SetValue(infoTimeout);
 	AddTextButton(row6, 2, 3, strings->clearSettings, evFactoryReset, nullptr);
+	screensaverTimeoutButton = AddIntegerButton(row7, 0, 3, strings->screensaverAfter, nullptr, evSetScreensaverTimeout);
+	screensaverTimeoutButton->SetValue(GetScreensaverTimeout() / 1000);
 	setupRoot = mgr.GetRoot();
 }
 
@@ -1106,6 +1116,7 @@ namespace UI
 		CreateFileActionPopup(colours);
 		CreateVolumePopup(colours);
 		CreateInfoTimeoutPopup(colours);
+		CreateScreensaverTimeoutPopup(colours);
 		CreateBaudRatePopup(colours);
 		CreateColoursPopup(colours);
 		CreateAreYouSurePopup(colours);
@@ -2355,6 +2366,11 @@ namespace UI
 				mgr.SetPopup(infoTimeoutPopup, AutoPlace, popupY);
 				break;
 
+			case evSetScreensaverTimeout:
+				Adjusting(bp);
+				mgr.SetPopup(screensaverTimeoutPopup, AutoPlace, popupY);
+				break;
+
 			case evSetColours:
 				if (coloursPopup != nullptr)
 				{
@@ -2383,6 +2399,15 @@ namespace UI
 					infoTimeout = bp.GetIParam();
 					SetInfoTimeout(infoTimeout);
 					infoTimeoutButton->SetValue(infoTimeout);
+				}
+				TouchBeep();									// give audible feedback of the touch at the new volume level
+				break;
+
+			case evAdjustScreensaverTimeout:
+				{
+					uint32_t screensaverTimeout = bp.GetIParam();
+					SetScreensaverTimeout(screensaverTimeout * 1000);
+					screensaverTimeoutButton->SetValue(screensaverTimeout);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
 				break;

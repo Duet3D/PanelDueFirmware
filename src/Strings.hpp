@@ -65,6 +65,7 @@ struct StringTable
 	CSTRING clearSettings;
 	CSTRING saveAndRestart;
 	CSTRING infoTimeout;
+	CSTRING screensaverAfter;
 
 	// Misc
 	CSTRING confirmFactoryReset;
@@ -107,6 +108,7 @@ struct StringTable
 
 	// Display dimmer types
 	CSTRING displayDimmingNames[(unsigned int)DisplayDimmerType::NumTypes];
+
 };
 
 const StringTable LanguageTables[NumLanguages] =
@@ -156,6 +158,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Clear settings",
 		"Save & Restart",
 		"Info timeout ",					// note space at end
+		"Screensaver ",						// note space at end
 
 		// Misc
 		"Confirm factory reset",
@@ -268,6 +271,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Werks-Reset",
 		"Sichern & Reboot",
 		"Info timeout ",					// note space at end
+		"Screensaver ",						// note space at end
 
 		// Misc
 		"Alle Einstellungen zurücksetzen",
@@ -379,6 +383,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Effacer paramêtres",
 		"Sauvegarde & Redémarrage",
 		"Info timeout ",						// note space at end
+		"Screensaver ",							// note space at end
 
 		// Misc
 		"Confirmer le réinitialisation de l'imprimante",
@@ -490,6 +495,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Borrar parámetros",
 		"Guardar y Reiniciar",
 		"Info timeout ",					// note space at end
+		"Screensaver ",						// note space at end
 
 		// Misc
 		"Confirma restablecimiento de fábrica",
@@ -601,6 +607,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Smazat nastavení",
 		"Uložit a Restart",
 		"Info timeout ",					// note space at end
+		"Screensaver ",						// note space at end
 
 		// Misc
 		"Skutečně obnovit tovární nastavení?",

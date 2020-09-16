@@ -56,7 +56,7 @@
 
 const uint32_t DefaultBaudRate = 57600;
 const uint32_t DimDisplayTimeout = 60000;				// dim this display after no activity for this number of milliseconds
-const uint32_t ScreensaverTimeout = 120000;				// enable screensaver after no activity for this number of milliseconds
+const uint32_t DefaultScreensaverTimeout = 120000;		// enable screensaver after no activity for this number of milliseconds
 const uint32_t ScreensaverMoveTime = 10000;				// Jog around screen saver text after this number of milliseconds
 const uint32_t DefaultInfoTimeout = 5;					// information message timeout in seconds
 
