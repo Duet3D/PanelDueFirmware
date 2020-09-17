@@ -2,6 +2,12 @@
 
 ## Upgrade notes:
 - This release is compatible with RepRapFirmware 3.2-beta1 or later. It will partially work with RepRapFirmware 3.1.1 but not with any older version.
+- Flashing this release will reset the configuration to defaults
+
+## Limitations
+- Due to the lack of RAM this build will not run on version 1 or early version 2 PanelDue boards that use the `ATSAM3S2B` chip. It  is expected to work on later
+version 2 PanelDue boards using the `ATSAM3S4B` chip. If you have a PanelDue using the `ATSAM3S2B` chip, we suggest you replace the board by
+a version 3 PanelDue board, which can drive your existing LCD.
 
 ## New and changed features:
 - This release uses the RepRapFirmware ObjectModel instead of limited status responses
