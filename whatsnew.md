@@ -1,3 +1,21 @@
+# Version 3.2-RC1
+
+## Upgrade notes:
+- This release is compatible with RepRapFirmware 3.2-beta1 or later. It will partially work with RepRapFirmware 3.1.1 but not with any older version.
+
+## New and changed features:
+- This release uses the RepRapFirmware ObjectModel instead of limited status responses
+- Support for spindles with current RPM as well as active RPM
+- Bed heater will only be shown if it is configured
+- Support for chamber heaters (will only show if bed heater + number of tools <= 6)
+- Tools and assigned heaters and extruders can be numbered arbitrarily (e.g. tool 1 can use heater 8 and extruder 2)
+- A simple screensaver has been added to help preventing screen burn-in on long-lasting prints
+- Tool buttons will reflect the tool status
+- Prevent flickering if values did not change
+
+## Bug fixes
+- Axes will be shown as they are configured, i.e. if configured axes are XYZA then PanelDue will display them like this instead of XYZU
+
 Version 1.20
 ------------
 
