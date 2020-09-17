@@ -20,7 +20,10 @@ enum Event : uint8_t
 	evTabControl, evTabPrint, evTabMsg, evTabSetup,
 
 	// Heater control
-	evSelectHead, evSelectBed, evSelectChamber, evAdjustActiveTemp, evAdjustStandbyTemp,
+	evSelectHead, evSelectBed, evSelectChamber,
+	evAdjustToolActiveTemp, evAdjustToolStandbyTemp,
+	evAdjustBedActiveTemp, evAdjustBedStandbyTemp,
+	evAdjustChamberActiveTemp, evAdjustChamberStandbyTemp,
 
 	// Spindle control
 	evAdjustActiveRPM,

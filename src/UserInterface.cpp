@@ -800,7 +800,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 		// Add the active temperature button
 		DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 		IntegerButton *ib = new IntegerButton(row4, column, tempButtonWidth);
-		ib->SetEvent(evAdjustActiveTemp, i);
+		ib->SetEvent(evAdjustToolActiveTemp, i);
 		ib->SetValue(0);
 		ib->Show(false);
 		activeTemps[i] = ib;
@@ -808,7 +808,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 
 		// Add the standby temperature button
 		ib = new IntegerButton(row5, column, tempButtonWidth);
-		ib->SetEvent(evAdjustStandbyTemp, i);
+		ib->SetEvent(evAdjustToolStandbyTemp, i);
 		ib->SetValue(0);
 		ib->Show(false);
 		standbyTemps[i] = ib;
@@ -1252,12 +1252,23 @@ namespace UI
 		heaterStatus[heaterSlot] = status;
 		if (currentTemps[heaterSlot] != nullptr)
 		{
-			Colour c = (status == HeaterStatus::standby) ? colours->standbyBackColour
+			Colour backgroundColour = (status == HeaterStatus::standby) ? colours->standbyBackColour
 						: (status == HeaterStatus::active) ? colours->activeBackColour
 						: (status == HeaterStatus::fault) ? colours->errorBackColour
 						: (status == HeaterStatus::tuning) ? colours->tuningBackColour
 						: colours->defaultBackColour;
-			currentTemps[heaterSlot]->SetColours((status == HeaterStatus::fault) ? colours->errorTextColour : colours->infoTextColour, c);
+		const Colour foregroundColour =	(status == HeaterStatus::fault)
+						? colours->errorTextColour
+						: colours->infoTextColour;
+		currentTemps[heaterSlot]->SetColours(foregroundColour, backgroundColour);
+			if ((int)heater == bedHeater.heater || (int)heater == chamberHeater.heater)
+			{
+				if (backgroundColour == colours->defaultBackColour)
+				{
+					backgroundColour = colours->buttonImageBackColour;
+				}
+				toolButtons[heaterSlot]->SetColours(foregroundColour, backgroundColour);
+			}
 		}
 	}
 
@@ -1899,8 +1910,12 @@ namespace UI
 				}
 				break;
 
-			case evAdjustActiveTemp:
-			case evAdjustStandbyTemp:
+			case evAdjustToolActiveTemp:
+			case evAdjustToolStandbyTemp:
+			case evAdjustBedActiveTemp:
+			case evAdjustBedStandbyTemp:
+			case evAdjustChamberActiveTemp:
+			case evAdjustChamberStandbyTemp:
 				if (static_cast<IntegerButton*>(f)->GetValue() < 0)
 				{
 					static_cast<IntegerButton*>(f)->SetValue(0);
@@ -1926,53 +1941,56 @@ namespace UI
 				if (fieldBeingAdjusted.IsValid())
 				{
 					int val = static_cast<const IntegerButton*>(fieldBeingAdjusted.GetButton())->GetValue();
-					switch(fieldBeingAdjusted.GetEvent())
+				const event_t eventOfFieldBeingAdjusted =
+						fieldBeingAdjusted.GetEvent();
+				switch (eventOfFieldBeingAdjusted)
 					{
-					case evAdjustActiveTemp:
+					case evAdjustBedActiveTemp:
+					case evAdjustChamberActiveTemp:
 						{
-							int heater = fieldBeingAdjusted.GetIParam();
-							if (heater == bedHeater.heater || heater == chamberHeater.heater)
-							{
-								SerialIo::SendString("M14");
-								SerialIo::SendInt(heater == bedHeater.heater ? 0 : 1);
-								SerialIo::SendString(" P");
-								SerialIo::SendInt(((heater == bedHeater.heater) ? bedHeater : chamberHeater).index);
-								SerialIo::SendString(" S");
-								SerialIo::SendInt(val);
-								SerialIo::SendChar('\n');
-							}
-							else
-							{
-								SerialIo::SendString(((GetFirmwareFeatures() & noG10Temps) == 0) ? "G10 P" : "M104 T");
-								SerialIo::SendInt(heater);
-								SerialIo::SendString(" S");
-								SerialIo::SendInt(val);
-								SerialIo::SendChar('\n');
-							}
+							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedActiveTemp;
+							SerialIo::SendString("M14");
+							SerialIo::SendInt(isBed ? 0 : 1);
+							SerialIo::SendString(" P");
+							SerialIo::SendInt((isBed ? bedHeater : chamberHeater).index);
+							SerialIo::SendString(" S");
+							SerialIo::SendInt(val);
+							SerialIo::SendChar('\n');
+						}
+						break;
+					case evAdjustToolActiveTemp:
+						{
+							int toolNumber = fieldBeingAdjusted.GetIParam();
+							SerialIo::SendString(((GetFirmwareFeatures() & noG10Temps) == 0) ? "G10 P" : "M104 T");
+							SerialIo::SendInt(toolNumber);
+							SerialIo::SendString(" S");
+							SerialIo::SendInt(val);
+							SerialIo::SendChar('\n');
 						}
 						break;
 
-					case evAdjustStandbyTemp:
+					case evAdjustBedStandbyTemp:
+					case evAdjustChamberStandbyTemp:
 						{
-							int heater = fieldBeingAdjusted.GetIParam();
-							if (heater == bedHeater.heater || heater == chamberHeater.heater)
-							{
-								SerialIo::SendString("M14");
-								SerialIo::SendInt(heater == bedHeater.heater ? 0 : 1);
-								SerialIo::SendString(" P");
-								SerialIo::SendInt(((heater == bedHeater.heater) ? bedHeater : chamberHeater).index);
-								SerialIo::SendString(" R");
-								SerialIo::SendInt(val);
-								SerialIo::SendChar('\n');
-							}
-							else
- 							{
-								SerialIo::SendString("G10 P");
-								SerialIo::SendInt(heater);
-								SerialIo::SendString(" R");
-								SerialIo::SendInt(val);
-								SerialIo::SendChar('\n');
-							}
+							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedStandbyTemp;
+							SerialIo::SendString("M14");
+							SerialIo::SendInt(isBed ? 0 : 1);
+							SerialIo::SendString(" P");
+							SerialIo::SendInt((isBed ? bedHeater : chamberHeater).index);
+							SerialIo::SendString(" R");
+							SerialIo::SendInt(val);
+							SerialIo::SendChar('\n');
+						}
+						break;
+
+					case evAdjustToolStandbyTemp:
+						{
+							int toolNumber = fieldBeingAdjusted.GetIParam();
+							SerialIo::SendString("G10 P");
+							SerialIo::SendInt(toolNumber);
+							SerialIo::SendString(" R");
+							SerialIo::SendInt(val);
+							SerialIo::SendChar('\n');
 						}
 						break;
 
@@ -2039,8 +2057,12 @@ namespace UI
 					int newValue = ib->GetValue() + bp.GetIParam();
 					switch(fieldBeingAdjusted.GetEvent())
 					{
-					case evAdjustActiveTemp:
-					case evAdjustStandbyTemp:
+					case evAdjustToolActiveTemp:
+					case evAdjustToolStandbyTemp:
+					case evAdjustBedActiveTemp:
+					case evAdjustBedStandbyTemp:
+					case evAdjustChamberActiveTemp:
+					case evAdjustChamberStandbyTemp:
 						newValue = constrain<int>(newValue, 0, 1600);		// some users want to print at high temperatures
 						break;
 
@@ -2176,7 +2198,7 @@ namespace UI
 					SerialIo::SendString(" S");
 					if (heaterStatus[slot] == HeaterStatus::active)			// if chamber is active
 					{
-						SerialIo::SendString(" S-273.15\n");
+						SerialIo::SendString("-273.15\n");
 					}
 					else
 					{
@@ -2584,8 +2606,8 @@ namespace UI
 				StopAdjusting();
 				break;
 
-			case evAdjustActiveTemp:
-			case evAdjustStandbyTemp:
+			case evAdjustToolActiveTemp:
+			case evAdjustToolStandbyTemp:
 			case evAdjustActiveRPM:
 			case evSetBaudRate:
 			case evSetVolume:
@@ -2778,8 +2800,8 @@ namespace UI
 			toolButtons[slot]->SetIcon(IconBed);
 			toolButtons[slot]->SetIntVal(bedHeater.index);	// Remove the line below if we want to show the bed number
 			toolButtons[slot]->SetPrintText(false);
-			activeTemps[slot]->SetEvent(evAdjustActiveTemp, bedHeater.heater);
-			standbyTemps[slot]->SetEvent(standbyTemps[slot]->GetEvent(), bedHeater.heater);
+			activeTemps[slot]->SetEvent(evAdjustBedActiveTemp, bedHeater.heater);
+			standbyTemps[slot]->SetEvent(evAdjustBedStandbyTemp, bedHeater.heater);
 			++slot;
 		}
 		OM::IterateTools([&slot](OM::Tool* tool)
@@ -2798,11 +2820,11 @@ namespace UI
 			mgr.Show(extrusionFactors[slot], hasHeater);
 
 			// Set tool number for change event
-			const event_t evForActive = hasHeater ? evAdjustActiveTemp : hasSpindle ? evAdjustActiveRPM : evNull;
+			const event_t evForActive = hasHeater ? evAdjustToolActiveTemp : hasSpindle ? evAdjustActiveRPM : evNull;
 			const int evActiveParam = hasSpindle ? tool->spindle->index : tool->index;
 
 			activeTemps[slot]->SetEvent(evForActive, evActiveParam);
-			standbyTemps[slot]->SetEvent(standbyTemps[slot]->GetEvent(), tool->index);
+			standbyTemps[slot]->SetEvent(evAdjustToolStandbyTemp, tool->index);
 			++slot;
 		});
 		chamberHeater.slot = MaxHeaters;
@@ -2817,8 +2839,8 @@ namespace UI
 			toolButtons[slot]->SetIcon(IconChamber);
 			toolButtons[slot]->SetIntVal(chamberHeater.index);	// Remove the line below if we want to show the chamber number
 			toolButtons[slot]->SetPrintText(false);
-			activeTemps[slot]->SetEvent(evAdjustActiveTemp, chamberHeater.heater);
-			standbyTemps[slot]->SetEvent(standbyTemps[slot]->GetEvent(), chamberHeater.heater);
+			activeTemps[slot]->SetEvent(evAdjustChamberActiveTemp, chamberHeater.heater);
+			standbyTemps[slot]->SetEvent(evAdjustChamberStandbyTemp, chamberHeater.heater);
 			++slot;
 		}
 		numToolColsUsed = slot;
