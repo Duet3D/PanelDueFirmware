@@ -1,3 +1,24 @@
+# Version 3.2-RC2
+
+## Upgrade Notes:
+- This release is compatible with RepRapFirmware 3.2-beta1 or later. It will partially work with RepRapFirmware 3.1.1 but not with any older version.
+
+## Limitations
+Due to the lack of RAM this build will not run on version 1 or early version 2 PanelDue boards that use the `ATSAM3S2B` chip.
+- Version 1.0, 1.1 and earlier v2 PanelDue: ATSAM3S2B processor (64MHz, 32kb RAM, 128kB flash) - these are the ones that the new firmware probably won't run on.
+- Version 2 PanelDue manufactured from August 2016: ATSAM3S4B processor (64MHz, 48kb RAM, 256kb flash). Will run the new firmware, but not as fast as version 3 will.
+- Version 3 PanelDue, including all 5i and 7i: ATSAM4S4B processor, 120MHz, 64kB RAM, 256kb flash. Will run the new firmware.
+
+# Changes since RC1:
+- Status colors of tools were confusing (because a tool can never go to "off" after being active once) so it only shows "active" or "anything else"
+
+## Bug fixes since RC1:
+- In some cases setting a tool's heater would instead the heatbed temperature
+- Chamber and heatbed icons did not change colors according to their state
+- It was not possible to disable the chamber heater by tapping the chamber button
+- Move popup buttons were none-functional
+- Commands entered via on-screen-keyboard were not echoed into the text field
+
 # Version 3.2-RC1
 
 ## Upgrade notes:

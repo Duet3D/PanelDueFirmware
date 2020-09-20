@@ -2890,8 +2890,8 @@ namespace UI
 		tool->status = status;
 		if (tool->slot < MaxHeaters)
 		{
-			Colour c = (status == ToolStatus::standby) ? colours->standbyBackColour
-						: (status == ToolStatus::active) ? colours->activeBackColour
+			Colour c = /*(status == ToolStatus::standby) ? colours->standbyBackColour : */
+						(status == ToolStatus::active) ? colours->activeBackColour
 						: colours->buttonImageBackColour;
 			toolButtons[tool->slot]->SetColours(colours->buttonTextColour, c);
 		}
