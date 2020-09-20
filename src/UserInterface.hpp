@@ -31,7 +31,7 @@ namespace UI
 	extern void ActivateScreensaver();
 	extern void DeactivateScreensaver();
 	extern void AnimateScreensaver();
-	extern void ShowAxis(size_t axis, bool b);
+	extern void ShowAxis(size_t axis, bool b, char axisLetter =  '\0');
 	extern void UpdateAxisPosition(size_t axis, float fval);
 	extern void UpdateCurrentTemperature(size_t heater, float fval);
 	extern void UpdateHeaterStatus(const size_t heater, const HeaterStatus status);

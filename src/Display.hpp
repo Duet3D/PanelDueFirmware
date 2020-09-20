@@ -258,10 +258,6 @@ public:
 
 	void SetLabel(const char* array s)
 	{
-		if (strcmp(label, s) == 0)
-		{
-			return;
-		}
 		label = s;
 		changed = true;
 	}
@@ -519,6 +515,20 @@ public:
 		text = pt;
 		changed = true;
 	}
+};
+
+class TextButtonForAxis : public TextButton
+{
+private:
+	char axisLetter;
+public:
+	TextButtonForAxis(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, int param = 0)
+		: TextButton(py, px, pw, pt, e, param), axisLetter('\0') {}
+	TextButtonForAxis(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, const char * array param)
+		: TextButton(py, px, pw, pt, e, param), axisLetter('\0') {}
+
+	char GetAxisLetter() const { return this->axisLetter; }
+	void SetAxisLetter(char axisLetter) { this->axisLetter = axisLetter; }
 };
 
 // Standard button with an icon

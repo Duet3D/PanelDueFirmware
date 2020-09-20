@@ -157,7 +157,8 @@ public:
 	void Set(const char *title, const char *text, int32_t mode, uint32_t controls);
 
 private:
-	TextButton *okButton, *cancelButton, *zUpCourseButton, *zUpMedButton, *zUpFineButton, *zDownCourseButton, *zDownMedButton, *zDownFineButton;
+	TextButton *okButton, *cancelButton;
+	TextButtonForAxis *zUpCourseButton, *zUpMedButton, *zUpFineButton, *zDownCourseButton, *zDownMedButton, *zDownFineButton;
 	String<alertTextLength/3> alertText1, alertText2, alertText3;
 	String<alertTitleLength> alertTitle;
 };
@@ -201,19 +202,18 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	constexpr PixelNumber hOffset = popupSideMargin + (alertPopupWidth - 2 * popupSideMargin - totalUnits * unitWidth)/2;
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	AddField(zUpCourseButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset,				  buttonWidth, LESS_ARROW "2.0", evMoveAxis, "-2.0"));
-	AddField(zUpMedButton =      new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + buttonStep,     buttonWidth, LESS_ARROW "0.2", evMoveAxis, "-0.2"));
-	AddField(zUpFineButton =     new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, LESS_ARROW "0.02", evMoveAxis, "-0.02"));
-	AddField(zDownFineButton =   new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, MORE_ARROW "0.02", evMoveAxis, "0.02"));
-	AddField(zDownMedButton =    new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, MORE_ARROW "0.2", evMoveAxis, "0.2"));
-	AddField(zDownCourseButton = new TextButton(popupTopMargin + 6 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, MORE_ARROW "2.0", evMoveAxis, "2.0"));
-	// TODO: Update these if order changes?
-	zUpCourseButton->SetEvent(evMoveAxis, 3);
-	zUpMedButton->SetEvent(evMoveAxis, 3);
-	zUpFineButton->SetEvent(evMoveAxis, 3);
-	zDownFineButton->SetEvent(evMoveAxis, 3);
-	zDownMedButton->SetEvent(evMoveAxis, 3);
-	zDownCourseButton->SetEvent(evMoveAxis, 3);
+	AddField(zUpCourseButton =   new TextButtonForAxis(popupTopMargin + 6 * rowTextHeight, hOffset,				  buttonWidth, LESS_ARROW "2.0", evMoveAxis, "-2.0"));
+	AddField(zUpMedButton =      new TextButtonForAxis(popupTopMargin + 6 * rowTextHeight, hOffset + buttonStep,     buttonWidth, LESS_ARROW "0.2", evMoveAxis, "-0.2"));
+	AddField(zUpFineButton =     new TextButtonForAxis(popupTopMargin + 6 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, LESS_ARROW "0.02", evMoveAxis, "-0.02"));
+	AddField(zDownFineButton =   new TextButtonForAxis(popupTopMargin + 6 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, MORE_ARROW "0.02", evMoveAxis, "0.02"));
+	AddField(zDownMedButton =    new TextButtonForAxis(popupTopMargin + 6 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, MORE_ARROW "0.2", evMoveAxis, "0.2"));
+	AddField(zDownCourseButton = new TextButtonForAxis(popupTopMargin + 6 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, MORE_ARROW "2.0", evMoveAxis, "2.0"));
+	zUpCourseButton->SetAxisLetter('Z');
+	zUpMedButton->SetAxisLetter('Z');
+	zUpFineButton->SetAxisLetter('Z');
+	zDownFineButton->SetAxisLetter('Z');
+	zDownMedButton->SetAxisLetter('Z');
+	zDownCourseButton->SetAxisLetter('Z');
 
 	AddField(okButton =          new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + buttonStep,     buttonWidth + buttonStep, "OK", evCloseAlert, "M292 P0"));
 	AddField(cancelButton =      new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + 3 * buttonStep, buttonWidth + buttonStep, "Cancel", evCloseAlert, "M292 P1"));
@@ -311,13 +311,16 @@ IconButtonWithText *AddIconButtonWithText(PixelNumber row, unsigned int col, uns
 // Optionally, set one to 'pressed' and return that one.
 // Set the colours before calling this
 ButtonPress CreateStringButtonRow(Window * pf, PixelNumber top, PixelNumber left, PixelNumber totalWidth, PixelNumber spacing, unsigned int numButtons,
-									const char* array const text[], const char* array const params[], Event evt, int selected = -1)
+									const char* array const text[], const char* array const params[], Event evt, int selected = -1, bool textButtonForAxis = false)
 {
 	const PixelNumber step = (totalWidth + spacing)/numButtons;
 	ButtonPress bp;
 	for (unsigned int i = 0; i < numButtons; ++i)
 	{
-		TextButton *tp = new TextButton(top, left + i * step, step - spacing, text[i], evt, params[i]);
+		TextButton *tp =
+				textButtonForAxis
+				? new TextButtonForAxis(top, left + i * step, step - spacing, text[i], evt, params[i])
+				: new TextButton(top, left + i * step, step - spacing, text[i], evt, params[i]);
 		pf->AddField(tp);
 		if ((int)i == selected)
 		{
@@ -466,14 +469,14 @@ void CreateMovePopup(const ColourScheme& colours)
 	{
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 		const char * array const * array values = (axisNames[i][0] == 'Z') ? zJogValues : xyJogValues;
-		CreateStringButtonRow(movePopup, ypos, xpos, movePopupWidth - xpos - popupSideMargin, fieldSpacing, 8, values, values, evMoveAxis);
+		CreateStringButtonRow(movePopup, ypos, xpos, movePopupWidth - xpos - popupSideMargin, fieldSpacing, 8, values, values, evMoveAxis, -1, true);
 
 		// We create the label after the button row, so that the buttons follow it in the field order, which makes it easier to hide them
 		DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
 		StaticTextField * const tf = new StaticTextField(ypos + labelRowAdjust, popupSideMargin, axisLabelWidth, TextAlignment::Left, axisNames[i]);
 		movePopup->AddField(tf);
 		moveAxisRows[i] = tf;
-		UI::ShowAxis(i, i < MIN_AXES);
+		UI::ShowAxis(i, i < MIN_AXES, axisNames[i][0]);
 
 		DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupInfoBackColour);
 		FloatField *f = new FloatField(axisPosYpos, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
@@ -1164,7 +1167,7 @@ namespace UI
 	}
 
 	// Show or hide an axis on the move button grid and on the axis display
-	void ShowAxis(size_t slot, bool b)
+	void ShowAxis(size_t slot, bool b, char axisLetter)
 	{
 		if (slot >= MaxDisplayableAxes)
 		{
@@ -1177,9 +1180,9 @@ namespace UI
 			f->Show(b);
 			if (i > 0) // actual move buttons
 			{
-				TextButton *textButton = static_cast<TextButton*>(f);
+				TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(f);
 				// Use int value with slot here because string value is already taken by amount
-				textButton->SetEvent(textButton->GetEvent(), (int)slot);
+				textButton->SetAxisLetter(axisLetter);
 			}
 			f = f->next;
 		}
@@ -1605,7 +1608,7 @@ namespace UI
 					homeButtons[slot]->SetEvent(homeButtons[slot]->GetEvent(), letter);
 
 					mgr.Show(homeButtons[slot], !isDelta);
-					ShowAxis(slot, true);
+					ShowAxis(slot, true, axis->letter[0]);
 				}
 			});
 			// Hide axes possibly shown before
@@ -2091,16 +2094,11 @@ namespace UI
 
 			case evMoveAxis:
 				{
-					auto axis = OM::FindAxis([&bp](OM::Axis* axis) { return axis->slot == bp.GetIParam(); });
-					if (axis == nullptr)
-					{
-						break;
-					}
-					const char c = axis->letter[0];
-					SerialIo::SendString("G91\nG1 ");
-					SerialIo::SendChar(c);
+					TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(bp.GetButton());
+					SerialIo::SendString("G91 G1 ");
+					SerialIo::SendChar(textButton->GetAxisLetter());
 					SerialIo::SendString(bp.GetSParam());
-					SerialIo::SendString(" F6000\nG90\n");
+					SerialIo::SendString(" F6000 G90\n");
 				}
 				break;
 
