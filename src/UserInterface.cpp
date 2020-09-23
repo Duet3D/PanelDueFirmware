@@ -2124,7 +2124,7 @@ namespace UI
 			case evRetract:
 				if (currentExtrudeAmountPress.IsValid() && currentExtrudeRatePress.IsValid())
 				{
-					SerialIo::SendString("M120\nM83\nG1 E");
+					SerialIo::SendString("M120 M83 G1 E");
 					if (ev == evRetract)
 					{
 						SerialIo::SendChar('-');
@@ -2132,7 +2132,7 @@ namespace UI
 					SerialIo::SendString(currentExtrudeAmountPress.GetSParam());
 					SerialIo::SendString(" F");
 					SerialIo::SendString(currentExtrudeRatePress.GetSParam());
-					SerialIo::SendString("\nM121\n");
+					SerialIo::SendString(" M121\n");
 				}
 				break;
 
@@ -2610,6 +2610,7 @@ namespace UI
 			case evSetBaudRate:
 			case evSetVolume:
 			case evSetInfoTimeout:
+			case evSetScreensaverTimeout:
 			case evSetColours:
 				mgr.ClearPopup();
 				StopAdjusting();
@@ -2650,6 +2651,7 @@ namespace UI
 			case evSetBaudRate:
 			case evSetVolume:
 			case evSetInfoTimeout:
+			case evSetScreensaverTimeout:
 			case evSetColours:
 			case evSetLanguage:
 			case evCalTouch:
