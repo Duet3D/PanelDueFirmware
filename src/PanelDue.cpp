@@ -1688,6 +1688,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 				if (uival < remoteUpTime)
 				{
 					resetSeqs();
+					UI::ResetBedAndChamber();
 				}
 				remoteUpTime = uival;
 			}

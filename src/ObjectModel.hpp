@@ -75,6 +75,8 @@ namespace OM {
 		int8_t heater = -1;
 		// Slot for display on panel
 		uint8_t slot = MaxHeaters;
+
+		void Reset() { index = 0; heater = -1; slot = MaxHeaters; }
 	};
 
 	typedef void (*AxisIterator)(Axis*);

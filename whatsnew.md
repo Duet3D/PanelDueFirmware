@@ -9,6 +9,9 @@ See 3.2-RC2
 
 ## Bug Fixes since RC2:
 - Screensaver timeout select pop-up would not disappear when clicking anything but "Set" or a tab button
+- Extrusion factor was not always targeting the correct extruder
+- Extrusion factor controls were not hidden if amount of tools was decreased
+- Bed and chamber controls were not hidden if they were removed from config
 
 # Version 3.2-RC2
 

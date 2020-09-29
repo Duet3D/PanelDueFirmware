@@ -2808,6 +2808,7 @@ namespace UI
 			tool->slot = slot;
 			const bool hasHeater = tool->heater > -1;
 			const bool hasSpindle = tool->spindle != nullptr;
+			const bool hasExtruder = tool->extruder > -1;
 			toolButtons[slot]->SetEvent(evSelectHead, tool->index);
 			toolButtons[slot]->SetIntVal(tool->index);
 			toolButtons[slot]->SetPrintText(true);
@@ -2816,7 +2817,7 @@ namespace UI
 			mgr.Show(currentTemps[slot], hasHeater || hasSpindle);
 			mgr.Show(activeTemps[slot], hasHeater || hasSpindle);
 			mgr.Show(standbyTemps[slot], hasHeater);
-			mgr.Show(extrusionFactors[slot], hasHeater);
+			mgr.Show(extrusionFactors[slot], hasExtruder);
 
 			// Set tool number for change event
 			const event_t evForActive = hasHeater ? evAdjustToolActiveTemp : hasSpindle ? evAdjustActiveRPM : evNull;
@@ -2824,6 +2825,7 @@ namespace UI
 
 			activeTemps[slot]->SetEvent(evForActive, evActiveParam);
 			standbyTemps[slot]->SetEvent(evAdjustToolStandbyTemp, tool->index);
+			extrusionFactors[slot]->SetEvent(extrusionFactors[slot]->GetEvent(), tool->extruder);
 			++slot;
 		});
 		chamberHeater.slot = MaxHeaters;
@@ -2849,6 +2851,7 @@ namespace UI
 			mgr.Show(currentTemps[i], false);
 			mgr.Show(activeTemps[i], false);
 			mgr.Show(standbyTemps[i], false);
+			mgr.Show(extrusionFactors[i], false);
 		}
 		AdjustControlPageMacroButtons();
 	}
@@ -2977,6 +2980,12 @@ namespace UI
 		OM::BedOrChamber* h = (bed) ? &bedHeater : &chamberHeater;
 		h->heater = heaterNumber;
 		h->index = heaterIndex;
+	}
+
+	void ResetBedAndChamber()
+	{
+		bedHeater.Reset();
+		chamberHeater.Reset();
 	}
 }
 
