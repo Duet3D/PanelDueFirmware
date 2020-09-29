@@ -248,10 +248,6 @@ public:
 
 	void SetValue(const char* array s)
 	{
-		if (strcmp(text, s) == 0)
-		{
-			return;
-		}
 		text = s;
 		changed = true;
 	}
