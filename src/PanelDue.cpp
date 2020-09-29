@@ -1051,7 +1051,7 @@ void SetStatus(const char * sts)
 
 	if (newStatus != status)
 	{
-		if (GetDisplayDimmerType() != DisplayDimmerType::always)
+		if (isDimmed)
 		{
 			RestoreBrightness();
 		}

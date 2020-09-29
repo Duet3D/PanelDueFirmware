@@ -5,6 +5,7 @@ See 3.2-RC2
 
 ## Changes since RC2
 - Extrusion and retraction commands are now a single line to prevent being interleaved by other commands
+- Screensaver is now a popup to better interact with existing or incoming popups
 
 ## Bug Fixes since RC2:
 - Screensaver timeout select pop-up would not disappear when clicking anything but "Set" or a tab button

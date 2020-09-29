@@ -56,9 +56,9 @@ static TextButton *controlPageMacroButtons[NumControlPageMacroButtons];
 static String<controlPageMacroTextLength> controlPageMacroText[NumControlPageMacroButtons];
 
 static PopupWindow *setTempPopup, *setRPMPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup,
-		*volumePopup, *infoTimeoutPopup, *screensaverTimeoutPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
+		*volumePopup, *infoTimeoutPopup, *screensaverTimeoutPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup, *screensaverPopup;
 static StaticTextField *areYouSureTextField, *areYouSureQueryField;
-static DisplayField *emptyRoot, *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot, *screensaverRoot;
+static DisplayField *emptyRoot, *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
 static SingleButton *homeAllButton, *bedCompButton;
 static IconButtonWithText *homeButtons[MaxDisplayableAxes], *toolButtons[MaxHeaters];
 static FloatField *controlTabAxisPos[MaxDisplayableAxes];
@@ -624,6 +624,15 @@ void CreateAreYouSurePopup(const ColourScheme& colours)
 	areYouSurePopup->AddField(new IconButton(popupTopMargin + 2 * rowHeight, areYouSurePopupWidth/2 + 10, areYouSurePopupWidth/2 - 2 * popupSideMargin, IconCancel, evCancel));
 }
 
+void CreateScreensaverPopup()
+{
+	screensaverPopup = new PopupWindow(DisplayY, DisplayX, black, black);
+	DisplayField::SetDefaultColours(white, black);
+	static const char * text = "Touch to wake up";
+	screensaverTextWidth = DisplayField::GetTextWidth(text, DisplayX);
+	screensaverPopup->AddField(screensaverText = new StaticTextField(row1, margin, screensaverTextWidth, TextAlignment::Left, text));
+}
+
 // Create the baud rate adjustment popup
 void CreateBaudRatePopup(const ColourScheme& colours)
 {
@@ -1020,16 +1029,6 @@ void CreateCommonFields(const ColourScheme& colours)
 	tabSetup = AddTextButton(rowTabs, 3, 4, strings->setup, evTabSetup, nullptr);
 }
 
-void CreateScreensaverRoot()
-{
-	mgr.SetRoot(emptyRoot);
-	DisplayField::SetDefaultColours(white, black);
-	static const char * text = "Touch to wake up";
-	screensaverTextWidth = DisplayField::GetTextWidth(text, DisplayX);
-	mgr.AddField(screensaverText = new StaticTextField(row1, margin, screensaverTextWidth, TextAlignment::Left, text));
-	screensaverRoot = mgr.GetRoot();
-}
-
 void CreateMainPages(uint32_t language, const ColourScheme& colours)
 {
 	if (language >= ARRAY_SIZE(LanguageTables))
@@ -1053,7 +1052,7 @@ void CreateMainPages(uint32_t language, const ColourScheme& colours)
 	CreatePrintingTabFields(colours);
 	CreateMessageTabFields(colours);
 	CreateSetupTabFields(language, colours);
-	CreateScreensaverRoot();
+	CreateScreensaverPopup();
 }
 
 namespace UI
@@ -1432,14 +1431,13 @@ namespace UI
 	void ActivateScreensaver()
 	{
 		lcd.fillScr(black);
-		mgr.SetRoot(screensaverRoot);
-		mgr.Refresh(true);
+		mgr.SetPopup(screensaverPopup);
 		lastScreensaverMoved = SystemTick::GetTickCount();
 	}
 
 	void DeactivateScreensaver()
 	{
-		SwitchToTab(currentTab);
+		mgr.ClearPopup(true, screensaverPopup);
 	}
 
 	void AnimateScreensaver()
@@ -1712,9 +1710,9 @@ namespace UI
 	// Process a new message box alert, clearing any existing one
 	void ProcessAlert(const Alert& alert)
 	{
+		RestoreBrightness();
 		alertPopup->Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
 		mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
-		RestoreBrightness();
 		alertMode = alert.mode;
 		displayingResponse = false;
 		whenAlertReceived = SystemTick::GetTickCount();
@@ -1751,6 +1749,7 @@ namespace UI
 
 	void ProcessSimpleAlert(const char* array text)
 	{
+		RestoreBrightness();
 		if (alertMode < 2)												// if the current alert doesn't require acknowledgement
 		{
 			alertPopup->Set(strings->message, text, 1, 0);
@@ -1760,7 +1759,6 @@ namespace UI
 			whenAlertReceived = SystemTick::GetTickCount();
 			alertTicks = 0;												// no timeout
 		}
-		RestoreBrightness();
 	}
 
 	// Process a new response. This is treated like a simple alert except that it times out and isn't cleared by a "clear alert" command from the host.
@@ -1772,6 +1770,7 @@ namespace UI
 			&& (isErrorMessage || infoTimeout != 0)
 		   )
 		{
+			RestoreBrightness();
 			alertPopup->Set(strings->response, text, 1, 0);
 			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
 			alertMode = -1;												// make sure that a call to ClearAlert doesn't clear us
