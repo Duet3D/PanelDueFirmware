@@ -109,16 +109,19 @@ UTouch touch(23, 24, 22, 21, 20);
 
 #endif
 
+// These defines control which detailed M409 requests will be sent
+// If one of the fields in the disabled ones need to be fetched the
+// corresponding define has to be set to (1)
 #define FETCH_BOARDS		(1)
 #define FETCH_DIRECTORIES	(0)
-#define FETCH_FANS			(1)
+#define FETCH_FANS			(0)
 #define FETCH_HEAT			(1)
 #define FETCH_INPUTS		(0)
 #define FETCH_JOB			(1)
 #define FETCH_MOVE			(1)
 #define FETCH_NETWORK		(1)
 #define FETCH_SCANNER		(0)
-#define FETCH_SENSORS		(1)
+#define FETCH_SENSORS		(0)
 #define FETCH_SPINDLES		(1)
 #define FETCH_STATE			(1)
 #define FETCH_TOOLS			(1)

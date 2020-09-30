@@ -212,7 +212,7 @@ namespace SerialIo
 	JsonState state = jsBegin;
 
 	// fieldId is the name of the field being received. A '^' character indicates the position of an array index, and a ':' character indicates a field separator.
-	String<50> fieldId;
+	String<100> fieldId;
 	String<300> fieldVal;	// long enough for about 6 lines of message
 	size_t arrayIndices[MaxArrayNesting];
 	size_t arrayDepth = 0;
