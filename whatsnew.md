@@ -6,12 +6,14 @@ See 3.2-RC2
 ## Changes since RC2
 - Extrusion and retraction commands are now a single line to prevent being interleaved by other commands
 - Screensaver is now a popup to better interact with existing or incoming popups
+- No longer fetch detailed M409 for Fans or Sensors (as they are currently not required)
 
 ## Bug Fixes since RC2:
 - Screensaver timeout select pop-up would not disappear when clicking anything but "Set" or a tab button
 - Extrusion factor was not always targeting the correct extruder
 - Extrusion factor controls were not hidden if amount of tools was decreased
 - Bed and chamber controls were not hidden if they were removed from config
+- If a JSON key path was too long it would result in an endless fetch-loop
 
 # Version 3.2-RC2
 
