@@ -1,3 +1,8 @@
+# Version 3.2-RC3+1
+
+## Bug fixes:
+- Message box was not closed on PanelDue if closed e.g. in DWC
+
 # Version 3.2-RC3
 
 ## Upgrade Notes and Limitations

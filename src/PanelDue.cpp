@@ -325,6 +325,7 @@ enum ReceivedDataEvent
 	rcvSpindlesTool,
 
 	// Keys from state response
+	rcvStateMessageBox,
 	rcvStateMessageBoxAxisControls,
 	rcvStateMessageBoxMessage,
 	rcvStateMessageBoxMode,
@@ -428,6 +429,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvSpindlesTool, 					"result^:tool" },
 
 	// M409 K"state" response
+	{ rcvStateMessageBox,				"result:messageBox" },
 	{ rcvStateMessageBoxAxisControls,	"result:messageBox:axisControls" },
 	{ rcvStateMessageBoxMessage,		"result:messageBox:message" },
 	{ rcvStateMessageBoxMode,			"result:messageBox:mode" },
@@ -1911,6 +1913,14 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		break;
 
 	// State section
+	case rcvStateMessageBox:
+		// Nessage box has been dealt with somewhere else
+		if (data[0] == 0)
+		{
+			UI::ClearAlert();
+		}
+		break;
+
 	case rcvStateMessageBoxAxisControls:
 		if (GetUnsignedInteger(data, currentAlert.controls))
 		{
@@ -2305,7 +2315,7 @@ int main(void)
 
 					SerialIo::SendString("M409 K\"");
 					SerialIo::SendString(nextToPoll);
-					SerialIo::SendString("\" F\"v\"\n");
+					SerialIo::SendString("\" F\"vn\"\n");
 				}
 				else {
 
