@@ -569,59 +569,59 @@ const char * GetNextToPoll()
 {
 	if (seqs.updateNetwork)
 	{
-		return "network";
+		return "K\"network\" F\"v\"";
 	}
 	if (seqs.updateBoards)
 	{
-		return "boards";
+		return "K\"boards\" F\"v\"";
 	}
 	if (seqs.updateMove)
 	{
-		return "move";
+		return "K\"move\" F\"v\"";
 	}
 	if (seqs.updateHeat)
 	{
-		return "heat";
+		return "K\"heat\" F\"v\"";
 	}
 	if (seqs.updateTools)
 	{
-		return "tools";
+		return "K\"tools\" F\"v\"";
 	}
 	if (seqs.updateSpindles)
 	{
-		return "spindles";
+		return "K\"spindles\" F\"v\"";
 	}
 	if (seqs.updateDirectories)
 	{
-		return "directories";
+		return "K\"directories\" F\"v\"";
 	}
 	if (seqs.updateFans)
 	{
-		return "fans";
+		return "K\"fans\" F\"v\"";
 	}
 	if (seqs.updateInputs)
 	{
-		return "inputs";
+		return "K\"inputs\" F\"v\"";
 	}
 	if (seqs.updateJob)
 	{
-		return "job";
+		return "K\"job\" F\"v\"";
 	}
 	if (seqs.updateScanner)
 	{
-		return "scanner";
+		return "K\"scanner\" F\"v\"";
 	}
 	if (seqs.updateSensors)
 	{
-		return "sensors";
+		return "K\"sensors\" F\"v\"";
 	}
 	if (seqs.updateState)
 	{
-		return "state";
+		return "K\"state\" F\"vn\"";
 	}
 	if (seqs.updateVolumes)
 	{
-		return "volumes";
+		return "K\"volumes\" F\"v\"";
 	}
 
 	return nullptr;
@@ -2313,9 +2313,9 @@ int main(void)
 					// Once we get here the first time we will work all seqs once
 					initialized = true;
 
-					SerialIo::SendString("M409 K\"");
+					SerialIo::SendString("M409 ");
 					SerialIo::SendString(nextToPoll);
-					SerialIo::SendString("\" F\"vn\"\n");
+					SerialIo::SendChar('\n');
 				}
 				else {
 
