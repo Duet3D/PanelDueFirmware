@@ -126,7 +126,7 @@ bool displayingResponse = false;						// true if displaying a response
 static PixelNumber screensaverTextWidth = 0;
 static uint32_t lastScreensaverMoved = 0;
 
-static int32_t currentTool = -1;
+static int8_t currentTool = -2;							// Initialized to a value never returned by RRF to have the logic for "no tool" applied at startup
 static OM::BedOrChamber bedHeater, chamberHeater;
 static bool allAxesHomed = false;
 
@@ -310,22 +310,38 @@ IconButtonWithText *AddIconButtonWithText(PixelNumber row, unsigned int col, uns
 // Create a row of text buttons.
 // Optionally, set one to 'pressed' and return that one.
 // Set the colours before calling this
-ButtonPress CreateStringButtonRow(Window * pf, PixelNumber top, PixelNumber left, PixelNumber totalWidth, PixelNumber spacing, unsigned int numButtons,
-									const char* array const text[], const char* array const params[], Event evt, int selected = -1, bool textButtonForAxis = false)
+ButtonPress CreateStringButtonRow(
+		Window * parentWindow,
+		PixelNumber top,
+		PixelNumber left,
+		PixelNumber totalWidth,
+		PixelNumber spacing,
+		unsigned int numButtons,
+		const char* array const text[],
+		const char* array const params[],
+		Event evt,
+		int selected = -1,
+		bool textButtonForAxis = false,
+		DisplayField** firstButton = nullptr)
 {
 	const PixelNumber step = (totalWidth + spacing)/numButtons;
 	ButtonPress bp;
-	for (unsigned int i = 0; i < numButtons; ++i)
+	// Since Window->AddField prepends fields in the linked list we start with the last element
+	for (int i = numButtons - 1; i >= 0; --i)
 	{
 		TextButton *tp =
 				textButtonForAxis
 				? new TextButtonForAxis(top, left + i * step, step - spacing, text[i], evt, params[i])
 				: new TextButton(top, left + i * step, step - spacing, text[i], evt, params[i]);
-		pf->AddField(tp);
+		parentWindow->AddField(tp);
 		if ((int)i == selected)
 		{
 			tp->Press(true, 0);
 			bp = ButtonPress(tp, 0);
+		}
+		if (firstButton != nullptr && i == 0)
+		{
+			*firstButton = tp;
 		}
 	}
 	return bp;
@@ -1176,27 +1192,26 @@ namespace UI
 		DisplayField *f = moveAxisRows[slot];
 		for (int i = 0; i < 9 && f != nullptr; ++i)
 		{
-			f->Show(b);
+			mgr.Show(f, b);
 			if (i > 0) // actual move buttons
 			{
 				TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(f);
-				// Use int value with slot here because string value is already taken by amount
 				textButton->SetAxisLetter(axisLetter);
 			}
 			f = f->next;
 		}
-		controlTabAxisPos[slot]->Show(b);
-		printTabAxisPos[slot]->Show(b);
+		mgr.Show(controlTabAxisPos[slot], b);
+		mgr.Show(printTabAxisPos[slot], b);
 		if (numDisplayedAxes < MaxDisplayableAxes)
 		{
-			movePopupAxisPos[slot]->Show(b);		// the move popup axis positions occupy the last axis row of the move popup
+			mgr.Show(movePopupAxisPos[slot], b);		// the move popup axis positions occupy the last axis row of the move popup
 		}
 		else
 		{
 			// This is incremental and we might end up that this row is no longer available
 			for (size_t i = 0; i < MaxDisplayableAxes; ++i)
 			{
-				movePopupAxisPos[i]->Show(false);
+				mgr.Show(movePopupAxisPos[i], false);
 			}
 		}
 	}
@@ -1430,7 +1445,6 @@ namespace UI
 
 	void ActivateScreensaver()
 	{
-		lcd.fillScr(black);
 		mgr.SetPopup(screensaverPopup);
 		lastScreensaverMoved = SystemTick::GetTickCount();
 	}
@@ -1449,8 +1463,9 @@ namespace UI
 			const PixelNumber availableHeight = (DisplayY - 2*margin - rowTextHeight);
 			const PixelNumber x = (rand_r(&seed) % availableWidth);
 			const PixelNumber y = (rand_r(&seed) % availableHeight);
-			lcd.fillScr(black);
+			mgr.Show(screensaverText, false);
 			screensaverText->SetPosition(x + margin, y + margin);
+			mgr.Show(screensaverText, true);
 			lastScreensaverMoved = SystemTick::GetTickCount();
 		}
 	}
@@ -2685,7 +2700,7 @@ namespace UI
 		if (filesNotMacros)
 		{
 			filePopupTitleField->SetValue(cardNumber);
-			changeCardButton->Show(numVolumes > 1);
+			mgr.Show(changeCardButton, numVolumes > 1);
 		}
 		mgr.SetPopup((filesNotMacros) ? fileListPopup : macrosPopup, AutoPlace, AutoPlace);
 	}

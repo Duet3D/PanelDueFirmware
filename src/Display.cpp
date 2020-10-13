@@ -173,7 +173,7 @@ Window::Window(Colour pb)
 {
 }
 
-// Append a field to the list of displayed fields
+// Prepend a field to the linked list of displayed fields
 void Window::AddField(DisplayField *d)
 {
 	d->next = root;
