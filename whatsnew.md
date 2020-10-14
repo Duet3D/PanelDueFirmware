@@ -1,3 +1,13 @@
+# Version 3.2-RC4
+## Upgrade Notes and Limitations
+See 3.2-RC2
+
+## Changes since RC3+1:
+- Only request null-flag for state request
+
+## Bug fixes:
+- Fix some fields not being hidden correctly (possible screensaver fix)
+
 # Version 3.2-RC3+1
 
 ## Bug fixes:
