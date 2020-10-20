@@ -13,7 +13,9 @@
 #include <cstddef>		// for size_t
 #include <cstdarg>
 #include <cstring>
+#undef array
 #include "General/SafeVsnprintf.h"
+#define array _ecv_array // Reinstate the eCv definitions of 'array'
 
 // Bounded vector class
 template<class T, size_t N> class Vector
