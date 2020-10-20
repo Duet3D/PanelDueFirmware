@@ -1623,6 +1623,12 @@ namespace UI
 					mgr.Show(homeButtons[slot], !isDelta);
 					ShowAxis(slot, true, axis->letter[0]);
 				}
+				// When we get here it's likely to be the initialisation phase
+				// and we won't have the babystep amount set
+				if (axis->letter[0] == 'Z')
+				{
+					babystepOffsetField->SetValue(axis->babystep);
+				}
 			});
 			// Hide axes possibly shown before
 			for (size_t i = numDisplayedAxes; i < MaxDisplayableAxes; ++i)
@@ -2959,6 +2965,8 @@ namespace UI
 		{
 			auto axis = OM::GetOrCreateAxis(index);
 			axis->babystep = f;
+			// In first initialization we will see babystep before letter
+			// so this won;t be true hence it is also set in UpdateGeometry
 			if (axis->letter[0] == 'Z')
 			{
 				babystepOffsetField->SetValue(f);
