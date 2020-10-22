@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"golang.org/x/image/bmp"
@@ -14,11 +15,25 @@ import (
 
 func main() {
 	var binaryOutput bool
+	var outfile string
 	flag.BoolVar(&binaryOutput, "binary", false, "Binary output")
+	flag.StringVar(&outfile, "outfile", "-", "Output file. The default is to output to stdout.")
 	flag.Parse()
 
 	files := flag.Args()
 
+	var buf *bufio.Writer
+	if outfile == "-" {
+		buf = bufio.NewWriter(os.Stdout)
+	} else {
+		of, err := os.OpenFile(outfile, os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			panic(err)
+		}
+		defer of.Close()
+		buf = bufio.NewWriter(of)
+	}
+	defer buf.Flush()
 	for _, file := range files {
 		f, err := os.Open(file)
 		if err != nil {
@@ -32,8 +47,6 @@ func main() {
 		}
 
 		if binaryOutput {
-			buf := bufio.NewWriter(os.Stdout)
-			defer buf.Flush()
 			writeBinary(buf, uint16(b.Bounds().Max.X))
 			writeBinary(buf, uint16(b.Bounds().Max.Y))
 
@@ -60,30 +73,37 @@ func main() {
 			}
 		} else {
 			pixelCount := 0
-			fmt.Printf("extern const uint8_t %s[] =\n", strings.TrimSuffix(strings.TrimSuffix(file, "_21h.bmp"), "_30h.bmp"))
-			fmt.Printf("{\t%d, %d,\t// width, height\n\t", b.Bounds().Dx(), b.Bounds().Dy())
+			_, variableName := filepath.Split(file)
+			variableName = strings.TrimSuffix(strings.TrimSuffix(variableName, "_21h.bmp"), "_30h.bmp")
+			buf.WriteString(fmt.Sprintf("extern const uint8_t %s[] =\n", variableName))
+			buf.WriteString(fmt.Sprintf("{\t%d, %d,\t// width, height\n\t", b.Bounds().Dx(), b.Bounds().Dy()))
 			for x := b.Bounds().Min.X; x < b.Bounds().Max.X; x++ {
 				for y := b.Bounds().Min.Y; y < b.Bounds().Max.Y; y++ {
 					c := b.At(x, y)
 					if pixelCount%2 == 0 {
-						fmt.Print("0x")
+						buf.WriteString("0x")
 					}
-					fmt.Print(getPaletteIndex(c.RGBA()))
+					buf.WriteString(fmt.Sprintf("%d", getPaletteIndex(c.RGBA())))
 					pixelCount++
-					if pixelCount%2 == 0 {
-						fmt.Print(", ")
+					if pixelCount%2 == 0 && !(x+1 == b.Bounds().Max.X && y+1 == b.Bounds().Max.Y) {
+						buf.WriteString(", ")
 						// wrap every 24 pixels
 						if pixelCount%24 == 0 {
-							fmt.Print("\n\t")
+							buf.WriteString("\n\t")
 						}
 					}
 				}
 			}
 			// Pad with 0 for uneven pixel count
 			if pixelCount%2 == 1 {
-				fmt.Print("0")
+				buf.WriteString("0")
 			}
-			fmt.Println("};")
+			buf.WriteString("\n};\n")
+		}
+
+		// For binary output we limit to one file
+		if binaryOutput {
+			break
 		}
 	}
 }
@@ -98,21 +118,21 @@ func getPaletteIndex(r, g, b, a uint32) int {
 		return 1
 	case 0x20e4: // e.g. 0x201c20
 		return 2
-	case 0xffdf: // e.g. 0xf8b8f8
+	case 0xffdf: // e.g. 0xf8f8f8
 		return 3
 	case 0x18e3: // e.g. 0x181c18
 		return 4
-	case 0xf79e: // e.g. 0xf0b0f0
+	case 0xf79e: // e.g. 0xf0f0f0
 		return 5
 	case 0xc986: // e.g. 0xc83030
 		return 6
-	case 0xd30c: // e.g. 0xd02060
+	case 0xd30c: // e.g. 0xd06060
 		return 7
 	case 0xc103: // e.g. 0xc02018
 		return 8
-	case 0xff52: // e.g. 0xf8a890
+	case 0xff52: // e.g. 0xf8e890
 		return 9
-	case 0xfffb: // e.g. 0xf8bcd8
+	case 0xfffb: // e.g. 0xf8fcd8
 		return 10
 	case 0x4569: // e.g. 0x40ac48
 		return 11
