@@ -765,6 +765,27 @@ size_t TextButton::PrintText(size_t offset) const
 	return 0;
 }
 
+TextButtonWithLabel::TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, int param, const char* array null label)
+	: TextButton(py, px, pw, pt, e, param), label(label)
+{
+}
+
+TextButtonWithLabel::TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, const char * array param, const char* array null label)
+	: TextButton(py, px, pw, pt, e, param), label(label)
+{
+}
+
+size_t TextButtonWithLabel::PrintText(size_t offset) const
+{
+	size_t w = 0;
+	if (label != nullptr)
+	{
+		w += lcd.print(label);
+	}
+	w += TextButton::PrintText(offset);
+	return w;
+}
+
 IconButton::IconButton(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int param)
 	: SingleButton(py, px, pw), icon(ic)
 {

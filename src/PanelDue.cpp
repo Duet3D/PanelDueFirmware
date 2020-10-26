@@ -160,7 +160,7 @@ struct FlashData
 {
 	// The magic value should be changed whenever the layout of the NVRAM changes
 	// We now use a different magic value for each display size, to force the "touch the spot" screen to be displayed when you change the display size
-	static const uint32_t magicVal = 0x3AB63A20 + DISPLAY_TYPE;
+	static const uint32_t magicVal = 0x3AB63A40 + DISPLAY_TYPE;
 	static const uint32_t muggleVal = 0xFFFFFFFF;
 
 	uint32_t magic;
@@ -178,7 +178,9 @@ struct FlashData
 	DisplayDimmerType displayDimmerType;
 	uint8_t infoTimeout;
 	uint32_t screensaverTimeout;
-	//uint8_t padding[4];
+	uint8_t babystepAmountIndex;
+	uint16_t feedrate;
+	uint8_t padding[1];
 	char dummy;								// must be at a multiple of 4 bytes from the start because flash is read/written in whole dwords
 
 	FlashData() : magic(muggleVal) { }
@@ -635,7 +637,8 @@ bool FlashData::IsValid() const
 		&& brightness <= Buzzer::MaxBrightness
 		&& language < UI::GetNumLanguages()
 		&& colourScheme < NumColourSchemes
-		&& displayDimmerType < DisplayDimmerType::NumTypes;
+		&& displayDimmerType < DisplayDimmerType::NumTypes
+		&& babystepAmountIndex > 0;
 }
 
 bool FlashData::operator==(const FlashData& other)
@@ -654,7 +657,9 @@ bool FlashData::operator==(const FlashData& other)
 		&& brightness == other.brightness
 		&& displayDimmerType == other.displayDimmerType
 		&& infoTimeout == other.infoTimeout
-		&& screensaverTimeout == other.screensaverTimeout;
+		&& screensaverTimeout == other.screensaverTimeout
+		&& babystepAmountIndex == other.babystepAmountIndex
+		&& feedrate == other.feedrate;
 }
 
 void FlashData::SetDefaults()
@@ -673,6 +678,8 @@ void FlashData::SetDefaults()
 	displayDimmerType = DisplayDimmerType::always;
 	infoTimeout = DefaultInfoTimeout;
 	screensaverTimeout = DefaultScreensaverTimeout;
+	babystepAmountIndex = DefaultBabystepAmountIndex;
+	feedrate = DefaultFeedrate;
 	magic = magicVal;
 }
 
@@ -1004,6 +1011,26 @@ int GetBrightness()
 
 uint32_t GetScreensaverTimeout() {
 	return nvData.screensaverTimeout;
+}
+
+uint8_t GetBabystepAmountIndex()
+{
+	return nvData.babystepAmountIndex;
+}
+
+void SetBabystepAmountIndex(uint8_t babystepAmountIndex)
+{
+	nvData.babystepAmountIndex = babystepAmountIndex;
+}
+
+uint16_t GetFeedrate()
+{
+	return nvData.feedrate;
+}
+
+void SetFeedrate(uint16_t feedrate)
+{
+	nvData.feedrate = feedrate;
 }
 
 // Factory reset

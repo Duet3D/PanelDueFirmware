@@ -279,9 +279,7 @@ namespace FileManager
 			else
 			{
 				// Send a command to mount the removable card. RepRapFirmware will ignore it if the card is already mounted and there are any files open on it.
-				SerialIo::SendString("M21 P");
-				SerialIo::SendInt(cardNumber);
-				SerialIo::SendChar('\n');
+				SerialIo::Sendf("M21 P%d\n", cardNumber);
 				requestedPath.printf("%u:", (unsigned int)cardNumber);
 			}
 			SetPending();

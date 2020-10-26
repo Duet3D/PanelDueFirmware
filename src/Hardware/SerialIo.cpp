@@ -123,6 +123,19 @@ namespace SerialIo
 		}
 	}
 	
+	size_t Sendf(const char *fmt, ...) noexcept
+	{
+		va_list vargs;
+		va_start(vargs, fmt);
+		return vuprintf([](char c) noexcept -> bool {
+			if (c != 0)
+			{
+				SendChar(c);
+			}
+			return true;
+		}, fmt, vargs);
+	}
+
 	void SendString(const char * array s)
 	{
 		while (*s != 0)
@@ -130,7 +143,7 @@ namespace SerialIo
 			SendChar(*s++);
 		}
 	}
-	
+
 	void SendQuoted(const char * array s)
 	{
 		SendChar('"');
@@ -157,7 +170,7 @@ namespace SerialIo
 			{
 				SendChar('/');
 			}
-			
+
 		}
 		SendString(name);
 		if (GetFirmwareFeatures() & quoteFilenames)

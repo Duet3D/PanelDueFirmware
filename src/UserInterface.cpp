@@ -56,7 +56,7 @@ static TextButton *controlPageMacroButtons[NumControlPageMacroButtons];
 static String<controlPageMacroTextLength> controlPageMacroText[NumControlPageMacroButtons];
 
 static PopupWindow *setTempPopup, *setRPMPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup,
-		*volumePopup, *infoTimeoutPopup, *screensaverTimeoutPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup, *screensaverPopup;
+		*volumePopup, *infoTimeoutPopup, *screensaverTimeoutPopup, *babystepAmountPopup, *feedrateAmountPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup, *screensaverPopup;
 static StaticTextField *areYouSureTextField, *areYouSureQueryField;
 static DisplayField *emptyRoot, *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
 static SingleButton *homeAllButton, *bedCompButton;
@@ -66,6 +66,7 @@ static FloatField *printTabAxisPos[MaxDisplayableAxes];
 static FloatField *movePopupAxisPos[MaxDisplayableAxes];
 static FloatField *currentTemps[MaxHeaters];
 static FloatField *fpHeightField, *fpLayerHeightField, *babystepOffsetField;
+static TextButtonWithLabel *babystepMinusButton, *babystepPlusButton;
 static IntegerField *fpSizeField, *fpFilamentField, *filePopupTitleField;
 static ProgressBar *printProgressBar;
 static SingleButton *tabControl, *tabPrint, *tabMsg, *tabSetup;
@@ -76,8 +77,9 @@ static StaticTextField *moveAxisRows[MaxDisplayableAxes];
 static StaticTextField *nameField, *statusField;
 static StaticTextField *screensaverText;
 static IntegerButton *activeTemps[MaxHeaters], *standbyTemps[MaxHeaters];
-static IntegerButton *spd, *extrusionFactors[MaxHeaters], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton, *screensaverTimeoutButton;
+static IntegerButton *spd, *extrusionFactors[MaxHeaters], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton, *screensaverTimeoutButton, *feedrateAmountButton;
 static TextButton *languageButton, *coloursButton, *dimmingTypeButton;
+static TextButtonWithLabel *babystepAmountButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
 static AlertPopup *alertPopup;
@@ -681,6 +683,21 @@ void CreateScreensaverTimeoutPopup(const ColourScheme& colours)
 	screensaverTimeoutPopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(screensaverTimeoutPopupText), screensaverTimeoutPopupText, values, evAdjustScreensaverTimeout, evAdjustScreensaverTimeout);
 }
 
+// Create the babystep amount adjustment popup
+void CreateBabystepAmountPopup(const ColourScheme& colours)
+{
+	static const int values[] = { 0, 1, 2, 3 };
+	babystepAmountPopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(babystepAmounts), babystepAmounts, values, evAdjustBabystepAmount, evAdjustBabystepAmount);
+}
+
+// Create the feedrate amount adjustment popup
+void CreateFeedrateAmountPopup(const ColourScheme& colours)
+{
+	static const char* const feedrateText[] = {"600", "1200", "2400", "6000", "12000"};
+	static const int values[] = { 600, 1200, 2400, 6000, 12000 };
+	feedrateAmountPopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(feedrateText), feedrateText, values, evAdjustFeedrate, evAdjustFeedrate);
+}
+
 // Create the colour scheme change popup
 void CreateColoursPopup(const ColourScheme& colours)
 {
@@ -779,8 +796,6 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 // Create the babystep popup
 void CreateBabystepPopup(const ColourScheme& colours)
 {
-	static const char * array const babystepStrings[2] = { LESS_ARROW " 0.02", MORE_ARROW " 0.02" };
-	static const char * array const babystepAmounts[2] = { "-0.02", "+0.02" };
 	babystepPopup = new StandardPopupWindow(babystepPopupHeight, babystepPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour,
 			strings->babyStepping);
 	PixelNumber ypos = popupTopMargin + babystepRowSpacing;
@@ -788,7 +803,9 @@ void CreateBabystepPopup(const ColourScheme& colours)
 	babystepPopup->AddField(babystepOffsetField = new FloatField(ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, TextAlignment::Left, 3, strings->currentZoffset, "mm"));
 	ypos += babystepRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.buttonImageBackColour);
-	CreateStringButtonRow(babystepPopup, ypos, popupSideMargin, babystepPopupWidth - 2 * popupSideMargin, fieldSpacing, 2, babystepStrings, babystepAmounts, evBabyStepAmount);
+	const PixelNumber width = CalcWidth(2, babystepPopupWidth - 2 * popupSideMargin);
+	babystepPopup->AddField(babystepMinusButton = new TextButtonWithLabel(ypos, CalcXPos(0, width, popupSideMargin), width, babystepAmounts[GetBabystepAmountIndex()], evBabyStepMinus, nullptr, LESS_ARROW " "));
+	babystepPopup->AddField(babystepPlusButton = new TextButtonWithLabel(ypos, CalcXPos(1, width, popupSideMargin), width, babystepAmounts[GetBabystepAmountIndex()], evBabyStepPlus, nullptr, MORE_ARROW " "));
 }
 
 // Create the grid of heater icons and temperatures
@@ -1031,6 +1048,13 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	AddTextButton(row6, 2, 3, strings->clearSettings, evFactoryReset, nullptr);
 	screensaverTimeoutButton = AddIntegerButton(row7, 0, 3, strings->screensaverAfter, nullptr, evSetScreensaverTimeout);
 	screensaverTimeoutButton->SetValue(GetScreensaverTimeout() / 1000);
+
+	const PixelNumber width = CalcWidth(3);
+	mgr.AddField(babystepAmountButton = new TextButtonWithLabel(row7, CalcXPos(1, width), width, babystepAmounts[GetBabystepAmountIndex()], evSetBabystepAmount, nullptr, strings->babystepAmount));
+
+	feedrateAmountButton = AddIntegerButton(row7, 2, 3, strings->feedrate, nullptr, evSetFeedrate);
+	feedrateAmountButton->SetValue(GetFeedrate());
+
 	setupRoot = mgr.GetRoot();
 }
 
@@ -1135,6 +1159,8 @@ namespace UI
 		CreateVolumePopup(colours);
 		CreateInfoTimeoutPopup(colours);
 		CreateScreensaverTimeoutPopup(colours);
+		CreateBabystepAmountPopup(colours);
+		CreateFeedrateAmountPopup(colours);
 		CreateBaudRatePopup(colours);
 		CreateColoursPopup(colours);
 		CreateAreYouSurePopup(colours);
@@ -1972,23 +1998,13 @@ namespace UI
 					case evAdjustChamberActiveTemp:
 						{
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedActiveTemp;
-							SerialIo::SendString("M14");
-							SerialIo::SendInt(isBed ? 0 : 1);
-							SerialIo::SendString(" P");
-							SerialIo::SendInt((isBed ? bedHeater : chamberHeater).index);
-							SerialIo::SendString(" S");
-							SerialIo::SendInt(val);
-							SerialIo::SendChar('\n');
+							SerialIo::Sendf("M14%d P%d S%d\n", isBed ? 0 : 1, (isBed ? bedHeater : chamberHeater).index, val);
 						}
 						break;
 					case evAdjustToolActiveTemp:
 						{
 							int toolNumber = fieldBeingAdjusted.GetIParam();
-							SerialIo::SendString(((GetFirmwareFeatures() & noG10Temps) == 0) ? "G10 P" : "M104 T");
-							SerialIo::SendInt(toolNumber);
-							SerialIo::SendString(" S");
-							SerialIo::SendInt(val);
-							SerialIo::SendChar('\n');
+							SerialIo::Sendf("%s%d S%d\n", ((GetFirmwareFeatures() & noG10Temps) == 0) ? "G10 P" : "M104 T", toolNumber, val);
 						}
 						break;
 
@@ -1996,24 +2012,14 @@ namespace UI
 					case evAdjustChamberStandbyTemp:
 						{
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedStandbyTemp;
-							SerialIo::SendString("M14");
-							SerialIo::SendInt(isBed ? 0 : 1);
-							SerialIo::SendString(" P");
-							SerialIo::SendInt((isBed ? bedHeater : chamberHeater).index);
-							SerialIo::SendString(" R");
-							SerialIo::SendInt(val);
-							SerialIo::SendChar('\n');
+							SerialIo::Sendf("M14%d P%d R%d\n", isBed ? 0 : 1, (isBed ? bedHeater : chamberHeater).index, val);
 						}
 						break;
 
 					case evAdjustToolStandbyTemp:
 						{
 							int toolNumber = fieldBeingAdjusted.GetIParam();
-							SerialIo::SendString("G10 P");
-							SerialIo::SendInt(toolNumber);
-							SerialIo::SendString(" R");
-							SerialIo::SendInt(val);
-							SerialIo::SendChar('\n');
+							SerialIo::Sendf("G10 P%d R%d\n", toolNumber, val);
 						}
 						break;
 
@@ -2022,19 +2028,11 @@ namespace UI
 							auto spindle = OM::GetSpindle(fieldBeingAdjusted.GetIParam());
 							if (val == 0)
 							{
-								SerialIo::SendString("M5 P");
-								SerialIo::SendInt(spindle->index);
-								SerialIo::SendChar('\n');
+								SerialIo::Sendf("M5 P%d\n", spindle->index);
 							}
 							else
 							{
-								SerialIo::SendChar('M');
-								SerialIo::SendInt(val < 0 ? 4 : 3);
-								SerialIo::SendString(" P");
-								SerialIo::SendInt(spindle->index);
-								SerialIo::SendString(" S");
-								SerialIo::SendInt(abs(val));
-								SerialIo::SendChar('\n');
+								SerialIo::Sendf("M%d P%d S%d\n", val < 0 ? 4 : 3, spindle->index, abs(val));
 							}
 						}
 						break;
@@ -2042,18 +2040,12 @@ namespace UI
 					case evExtrusionFactor:
 						{
 							const int extruder = fieldBeingAdjusted.GetIParam();
-							SerialIo::SendString("M221 D");
-							SerialIo::SendInt(extruder);
-							SerialIo::SendString(" S");
-							SerialIo::SendInt(val);
-							SerialIo::SendChar('\n');
+							SerialIo::Sendf("M221 D%d S%d\n", extruder, val);
 						}
 						break;
 
 					case evAdjustFan:
-						SerialIo::SendString("M106 S");
-						SerialIo::SendInt((256 * val)/100);
-						SerialIo::SendChar('\n');
+						SerialIo::Sendf("M106 S%d\n", (256 * val)/100);
 						break;
 
 					default:
@@ -2061,9 +2053,7 @@ namespace UI
 							const char* null cmd = fieldBeingAdjusted.GetSParam();
 							if (cmd != nullptr)
 							{
-								SerialIo::SendString(cmd);
-								SerialIo::SendInt(val);
-								SerialIo::SendChar('\n');
+								SerialIo::Sendf("%s%d\n", cmd, val);
 							}
 						}
 						break;
@@ -2115,10 +2105,7 @@ namespace UI
 			case evMoveAxis:
 				{
 					TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(bp.GetButton());
-					SerialIo::SendString("G91 G1 ");
-					SerialIo::SendChar(textButton->GetAxisLetter());
-					SerialIo::SendString(bp.GetSParam());
-					SerialIo::SendString(" F6000 G90\n");
+					SerialIo::Sendf("G91 G1 %c%s F%d G90\n", textButton->GetAxisLetter(), bp.GetSParam(), GetFeedrate());
 				}
 				break;
 
@@ -2144,15 +2131,10 @@ namespace UI
 			case evRetract:
 				if (currentExtrudeAmountPress.IsValid() && currentExtrudeRatePress.IsValid())
 				{
-					SerialIo::SendString("M120 M83 G1 E");
-					if (ev == evRetract)
-					{
-						SerialIo::SendChar('-');
-					}
-					SerialIo::SendString(currentExtrudeAmountPress.GetSParam());
-					SerialIo::SendString(" F");
-					SerialIo::SendString(currentExtrudeRatePress.GetSParam());
-					SerialIo::SendString(" M121\n");
+					SerialIo::Sendf("M120 M83 G1 E%s%s F%s M121\n",
+							(ev == evRetract ? "-" : ""),
+							currentExtrudeAmountPress.GetSParam(),
+							currentExtrudeRatePress.GetSParam());
 				}
 				break;
 
@@ -2160,10 +2142,9 @@ namespace UI
 				mgr.SetPopup(babystepPopup, AutoPlace, AutoPlace);
 				break;
 
-			case evBabyStepAmount:
-				SerialIo::SendString("M290 Z");
-				SerialIo::SendString(bp.GetSParam());
-				SerialIo::SendChar('\n');
+			case evBabyStepMinus:
+			case evBabyStepPlus:
+				SerialIo::Sendf("M290 Z%s%s\n", (ev == evBabyStepMinus ? "-" : ""), babystepAmounts[GetBabystepAmountIndex()]);
 				break;
 
 			case evListFiles:
@@ -2195,11 +2176,7 @@ namespace UI
 					}
 					else
 					{
-						SerialIo::SendString("M140 P");
-						SerialIo::SendInt(bedHeater.index);
-						SerialIo::SendString(" S");
-						SerialIo::SendInt(activeTemps[slot]->GetValue());
-						SerialIo::SendChar('\n');
+						SerialIo::Sendf("M140 P%d S%d\n", bedHeater.index, activeTemps[slot]->GetValue());
 					}
 				}
 				break;
@@ -2211,18 +2188,9 @@ namespace UI
 					{
 						break;
 					}
-					SerialIo::SendString("M141 P");
-					SerialIo::SendInt(chamberHeater.index);
-					SerialIo::SendString(" S");
-					if (heaterStatus[slot] == HeaterStatus::active)			// if chamber is active
-					{
-						SerialIo::SendString("-273.15\n");
-					}
-					else
-					{
-						SerialIo::SendInt(activeTemps[slot]->GetValue());
-					}
-					SerialIo::SendChar('\n');
+					SerialIo::Sendf("M141 P%d S%d\n",
+							chamberHeater.index,
+							(heaterStatus[slot] == HeaterStatus::active ? -274 : activeTemps[slot]->GetValue()));
 				}
 				break;
 
@@ -2238,9 +2206,7 @@ namespace UI
 						}
 						else
 						{
-							SerialIo::SendChar('T');
-							SerialIo::SendInt(head);
-							SerialIo::SendChar('\n');
+							SerialIo::Sendf("T%d\n", head);
 						}
 					}
 				}
@@ -2347,9 +2313,7 @@ namespace UI
 				break;
 
 			case evHomeAxis:
-				SerialIo::SendString("G28 ");
-				SerialIo::SendString(bp.GetSParam());
-				SerialIo::SendString("0\n");
+				SerialIo::Sendf("G28 %s0\n", bp.GetSParam());
 				break;
 
 			case evScrollFiles:
@@ -2411,6 +2375,16 @@ namespace UI
 				mgr.SetPopup(screensaverTimeoutPopup, AutoPlace, popupY);
 				break;
 
+			case evSetBabystepAmount:
+				Adjusting(bp);
+				mgr.SetPopup(babystepAmountPopup, AutoPlace, popupY);
+				break;
+
+			case evSetFeedrate:
+				Adjusting(bp);
+				mgr.SetPopup(feedrateAmountPopup, AutoPlace, popupY);
+				break;
+
 			case evSetColours:
 				if (coloursPopup != nullptr)
 				{
@@ -2448,6 +2422,26 @@ namespace UI
 					uint32_t screensaverTimeout = bp.GetIParam();
 					SetScreensaverTimeout(screensaverTimeout * 1000);
 					screensaverTimeoutButton->SetValue(screensaverTimeout);
+				}
+				TouchBeep();									// give audible feedback of the touch at the new volume level
+				break;
+
+			case evAdjustBabystepAmount:
+				{
+					uint32_t babystepAmountIndex = bp.GetIParam();
+					SetBabystepAmountIndex(babystepAmountIndex);
+					babystepAmountButton->SetText(babystepAmounts[babystepAmountIndex]);
+					babystepMinusButton->SetText(babystepAmounts[babystepAmountIndex]);
+					babystepPlusButton->SetText(babystepAmounts[babystepAmountIndex]);
+				}
+				TouchBeep();									// give audible feedback of the touch at the new volume level
+				break;
+
+			case evAdjustFeedrate:
+				{
+					uint32_t feedrate = bp.GetIParam();
+					SetFeedrate(feedrate);
+					feedrateAmountButton->SetValue(feedrate);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
 				break;
@@ -2631,6 +2625,8 @@ namespace UI
 			case evSetVolume:
 			case evSetInfoTimeout:
 			case evSetScreensaverTimeout:
+			case evSetFeedrate:
+			case evSetBabystepAmount:
 			case evSetColours:
 				mgr.ClearPopup();
 				StopAdjusting();
@@ -2672,6 +2668,8 @@ namespace UI
 			case evSetVolume:
 			case evSetInfoTimeout:
 			case evSetScreensaverTimeout:
+			case evSetFeedrate:
+			case evSetBabystepAmount:
 			case evSetColours:
 			case evSetLanguage:
 			case evCalTouch:

@@ -491,7 +491,7 @@ class TextButton : public ButtonWithText
 	friend class ShadowTextButton;
 
 	const char * array null text;
-	
+
 protected:
 	size_t PrintText(size_t offset) const override;
 
@@ -509,6 +509,29 @@ public:
 			return;
 		}
 		text = pt;
+		changed = true;
+	}
+};
+
+class TextButtonWithLabel : public TextButton
+{
+	const char * array null label;
+protected:
+	size_t PrintText(size_t offset) const override;
+public:
+	TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, int param = 0, const char* array null label = nullptr);
+	TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, const char * array param, const char* array null label = nullptr);
+
+	// Hide any text buttons with null text and null label
+	bool IsVisible() const override { return (label != nullptr && DisplayField::IsVisible()) || TextButton::IsVisible(); }
+
+	void SetLabel(const char* array null label)
+	{
+		if (strcmp(this->label, label) == 0)
+		{
+			return;
+		}
+		this->label = label;
 		changed = true;
 	}
 };

@@ -22,6 +22,7 @@ const size_t NumColourSchemes = 3;
 
 static const char* array const axisNames[] = { "X", "Y", "Z", "U", "V", "W", "A", "B", "C", "D" };
 constexpr size_t MaxTotalAxes = ARRAY_SIZE(axisNames);
+static const char* array const babystepAmounts[] = { "0.01", "0.02", "0.05", "0.1" };
 
 #if DISPLAY_X == 480
 

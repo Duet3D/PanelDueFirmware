@@ -66,6 +66,8 @@ struct StringTable
 	CSTRING saveAndRestart;
 	CSTRING infoTimeout;
 	CSTRING screensaverAfter;
+	CSTRING babystepAmount;
+	CSTRING feedrate;
 
 	// Misc
 	CSTRING confirmFactoryReset;
@@ -159,6 +161,8 @@ const StringTable LanguageTables[NumLanguages] =
 		"Save & Restart",
 		"Info timeout ",					// note space at end
 		"Screensaver ",						// note space at end
+		"Babystep ",						// note space at end
+		"Feedrate ",						// note space at end
 
 		// Misc
 		"Confirm factory reset",
@@ -272,6 +276,8 @@ const StringTable LanguageTables[NumLanguages] =
 		"Sichern & Reboot",
 		"Info timeout ",					// note space at end
 		"Screensaver ",						// note space at end
+		"Babystep ",						// note space at end
+		"Feedrate ",						// note space at end
 
 		// Misc
 		"Alle Einstellungen zurücksetzen",
@@ -384,6 +390,8 @@ const StringTable LanguageTables[NumLanguages] =
 		"Sauvegarde & Redémarrage",
 		"Info timeout ",						// note space at end
 		"Screensaver ",							// note space at end
+		"Babystep ",							// note space at end
+		"Feedrate ",							// note space at end
 
 		// Misc
 		"Confirmer le réinitialisation de l'imprimante",
@@ -496,6 +504,8 @@ const StringTable LanguageTables[NumLanguages] =
 		"Guardar y Reiniciar",
 		"Info timeout ",					// note space at end
 		"Screensaver ",						// note space at end
+		"Babystep ",						// note space at end
+		"Feedrate ",						// note space at end
 
 		// Misc
 		"Confirma restablecimiento de fábrica",
@@ -608,6 +618,8 @@ const StringTable LanguageTables[NumLanguages] =
 		"Uložit a Restart",
 		"Info timeout ",					// note space at end
 		"Screensaver ",						// note space at end
+		"Babystep ",						// note space at end
+		"Feedrate ",						// note space at end
 
 		// Misc
 		"Skutečně obnovit tovární nastavení?",

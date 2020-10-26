@@ -60,14 +60,17 @@ enum Event : uint8_t
 	evSimulateFile,
 	evPausePrint,
 	evResumePrint,
-	evBabyStepPopup, evBabyStepAmount,
+	evBabyStepPopup, evBabyStepMinus, evBabyStepPlus,
 
 	evKey, evShift, evBackspace, evSendKeyboardCommand, evUp, evDown,
 
 	evAdjustLanguage, evSetLanguage,
 	evAdjustColours, evSetColours,
 	evBrighter, evDimmer,
-	evSetDimmingType, evSetScreensaverTimeout, evAdjustScreensaverTimeout,
+	evSetDimmingType,
+	evSetScreensaverTimeout, evAdjustScreensaverTimeout,
+	evSetBabystepAmount, evAdjustBabystepAmount,
+	evSetFeedrate, evAdjustFeedrate,
 
 	evEmergencyStop,
 

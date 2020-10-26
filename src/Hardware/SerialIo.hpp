@@ -13,6 +13,7 @@ namespace SerialIo
 {
 	void Init(uint32_t baudRate);
 	void SendChar(char c);
+	size_t Sendf(const char *fmt, ...) noexcept;
 	void SendString(const char * array s);
 	void SendQuoted(const char * array s);
 	void SendFilename(const char * array dir, const char * array name);
