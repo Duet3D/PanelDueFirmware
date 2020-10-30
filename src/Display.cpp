@@ -14,8 +14,6 @@
 #undef array
 #undef result
 #include <algorithm>
-#define array _ecv_array
-#define result _ecv_result
 
 extern UTFT lcd;
 
@@ -37,7 +35,7 @@ DisplayField::DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw)
 {
 }
 
-void DisplayField::SetTextRows(const char * array null t)
+void DisplayField::SetTextRows(const char * _ecv_array null t)
 {
 	unsigned int rows = 1;
 	if (t != nullptr)
@@ -87,7 +85,7 @@ void DisplayField::SetPosition(PixelNumber x, PixelNumber y)
 	defaultIconPalette = pal;
 }
 
-/*static*/ PixelNumber DisplayField::GetTextWidth(const char* array s, PixelNumber maxWidth)
+/*static*/ PixelNumber DisplayField::GetTextWidth(const char* _ecv_array s, PixelNumber maxWidth)
 {
 	lcd.setFont(DisplayField::defaultFont);
 	lcd.setTextPos(0, 9999, maxWidth);
@@ -95,7 +93,7 @@ void DisplayField::SetPosition(PixelNumber x, PixelNumber y)
 	return lcd.getTextX();
 }
 
-/*static*/ PixelNumber DisplayField::GetTextWidth(const char* array s, PixelNumber maxWidth, size_t maxChars)
+/*static*/ PixelNumber DisplayField::GetTextWidth(const char* _ecv_array s, PixelNumber maxWidth, size_t maxChars)
 {
 	lcd.setTextPos(0, 9999, maxWidth);
 	lcd.print(s, maxChars);				// dummy print to get text width
@@ -160,7 +158,7 @@ int ButtonPress::GetIParam() const
 	return button->GetIParam(index);
 }
 
-const char* array ButtonPress::GetSParam() const
+const char* _ecv_array ButtonPress::GetSParam() const
 {
 	return button->GetSParam(index);
 }
@@ -743,14 +741,14 @@ size_t CharButton::PrintText(size_t offset) const
 	return lcd.write((char)GetIParam(0));
 }
 
-TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, int param)
+TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param)
 	: ButtonWithText(py, px, pw), text(pt)
 {
 	SetTextRows(pt);
 	SetEvent(e, param);
 }
 
-TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, const char * array param)
+TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param)
 	: ButtonWithText(py, px, pw), text(pt)
 {
 	SetEvent(e, param);
@@ -765,12 +763,12 @@ size_t TextButton::PrintText(size_t offset) const
 	return 0;
 }
 
-TextButtonWithLabel::TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, int param, const char* array null label)
+TextButtonWithLabel::TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param, const char* _ecv_array null label)
 	: TextButton(py, px, pw, pt, e, param), label(label)
 {
 }
 
-TextButtonWithLabel::TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * array null pt, event_t e, const char * array param, const char* array null label)
+TextButtonWithLabel::TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param, const char* _ecv_array null label)
 	: TextButton(py, px, pw, pt, e, param), label(label)
 {
 }
@@ -792,7 +790,7 @@ IconButton::IconButton(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, 
 	SetEvent(e, param);
 }
 
-IconButton::IconButton(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, const char * array param)
+IconButton::IconButton(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, const char * _ecv_array param)
 : SingleButton(py, px, pw), icon(ic)
 {
 	SetEvent(e, param);
@@ -816,7 +814,7 @@ IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumb
 {
 }
 
-IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, const char * text, const char * array param)
+IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, const char * text, const char * _ecv_array param)
 	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(text), val(0), printText(true)
 {
 }
@@ -826,7 +824,7 @@ IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumb
 {
 }
 
-IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int textVal, const char * array param)
+IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int textVal, const char * _ecv_array param)
 	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(nullptr), val(textVal), printText(true)
 {
 }
@@ -951,7 +949,7 @@ void CharButtonRow::PrintText(unsigned int n) const
 	lcd.write(text[n]);
 }
 
-CharButtonRow::CharButtonRow(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ps, const char * array s, event_t e)
+CharButtonRow::CharButtonRow(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ps, const char * _ecv_array s, event_t e)
 	: ButtonRowWithText(py, px, pw, ps, strlen(s), e), text(s)
 {
 }
@@ -989,7 +987,7 @@ void CharButtonRow::Press(bool p, int index) /*override*/
 	whichPressed = (p) ? index : -1;
 }
 
-void CharButtonRow::ChangeText(const char* array s)
+void CharButtonRow::ChangeText(const char* _ecv_array s)
 {
 	if (strcmp(text, s) == 0)
 	{

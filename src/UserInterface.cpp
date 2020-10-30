@@ -14,7 +14,8 @@
 #include "FileManager.hpp"
 #include "MessageLog.hpp"
 #include "Library/Misc.hpp"
-#include "Library/Vector.hpp"
+#include "General/String.h"
+#include "General/SafeVsnprintf.h"
 #include "Icons/Icons.hpp"
 #include "Hardware/Buzzer.hpp"
 #include "Hardware/Reset.hpp"
@@ -84,7 +85,7 @@ static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
 static AlertPopup *alertPopup;
 static CharButtonRow *keyboardRows[4];
-static const char* array const * array currentKeyboard;
+static const char* _ecv_array const * _ecv_array currentKeyboard;
 
 static ButtonBase * null currentTab = nullptr;
 
@@ -114,7 +115,7 @@ static uint8_t numVisibleAxes = 0;						// initialise to 0 so we refresh the mac
 static uint8_t numDisplayedAxes = 0;
 static bool isDelta = false;
 
-const char* array null currentFile = nullptr;			// file whose info is displayed in the file info popup
+const char* _ecv_array null currentFile = nullptr;			// file whose info is displayed in the file info popup
 const StringTable * strings = &LanguageTables[0];
 static bool keyboardIsDisplayed = false;
 static bool keyboardShifted = false;
@@ -226,13 +227,13 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 	alertTitle.copy(title);
 
 	// Split the alert text into 3 lines
-	size_t splitPoint = MessageLog::FindSplitPoint(text, alertText1.capacity(), (PixelNumber)(GetWidth() - 2 * popupSideMargin));
+	size_t splitPoint = MessageLog::FindSplitPoint(text, alertText1.Capacity(), (PixelNumber)(GetWidth() - 2 * popupSideMargin));
 	alertText1.copy(text);
-	alertText1.truncate(splitPoint);
+	alertText1.Truncate(splitPoint);
 	text += splitPoint;
-	splitPoint = MessageLog::FindSplitPoint(text, alertText2.capacity(), GetWidth() - 2 * popupSideMargin);
+	splitPoint = MessageLog::FindSplitPoint(text, alertText2.Capacity(), GetWidth() - 2 * popupSideMargin);
 	alertText2.copy(text);
-	alertText2.truncate(splitPoint);
+	alertText2.Truncate(splitPoint);
 	text += splitPoint;
 	alertText3.copy(text);
 
@@ -259,7 +260,7 @@ inline PixelNumber CalcXPos(unsigned int col, PixelNumber width, int offset = 0)
 }
 
 // Add a text button with a string parameter
-TextButton *AddTextButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* array text, Event evt, const char* param, PixelNumber displayWidth = DisplayX)
+TextButton *AddTextButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* _ecv_array text, Event evt, const char* param, PixelNumber displayWidth = DisplayX)
 {
 	PixelNumber width = CalcWidth(numCols, displayWidth);
 	PixelNumber xpos = CalcXPos(col, width);
@@ -269,7 +270,7 @@ TextButton *AddTextButton(PixelNumber row, unsigned int col, unsigned int numCol
 }
 
 // Add a text button with an int parameter
-TextButton *AddTextButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* array text, Event evt, int param, PixelNumber displayWidth = DisplayX)
+TextButton *AddTextButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* _ecv_array text, Event evt, int param, PixelNumber displayWidth = DisplayX)
 {
 	PixelNumber width = CalcWidth(numCols, displayWidth);
 	PixelNumber xpos = CalcXPos(col, width);
@@ -279,7 +280,7 @@ TextButton *AddTextButton(PixelNumber row, unsigned int col, unsigned int numCol
 }
 
 // Add an integer button
-IntegerButton *AddIntegerButton(PixelNumber row, unsigned int col, unsigned int numCols, const char * array null label, const char * array null units, Event evt, PixelNumber displayWidth = DisplayX)
+IntegerButton *AddIntegerButton(PixelNumber row, unsigned int col, unsigned int numCols, const char * _ecv_array null label, const char * _ecv_array null units, Event evt, PixelNumber displayWidth = DisplayX)
 {
 	PixelNumber width = CalcWidth(numCols, displayWidth);
 	PixelNumber xpos = CalcXPos(col, width);
@@ -319,8 +320,8 @@ ButtonPress CreateStringButtonRow(
 		PixelNumber totalWidth,
 		PixelNumber spacing,
 		unsigned int numButtons,
-		const char* array const text[],
-		const char* array const params[],
+		const char* _ecv_array const text[],
+		const char* _ecv_array const params[],
 		Event evt,
 		int selected = -1,
 		bool textButtonForAxis = false,
@@ -353,7 +354,7 @@ ButtonPress CreateStringButtonRow(
 // Create a row of icon buttons.
 // Set the colours before calling this
 void CreateIconButtonRow(Window * pf, PixelNumber top, PixelNumber left, PixelNumber totalWidth, PixelNumber spacing, unsigned int numButtons,
-									const Icon icons[], const char* array const params[], Event evt)
+									const Icon icons[], const char* _ecv_array const params[], Event evt)
 {
 	const PixelNumber step = (totalWidth + spacing)/numButtons;
 	for (unsigned int i = 0; i < numButtons; ++i)
@@ -393,7 +394,7 @@ PopupWindow *CreateIntPopupBar(const ColourScheme& colours, PixelNumber width, u
 
 // Nasty hack to work around bug in RepRapFirmware 1.09k and earlier
 // The M23 and M30 commands don't work if we send the full path, because "0:/gcodes/" gets prepended regardless.
-const char * array StripPrefix(const char * array dir)
+const char * _ecv_array StripPrefix(const char * _ecv_array dir)
 {
 	if ((GetFirmwareFeatures() && noGcodesFolder) == 0)			// if running RepRapFirmware
 	{
@@ -473,8 +474,8 @@ void CreateIntegerRPMAdjustPopup(const ColourScheme& colours)
 // Create the movement popup window
 void CreateMovePopup(const ColourScheme& colours)
 {
-	static const char * array const xyJogValues[] = { "-100", "-10", "-1", "-0.1", "0.1",  "1", "10", "100" };
-	static const char * array const zJogValues[] = { "-50", "-5", "-0.5", "-0.05", "0.05",  "0.5", "5", "50" };
+	static const char * _ecv_array const xyJogValues[] = { "-100", "-10", "-1", "-0.1", "0.1",  "1", "10", "100" };
+	static const char * _ecv_array const zJogValues[] = { "-50", "-5", "-0.5", "-0.05", "0.05",  "0.5", "5", "50" };
 
 	movePopup = new StandardPopupWindow(movePopupHeight, movePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->moveHead);
 	PixelNumber ypos = popupTopMargin + buttonHeight + moveButtonRowSpacing;
@@ -486,7 +487,7 @@ void CreateMovePopup(const ColourScheme& colours)
 	for (size_t i = 0; i < MaxDisplayableAxes; ++i)
 	{
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-		const char * array const * array values = (axisNames[i][0] == 'Z') ? zJogValues : xyJogValues;
+		const char * _ecv_array const * _ecv_array values = (axisNames[i][0] == 'Z') ? zJogValues : xyJogValues;
 		CreateStringButtonRow(movePopup, ypos, xpos, movePopupWidth - xpos - popupSideMargin, fieldSpacing, 8, values, values, evMoveAxis, -1, true);
 
 		// We create the label after the button row, so that the buttons follow it in the field order, which makes it easier to hide them
@@ -511,9 +512,9 @@ void CreateMovePopup(const ColourScheme& colours)
 // Create the extrusion controls popup
 void CreateExtrudePopup(const ColourScheme& colours)
 {
-	static const char * array extrudeAmountValues[] = { "100", "50", "20", "10", "5",  "1" };
-	static const char * array extrudeSpeedValues[] = { "50", "20", "10", "5", "2" };
-	static const char * array extrudeSpeedParams[] = { "3000", "1200", "600", "300", "120" };		// must be extrudeSpeedValues * 60
+	static const char * _ecv_array extrudeAmountValues[] = { "100", "50", "20", "10", "5",  "1" };
+	static const char * _ecv_array extrudeSpeedValues[] = { "50", "20", "10", "5", "2" };
+	static const char * _ecv_array extrudeSpeedParams[] = { "3000", "1200", "600", "300", "120" };		// must be extrudeSpeedValues * 60
 
 	extrudePopup = new StandardPopupWindow(extrudePopupHeight, extrudePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->extrusionAmount);
 	PixelNumber ypos = popupTopMargin + buttonHeight + extrudeButtonRowSpacing;
@@ -531,7 +532,7 @@ void CreateExtrudePopup(const ColourScheme& colours)
 }
 
 // Create a popup used to list files pr macros
-PopupWindow *CreateFileListPopup(FileListButtons& controlButtons, TextButton ** array fileButtons, unsigned int numRows, unsigned int numCols, const ColourScheme& colours, bool filesNotMacros)
+PopupWindow *CreateFileListPopup(FileListButtons& controlButtons, TextButton ** _ecv_array fileButtons, unsigned int numRows, unsigned int numCols, const ColourScheme& colours, bool filesNotMacros)
 pre(fileButtons.lim == numRows * numCols)
 {
 	PopupWindow * const popup = new StandardPopupWindow(fileListPopupHeight, fileListPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, nullptr);
@@ -703,7 +704,7 @@ void CreateColoursPopup(const ColourScheme& colours)
 {
 	if (NumColourSchemes >= 2)
 	{
-		// Put all the colour scheme names in a single array for the call to CreateIntPopupBar
+		// Put all the colour scheme names in a single _ecv_array for the call to CreateIntPopupBar
 		const char* coloursPopupText[NumColourSchemes];
 		for (size_t i = 0; i < NumColourSchemes; ++i)
 		{
@@ -732,10 +733,10 @@ void CreateLanguagePopup(const ColourScheme& colours)
 // Create the pop-up keyboard
 void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 {
-	static const char* array const keysEN[8] = { "1234567890-+", "QWERTYUIOP[]", "ASDFGHJKL:@", "ZXCVBNM,./", "!\"#$%^&*()_=", "qwertyuiop{}", "asdfghjkl;'", "zxcvbnm<>?" };
-	static const char* array const keysDE[8] = { "1234567890-+", "QWERTZUIOP[]", "ASDFGHJKL:@", "YXCVBNM,./", "!\"#$%^&*()_=", "qwertzuiop{}", "asdfghjkl;'", "yxcvbnm<>?" };
-	static const char* array const keysFR[8] = { "1234567890-+", "AZERTWUIOP[]", "QSDFGHJKLM@", "YXCVBN.,:/", "!\"#$%^&*()_=", "azertwuiop{}", "qsdfghjklm'", "yxcvbn<>;?" };
-	static const char* array const * const keyboards[] = { keysEN, keysDE, keysFR, keysEN, keysEN };		// Spain and Czech keyboard layout is same as English
+	static const char* _ecv_array const keysEN[8] = { "1234567890-+", "QWERTYUIOP[]", "ASDFGHJKL:@", "ZXCVBNM,./", "!\"#$%^&*()_=", "qwertyuiop{}", "asdfghjkl;'", "zxcvbnm<>?" };
+	static const char* _ecv_array const keysDE[8] = { "1234567890-+", "QWERTZUIOP[]", "ASDFGHJKL:@", "YXCVBNM,./", "!\"#$%^&*()_=", "qwertzuiop{}", "asdfghjkl;'", "yxcvbnm<>?" };
+	static const char* _ecv_array const keysFR[8] = { "1234567890-+", "AZERTWUIOP[]", "QSDFGHJKLM@", "YXCVBN.,:/", "!\"#$%^&*()_=", "azertwuiop{}", "qsdfghjklm'", "yxcvbn<>;?" };
+	static const char* _ecv_array const * const keyboards[] = { keysEN, keysDE, keysFR, keysEN, keysEN };		// Spain and Czech keyboard layout is same as English
 
 	static_assert(ARRAY_SIZE(keyboards) >= NumLanguages, "Wrong number of keyboard entries");
 
@@ -1353,7 +1354,7 @@ namespace UI
 			break;
 
 		case PrinterStatus::idle:
-			printingFile.clear();
+			printingFile.Clear();
 			nameField->SetValue(machineName.c_str());		// if we are on the print tab then it may still be set to the file that was being printed
 			__attribute__ ((fallthrough));
 			// no break
@@ -1365,7 +1366,7 @@ namespace UI
 			break;
 
 		case PrinterStatus::connecting:
-			printingFile.clear();
+			printingFile.Clear();
 			// We no longer clear the machine name here
 			mgr.ClearAllPopups();
 			break;
@@ -1562,7 +1563,7 @@ namespace UI
 	// This is called when we have just received the name of the file being printed
 	void PrintingFilenameChanged(const char data[])
 	{
-		if (!printingFile.similar(data))
+		if (!printingFile.Similar(data))
 		{
 			printingFile.copy(data);
 			if (currentTab == tabPrint && PrintInProgress())
@@ -1794,7 +1795,7 @@ namespace UI
 		return alertMode < 2;
 	}
 
-	void ProcessSimpleAlert(const char* array text)
+	void ProcessSimpleAlert(const char* _ecv_array text)
 	{
 		RestoreBrightness();
 		if (alertMode < 2)												// if the current alert doesn't require acknowledgement
@@ -1809,7 +1810,7 @@ namespace UI
 	}
 
 	// Process a new response. This is treated like a simple alert except that it times out and isn't cleared by a "clear alert" command from the host.
-	void NewResponseReceived(const char* array text)
+	void NewResponseReceived(const char* _ecv_array text)
 	{
 		const bool isErrorMessage = stringStartsWith(text, "Error");
 		if (   alertMode < 2											// if the current alert doesn't require acknowledgement
@@ -1828,7 +1829,7 @@ namespace UI
 	}
 
 	// This is called when the user selects a new file from a list of SD card files
-	void FileSelected(const char * array null fileName)
+	void FileSelected(const char * _ecv_array null fileName)
 	{
 		fpNameField->SetValue(fileName);
 		// Clear out the old field values, they relate to the previous file we looked at until we process the response
@@ -1836,11 +1837,11 @@ namespace UI
 		fpHeightField->SetValue(0.0);					// would be better to make it blank
 		fpLayerHeightField->SetValue(0.0);				// would be better to make it blank
 		fpFilamentField->SetValue(0);					// would be better to make it blank
-		generatedByText.clear();
+		generatedByText.Clear();
 		fpGeneratedByField->SetChanged();
-		lastModifiedText.clear();
+		lastModifiedText.Clear();
 		fpLastModifiedField->SetChanged();
-		printTimeText.clear();
+		printTimeText.Clear();
 		fpPrintTimeField->SetChanged();
 	}
 
@@ -1855,9 +1856,9 @@ namespace UI
 	void UpdateFileLastModifiedText(const char data[])
 	{
 		lastModifiedText.copy(data);
-		lastModifiedText.replace('T', ' ');
-		lastModifiedText.replace('+', '\0');		// ignore time zone if present
-		lastModifiedText.replace('.', '\0');		// ignore decimal seconds if present (DCS 2.0.0 sends them)
+		lastModifiedText.Replace('T', ' ');
+		lastModifiedText.Replace('+', '\0');		// ignore time zone if present
+		lastModifiedText.Replace('.', '\0');		// ignore decimal seconds if present (DCS 2.0.0 sends them)
 		fpLastModifiedField->SetChanged();
 	}
 
@@ -1867,11 +1868,11 @@ namespace UI
 		bool update = false;
 		if (isSimulated)
 		{
-			printTimeText.clear();					// prefer simulated to estimated print time
+			printTimeText.Clear();					// prefer simulated to estimated print time
 			fpPrintTimeField->SetLabel(strings->simulatedPrintTime);
 			update = true;
 		}
-		else if (printTimeText.isEmpty())
+		else if (printTimeText.IsEmpty())
 		{
 			fpPrintTimeField->SetLabel(strings->estimatedPrintTime);
 			update = true;
@@ -2144,7 +2145,19 @@ namespace UI
 
 			case evBabyStepMinus:
 			case evBabyStepPlus:
-				SerialIo::Sendf("M290 Z%s%s\n", (ev == evBabyStepMinus ? "-" : ""), babystepAmounts[GetBabystepAmountIndex()]);
+				{
+					SerialIo::Sendf("M290 Z%s%s\n", (ev == evBabyStepMinus ? "-" : ""), babystepAmounts[GetBabystepAmountIndex()]);
+					float currentBabystepAmount = babystepOffsetField->GetValue();
+					if (ev == evBabyStepMinus)
+					{
+						currentBabystepAmount -= babystepAmountsF[GetBabystepAmountIndex()];
+					}
+					else
+					{
+						currentBabystepAmount += babystepAmountsF[GetBabystepAmountIndex()];
+					}
+					babystepOffsetField->SetValue(currentBabystepAmount);
+				}
 				break;
 
 			case evListFiles:
@@ -2214,7 +2227,7 @@ namespace UI
 
 			case evFile:
 				{
-					const char * array fileName = bp.GetSParam();
+					const char * _ecv_array fileName = bp.GetSParam();
 					if (fileName != nullptr)
 					{
 						if (fileName[0] == '*')
@@ -2263,7 +2276,7 @@ namespace UI
 						else
 						{
 							SerialIo::SendString("M98 P");
-							const char * array const dir = (ev == evMacroControlPage) ? FileManager::GetMacrosRootDir() : FileManager::GetMacrosDir();
+							const char * _ecv_array const dir = (ev == evMacroControlPage) ? FileManager::GetMacrosRootDir() : FileManager::GetMacrosDir();
 							SerialIo::SendFilename(CondStripDrive(dir), fileName);
 							SerialIo::SendChar('\n');
 						}
@@ -2509,7 +2522,7 @@ namespace UI
 				break;
 
 			case evKey:
-				if (userCommandBuffers[currentUserCommandBuffer].add((char)bp.GetIParam()))
+				if (userCommandBuffers[currentUserCommandBuffer].cat((char)bp.GetIParam()))
 				{
 					userCommandField->SetChanged();
 				}
@@ -2537,9 +2550,9 @@ namespace UI
 				break;
 
 			case evBackspace:
-				if (!userCommandBuffers[currentUserCommandBuffer].isEmpty())
+				if (!userCommandBuffers[currentUserCommandBuffer].IsEmpty())
 				{
-					userCommandBuffers[currentUserCommandBuffer].erase(userCommandBuffers[currentUserCommandBuffer].size() - 1);
+					userCommandBuffers[currentUserCommandBuffer].Erase(userCommandBuffers[currentUserCommandBuffer].strlen() - 1);
 					userCommandField->SetChanged();
 					ShortenTouchDelay();
 				}
@@ -2549,11 +2562,11 @@ namespace UI
 				currentHistoryBuffer = (currentHistoryBuffer + numUserCommandBuffers - 1) % numUserCommandBuffers;
 				if (currentHistoryBuffer == currentUserCommandBuffer)
 				{
-					userCommandBuffers[currentUserCommandBuffer].clear();
+					userCommandBuffers[currentUserCommandBuffer].Clear();
 				}
 				else
 				{
-					userCommandBuffers[currentUserCommandBuffer].copy(userCommandBuffers[currentHistoryBuffer]);
+					userCommandBuffers[currentUserCommandBuffer].copy(userCommandBuffers[currentHistoryBuffer].c_str());
 				}
 				userCommandField->SetChanged();
 				break;
@@ -2562,17 +2575,17 @@ namespace UI
 				currentHistoryBuffer = (currentHistoryBuffer + 1) % numUserCommandBuffers;
 				if (currentHistoryBuffer == currentUserCommandBuffer)
 				{
-					userCommandBuffers[currentUserCommandBuffer].clear();
+					userCommandBuffers[currentUserCommandBuffer].Clear();
 				}
 				else
 				{
-					userCommandBuffers[currentUserCommandBuffer].copy(userCommandBuffers[currentHistoryBuffer]);
+					userCommandBuffers[currentUserCommandBuffer].copy(userCommandBuffers[currentHistoryBuffer].c_str());
 				}
 				userCommandField->SetChanged();
 				break;
 
 			case evSendKeyboardCommand:
-				if (userCommandBuffers[currentUserCommandBuffer].size() != 0)
+				if (userCommandBuffers[currentUserCommandBuffer].strlen() != 0)
 				{
 					SerialIo::SendString(userCommandBuffers[currentUserCommandBuffer].c_str());
 					SerialIo::SendChar('\n');
@@ -2584,7 +2597,7 @@ namespace UI
 						currentUserCommandBuffer = (currentUserCommandBuffer + 1) % numUserCommandBuffers;
 					}
 					currentHistoryBuffer = currentUserCommandBuffer;
-					userCommandBuffers[currentUserCommandBuffer].clear();
+					userCommandBuffers[currentUserCommandBuffer].Clear();
 					userCommandField->SetLabel(userCommandBuffers[currentUserCommandBuffer].c_str());
 				}
 				break;
@@ -2732,7 +2745,7 @@ namespace UI
 	}
 
 	// Update the specified button in the file or macro buttons list. If 'text' is nullptr then hide the button, else display it.
-	void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * array null text, const char * array null param)
+	void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * _ecv_array null text, const char * _ecv_array null param)
 	{
 		TextButton * const f = ((filesNotMacros) ? filenameButtons : macroButtons)[buttonIndex];
 		f->SetText(text);
@@ -2742,7 +2755,7 @@ namespace UI
 
 	// Update the specified button in the macro short list. If 'fileName' is nullptr then hide the button, else display it.
 	// Return true if this should be called again for the next button.
-	bool UpdateMacroShortList(unsigned int buttonIndex, const char * array null fileName)
+	bool UpdateMacroShortList(unsigned int buttonIndex, const char * _ecv_array null fileName)
 	{
 		if (buttonIndex >= ARRAY_SIZE(controlPageMacroButtons) || controlPageMacroButtons[buttonIndex] == nullptr || numToolColsUsed == 0 || numToolColsUsed >= MaxHeaters - 2)
 		{
@@ -2750,7 +2763,7 @@ namespace UI
 		}
 
 		String<controlPageMacroTextLength>& str = controlPageMacroText[buttonIndex];
-		str.clear();
+		str.Clear();
 		const bool isFile = (fileName != nullptr);
 		if (isFile)
 		{

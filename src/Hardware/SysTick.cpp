@@ -5,7 +5,6 @@
  *  Author: David
  */ 
 
-#include "ecv.h"
 #include "asf.h"
 #include "SysTick.hpp"
 #include "Buzzer.hpp"

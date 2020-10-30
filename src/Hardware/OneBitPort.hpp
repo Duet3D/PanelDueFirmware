@@ -12,8 +12,6 @@
 #undef array
 #undef result
 #include "asf.h"
-#define array _ecv_array
-#define result _ecv_result
 
 class OneBitPort
 {

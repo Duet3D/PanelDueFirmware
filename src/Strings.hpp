@@ -11,9 +11,11 @@
 #define SRC_STRINGS_HPP_
 
 #include "ecv.h"
+#undef array
+#undef result
 #include "UserInterfaceConstants.hpp"
 
-#define CSTRING const char * const array
+#define CSTRING const char * const _ecv_array
 #define Newline			"\n"
 #define DegreeSymbol	"\u00B0"
 

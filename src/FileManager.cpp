@@ -5,21 +5,18 @@
  *  Author: David
  */
 
+#include <cctype>
 #include "FileManager.hpp"
 #include "PanelDue.hpp"
 #include "UserInterfaceConstants.hpp"
 #include "UserInterface.hpp"
 #include "Hardware/SerialIo.hpp"
 #include "Library/Misc.hpp"
-#include <cctype>
+#include "Library/Vector.hpp"
+#include "General/String.h"
 
 #undef min
 #undef max
-#undef array
-#undef result
-//#include <algorithm>
-#define array _ecv_array
-#define result _ecv_result
 
 #if SAM4S
 // We have 64Kb SRAM on the SAM4S4B so we can support larger file lists
@@ -34,10 +31,10 @@ constexpr size_t MaxFiles = 100;
 namespace FileManager
 {
 	typedef Vector<char, FileListSize> FileList;				// we use a Vector instead of a String because we store multiple null-terminated strings in it
-	typedef Vector<const char* array, MaxFiles> FileListIndex;
+	typedef Vector<const char* _ecv_array, MaxFiles> FileListIndex;
 
-	const char * array filesRoot = "0:/gcodes";
-	const char * array macrosRoot = "0:/macros";
+	const char * _ecv_array filesRoot = "0:/gcodes";
+	const char * _ecv_array macrosRoot = "0:/macros";
 	const uint32_t FileListRequestTimeout = 8000;				// file info request timeout in milliseconds
 
 	static FileList fileLists[3];								// one for gcode file list, one for macro list, one for receiving new lists into
@@ -57,10 +54,11 @@ namespace FileManager
 		return strcasecmp(a, b) > 0;
 	}
 
-	FileSet::FileSet(const char * array rootDir, unsigned int numDisp, bool pIsFilesList)
-		: numDisplayed(numDisp), requestedPath(rootDir), currentPath(), timer(FileListRequestTimeout, "", requestedPath.c_str()), whichList(-1), scrollOffset(0),
+	FileSet::FileSet(const char * _ecv_array rootDir, unsigned int numDisp, bool pIsFilesList)
+		: numDisplayed(numDisp), currentPath(), timer(FileListRequestTimeout, "", requestedPath.c_str()), whichList(-1), scrollOffset(0),
 		  isFilesList(pIsFilesList), cardNumber(0)
 	{
+		requestedPath.copy(rootDir);
 	}
 
 	void FileSet::Display()
@@ -165,7 +163,7 @@ namespace FileManager
 		FileListUpdated();
 	}
 
-	void FileSet::SetPath(const char * array pPath)
+	void FileSet::SetPath(const char * _ecv_array pPath)
 	{
 		currentPath.copy(pPath);
 	}
@@ -174,12 +172,12 @@ namespace FileManager
 	bool FileSet::IsInSubdir() const
 	{
 		// Find the start of the first component of the path
-		size_t start = (currentPath.size() >= 2 && isdigit(currentPath[0]) && currentPath[1] == ':') ? 2 : 0;
+		size_t start = (currentPath.strlen() >= 2 && isdigit(currentPath[0]) && currentPath[1] == ':') ? 2 : 0;
 		if (currentPath[start] == '/')
 		{
 			++start;
 		}
-		size_t end = currentPath.size();
+		size_t end = currentPath.strlen();
 		if (end > start && currentPath[end - 1] == '/')
 		{
 			--end;			// remove trailing '/' if there is one
@@ -201,7 +199,7 @@ namespace FileManager
 		whichList = -1;
 		FileListUpdated();									// this hides the file list until we receive a new one
 
-		size_t end = currentPath.size();
+		size_t end = currentPath.strlen();
 		// Skip any trailing '/'
 		if (end != 0 && currentPath[end - 1] == '/')
 		{
@@ -216,24 +214,24 @@ namespace FileManager
 				break;
 			}
 		}
-		requestedPath.clear();
+		requestedPath.Clear();
 		for (size_t i = 0; i < end; ++i)
 		{
-			requestedPath.add(currentPath[i]);
+			requestedPath.cat(currentPath[i]);
 		}
 		SetPending();
 	}
 
 	// Build a subdirectory of the current path
-	void FileSet::RequestSubdir(const char * array dir)
+	void FileSet::RequestSubdir(const char * _ecv_array dir)
 	{
 		whichList = -1;
 		FileListUpdated();									// this hides the file list until we receive a new one
 
-		requestedPath.copy(currentPath);
-		if (requestedPath.size() == 0 || (requestedPath[requestedPath.size() - 1] != '/'))
+		requestedPath.copy(currentPath.c_str());
+		if (requestedPath.strlen() == 0 || (requestedPath[requestedPath.strlen() - 1] != '/'))
 		{
-			requestedPath.add('/');
+			requestedPath.cat('/');
 		}
 		requestedPath.cat(dir);
 		SetPending();
@@ -302,7 +300,7 @@ namespace FileManager
 	// This is called when a new JSON response is received
 	void BeginNewMessage()
 	{
-		fileDirectoryName.clear();
+		fileDirectoryName.Clear();
 		errorCode = 0;
 		newFileList = -1;
 	}
@@ -315,7 +313,7 @@ namespace FileManager
 			// We received a new file list, which may be for the files or the macro list. Find out which.
 			size_t i;
 			bool card0;
-			if (fileDirectoryName.size() >= 2 && isdigit(fileDirectoryName[0]) && fileDirectoryName[1] == ':')
+			if (fileDirectoryName.strlen() >= 2 && isdigit(fileDirectoryName[0]) && fileDirectoryName[1] == ':')
 			{
 				i = 2;
 				card0 = (fileDirectoryName[0] == '0');
@@ -330,17 +328,17 @@ namespace FileManager
 				++i;
 			}
 			String<10> temp;
-			while (i < fileDirectoryName.size() && fileDirectoryName[i] != '/')
+			while (i < fileDirectoryName.strlen() && fileDirectoryName[i] != '/')
 			{
-				temp.add(fileDirectoryName[i++]);
+				temp.cat(fileDirectoryName[i++]);
 			}
 
 			fileIndices[newFileList].sort(StringGreaterThan);		// put the index in alphabetical order
 
-			if (card0 && temp.equalsIgnoreCase("macros"))
+			if (card0 && temp.EqualsIgnoreCase("macros"))
 			{
 				macroFilesList.Reload(newFileList, fileDirectoryName, errorCode);
-				if (i + 1 >= fileDirectoryName.size())				// if in root of /macros
+				if (i + 1 >= fileDirectoryName.strlen())				// if in root of /macros
 				{
 					macroFilesList.ReloadMacroShortList(errorCode);
 				}
@@ -369,7 +367,7 @@ namespace FileManager
 	}
 
 	// This is called for each filename received
-	void ReceiveFile(const char * array data)
+	void ReceiveFile(const char * _ecv_array data)
 	{
 		if (newFileList >= 0)
 		{
@@ -385,7 +383,7 @@ namespace FileManager
 	}
 
 	// This is called when we receive the directory name
-	void ReceiveDirectoryName(const char * array data)
+	void ReceiveDirectoryName(const char * _ecv_array data)
 	{
 		fileDirectoryName.copy(data);
 	}
@@ -420,12 +418,12 @@ namespace FileManager
 		macroFilesList.Scroll(amount);
 	}
 
-	void RequestFilesSubdir(const char * array dir)
+	void RequestFilesSubdir(const char * _ecv_array dir)
 	{
 		gcodeFilesList.RequestSubdir(dir);
 	}
 
-	void RequestMacrosSubdir(const char * array dir)
+	void RequestMacrosSubdir(const char * _ecv_array dir)
 	{
 		macroFilesList.RequestSubdir(dir);
 	}
@@ -440,17 +438,17 @@ namespace FileManager
 		macroFilesList.RequestParentDir();
 	}
 
-	const char * array GetFilesDir()
+	const char * _ecv_array GetFilesDir()
 	{
 		return gcodeFilesList.GetPath();
 	}
 
-	const char * array GetMacrosDir()
+	const char * _ecv_array GetMacrosDir()
 	{
 		return macroFilesList.GetPath();
 	}
 
-	const char * array GetMacrosRootDir()
+	const char * _ecv_array GetMacrosRootDir()
 	{
 		return macrosRoot;
 	}

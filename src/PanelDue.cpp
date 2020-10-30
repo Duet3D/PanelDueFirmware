@@ -7,17 +7,8 @@
 // 3. No pure virtual functions. This is because in release builds, having pure virtual functions causes huge amounts of the C++ library to be linked in
 //    (possibly because it wants to print a message if a pure virtual function is called).
 
-// Include definitions for verification using Escher C/C++ verifier
-#include "ecv.h"
-
-// We have to temporarily allow 'array' and 'result' to be used as ordinary identifiers when including the ASF
-#undef array
-#undef result
+#include "PanelDue.hpp"
 #include "asf.h"
-
-// Reinstate the eCv definitions of 'array' and 'result'
-#define array _ecv_array
-#define result _ecv_result
 
 #include <cstring>
 #include <cctype>
@@ -41,7 +32,6 @@
 #include "Hardware/FlashStorage.hpp"
 #endif
 
-#include "PanelDue.hpp"
 #include "Configuration.hpp"
 #include "UserInterfaceConstants.hpp"
 #include "FileManager.hpp"
@@ -81,7 +71,7 @@ const uint32_t shortTouchDelay = 100;				// how long we ignore new touches while
 
 struct HostFirmwareType
 {
-	const char* array const name;
+	const char* _ecv_array const name;
 	const FirmwareFeatures features;
 };
 
@@ -238,24 +228,24 @@ enum ReceivedDataEvent
 	rcvResult,
 
 	// Available keys
-	rcvKeyNoKey,
-	rcvKeyBoards,
-	rcvKeyDirectories,
-	rcvKeyFans,
-	rcvKeyHeat,
-	rcvKeyInputs,
-	rcvKeyJob,
-	rcvKeyLimits,
-	rcvKeyMove,
-	rcvKeyNetwork,
-	rcvKeyReply,
-	rcvKeyScanner,
-	rcvKeySensors,
-	rcvKeySeqs,
-	rcvKeySpindles,
-	rcvKeyState,
-	rcvKeyTools,
-	rcvKeyVolumes,
+	rcvOMKeyNoKey,
+	rcvOMKeyBoards,
+	rcvOMKeyDirectories,
+	rcvOMKeyFans,
+	rcvOMKeyHeat,
+	rcvOMKeyInputs,
+	rcvOMKeyJob,
+	rcvOMKeyLimits,
+	rcvOMKeyMove,
+	rcvOMKeyNetwork,
+	rcvOMKeyReply,
+	rcvOMKeyScanner,
+	rcvOMKeySensors,
+	rcvOMKeySeqs,
+	rcvOMKeySpindles,
+	rcvOMKeyState,
+	rcvOMKeyTools,
+	rcvOMKeyVolumes,
 
 	// Keys in "live" response
 	rcvLiveFansActualValue,
@@ -270,7 +260,7 @@ enum ReceivedDataEvent
 	rcvLiveJobTimesLeftFile,
 	rcvLiveJobTimesLeftLayer,
 
-	rcvLiveMoveAxesHomed,
+	rcvMoveAxesHomed,
 	rcvLiveMoveAxesMachinePosition,
 	rcvLiveMoveAxesUserPosition,
 
@@ -353,100 +343,100 @@ struct FieldTableEntry
 };
 
 // The following tables will be sorted once on startup so entries can be better grouped for code maintenance
-// A '^' character indicates the position of an array index, and a ':' character indicates the start of a sub-field name
+// A '^' character indicates the position of an _ecv_array index, and a ':' character indicates the start of a sub-field name
 static FieldTableEntry fieldTable[] =
 {
 	// M409 common fields
 	{ rcvKey, 							"key" },
 
 	// M409 F"d99f" response
-	{ rcvLiveFansActualValue,			"result:fans^:actualValue" },
+	{ rcvLiveFansActualValue,			"fans^:actualValue" },
 
-	{ rcvLiveHeatHeatersActive,			"result:heat:heaters^:active" },
-	{ rcvLiveHeatHeatersCurrent,		"result:heat:heaters^:current" },
-	{ rcvLiveHeatHeatersStandby,		"result:heat:heaters^:standby" },
-	{ rcvLiveHeatHeatersState,			"result:heat:heaters^:state" },
+	{ rcvLiveHeatHeatersActive,			"heat:heaters^:active" },
+	{ rcvLiveHeatHeatersCurrent,		"heat:heaters^:current" },
+	{ rcvLiveHeatHeatersStandby,		"heat:heaters^:standby" },
+	{ rcvLiveHeatHeatersState,			"heat:heaters^:state" },
 
-	{ rcvLiveJobFilePosition,			"result:job:filePosition" },
-	{ rcvLiveJobTimesLeftFilament,		"result:job:timesLeft:filament" },
-	{ rcvLiveJobTimesLeftFile,			"result:job:timesLeft:file" },
-	{ rcvLiveJobTimesLeftLayer,			"result:job:timesLeft:layer" },
+	{ rcvLiveJobFilePosition,			"job:filePosition" },
+	{ rcvLiveJobTimesLeftFilament,		"job:timesLeft:filament" },
+	{ rcvLiveJobTimesLeftFile,			"job:timesLeft:file" },
+	{ rcvLiveJobTimesLeftLayer,			"job:timesLeft:layer" },
 
-	{ rcvLiveMoveAxesHomed,				"result:move:axes^:homed" },
-	{ rcvLiveMoveAxesMachinePosition,	"result:move:axes^:machinePosition" },
-	{ rcvLiveMoveAxesUserPosition,		"result:move:axes^:userPosition" },
+	{ rcvLiveMoveAxesMachinePosition,	"move:axes^:machinePosition" },
+	{ rcvLiveMoveAxesUserPosition,		"move:axes^:userPosition" },
 
-	{ rcvLiveSensorsProbeValue,			"result:sensors:probes^:value^" },
+	{ rcvLiveSensorsProbeValue,			"sensors:probes^:value^" },
 
-	{ rcvLiveSeqsBoards,				"result:seqs:boards" },
-	{ rcvLiveSeqsDirectories,			"result:seqs:directories" },
-	{ rcvLiveSeqsFans,					"result:seqs:fans" },
-	{ rcvLiveSeqsHeat,					"result:seqs:heat" },
-	{ rcvLiveSeqsInputs,				"result:seqs:inputs" },
-	{ rcvLiveSeqsJob,					"result:seqs:job" },
-	{ rcvLiveSeqsMove,					"result:seqs:move" },
-	{ rcvLiveSeqsNetwork,				"result:seqs:network" },
-	{ rcvLiveSeqsReply,					"result:seqs:reply" },
-	{ rcvLiveSeqsScanner,				"result:seqs:scanner" },
-	{ rcvLiveSeqsSensors,				"result:seqs:sensors" },
-	{ rcvLiveSeqsSpindles,				"result:seqs:spindles" },
-	{ rcvLiveSeqsState,					"result:seqs:state" },
-	{ rcvLiveSeqsTools,					"result:seqs:tools" },
-	{ rcvLiveSeqsVolumes,				"result:seqs:volumes" },
+	{ rcvLiveSeqsBoards,				"seqs:boards" },
+	{ rcvLiveSeqsDirectories,			"seqs:directories" },
+	{ rcvLiveSeqsFans,					"seqs:fans" },
+	{ rcvLiveSeqsHeat,					"seqs:heat" },
+	{ rcvLiveSeqsInputs,				"seqs:inputs" },
+	{ rcvLiveSeqsJob,					"seqs:job" },
+	{ rcvLiveSeqsMove,					"seqs:move" },
+	{ rcvLiveSeqsNetwork,				"seqs:network" },
+	{ rcvLiveSeqsReply,					"seqs:reply" },
+	{ rcvLiveSeqsScanner,				"seqs:scanner" },
+	{ rcvLiveSeqsSensors,				"seqs:sensors" },
+	{ rcvLiveSeqsSpindles,				"seqs:spindles" },
+	{ rcvLiveSeqsState,					"seqs:state" },
+	{ rcvLiveSeqsTools,					"seqs:tools" },
+	{ rcvLiveSeqsVolumes,				"seqs:volumes" },
 
-	{ rcvLiveSpindlesCurrent,			"result:spindles^:current" },
+	{ rcvLiveSpindlesCurrent,			"spindles^:current" },
 
-	{ rcvLiveStateCurrentTool,			"result:state:currentTool" },
-	{ rcvLiveStateStatus,				"result:state:status" },
-	{ rcvLiveStateUptime,				"result:state:upTime" },
+	{ rcvLiveStateCurrentTool,			"state:currentTool" },
+	{ rcvLiveStateStatus,				"state:status" },
+	{ rcvLiveStateUptime,				"state:upTime" },
 
-	{ rcvLiveToolsState, 				"result:tools^:state" },
+	{ rcvLiveToolsState, 				"tools^:state" },
 
 	// M409 K"boards" response
-	{ rcvBoardsFirmwareName, 			"result^:firmwareName" },
+	{ rcvBoardsFirmwareName, 			"boards^:firmwareName" },
 
 	// M409 K"heat" response
-	{ rcvHeatBedHeaters,				"result:bedHeaters^" },
-	{ rcvHeatChamberHeaters,			"result:chamberHeaters^" },
+	{ rcvHeatBedHeaters,				"heat:bedHeaters^" },
+	{ rcvHeatChamberHeaters,			"heat:chamberHeaters^" },
 
 	// M409 K"job" response
-	{ rcvJobFileFilename, 				"result:file:fileName" },
-	{ rcvJobFileSize, 					"result:file:size" },
+	{ rcvJobFileFilename, 				"job:file:fileName" },
+	{ rcvJobFileSize, 					"job:file:size" },
 
 	// M409 K"move" response
-	{ rcvMoveAxesBabystep, 				"result:axes^:babystep" },
-	{ rcvMoveAxesLetter,	 			"result:axes^:letter" },
-	{ rcvMoveAxesVisible, 				"result:axes^:visible" },
-	{ rcvMoveAxesWorkplaceOffsets, 		"result:axes^:workplaceOffsets^" },
-	{ rcvMoveExtrudersFactor, 			"result:extruders^:factor" },
-	{ rcvMoveKinematicsName, 			"result:kinematics:name" },
-	{ rcvMoveSpeedFactor, 				"result:speedFactor" },
+	{ rcvMoveAxesBabystep, 				"move:axes^:babystep" },
+	{ rcvMoveAxesHomed,					"move:axes^:homed" },
+	{ rcvMoveAxesLetter,	 			"move:axes^:letter" },
+	{ rcvMoveAxesVisible, 				"move:axes^:visible" },
+	{ rcvMoveAxesWorkplaceOffsets, 		"move:axes^:workplaceOffsets^" },
+	{ rcvMoveExtrudersFactor, 			"move:extruders^:factor" },
+	{ rcvMoveKinematicsName, 			"move:kinematics:name" },
+	{ rcvMoveSpeedFactor, 				"move:speedFactor" },
 
 	// M409 K"network" response
-	{ rcvNetworkName, 					"result:name" },
+	{ rcvNetworkName, 					"network:name" },
 
 	// M409 K"spindles" response
-	{ rcvSpindlesActive, 				"result^:active" },
-	{ rcvSpindlesMax, 					"result^:max" },
-	{ rcvSpindlesTool, 					"result^:tool" },
+	{ rcvSpindlesActive, 				"spindles^:active" },
+	{ rcvSpindlesMax, 					"spindles^:max" },
+	{ rcvSpindlesTool, 					"spindles^:tool" },
 
 	// M409 K"state" response
-	{ rcvStateMessageBox,				"result:messageBox" },
-	{ rcvStateMessageBoxAxisControls,	"result:messageBox:axisControls" },
-	{ rcvStateMessageBoxMessage,		"result:messageBox:message" },
-	{ rcvStateMessageBoxMode,			"result:messageBox:mode" },
-	{ rcvStateMessageBoxSeq,			"result:messageBox:seq" },
-	{ rcvStateMessageBoxTimeout,		"result:messageBox:timeout" },
-	{ rcvStateMessageBoxTitle,			"result:messageBox:title" },
+	{ rcvStateMessageBox,				"state:messageBox" },
+	{ rcvStateMessageBoxAxisControls,	"state:messageBox:axisControls" },
+	{ rcvStateMessageBoxMessage,		"state:messageBox:message" },
+	{ rcvStateMessageBoxMode,			"state:messageBox:mode" },
+	{ rcvStateMessageBoxSeq,			"state:messageBox:seq" },
+	{ rcvStateMessageBoxTimeout,		"state:messageBox:timeout" },
+	{ rcvStateMessageBoxTitle,			"state:messageBox:title" },
 
 	// M409 K"tools" response
-	{ rcvToolsExtruders,				"result^:extruders^" },
-	{ rcvToolsHeaters,					"result^:heaters^" },
-	{ rcvToolsNumber, 					"result^:number" },
-	{ rcvToolsOffsets, 					"result^:offsets^" },
+	{ rcvToolsExtruders,				"tools^:extruders^" },
+	{ rcvToolsHeaters,					"tools^:heaters^" },
+	{ rcvToolsNumber, 					"tools^:number" },
+	{ rcvToolsOffsets, 					"tools^:offsets^" },
 
 	// M409 K"volumes" response
-	{ rcvVolumesMounted, 				"result^:mounted" },
+	{ rcvVolumesMounted, 				"volumes^:mounted" },
 
 	// M20 response
 	{ rcvM20Dir,						"dir" },
@@ -475,28 +465,28 @@ static FieldTableEntry fieldTable[] =
 // This table must be kept in case-insensitive alphabetical order of the search string.
 const FieldTableEntry keyResponseTypeTable[] =
 {
-	{ rcvKeyNoKey, 			"" },
-	{ rcvKeyBoards,			"boards" },
-	{ rcvKeyDirectories,	"directories" },
-	{ rcvKeyFans,			"fans" },
-	{ rcvKeyHeat,			"heat" },
-	{ rcvKeyInputs,			"inputs" },
-	{ rcvKeyJob,			"job" },
-	{ rcvKeyLimits,			"limits" },
-	{ rcvKeyMove,			"move" },
-	{ rcvKeyNetwork,		"network" },
-	{ rcvKeyReply,			"reply" },
-	{ rcvKeyScanner,		"scanner" },
-	{ rcvKeySensors,		"sensors" },
-	{ rcvKeySeqs,			"seqs" },
-	{ rcvKeySpindles,		"spindles" },
-	{ rcvKeyState,			"state" },
-	{ rcvKeyTools,			"tools" },
-	{ rcvKeyVolumes,		"volumes" },
+	{ rcvOMKeyNoKey, 			"" },
+	{ rcvOMKeyBoards,			"boards" },
+	{ rcvOMKeyDirectories,		"directories" },
+	{ rcvOMKeyFans,				"fans" },
+	{ rcvOMKeyHeat,				"heat" },
+	{ rcvOMKeyInputs,			"inputs" },
+	{ rcvOMKeyJob,				"job" },
+	{ rcvOMKeyLimits,			"limits" },
+	{ rcvOMKeyMove,				"move" },
+	{ rcvOMKeyNetwork,			"network" },
+	{ rcvOMKeyReply,			"reply" },
+	{ rcvOMKeyScanner,			"scanner" },
+	{ rcvOMKeySensors,			"sensors" },
+	{ rcvOMKeySeqs,				"seqs" },
+	{ rcvOMKeySpindles,			"spindles" },
+	{ rcvOMKeyState,			"state" },
+	{ rcvOMKeyTools,			"tools" },
+	{ rcvOMKeyVolumes,			"volumes" },
 };
 
 
-static ReceivedDataEvent currentResponseType = rcvKeyNoKey;
+static ReceivedDataEvent currentResponseType = rcvUnknown;
 
 struct Seqs
 {
@@ -567,63 +557,84 @@ void resetSeqs()
 	Reconnect();
 }
 
-const char * GetNextToPoll()
+struct OMRequestParams {
+	const char * _ecv_array const key;
+	const char * _ecv_array const flags = "v";
+};
+
+static const OMRequestParams noKeyParams =			{""};
+static const OMRequestParams boardsParams =			{"boards"};
+static const OMRequestParams directoriesParams =	{"directories"};
+static const OMRequestParams fansParams =			{"fans"};
+static const OMRequestParams heatParams =			{"heat"};
+static const OMRequestParams inputsParams =			{"inputs"};
+static const OMRequestParams jobParams =			{"job"};
+static const OMRequestParams moveParams =			{"move"};
+static const OMRequestParams networkParams =		{"network"};
+static const OMRequestParams scannerParams =		{"scanner"};
+static const OMRequestParams sensorsParams =		{"sensors"};
+static const OMRequestParams spindlesParams =		{"spindles"};
+static const OMRequestParams stateParams =			{"state", "vn"};
+static const OMRequestParams toolsParams =			{"tools"};
+static const OMRequestParams volumesParams =		{"volumes"};
+
+const OMRequestParams* GetNextToPoll()
 {
 	if (seqs.updateNetwork)
 	{
-		return "K\"network\" F\"v\"";
+		return &networkParams;
 	}
 	if (seqs.updateBoards)
 	{
-		return "K\"boards\" F\"v\"";
+		return &boardsParams;
 	}
 	if (seqs.updateMove)
 	{
-		return "K\"move\" F\"v\"";
+		return &moveParams;
 	}
 	if (seqs.updateHeat)
 	{
-		return "K\"heat\" F\"v\"";
+		return &heatParams;
 	}
 	if (seqs.updateTools)
 	{
-		return "K\"tools\" F\"v\"";
+		return &toolsParams;
 	}
 	if (seqs.updateSpindles)
 	{
-		return "K\"spindles\" F\"v\"";
+		return &spindlesParams;
 	}
 	if (seqs.updateDirectories)
 	{
-		return "K\"directories\" F\"v\"";
+		return &directoriesParams;
 	}
 	if (seqs.updateFans)
 	{
-		return "K\"fans\" F\"v\"";
+		return &fansParams;
 	}
 	if (seqs.updateInputs)
 	{
-		return "K\"inputs\" F\"v\"";
+		return &inputsParams;
 	}
 	if (seqs.updateJob)
 	{
-		return "K\"job\" F\"v\"";
+		return &jobParams;
 	}
 	if (seqs.updateScanner)
 	{
-		return "K\"scanner\" F\"v\"";
+		return &scannerParams;
 	}
 	if (seqs.updateSensors)
 	{
-		return "K\"sensors\" F\"v\"";
+		return &sensorsParams;
 	}
 	if (seqs.updateState)
 	{
-		return "K\"state\" F\"vn\"";
+		return &stateParams;
 	}
 	if (seqs.updateVolumes)
 	{
-		return "K\"volumes\" F\"v\"";
+		return &volumesParams;
 	}
 
 	return nullptr;
@@ -712,7 +723,7 @@ FirmwareFeatures GetFirmwareFeatures()
 }
 
 // Strip the drive letter prefix from a file path if the host firmware doesn't support it
-const char* array CondStripDrive(const char* array arg)
+const char* _ecv_array CondStripDrive(const char* _ecv_array arg)
 {
 	return ((firmwareFeatures & noDriveNumber) != 0 && isdigit(arg[0]) && arg[1] == ':')
 			? arg + 2
@@ -746,7 +757,7 @@ bool PrintInProgress()
 }
 
 // Search an ordered table for a matching string
-ReceivedDataEvent bsearch(const FieldTableEntry array table[], size_t numElems, const char* key)
+ReceivedDataEvent bsearch(const FieldTableEntry _ecv_array table[], size_t numElems, const char* key)
 {
 	size_t low = 0u, high = numElems;
 	while (high > low)
@@ -1165,46 +1176,46 @@ void SeqsRequestDone(const ReceivedDataEvent rde)
 {
 	switch (rde)
 	{
-	case rcvKeyBoards:
+	case rcvOMKeyBoards:
 		seqs.updateBoards = false;
 		break;
-	case rcvKeyDirectories:
+	case rcvOMKeyDirectories:
 		seqs.updateDirectories = false;
 		break;
-	case rcvKeyFans:
+	case rcvOMKeyFans:
 		seqs.updateFans = false;
 		break;
-	case rcvKeyHeat:
+	case rcvOMKeyHeat:
 		seqs.updateHeat = false;
 		break;
-	case rcvKeyInputs:
+	case rcvOMKeyInputs:
 		seqs.updateInputs = false;
 		break;
-	case rcvKeyJob:
+	case rcvOMKeyJob:
 		seqs.updateJob = false;
 		break;
-	case rcvKeyMove:
+	case rcvOMKeyMove:
 		seqs.updateMove = false;
 		break;
-	case rcvKeyNetwork:
+	case rcvOMKeyNetwork:
 		seqs.updateNetwork = false;
 		break;
-	case rcvKeyScanner:
+	case rcvOMKeyScanner:
 		seqs.updateScanner = false;
 		break;
-	case rcvKeySensors:
+	case rcvOMKeySensors:
 		seqs.updateSensors = false;
 		break;
-	case rcvKeySpindles:
+	case rcvOMKeySpindles:
 		seqs.updateSpindles = false;
 		break;
-	case rcvKeyState:
+	case rcvOMKeyState:
 		seqs.updateState = false;
 		break;
-	case rcvKeyTools:
+	case rcvOMKeyTools:
 		seqs.updateTools = false;
 		break;
-	case rcvKeyVolumes:
+	case rcvOMKeyVolumes:
 		seqs.updateVolumes = false;
 		break;
 	default:
@@ -1218,6 +1229,7 @@ void EndReceivedMessage()
 	ShowLine;
 	lastResponseTime = SystemTick::GetTickCount();
 	SeqsRequestDone(currentResponseType);
+	currentResponseType = rcvUnknown;
 
 	if (newMessageSeq != messageSeq)
 	{
@@ -1372,156 +1384,88 @@ void UpdateSeqs(const ReceivedDataEvent rde, const int32_t ival)
 	}
 }
 
-// Public functions called by the SerialIo module
-void ProcessReceivedValue(const char id[], const char data[], const size_t indices[])
+const OMRequestParams* GetOMRequestParams()
 {
-	const ReceivedDataEvent rde = bsearch(fieldTable, ARRAY_SIZE(fieldTable), id);
+	switch (currentResponseType)
+	{
+	case rcvOMKeyNoKey:
+		return &noKeyParams;
+	case rcvOMKeyBoards:
+		return &boardsParams;
+	case rcvOMKeyFans:
+		return &fansParams;
+	case rcvOMKeyHeat:
+		return &heatParams;
+	case rcvOMKeyInputs:
+		return &inputsParams;
+	case rcvOMKeyJob:
+		return &jobParams;
+	case rcvOMKeyMove:
+		return &moveParams;
+	case rcvOMKeyNetwork:
+		return &networkParams;
+	case rcvOMKeyScanner:
+		return &scannerParams;
+	case rcvOMKeySensors:
+		return &sensorsParams;
+	case rcvOMKeySpindles:
+		return &spindlesParams;
+	case rcvOMKeyState:
+		return &stateParams;
+	case rcvOMKeyTools:
+		return &toolsParams;
+	case rcvOMKeyVolumes:
+		return &volumesParams;
+	default:
+		return nullptr;
+	}
+}
+
+// Public functions called by the SerialIo module
+void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[])
+{
+	if (stringStartsWith(id.c_str(), "result"))
+	{
+		auto requestParams = GetOMRequestParams();
+		if (requestParams != nullptr)
+		{
+			// We might either get something like:
+			// * "result[optional modified]:[key]:[field]" for a live response or
+			// * "result[optional modified]:[field]" for a detailed response
+			// If live response remove "result:"
+			// else replace "result" by "key" (do NOT replace anything beyond "result" as there might be an _ecv_array modifier)
+
+			id.Erase(0, 6);		// Erase the string "result"
+			if (currentResponseType == rcvOMKeyNoKey)
+			{
+				id.Erase(0);	// Also erase the colon
+			}
+			else
+			{
+				id.Prepend(requestParams->key);		// Prepend the key of the current response
+			}
+		}
+	}
+
+	const ReceivedDataEvent rde = bsearch(fieldTable, ARRAY_SIZE(fieldTable), id.c_str());
 	switch (rde)
 	{
-	// Push messages
-	case rcvPushResponse:
-		MessageLog::SaveMessage(data);
-		break;
-
-	case rcvPushMessage:
-		if (data[0] == 0)
-		{
-			UI::ClearAlert();
-		}
-		else
-		{
-			UI::ProcessSimpleAlert(data);
-		}
-		break;
-
-	case rcvPushSeq:
-		GetUnsignedInteger(data, newMessageSeq);
-		break;
-
-	case rcvPushBeepDuration:
-		GetInteger(data, beepLength);
-		break;
-
-	case rcvPushBeepFrequency:
-		GetInteger(data, beepFrequency);
-		break;
-
-	// M20 section
-	case rcvM20Dir:
-		FileManager::ReceiveDirectoryName(data);
-		break;
-
-	case rcvM20Err:
-		{
-			int32_t i;
-			if (GetInteger(data, i))
-			{
-				if (i >= 0)
-				{
-					FileManager::ReceiveErrorCode(i);
-				}
-				else if (i == -1)
-				{
-					// RRF ran out of buffers
-				}
-			}
-		}
-		break;
-
-	case rcvM20Files:
-		ShowLine;
-		if (indices[0] == 0)
-		{
-			FileManager::BeginReceivingFiles();
-		}
-		FileManager::ReceiveFile(data);
-		break;
-
-	// M36 section
-	case rcvM36Filament:
-		ShowLine;
-		{
-			static float totalFilament = 0.0;
-			if (indices[0] == 0)
-			{
-				totalFilament = 0.0;
-			}
-			float f;
-			if (GetFloat(data, f))
-			{
-				totalFilament += f;
-				UI::UpdateFileFilament((int)totalFilament);
-			}
-		}
-		break;
-	case rcvM36Filename:
-		break;
-
-	case rcvM36GeneratedBy:
-		UI::UpdateFileGeneratedByText(data);
-		break;
-
-	case rcvM36Height:
-		{
-			float f;
-			if (GetFloat(data, f))
-			{
-				UI::UpdateFileObjectHeight(f);
-			}
-		}
-		break;
-
-	case rcvM36LastModified:
-		UI::UpdateFileLastModifiedText(data);
-		break;
-
-	case rcvM36LayerHeight:
-		{
-			float f;
-			if (GetFloat(data, f))
-			{
-				UI::UpdateFileLayerHeight(f);
-			}
-		}
-		break;
-
-	case rcvM36PrintTime:
-	case rcvM36SimulatedTime:
-		{
-			int32_t sz;
-			if (GetInteger(data, sz) && sz > 0)
-			{
-				UI::UpdatePrintTimeText((uint32_t)sz, rde == rcvM36SimulatedTime);
-			}
-		}
-		break;
-
-	case rcvM36Size:
-		{
-			int32_t sz;
-			if (GetInteger(data, sz))
-			{
-				UI::UpdateFileSize(sz);
-			}
-		}
-		break;
-
 	// M409 section
 	case rcvKey:
 		ShowLine;
 		{
 			currentResponseType = bsearch(keyResponseTypeTable, ARRAY_SIZE(keyResponseTypeTable), data);
 			switch (currentResponseType) {
-			case rcvKeyMove:
+			case rcvOMKeyMove:
 				visibleAxesCounted = 0;
 				break;
-			case rcvKeySpindles:
+			case rcvOMKeySpindles:
 				lastSpindle = -1;
 				break;
-			case rcvKeyTools:
+			case rcvOMKeyTools:
 				lastTool = -1;
 				break;
-			case rcvKeyVolumes:
+			case rcvOMKeyVolumes:
 				mountedVolumesCounted = 0;
 				break;
 			default:
@@ -1624,7 +1568,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		}
 		break;
 
-	case rcvLiveMoveAxesHomed:
+	case rcvMoveAxesHomed:
 		ShowLine;
 		{
 			bool isHomed;
@@ -1916,7 +1860,7 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 
 	case rcvSpindlesMax:
 		// fans also has a field "result^:max"
-		if (currentResponseType != rcvKeySpindles)
+		if (currentResponseType != rcvOMKeySpindles)
 		{
 			break;
 		}
@@ -2046,6 +1990,134 @@ void ProcessReceivedValue(const char id[], const char data[], const size_t indic
 		}
 		break;
 
+	// Push messages
+	case rcvPushResponse:
+		MessageLog::SaveMessage(data);
+		break;
+
+	case rcvPushMessage:
+		if (data[0] == 0)
+		{
+			UI::ClearAlert();
+		}
+		else
+		{
+			UI::ProcessSimpleAlert(data);
+		}
+		break;
+
+	case rcvPushSeq:
+		GetUnsignedInteger(data, newMessageSeq);
+		break;
+
+	case rcvPushBeepDuration:
+		GetInteger(data, beepLength);
+		break;
+
+	case rcvPushBeepFrequency:
+		GetInteger(data, beepFrequency);
+		break;
+
+	// M20 section
+	case rcvM20Dir:
+		FileManager::ReceiveDirectoryName(data);
+		break;
+
+	case rcvM20Err:
+		{
+			int32_t i;
+			if (GetInteger(data, i))
+			{
+				if (i >= 0)
+				{
+					FileManager::ReceiveErrorCode(i);
+				}
+				else if (i == -1)
+				{
+					// RRF ran out of buffers
+				}
+			}
+		}
+		break;
+
+	case rcvM20Files:
+		ShowLine;
+		if (indices[0] == 0)
+		{
+			FileManager::BeginReceivingFiles();
+		}
+		FileManager::ReceiveFile(data);
+		break;
+
+	// M36 section
+	case rcvM36Filament:
+		ShowLine;
+		{
+			static float totalFilament = 0.0;
+			if (indices[0] == 0)
+			{
+				totalFilament = 0.0;
+			}
+			float f;
+			if (GetFloat(data, f))
+			{
+				totalFilament += f;
+				UI::UpdateFileFilament((int)totalFilament);
+			}
+		}
+		break;
+	case rcvM36Filename:
+		break;
+
+	case rcvM36GeneratedBy:
+		UI::UpdateFileGeneratedByText(data);
+		break;
+
+	case rcvM36Height:
+		{
+			float f;
+			if (GetFloat(data, f))
+			{
+				UI::UpdateFileObjectHeight(f);
+			}
+		}
+		break;
+
+	case rcvM36LastModified:
+		UI::UpdateFileLastModifiedText(data);
+		break;
+
+	case rcvM36LayerHeight:
+		{
+			float f;
+			if (GetFloat(data, f))
+			{
+				UI::UpdateFileLayerHeight(f);
+			}
+		}
+		break;
+
+	case rcvM36PrintTime:
+	case rcvM36SimulatedTime:
+		{
+			int32_t sz;
+			if (GetInteger(data, sz) && sz > 0)
+			{
+				UI::UpdatePrintTimeText((uint32_t)sz, rde == rcvM36SimulatedTime);
+			}
+		}
+		break;
+
+	case rcvM36Size:
+		{
+			int32_t sz;
+			if (GetInteger(data, sz))
+			{
+				UI::UpdateFileSize(sz);
+			}
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -2059,40 +2131,45 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	{
 		FileManager::BeginReceivingFiles();				// received an empty file list - need to tell the file manager about it
 	}
-	else if (currentResponseType == rcvKeyMove && strcasecmp(id, "result:axes^") == 0)
+	else if (currentResponseType == rcvOMKeyMove && strcasecmp(id, "move:axes^") == 0)
 	{
 		OM::RemoveAxis(indices[0], true);
 		numAxes = constrain<unsigned int>(visibleAxesCounted, MIN_AXES, MaxTotalAxes);
 		UI::UpdateGeometry(numAxes, isDelta);
 	}
-	else if (currentResponseType == rcvKeySpindles)
+	else if (currentResponseType == rcvOMKeySpindles)
 	{
-		if (strcasecmp(id, "result^") == 0)
+		if (strcasecmp(id, "spindles^") == 0)
 		{
 			OM::RemoveSpindle(lastSpindle + 1, true);
 			UI::AllToolsSeen();
 		}
 	}
-	else if (currentResponseType == rcvKeyTools)
+	else if (currentResponseType == rcvOMKeyTools)
 	{
-		if (strcasecmp(id, "result^") == 0)
+		if (strcasecmp(id, "tools^") == 0)
 		{
 			OM::RemoveTool(lastTool + 1, true);
 			UI::AllToolsSeen();
 		}
-		else if (strcasecmp(id, "result^:extruders^") == 0 && indices[1] == 0)
+		else if (strcasecmp(id, "tools^:extruders^") == 0 && indices[1] == 0)
 		{
 			UI::SetToolExtruder(indices[0], -1);			// No extruder defined for this tool
 		}
-		else if (strcasecmp(id, "result^:heaters^") == 0 && indices[1] == 0)
+		else if (strcasecmp(id, "tools^:heaters^") == 0 && indices[1] == 0)
 		{
 			UI::SetToolHeater(indices[0], -1);				// No heater defined for this tool
 		}
 	}
-	else if (currentResponseType == rcvKeyVolumes && strcasecmp(id, "result^") == 0)
+	else if (currentResponseType == rcvOMKeyVolumes && strcasecmp(id, "volumes^") == 0)
 	{
 		FileManager::SetNumVolumes(mountedVolumesCounted);
 	}
+}
+
+void ParserErrorEncountered()
+{
+	// TODO: Handle parser errors
 }
 
 // Update those fields that display debug information
@@ -2334,15 +2411,13 @@ int main(void)
 		{
 			if (now - lastPollTime > now - lastResponseTime)		// if we've had a response since the last poll
 			{
-				const char * nextToPoll = GetNextToPoll();
+				auto nextToPoll = GetNextToPoll();
 				if (nextToPoll != nullptr)
 				{
 					// Once we get here the first time we will work all seqs once
 					initialized = true;
 
-					SerialIo::SendString("M409 ");
-					SerialIo::SendString(nextToPoll);
-					SerialIo::SendChar('\n');
+					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", nextToPoll->key, nextToPoll->flags);
 				}
 				else {
 

@@ -9,7 +9,7 @@
 #define FILEMANAGER_H_
 
 #include "Configuration.hpp"
-#include "Library/Vector.hpp"
+#include "General/String.h"
 #include "DisplaySize.hpp"
 #include "RequestTimer.hpp"
 #include "Events.hpp"
@@ -34,7 +34,7 @@ namespace FileManager
 		uint8_t cardNumber;
 
 	public:
-		FileSet(const char * array rootDir, unsigned numDisp, bool pIsFilesList);
+		FileSet(const char * _ecv_array rootDir, unsigned numDisp, bool pIsFilesList);
 		void Display();
 		void Reload(int whichList, const Path& dir, int errCode);
 		void ReloadMacroShortList(int errorCode);
@@ -42,11 +42,11 @@ namespace FileManager
 		void Scroll(int amount);
 		void SetIndex(int index) { whichList = index; }
 		int GetIndex() const { return whichList; }
-		void SetPath(const char * array pPath);
-		const char * array GetPath() { return currentPath.c_str(); }
+		void SetPath(const char * _ecv_array pPath);
+		const char * _ecv_array GetPath() { return currentPath.c_str(); }
 		void RequestParentDir()
 			pre(IsInSubdir());
-		void RequestSubdir(const char * array dir);
+		void RequestSubdir(const char * _ecv_array dir);
 		void SetPending();
 		void StopTimer() { timer.Stop(); }
 		bool ProcessTimer() { return timer.Process(); }
@@ -61,8 +61,8 @@ namespace FileManager
 	void BeginNewMessage();
 	void EndReceivedMessage();
 	void BeginReceivingFiles();
-	void ReceiveFile(const char * array data);
-	void ReceiveDirectoryName(const char * array data);
+	void ReceiveFile(const char * _ecv_array data);
+	void ReceiveDirectoryName(const char * _ecv_array data);
 	void ReceiveErrorCode(int err);
 
 	void DisplayFilesList();
@@ -70,13 +70,13 @@ namespace FileManager
 	void ScrollFiles(int amount);
 	void ScrollMacros(int amount);
 
-	void RequestFilesSubdir(const char * array dir);
-	void RequestMacrosSubdir(const char * array dir);
+	void RequestFilesSubdir(const char * _ecv_array dir);
+	void RequestMacrosSubdir(const char * _ecv_array dir);
 	void RequestFilesParentDir();
 	void RequestMacrosParentDir();
-	const char * array GetFilesDir();
-	const char * array GetMacrosDir();
-	const char * array GetMacrosRootDir();
+	const char * _ecv_array GetFilesDir();
+	const char * _ecv_array GetMacrosDir();
+	const char * _ecv_array GetMacrosRootDir();
 
 	void RefreshFilesList();
 	void RefreshMacrosList();

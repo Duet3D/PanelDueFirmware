@@ -10,6 +10,9 @@
 #define MESSAGELOG_H_
 
 #include "Display.hpp"
+#include "ecv.h"
+#undef array
+#undef result
 
 namespace MessageLog
 {
@@ -34,7 +37,7 @@ namespace MessageLog
 	void BeginNewMessage();
 	
 	// Find where we need to split a text string so that it will fit in  a field
-	size_t FindSplitPoint(const char * array s, size_t maxChars, PixelNumber width);
+	size_t FindSplitPoint(const char * _ecv_array s, size_t maxChars, PixelNumber width);
 }
 
 #endif /* MESSAGELOG_H_ */

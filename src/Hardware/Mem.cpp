@@ -5,7 +5,6 @@
  *  Author: David
  */ 
 
-#include "ecv.h"
 #include "Mem.hpp"
 #include "Library/Misc.hpp"
 

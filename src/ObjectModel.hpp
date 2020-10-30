@@ -14,7 +14,6 @@
 #undef vsnprintf
 #undef snprintf
 #include <functional>
-#define array _ecv_array // Reinstate the eCv definitions of 'array'
 // Also reinstate the safeguards against using the wrong *snprintf versions
 #define vsnprintf(b, m, f, a) static_assert(false, "Do not use vsnprintf, use SafeVsnprintf instead")
 #define snprintf(b, m, f, ...) static_assert(false, "Do not use snprintf, use SafeSnprintf instead")

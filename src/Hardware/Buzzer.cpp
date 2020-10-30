@@ -8,6 +8,8 @@
  */ 
 
 #include "ecv.h"
+#undef array
+#undef result
 #include "asf.h"
 #include "Buzzer.hpp"
 #include "SysTick.hpp"

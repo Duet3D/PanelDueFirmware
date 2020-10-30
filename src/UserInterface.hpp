@@ -52,8 +52,8 @@ namespace UI
 	extern void UpdateMachineName(const char data[]);
 	extern void ProcessAlert(const Alert& alert);
 	extern void ClearAlert();
-	extern void ProcessSimpleAlert(const char* array text);
-	extern void NewResponseReceived(const char* array text);
+	extern void ProcessSimpleAlert(const char* _ecv_array text);
+	extern void NewResponseReceived(const char* _ecv_array text);
 	extern bool CanDimDisplay();
 	extern void UpdateFileLastModifiedText(const char data[]);
 	extern void UpdateFileGeneratedByText(const char data[]);
@@ -78,9 +78,9 @@ namespace UI
 	extern void DisplayFilesOrMacrosList(bool filesNotMacros, int cardNumber, unsigned int numVolumes);
 	extern void FileListLoaded(bool filesNotMacros, int errCode);
 	extern void EnableFileNavButtons(bool filesNotMacros, bool scrollEarlier, bool scrollLater, bool parentDir);
-	extern void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * array null text, const char * array null param);
+	extern void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * _ecv_array null text, const char * _ecv_array null param);
 	extern unsigned int GetNumScrolledFiles(bool filesNotMacros);
-	extern bool UpdateMacroShortList(unsigned int buttonIndex, const char * array null fileName);
+	extern bool UpdateMacroShortList(unsigned int buttonIndex, const char * _ecv_array null fileName);
 
 	extern void SetBabystepOffset(size_t index, float f);
 	extern void SetAxisLetter(size_t index, char l);

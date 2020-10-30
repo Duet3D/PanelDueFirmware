@@ -5,14 +5,14 @@
  *  Author: David
  */ 
 
-#include "ecv.h"
+#include "MessageLog.hpp"
 #include "asf.h"
 #include "UserInterfaceConstants.hpp"
-#include "MessageLog.hpp"
 #include "UserInterface.hpp"
 #include "Hardware/SysTick.hpp"
 #include "Library/Misc.hpp"
-#include "Library/Vector.hpp"
+#include "General/String.h"
+#include "General/SafeVsnprintf.h"
 
 namespace MessageLog
 {
@@ -106,7 +106,7 @@ namespace MessageLog
 
 	// Add a message to the end of the list
 	// Call this only with a non empty message having no leading whitespace
-	void AppendMessage(const char* array data)
+	void AppendMessage(const char* _ecv_array data)
 	{
 		bool split;
 		unsigned int numLines = 0;
@@ -167,9 +167,9 @@ namespace MessageLog
 	// If there is a new message, scroll it in
 	void DisplayNewMessage()
 	{
-		if (!newMessage.isEmpty())
+		if (!newMessage.IsEmpty())
 		{
-			const char * array msg = newMessage.c_str();
+			const char * _ecv_array msg = newMessage.c_str();
 			// Skip any leading spaces, we don't have room on the display to waste
 			while (*msg == ' ' || *msg == '\n')
 			{
@@ -182,18 +182,18 @@ namespace MessageLog
 				AppendMessage(msg);
 				UI::NewResponseReceived(msg);
 			}
-			newMessage.clear();
+			newMessage.Clear();
 		}
 	}
 	
 	// This is called when we receive a new response from the host, which may or may not include a new message for the log
 	void BeginNewMessage()
 	{
-		newMessage.clear();
+		newMessage.Clear();
 	}
 
 	// Find where we need to split a text string so that it will fit in a field
-	size_t FindSplitPoint(const char * array s, size_t maxChars, PixelNumber width)
+	size_t FindSplitPoint(const char * _ecv_array s, size_t maxChars, PixelNumber width)
 	{
 		const size_t remLength = strlen(s);
 		maxChars = min<size_t>(maxChars, MaxCharsPerRow);

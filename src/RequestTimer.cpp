@@ -5,15 +5,14 @@
  *  Author: David
  */ 
 
-#include "ecv.h"
-#include "asf.h"
 #include "RequestTimer.hpp"
+#include "asf.h"
 #include "Hardware/SysTick.hpp"
 #include "Hardware/SerialIo.hpp"
 
 extern bool OkToSend();		// in PanelDue.cpp
 
-RequestTimer::RequestTimer(uint32_t del, const char * array cmd, const char * array null ex)
+RequestTimer::RequestTimer(uint32_t del, const char * _ecv_array cmd, const char * _ecv_array null ex)
 	: startTime(SystemTick::GetTickCount()), delayTime(del), command(cmd), extra(ex), quoteArgument(false)
 {
 	timerState = stopped;

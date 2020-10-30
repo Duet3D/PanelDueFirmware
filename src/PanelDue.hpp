@@ -8,18 +8,21 @@
 #ifndef PANELDUE_H_
 #define PANELDUE_H_
 
+#include "ecv.h"
+#undef array
 #include "Hardware/UTFT.hpp"
 #include "Display.hpp"
 #include "RequestTimer.hpp"
 #include "PrinterStatus.hpp"
 #include "FirmwareFeatures.hpp"
-#include "Library/Vector.hpp"
+#include "General/String.h"
 
 // Functions called from the serial I/O module
-extern void ProcessReceivedValue(const char id[], const char val[], const size_t indices[]);
+extern void ProcessReceivedValue(StringRef id, const char val[], const size_t indices[]);
 extern void ProcessArrayEnd(const char id[], const size_t indices[]);
 extern void StartReceivedMessage();
 extern void EndReceivedMessage();
+extern void ParserErrorEncountered();
 
 // Functions called from module UserInterface
 enum class DisplayDimmerType : uint8_t
@@ -63,7 +66,7 @@ extern void SetBabystepAmountIndex(uint8_t babystepAmountIndex);
 extern uint16_t GetFeedrate();
 extern void SetFeedrate(uint16_t feedrate);
 extern FirmwareFeatures GetFirmwareFeatures();
-extern const char* array CondStripDrive(const char* array arg);
+extern const char* _ecv_array CondStripDrive(const char* _ecv_array arg);
 extern void Reconnect();
 extern void Delay(uint32_t milliSeconds);
 

@@ -10,6 +10,8 @@
 #define PRINT_H_
 
 #include "ecv.h"
+#undef array
+#undef result
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
