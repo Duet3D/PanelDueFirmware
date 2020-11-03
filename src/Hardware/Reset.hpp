@@ -9,10 +9,21 @@
 #ifndef RESET_H_
 #define RESET_H_
 
+#include "asf.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Restart the hardware
-inline void Restart()
+inline void Reset()
 {
 	rstc_start_software_reset(RSTC);
 }
+void EraseAndReset() noexcept;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* RESET_H_ */

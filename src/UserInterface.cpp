@@ -2465,7 +2465,7 @@ namespace UI
 					if (SetColourScheme(newColours))
 					{
 						SaveSettings();
-						Restart();
+						Reset();
 					}
 				}
 				mgr.ClearPopup();
@@ -2482,7 +2482,7 @@ namespace UI
 					if (SetLanguage(newLanguage))
 					{
 						SaveSettings();
-						Restart();
+						Reset();
 					}
 				}
 				mgr.ClearPopup();

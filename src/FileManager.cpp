@@ -12,7 +12,7 @@
 #include "UserInterface.hpp"
 #include "Hardware/SerialIo.hpp"
 #include "Library/Misc.hpp"
-#include "Library/Vector.hpp"
+#include "General/Vector.hpp"
 #include "General/String.h"
 
 #undef min
@@ -89,16 +89,16 @@ namespace FileManager
 	{
 		unsigned int buttonNum = 0;
 		const FileListIndex& index = fileIndices[GetIndex()];
-		unsigned int fileNum = (errorCode == 0) ? 0 : index.size();
+		unsigned int fileNum = (errorCode == 0) ? 0 : index.Size();
 		bool again;
 		do
 		{
 			// Find the next non-directory
-			while (fileNum < index.size() && index[fileNum][0] == '*')
+			while (fileNum < index.Size() && index[fileNum][0] == '*')
 			{
 				++fileNum;
 			}
-			if (fileNum < index.size())
+			if (fileNum < index.Size())
 			{
 				again = UI::UpdateMacroShortList(buttonNum, index[fileNum]);
 				++fileNum;
@@ -119,23 +119,23 @@ namespace FileManager
 			FileListIndex& fileIndex = fileIndices[whichList];
 
 			// 2. Make sure the scroll position is still sensible
-			if (scrollOffset < 0 || fileIndex.size() == 0)
+			if (scrollOffset < 0 || fileIndex.Size() == 0)
 			{
 				scrollOffset = 0;
 			}
-			else if ((unsigned int)scrollOffset >= fileIndex.size())
+			else if ((unsigned int)scrollOffset >= fileIndex.Size())
 			{
 				const unsigned int scrollAmount = UI::GetNumScrolledFiles(isFilesList);
-				scrollOffset = ((fileIndex.size() - 1)/scrollAmount) * scrollAmount;
+				scrollOffset = ((fileIndex.Size() - 1)/scrollAmount) * scrollAmount;
 			}
 
 			// 3. Display the scroll buttons if needed
-			UI::EnableFileNavButtons(isFilesList, scrollOffset != 0, scrollOffset + numDisplayed < fileIndex.size(), IsInSubdir());
+			UI::EnableFileNavButtons(isFilesList, scrollOffset != 0, scrollOffset + numDisplayed < fileIndex.Size(), IsInSubdir());
 
 			// 4. Display the file list
 			for (size_t i = 0; i < numDisplayed; ++i)
 			{
-				if (i + scrollOffset < fileIndex.size())
+				if (i + scrollOffset < fileIndex.Size())
 				{
 					const char *text = fileIndex[i + scrollOffset];
 					UI::UpdateFileButton(isFilesList, i, (isFilesList) ? text : SkipDigitsAndUnderscore(text), text);
@@ -333,7 +333,7 @@ namespace FileManager
 				temp.cat(fileDirectoryName[i++]);
 			}
 
-			fileIndices[newFileList].sort(StringGreaterThan);		// put the index in alphabetical order
+			fileIndices[newFileList].Sort([](auto a, auto b) -> bool { return StringGreaterThan(a, b); });		// put the index in alphabetical order
 
 			if (card0 && temp.EqualsIgnoreCase("macros"))
 			{
@@ -362,8 +362,8 @@ namespace FileManager
 		}
 
 		_ecv_assert(0 <= newFileList && newFileList < 3);
-		fileLists[newFileList].clear();
-		fileIndices[newFileList].clear();
+		fileLists[newFileList].Clear();
+		fileIndices[newFileList].Clear();
 	}
 
 	// This is called for each filename received
@@ -374,10 +374,10 @@ namespace FileManager
 			FileList& fileList = fileLists[newFileList];
 			FileListIndex& fileIndex = fileIndices[newFileList];
 			size_t len = strlen(data) + 1;		// we are going to copy the null terminator as well
-			if (len + fileList.size() < fileList.capacity() && fileIndex.size() < fileIndex.capacity())
+			if (len + fileList.Size() < fileList.Capacity() && fileIndex.Size() < fileIndex.Capacity())
 			{
-				fileIndex.add(fileList.c_ptr() + fileList.size());
-				fileList.add(data, len);
+				fileIndex.Add(fileList.c_ptr() + fileList.Size());
+				fileList.Add(data, len);
 			}
 		}
 	}

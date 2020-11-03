@@ -23,7 +23,6 @@
 #include "Hardware/SysTick.hpp"
 #include "Hardware/Reset.hpp"
 #include "Library/Misc.hpp"
-#include "Library/Vector.hpp"
 #include "General/SafeStrtod.h"
 
 #if SAM4S
@@ -1053,7 +1052,7 @@ void FactoryReset()
 	savedNvData = nvData;
 	Buzzer::Beep(touchBeepFrequency, 400, Buzzer::MaxVolume);		// long beep to acknowledge it
 	while (Buzzer::Noisy()) { }
-	Restart();														// reset the processor
+	Reset();														// reset the processor
 }
 
 // Save settings
