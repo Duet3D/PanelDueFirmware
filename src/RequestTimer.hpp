@@ -13,6 +13,7 @@
 #include "ecv.h"
 #undef array
 #undef result
+#undef value
 
 class RequestTimer
 {

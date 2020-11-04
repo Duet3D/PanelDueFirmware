@@ -13,6 +13,7 @@
 #include "ecv.h"
 #undef array
 #undef result
+#undef value
 #include "UserInterfaceConstants.hpp"
 
 #define CSTRING const char * const _ecv_array

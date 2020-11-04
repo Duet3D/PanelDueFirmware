@@ -42,6 +42,7 @@
 #include "ToolStatus.hpp"
 #include "UserInterface.hpp"
 #include "ObjectModel.hpp"
+#include "ControlCommands.hpp"
 
 #ifdef OEM
 # if DISPLAY_X == 800
@@ -197,6 +198,9 @@ static PrinterStatus status = PrinterStatus::connecting;
 enum ReceivedDataEvent
 {
 	rcvUnknown = 0,
+
+	// Keys for control command messages
+	rcvControlCommand,
 
 	// Keys for push messages
 	rcvPushMessage,
@@ -459,6 +463,9 @@ static FieldTableEntry fieldTable[] =
 	{ rcvPushSeq,						"seq" },
 	{ rcvPushBeepDuration,				"beep_length" },
 	{ rcvPushBeepFrequency,				"beep_freq" },
+
+	// Control Command message
+	{ rcvControlCommand,				"controlCommand" },
 };
 
 // This table must be kept in case-insensitive alphabetical order of the search string.
@@ -2113,6 +2120,35 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 			if (GetInteger(data, sz))
 			{
 				UI::UpdateFileSize(sz);
+			}
+		}
+		break;
+
+	case rcvControlCommand:
+		{
+			const ControlCommandMapEntry key = (ControlCommandMapEntry) {data, ControlCommand::invalid};
+			const ControlCommandMapEntry * controlCommandFromMap =
+					(ControlCommandMapEntry *) bsearch(
+							&key,
+							controlCommandMap,
+							ARRAY_SIZE(controlCommandMap),
+							sizeof(ControlCommandMapEntry),
+							[](auto a, auto b)
+							{
+								return strcasecmp(((ControlCommandMapEntry*) a)->key, ((ControlCommandMapEntry*)b)->key);
+							});
+			const ControlCommand controlCommand = (controlCommandFromMap != nullptr) ? controlCommandFromMap->val : ControlCommand::invalid;
+			switch (controlCommand)
+			{
+			case ControlCommand::eraseAndReset:
+				EraseAndReset(); // Does not return
+				break;
+			case ControlCommand::reset:
+				Reset(); // Does not return
+				break;
+			default:
+				// Invalid command. Just ignore.
+				break;
 			}
 		}
 		break;

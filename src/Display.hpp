@@ -12,6 +12,7 @@
 #include "ecv.h"
 #undef array
 #undef result
+#undef value
 #include "Hardware/UTFT.hpp"
 #include "DisplaySize.hpp"
 #include <math.h>

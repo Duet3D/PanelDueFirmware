@@ -10,6 +10,7 @@
 #include "ecv.h"
 #undef array
 #undef result
+#undef value
 #include "asf.h"
 #include "Buzzer.hpp"
 #include "SysTick.hpp"

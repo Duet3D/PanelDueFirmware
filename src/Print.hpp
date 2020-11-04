@@ -12,6 +12,7 @@
 #include "ecv.h"
 #undef array
 #undef result
+#undef value
 #include <cstdint>
 #include <cstddef>
 #include <cstring>

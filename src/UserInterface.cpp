@@ -71,7 +71,7 @@ static TextButtonWithLabel *babystepMinusButton, *babystepPlusButton;
 static IntegerField *fpSizeField, *fpFilamentField, *filePopupTitleField;
 static ProgressBar *printProgressBar;
 static SingleButton *tabControl, *tabPrint, *tabMsg, *tabSetup;
-static ButtonBase *filesButton, *pauseButton, *resumeButton, *resetButton, *babystepButton;
+static ButtonBase *filesButton, *pauseButton, *resumeButton, *cancelButton, *babystepButton;
 static TextField *timeLeftField, *zProbe;
 static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
 static StaticTextField *moveAxisRows[MaxDisplayableAxes];
@@ -958,7 +958,7 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 	mgr.AddField(pauseButton);
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	babystepButton = new TextButton(row7, babystepColumn, DisplayX - babystepColumn - fieldSpacing, strings->babystep, evBabyStepPopup);
+	babystepButton = new TextButton(row7, babystepColumn, DisplayX - babystepColumn - margin, strings->babystep, evBabyStepPopup);
 	mgr.AddField(babystepButton);
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.resumeButtonBackColour);
@@ -966,8 +966,8 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 	mgr.AddField(resumeButton);
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.resetButtonBackColour);
-	resetButton = new TextButton(row7, cancelColumn, DisplayX - cancelColumn - margin, strings->cancel, evReset, "M0");
-	mgr.AddField(resetButton);
+	cancelButton = new TextButton(row7, cancelColumn, DisplayX - cancelColumn - margin, strings->cancel, evReset, "M0");
+	mgr.AddField(cancelButton);
 
 #if DISPLAY_X == 800
 	// On 5" and 7" screens there is room to show the current position on the Print page
@@ -1184,7 +1184,7 @@ namespace UI
 	void ShowFilesButton()
 	{
 		mgr.Show(resumeButton, false);
-		mgr.Show(resetButton, false);
+		mgr.Show(cancelButton, false);
 		mgr.Show(pauseButton, false);
 		mgr.Show(babystepButton, false);
 		mgr.Show(filesButton, true);
@@ -1193,7 +1193,7 @@ namespace UI
 	void ShowPauseButton()
 	{
 		mgr.Show(resumeButton, false);
-		mgr.Show(resetButton, false);
+		mgr.Show(cancelButton, false);
 		mgr.Show(filesButton, false);
 		mgr.Show(pauseButton, true);
 		mgr.Show(babystepButton, true);
@@ -1205,7 +1205,7 @@ namespace UI
 		mgr.Show(babystepButton, false);
 		mgr.Show(filesButton, false);
 		mgr.Show(resumeButton, true);
-		mgr.Show(resetButton, true);
+		mgr.Show(cancelButton, true);
 	}
 
 	// Show or hide an axis on the move button grid and on the axis display

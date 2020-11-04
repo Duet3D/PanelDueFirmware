@@ -10,6 +10,8 @@
 
 #include "ecv.h"
 #undef array
+#undef result
+#undef value
 #include "Hardware/UTFT.hpp"
 #include "Display.hpp"
 #include "RequestTimer.hpp"
