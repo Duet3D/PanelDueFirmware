@@ -80,35 +80,56 @@ namespace OM {
 		// Slot for display on panel
 		uint8_t slot = MaxHeaters;
 
+		BedOrChamber* next = nullptr;
+
 		void Reset() { index = 0; heater = -1; slot = MaxHeaters; }
 	};
+
+	typedef BedOrChamber Bed;
+	typedef BedOrChamber Chamber;
 
 	typedef void (*AxisIterator)(Axis*);
 	typedef bool (*AxisIteratorWhile)(Axis*);
 
 	Axis* FindAxis(std::function<bool(Axis*)> filter);
-	Axis* GetAxis(size_t index);
-	Axis* GetAxisInSlot(size_t slot);
-	Axis* GetOrCreateAxis(size_t index);
-	void IterateAxes(std::function<void(Axis*)> func);
-	bool IterateAxesWhile(std::function<bool(Axis*)> func);
+	Axis* GetAxis(const size_t index);
+	Axis* GetAxisInSlot(const size_t slot);
+	Axis* GetOrCreateAxis(const size_t index);
+	void IterateAxes(std::function<void(Axis*)> func, const size_t startAt = 0);
+	bool IterateAxesWhile(std::function<bool(Axis*)> func, const size_t startAt = 0);
 
-	Spindle* GetSpindle(size_t index);
-	Spindle* GetOrCreateSpindle(size_t index);
-	Spindle* GetSpindleForTool(size_t toolNumber);
-	void IterateSpindles(std::function<void(Spindle*)> func);
-	bool IterateSpindlesWhile(std::function<bool(Spindle*)> func);
+	Spindle* GetSpindle(const size_t index);
+	Spindle* GetOrCreateSpindle(const size_t index);
+	Spindle* GetSpindleForTool(const size_t toolNumber);
+	void IterateSpindles(std::function<void(Spindle*)> func, const size_t startAt = 0);
+	bool IterateSpindlesWhile(std::function<bool(Spindle*)> func, const size_t startAt = 0);
 
-	Tool* GetTool(size_t index);
-	Tool* GetOrCreateTool(size_t index);
-	Tool* GetToolForExtruder(size_t extruder);
-	Tool* GetToolForHeater(size_t heater);
-	void IterateTools(std::function<void(Tool*)> func);
-	bool IterateToolsWhile(std::function<bool(Tool*)> func);
+	Tool* GetTool(const size_t index);
+	Tool* GetOrCreateTool(const size_t index);
+	Tool* GetToolForExtruder(const size_t extruder);
+	Tool* GetToolForHeater(const size_t heater);
+	void IterateTools(std::function<void(Tool*)> func, const size_t startAt = 0);
+	bool IterateToolsWhile(std::function<bool(Tool*)> func, const size_t startAt = 0);
 
-	size_t RemoveAxis(size_t index, bool allFollowing);
-	size_t RemoveSpindle(size_t index, bool allFollowing);
-	size_t RemoveTool(size_t index, bool allFollowing);
+	Bed* GetBed(const size_t index);
+	Bed* GetOrCreateBed(const size_t index);
+	Bed* GetFirstBed();
+	Bed* GetBedForHeater(const size_t heater);
+	size_t GetBedCount();
+	void IterateBeds(std::function<void(Bed*)> func, const size_t startAt = 0);
+
+	Chamber* GetChamber(const size_t index);
+	Chamber* GetOrCreateChamber(const size_t index);
+	Chamber* GetFirstChamber();
+	Chamber* GetChamberForHeater(const size_t heater);
+	size_t GetChamberCount();
+	void IterateChambers(std::function<void(Chamber*)> func, const size_t startAt = 0);
+
+	size_t RemoveAxis(const size_t index, const bool allFollowing);
+	size_t RemoveSpindle(const size_t index, const bool allFollowing);
+	size_t RemoveTool(const size_t index, const bool allFollowing);
+	size_t RemoveBed(const size_t index, const bool allFollowing);
+	size_t RemoveChamber(const size_t index, const bool allFollowing);
 }
 
 

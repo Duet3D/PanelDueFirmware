@@ -44,6 +44,17 @@ T* GetOrCreate(T*& start, size_t index, bool create)
 	return ret;
 }
 
+template<class T>
+size_t GetElementCount(T*& start)
+{
+	size_t count = 0;
+	for (auto elem = start; elem != nullptr; elem = elem->next)
+	{
+		++count;
+	}
+	return count;
+}
+
 template<typename T>
 T* Find(T*& start, std::function<bool(T*)> filter)
 {
@@ -58,23 +69,33 @@ T* Find(T*& start, std::function<bool(T*)> filter)
 }
 
 template<typename T>
-void Iterate(T*& start, std::function<void(T*)> func)
+void Iterate(T*& start, std::function<void(T*)> func, const size_t startAt)
 {
+	size_t counter = 0;
 	for (auto elem = start; elem != nullptr; elem = elem->next)
 	{
-		func(elem);
+		if (counter >= startAt)
+		{
+			func(elem);
+		}
+		++counter;
 	}
 }
 
 template<typename T>
-bool IterateWhile(T*& start, std::function<bool(T*)> func)
+bool IterateWhile(T*& start, std::function<bool(T*)> func, const size_t startAt)
 {
+	size_t counter = 0;
 	for (auto elem = start; elem != nullptr; elem = elem->next)
 	{
-		if(!func(elem))
+		if (counter >= startAt)
 		{
-			return false;
+			if(!func(elem))
+			{
+				return false;
+			}
 		}
+		++counter;
 	}
 	return true;
 }
@@ -154,13 +175,15 @@ namespace OM
 	static Axis* axes;
 	static Spindle* spindles;
 	static Tool* tools;
+	static Bed* beds;
+	static Chamber* chambers;
 
 	Axis* FindAxis(std::function<bool(Axis*)> filter)
 	{
 		return Find(axes, filter);
 	}
 
-	Axis* GetAxis(size_t index)
+	Axis* GetAxis(const size_t index)
 	{
 		if (index >= MaxTotalAxes)
 		{
@@ -169,16 +192,16 @@ namespace OM
 		return GetOrCreate(axes, index, false);
 	}
 
-	Axis* GetAxisInSlot(size_t slot)
+	Axis* GetAxisInSlot(const size_t slot)
 	{
 		if (slot >= MaxTotalAxes)
 		{
 			return nullptr;
 		}
-		return Find<Axis>(axes, [slot](Axis* axis) { return axis->slot == slot; });
+		return Find<Axis>(axes, [slot](auto axis) { return axis->slot == slot; });
 	}
 
-	Axis* GetOrCreateAxis(size_t index)
+	Axis* GetOrCreateAxis(const size_t index)
 	{
 		if (index >= MaxTotalAxes)
 		{
@@ -187,84 +210,154 @@ namespace OM
 		return GetOrCreate(axes, index, true);
 	}
 
-	void IterateAxes(std::function<void(Axis*)> func)
+	void IterateAxes(std::function<void(Axis*)> func, const size_t startAt)
 	{
-		Iterate(axes, func);
+		Iterate(axes, func, startAt);
 	}
 
-	bool IterateAxesWhile(std::function<bool(Axis*)> func)
+	bool IterateAxesWhile(std::function<bool(Axis*)> func, const size_t startAt)
 	{
-		return IterateWhile(axes, func);
+		return IterateWhile(axes, func, startAt);
 	}
 
-	Spindle* GetSpindle(size_t index)
+	Spindle* GetSpindle(const size_t index)
 	{
 		return GetOrCreate(spindles, index, false);
 	}
 
-	Spindle* GetOrCreateSpindle(size_t index)
+	Spindle* GetOrCreateSpindle(const size_t index)
 	{
 		return GetOrCreate(spindles, index, true);
 	}
 
-	void IterateSpindles(std::function<void(Spindle*)> func)
+	void IterateSpindles(std::function<void(Spindle*)> func, const size_t startAt)
 	{
-		Iterate(spindles, func);
+		Iterate(spindles, func, startAt);
 	}
 
-	bool IterateSpindlesWhile(std::function<bool(Spindle*)> func)
+	bool IterateSpindlesWhile(std::function<bool(Spindle*)> func, const size_t startAt)
 	{
-		return IterateWhile(spindles, func);
+		return IterateWhile(spindles, func, startAt);
 	}
 
-	Tool* GetTool(size_t index)
+	Tool* GetTool(const size_t index)
 	{
 		return GetOrCreate(tools, index, false);
 	}
 
-	Tool* GetOrCreateTool(size_t index)
+	Tool* GetOrCreateTool(const size_t index)
 	{
 		return GetOrCreate(tools, index, true);
 	}
 
-	void IterateTools(std::function<void(Tool*)> func)
+	void IterateTools(std::function<void(Tool*)> func, const size_t startAt)
 	{
-		Iterate(tools, func);
+		Iterate(tools, func, startAt);
 	}
 
-	bool IterateToolsWhile(std::function<bool(Tool*)> func)
+	bool IterateToolsWhile(std::function<bool(Tool*)> func, const size_t startAt)
 	{
-		return IterateWhile(tools, func);
+		return IterateWhile(tools, func, startAt);
 	}
 
-	size_t RemoveAxis(size_t index, bool allFollowing)
+	Spindle* GetSpindleForTool(const size_t toolNumber)
+	{
+		return Find<Spindle>(spindles, [toolNumber](auto spindle) { return spindle->tool == (int)toolNumber; });
+	}
+
+	Tool* GetToolForExtruder(const size_t extruder)
+	{
+		return Find<Tool>(tools, [extruder](auto tool) { return tool->extruder == (int)extruder; });
+	}
+
+	Tool* GetToolForHeater(const size_t heater)
+	{
+		return Find<Tool>(tools, [heater](auto tool) { return tool->heater == (int)heater; });
+	}
+
+	Bed* GetBed(const size_t index)
+	{
+		return GetOrCreate(beds, index, false);
+	}
+
+	Bed* GetOrCreateBed(const size_t index)
+	{
+		return GetOrCreate(beds, index, true);
+	}
+
+	Bed* GetFirstBed()
+	{
+		return beds;
+	}
+
+	Bed* GetBedForHeater(const size_t heater)
+	{
+		return Find<Bed>(beds, [heater](auto bed) { return bed->heater == (int)heater; });
+	}
+
+	size_t GetBedCount()
+	{
+		return GetElementCount(beds);
+	}
+
+	void IterateBeds(std::function<void(Bed*)> func, const size_t startAt)
+	{
+		Iterate(beds, func, startAt);
+	}
+
+	Chamber* GetChamber(const size_t index)
+	{
+		return GetOrCreate(chambers, index, false);
+	}
+
+	Chamber* GetOrCreateChamber(const size_t index)
+	{
+		return GetOrCreate(chambers, index, true);
+	}
+
+	Chamber* GetFirstChamber()
+	{
+		return chambers;
+	}
+
+	Chamber* GetChamberForHeater(const size_t heater)
+	{
+		return Find<Chamber>(chambers, [heater](auto chamber) { return chamber->heater == (int)heater; });
+	}
+
+	size_t GetChamberCount()
+	{
+		return GetElementCount(chambers);
+	}
+
+	void IterateChambers(std::function<void(Chamber*)> func, const size_t startAt)
+	{
+		Iterate(chambers, func, startAt);
+	}
+
+	size_t RemoveAxis(const size_t index, const bool allFollowing)
 	{
 		return Remove(axes, index, allFollowing);
 	}
 
-	size_t RemoveSpindle(size_t index, bool allFollowing)
+	size_t RemoveSpindle(const size_t index, const bool allFollowing)
 	{
 		return Remove(spindles, index, allFollowing);
 	}
 
-	size_t RemoveTool(size_t index, bool allFollowing)
+	size_t RemoveTool(const size_t index, const bool allFollowing)
 	{
 		return Remove(tools, index, allFollowing);
 	}
 
-	Spindle* GetSpindleForTool(size_t toolNumber)
+	size_t RemoveBed(const size_t index, const bool allFollowing)
 	{
-		return Find<Spindle>(spindles, [toolNumber](Spindle* spindle) { return spindle->tool == (int)toolNumber; });
+		return Remove(beds, index, allFollowing);
 	}
 
-	Tool* GetToolForExtruder(size_t extruder)
+	size_t RemoveChamber(const size_t index, const bool allFollowing)
 	{
-		return Find<Tool>(tools, [extruder](Tool* tool) { return tool->extruder == (int)extruder; });
-	}
-
-	Tool* GetToolForHeater(size_t heater)
-	{
-		return Find<Tool>(tools, [heater](Tool* tool) { return tool->heater == (int)heater; });
+		return Remove(chambers, index, allFollowing);
 	}
 }
 
