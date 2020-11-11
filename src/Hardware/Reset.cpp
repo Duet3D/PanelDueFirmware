@@ -27,9 +27,11 @@ void EraseAndReset()
 {
 	cpu_irq_disable();
 
+#if __SAM4S4B__
 #define IFLASH_ADDR					IFLASH0_ADDR
 #define IFLASH_PAGE_SIZE			IFLASH0_PAGE_SIZE
 #define IFLASH_NB_OF_PAGES			(IFLASH0_SIZE / IFLASH_PAGE_SIZE)
+#endif
 
     for(size_t i = 0; i <= IFLASH_NB_OF_PAGES; i++)
     {
