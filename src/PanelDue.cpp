@@ -193,6 +193,83 @@ static_assert(sizeof(FlashData) <= 512, "Flash data too large");
 static_assert(sizeof(FlashData) <= FLASH_DATA_LENGTH, "Flash data too large");
 #endif
 
+bool FlashData::IsValid() const
+{
+	return magic == magicVal
+		&& touchVolume <= Buzzer::MaxVolume
+		&& brightness >= Buzzer::MinBrightness
+		&& brightness <= Buzzer::MaxBrightness
+		&& language < UI::GetNumLanguages()
+		&& colourScheme < NumColourSchemes
+		&& displayDimmerType < DisplayDimmerType::NumTypes
+		&& babystepAmountIndex < ARRAY_SIZE(babystepAmounts)
+		&& feedrate > 0;
+}
+
+bool FlashData::operator==(const FlashData& other)
+{
+	return magic == other.magic
+		&& baudRate == other.baudRate
+		&& xmin == other.xmin
+		&& xmax == other.xmax
+		&& ymin == other.ymin
+		&& ymax == other.ymax
+		&& lcdOrientation == other.lcdOrientation
+		&& touchOrientation == other.touchOrientation
+		&& touchVolume == other.touchVolume
+		&& language == other.language
+		&& colourScheme == other.colourScheme
+		&& brightness == other.brightness
+		&& displayDimmerType == other.displayDimmerType
+		&& infoTimeout == other.infoTimeout
+		&& screensaverTimeout == other.screensaverTimeout
+		&& babystepAmountIndex == other.babystepAmountIndex
+		&& feedrate == other.feedrate;
+}
+
+void FlashData::SetDefaults()
+{
+	baudRate = DefaultBaudRate;
+	xmin = 0;
+	xmax = DisplayX - 1;
+	ymin = 0;
+	ymax = DisplayY - 1;
+	lcdOrientation = DefaultDisplayOrientAdjust;
+	touchOrientation = DefaultTouchOrientAdjust;
+	touchVolume = Buzzer::DefaultVolume;
+	brightness = Buzzer::DefaultBrightness;
+	language = 0;
+	colourScheme = 0;
+	displayDimmerType = DisplayDimmerType::always;
+	infoTimeout = DefaultInfoTimeout;
+	screensaverTimeout = DefaultScreensaverTimeout;
+	babystepAmountIndex = DefaultBabystepAmountIndex;
+	feedrate = DefaultFeedrate;
+	magic = magicVal;
+}
+
+// Load parameters from flash memory
+void FlashData::Load()
+{
+	magic = 0xFFFFFFFF;				// to make sure we know if the read failed
+#if SAM4S
+	flash_read_user_signature(&(this->magic), (&(this->dummy) - reinterpret_cast<const char*>(&(this->magic)))/sizeof(uint32_t));
+#else
+	FlashStorage::read(0, &(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
+#endif
+}
+
+// Save parameters to flash memory
+void FlashData::Save() const
+{
+#if SAM4S
+	flash_erase_user_signature();
+	flash_write_user_signature(&(this->magic), (&(this->dummy) - reinterpret_cast<const char*>(&(this->magic)))/sizeof(uint32_t));
+#else
+	FlashStorage::write(0, &(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
+#endif
+}
+
 FlashData nvData, savedNvData;
 
 static PrinterStatus status = PrinterStatus::connecting;
@@ -520,43 +597,40 @@ struct Seqs
 		 updateState		: 1,
 		 updateTools		: 1,
 		 updateVolumes		: 1;
+
+	void Reset() noexcept
+	{
+		boards 				=
+		directories			=
+		fans 				=
+		heat 				=
+		inputs 				=
+		job 				=
+		move 				=
+		network 			=
+		scanner 			=
+		sensors 			=
+		spindles 			=
+		state 				=
+		tools 				=
+		volumes 			= (uint16_t)((1 << 16)-1);
+
+		updateBoards		=
+		updateDirectories	=
+		updateFans 			=
+		updateHeat 			=
+		updateInputs 		=
+		updateJob 			=
+		updateMove 			=
+		updateNetwork 		=
+		updateScanner 		=
+		updateSensors 		=
+		updateSpindles 		=
+		updateState 		=
+		updateTools 		=
+		updateVolumes 		= false;
+	}
 } seqs;
-
-
-void resetSeqs()
-{
-	seqs.boards 			=
-	seqs.directories		=
-	seqs.fans 				=
-	seqs.heat 				=
-	seqs.inputs 			=
-	seqs.job 				=
-	seqs.move 				=
-	seqs.network 			=
-	seqs.scanner 			=
-	seqs.sensors 			=
-	seqs.spindles 			=
-	seqs.state 				=
-	seqs.tools 				=
-	seqs.volumes 			= (uint16_t)((1 << 16)-1);
-
-	seqs.updateBoards		=
-	seqs.updateDirectories	=
-	seqs.updateFans 		=
-	seqs.updateHeat 		=
-	seqs.updateInputs 		=
-	seqs.updateJob 			=
-	seqs.updateMove 		=
-	seqs.updateNetwork 		=
-	seqs.updateScanner 		=
-	seqs.updateSensors 		=
-	seqs.updateSpindles 	=
-	seqs.updateState 		=
-	seqs.updateTools 		=
-	seqs.updateVolumes 		= false;
-
-	Reconnect();
-}
 
 struct OMRequestParams {
 	const char * _ecv_array const key;
@@ -639,82 +713,6 @@ const OMRequestParams* GetNextToPoll()
 	}
 
 	return nullptr;
-}
-
-bool FlashData::IsValid() const
-{
-	return magic == magicVal
-		&& touchVolume <= Buzzer::MaxVolume
-		&& brightness >= Buzzer::MinBrightness
-		&& brightness <= Buzzer::MaxBrightness
-		&& language < UI::GetNumLanguages()
-		&& colourScheme < NumColourSchemes
-		&& displayDimmerType < DisplayDimmerType::NumTypes
-		&& babystepAmountIndex > 0;
-}
-
-bool FlashData::operator==(const FlashData& other)
-{
-	return magic == other.magic
-		&& baudRate == other.baudRate
-		&& xmin == other.xmin
-		&& xmax == other.xmax
-		&& ymin == other.ymin
-		&& ymax == other.ymax
-		&& lcdOrientation == other.lcdOrientation
-		&& touchOrientation == other.touchOrientation
-		&& touchVolume == other.touchVolume
-		&& language == other.language
-		&& colourScheme == other.colourScheme
-		&& brightness == other.brightness
-		&& displayDimmerType == other.displayDimmerType
-		&& infoTimeout == other.infoTimeout
-		&& screensaverTimeout == other.screensaverTimeout
-		&& babystepAmountIndex == other.babystepAmountIndex
-		&& feedrate == other.feedrate;
-}
-
-void FlashData::SetDefaults()
-{
-	baudRate = DefaultBaudRate;
-	xmin = 0;
-	xmax = DisplayX - 1;
-	ymin = 0;
-	ymax = DisplayY - 1;
-	lcdOrientation = DefaultDisplayOrientAdjust;
-	touchOrientation = DefaultTouchOrientAdjust;
-	touchVolume = Buzzer::DefaultVolume;
-	brightness = Buzzer::DefaultBrightness;
-	language = 0;
-	colourScheme = 0;
-	displayDimmerType = DisplayDimmerType::always;
-	infoTimeout = DefaultInfoTimeout;
-	screensaverTimeout = DefaultScreensaverTimeout;
-	babystepAmountIndex = DefaultBabystepAmountIndex;
-	feedrate = DefaultFeedrate;
-	magic = magicVal;
-}
-
-// Load parameters from flash memory
-void FlashData::Load()
-{
-	magic = 0xFFFFFFFF;				// to make sure we know if the read failed
-#if SAM4S
-	flash_read_user_signature(&(this->magic), (&(this->dummy) - reinterpret_cast<const char*>(&(this->magic)))/sizeof(uint32_t));
-#else
-	FlashStorage::read(0, &(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
-#endif
-}
-
-// Save parameters to flash memory
-void FlashData::Save() const
-{
-#if SAM4S
-	flash_erase_user_signature();
-	flash_write_user_signature(&(this->magic), (&(this->dummy) - reinterpret_cast<const char*>(&(this->magic)))/sizeof(uint32_t));
-#else
-	FlashStorage::write(0, &(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
-#endif
 }
 
 // Return the host firmware features
@@ -1910,7 +1908,8 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 				// Controller was restarted
 				if (uival < remoteUpTime)
 				{
-					resetSeqs();
+					seqs.Reset();
+					Reconnect();
 					UI::ResetBedsAndChambers();
 				}
 				remoteUpTime = uival;
@@ -2355,7 +2354,7 @@ int main(void)
 				return strcasecmp(((FieldTableEntry*) a)->varName, ((FieldTableEntry*) b)->varName);
 			});
 
-	resetSeqs();
+	seqs.Reset();
 
 //	lastResponseTime = SystemTick::GetTickCount();	// pretend we just received a response
 
