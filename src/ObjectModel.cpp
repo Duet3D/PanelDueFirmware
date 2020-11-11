@@ -142,9 +142,10 @@ size_t Remove(T*& start, size_t index, bool allFollowing)
 		// We need to delete the full list
 		if (start->index >= index)
 		{
-			for (auto toDelete = start; toDelete != nullptr; toDelete = start->next)
+			while (start != nullptr)
 			{
-				start = toDelete->next;
+				auto toDelete = start;
+				start = start->next;
 				delete toDelete;
 				++removed;
 			}

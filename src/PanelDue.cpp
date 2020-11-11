@@ -117,6 +117,22 @@ UTouch touch(23, 24, 22, 21, 20);
 #define FETCH_TOOLS			(1)
 #define FETCH_VOLUMES		(1)
 
+// Use this for an Initializing Progress Bar/Counter/Percentage
+#define TOTAL_REQUESTS (FETCH_BOARDS \
+		+ FETCH_DIRECTORIES \
+		+ FETCH_FANS \
+		+ FETCH_HEAT \
+		+ FETCH_INPUTS \
+		+ FETCH_JOB \
+		+ FETCH_MOVE \
+		+ FETCH_NETWORK \
+		+ FETCH_SCANNER \
+		+ FETCH_SENSORS \
+		+ FETCH_SPINDLES \
+		+ FETCH_STATE \
+		+ FETCH_TOOLS \
+		+ FETCH_VOLUMES)
+
 MainWindow mgr;
 
 static uint32_t lastTouchTime;
@@ -1114,6 +1130,8 @@ void Reconnect()
 {
 	initialized = false;
 	SetStatus(nullptr);
+	// Send first round of data fetching again
+	SerialIo::SendString("M409 F\"d99f\"\n");
 }
 
 // Try to get an integer value from a string. If it is actually a floating point value, round it.
@@ -1479,6 +1497,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Boards section
 	case rcvBoardsFirmwareName:
+		ShowLine;
 		if (indices[0] == 0)			// currently we only handle the first board
 		{
 			for (size_t i = 0; i < ARRAY_SIZE(firmwareTypes); ++i)
@@ -1514,6 +1533,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Heat section
 	case rcvHeatBedHeaters:
+		ShowLine;
 		{
 			int32_t heaterNumber;
 			if (GetInteger(data, heaterNumber) && heaterNumber > -1)
@@ -1529,6 +1549,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvHeatChamberHeaters:
+		ShowLine;
 		{
 			int32_t heaterNumber;
 			if (GetInteger(data, heaterNumber) && heaterNumber > -1)
@@ -1598,10 +1619,12 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Job section
 	case rcvJobFileFilename:
+		ShowLine;
 		UI::PrintingFilenameChanged(data);
 		break;
 
 	case rcvJobFileSize:
+		ShowLine;
 		{
 			uint32_t ival;
 			if (GetUnsignedInteger(data, ival))
@@ -1616,6 +1639,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvJobFilePosition:
+		ShowLine;
 		{
 			if (PrintInProgress() && fileSize > 0)
 			{
@@ -1645,6 +1669,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Move section
 	case rcvMoveAxesBabystep:
+		ShowLine;
 		{
 			float f;
 			if (GetFloat(data, f))
@@ -1666,6 +1691,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvMoveAxesLetter:
+		ShowLine;
 		{
 			UI::SetAxisLetter(indices[0], data[0]);
 		}
@@ -1683,6 +1709,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvMoveAxesVisible:
+		ShowLine;
 		{
 			bool visible;
 			if (GetBool(data, visible))
@@ -1698,6 +1725,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvMoveAxesWorkplaceOffsets:
+		ShowLine;
 		{
 			float offset;
 			if (GetFloat(data, offset))
@@ -1719,6 +1747,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvMoveKinematicsName:
+		ShowLine;
 		if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
 		{
 			isDelta = (strcasecmp(data, "delta") == 0);
@@ -1727,6 +1756,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvMoveSpeedFactor:
+		ShowLine;
 		{
 			float fval;
 			if (GetFloat(data, fval))
@@ -1738,6 +1768,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Network section
 	case rcvNetworkName:
+		ShowLine;
 		if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
 		{
 			UI::UpdateMachineName(data);
@@ -1773,6 +1804,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Sensors section
 	case rcvSensorsProbeValue:
+		ShowLine;
 		{
 			if (indices[0] == 0 && indices[1] == 0)			// currently we only handle one probe with one value
 			UI::UpdateZProbe(data);
@@ -1781,6 +1813,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Spindles section
 	case rcvSpindlesActive:
+		ShowLine;
 		{
 			uint32_t active;
 			if (GetUnsignedInteger(data, active))
@@ -1797,6 +1830,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvSpindlesCurrent:
+		ShowLine;
 		{
 			uint32_t current;
 			if (GetUnsignedInteger(data, current))
@@ -1807,6 +1841,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvSpindlesMax:
+		ShowLine;
 		// fans also has a field "result^:max"
 		if (currentResponseType != rcvOMKeySpindles)
 		{
@@ -1822,6 +1857,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvSpindlesTool:
+		ShowLine;
 		{
 			int32_t toolNumber;
 			if (GetInteger(data, toolNumber))
@@ -1833,6 +1869,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// State section
 	case rcvStateCurrentTool:
+		ShowLine;
 		if (status == PrinterStatus::connecting || status == PrinterStatus::panelInitializing)
 		{
 			break;
@@ -1847,6 +1884,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvStateMessageBox:
+		ShowLine;
 		// Nessage box has been dealt with somewhere else
 		if (data[0] == 0)
 		{
@@ -1855,6 +1893,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvStateMessageBoxAxisControls:
+		ShowLine;
 		if (GetUnsignedInteger(data, currentAlert.controls))
 		{
 			currentAlert.flags |= Alert::GotControls;
@@ -1862,11 +1901,13 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvStateMessageBoxMessage:
+		ShowLine;
 		currentAlert.text.copy(data);
 		currentAlert.flags |= Alert::GotText;
 		break;
 
 	case rcvStateMessageBoxMode:
+		ShowLine;
 		if (GetInteger(data, currentAlert.mode))
 		{
 			currentAlert.flags |= Alert::GotMode;
@@ -1874,6 +1915,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvStateMessageBoxSeq:
+		ShowLine;
 		if (GetUnsignedInteger(data, currentAlert.seq))
 		{
 			currentAlert.flags |= Alert::GotSeq;
@@ -1881,6 +1923,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvStateMessageBoxTimeout:
+		ShowLine;
 		if (GetFloat(data, currentAlert.timeout))
 		{
 			currentAlert.flags |= Alert::GotTimeout;
@@ -1888,6 +1931,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvStateMessageBoxTitle:
+		ShowLine;
 		currentAlert.title.copy(data);
 		currentAlert.flags |= Alert::GotTitle;
 		break;
@@ -1919,6 +1963,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Tools section
 	case rcvToolsExtruders:
+		ShowLine;
 		{
 			if (indices[1] > 0)
 			{
@@ -1933,6 +1978,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvToolsHeaters:
+		ShowLine;
 		{
 			if (indices[1] > 0)
 			{
@@ -1947,6 +1993,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvToolsNumber:
+		ShowLine;
 		{
 			for (size_t i = lastTool + 1; i < indices[0]; ++i)
 			{
@@ -1957,6 +2004,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvToolsOffsets:
+		ShowLine;
 		{
 			float offset;
 			if (GetFloat(data, offset))
@@ -1967,6 +2015,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvToolsState:
+		ShowLine;
 		{
 			const ToolStatusMapEntry key = (ToolStatusMapEntry) {data, ToolStatus::off};
 			const ToolStatusMapEntry * statusFromMap =
@@ -1986,6 +2035,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Volumes section
 	case rcvVolumesMounted:
+		ShowLine;
 		{
 			bool mounted;
 			if (GetBool(data, mounted) && mounted)
@@ -1997,10 +2047,12 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Push messages
 	case rcvPushResponse:
+		ShowLine;
 		MessageLog::SaveMessage(data);
 		break;
 
 	case rcvPushMessage:
+		ShowLine;
 		if (data[0] == 0)
 		{
 			UI::ClearAlert();
@@ -2012,23 +2064,28 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvPushSeq:
+		ShowLine;
 		GetUnsignedInteger(data, newMessageSeq);
 		break;
 
 	case rcvPushBeepDuration:
+		ShowLine;
 		GetInteger(data, beepLength);
 		break;
 
 	case rcvPushBeepFrequency:
+		ShowLine;
 		GetInteger(data, beepFrequency);
 		break;
 
 	// M20 section
 	case rcvM20Dir:
+		ShowLine;
 		FileManager::ReceiveDirectoryName(data);
 		break;
 
 	case rcvM20Err:
+		ShowLine;
 		{
 			int32_t i;
 			if (GetInteger(data, i))
@@ -2075,10 +2132,12 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvM36GeneratedBy:
+		ShowLine;
 		UI::UpdateFileGeneratedByText(data);
 		break;
 
 	case rcvM36Height:
+		ShowLine;
 		{
 			float f;
 			if (GetFloat(data, f))
@@ -2089,10 +2148,12 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvM36LastModified:
+		ShowLine;
 		UI::UpdateFileLastModifiedText(data);
 		break;
 
 	case rcvM36LayerHeight:
+		ShowLine;
 		{
 			float f;
 			if (GetFloat(data, f))
@@ -2104,6 +2165,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	case rcvM36PrintTime:
 	case rcvM36SimulatedTime:
+		ShowLine;
 		{
 			int32_t sz;
 			if (GetInteger(data, sz) && sz > 0)
@@ -2114,6 +2176,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvM36Size:
+		ShowLine;
 		{
 			int32_t sz;
 			if (GetInteger(data, sz))
@@ -2124,6 +2187,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvControlCommand:
+		ShowLine;
 		{
 			const ControlCommandMapEntry key = (ControlCommandMapEntry) {data, ControlCommand::invalid};
 			const ControlCommandMapEntry * controlCommandFromMap =
@@ -2461,12 +2525,12 @@ int main(void)
 				auto nextToPoll = GetNextToPoll();
 				if (nextToPoll != nullptr)
 				{
-					// Once we get here the first time we will work all seqs once
-					initialized = true;
 
 					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", nextToPoll->key, nextToPoll->flags);
 				}
 				else {
+					// Once we get here the first time we will have work all seqs once
+					initialized = true;
 
 					// First check for specific info we need to fetch
 					bool done = FileManager::ProcessTimers();

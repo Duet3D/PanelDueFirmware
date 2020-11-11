@@ -2821,10 +2821,19 @@ namespace UI
 		}
 	}
 
-	size_t AddBedOrChamber(OM::BedOrChamber *bedOrChamber, size_t slot, const bool isBed = true) {
+	void ResetToolAndHeaterStates() noexcept
+	{
+		for (size_t i = 0; i < numToolColsUsed; ++i)
+		{
+			toolButtons[i]->SetColours(colours->buttonTextColour, colours->buttonImageBackColour);
+			currentTemps[i]->SetColours(colours->infoTextColour, colours->defaultBackColour);
+		}
+	}
+
+	size_t AddBedOrChamber(OM::BedOrChamber *bedOrChamber, size_t &slot, const bool isBed = true) {
 		const size_t count = (isBed ? OM::GetBedCount() : OM::GetChamberCount());
 		bedOrChamber->slot = MaxHeaters;
-		if (bedOrChamber->heater > -1) {
+		if (slot < MaxHeaters && bedOrChamber->heater > -1) {
 			bedOrChamber->slot = slot;
 			mgr.Show(toolButtons[slot], true);
 			mgr.Show(currentTemps[slot], true);
@@ -2847,7 +2856,7 @@ namespace UI
 		auto firstBed = OM::GetFirstBed();
 		if (firstBed != nullptr)
 		{
-			slot = AddBedOrChamber(firstBed, slot);
+			AddBedOrChamber(firstBed, slot);
 		}
 		OM::IterateTools([&slot](OM::Tool* tool)
 		{
@@ -2874,13 +2883,10 @@ namespace UI
 			extrusionFactors[slot]->SetEvent(extrusionFactors[slot]->GetEvent(), tool->extruder);
 			++slot;
 		});
-		if (slot < MaxHeaters)
+		auto firstChamber = OM::GetFirstChamber();
+		if (firstChamber != nullptr)
 		{
-			auto firstChamber = OM::GetFirstChamber();
-			if (firstChamber != nullptr)
-			{
-				slot = AddBedOrChamber(firstChamber, slot, false);
-			}
+			AddBedOrChamber(firstChamber, slot, false);
 		}
 		numToolColsUsed = slot;
 		for (size_t i = slot; i < MaxHeaters; ++i)
@@ -2891,6 +2897,7 @@ namespace UI
 			mgr.Show(standbyTemps[i], false);
 			mgr.Show(extrusionFactors[i], false);
 		}
+		ResetToolAndHeaterStates();
 		AdjustControlPageMacroButtons();
 	}
 
