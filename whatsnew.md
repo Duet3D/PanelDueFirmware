@@ -1,4 +1,8 @@
 # Version 3.2.1
+## Upgrade Notes:
+- This release is compatible with RepRapFirmware 3.2-beta1 or later. It will partially work with RepRapFirmware 3.1.1 but not with any older version.
+- Flashing this release will reset the configuration to defaults
+
 # Limitations
 - Due to the lack of RAM this build will not run on version 1 or early version 2 PanelDue boards that use the `ATSAM3S2B` chip.
     - Version 1.0, 1.1 and earlier v2 PanelDue: `ATSAM3S2B` processor (64MHz, 32kb RAM, 128kB flash) - these are the ones that the new firmware probably won't run on.
@@ -11,7 +15,7 @@
 * When babystep buttons are pressed the value on the screen will be updated immediately and will be overwritten
 with the actual value on the next status update (usually these values should be equal anyway)
 * Feedrate for move buttons is configuratble from preset values
-* PanelDueFirmware does no longer distinguish between responses to M409 with and without K parameter. This prevents
+* PanelDueFirmware does no longer distinguish between responses to `M409` with and without `K` parameter. This prevents
 issues if values are moved from live to detail response or vice versa
 * Provide interface for RepRapFirmware to reset as well as erase and reset the PanelDue
 * Preparations to show more than one bed/one chamber
