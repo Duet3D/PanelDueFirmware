@@ -1933,6 +1933,7 @@ namespace UI
 		TouchBeep();											// needed when we are called from ProcessTouchOutsidePopup
 		Delay(1000);
 		SerialIo::SendString("M999\n");
+		Delay(1000);
 		Reconnect();
 	}
 
@@ -2000,7 +2001,11 @@ namespace UI
 					case evAdjustChamberActiveTemp:
 						{
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedActiveTemp;
-							const auto heaterIndex = (isBed ? OM::GetFirstBed() : OM::GetFirstChamber())->index;
+							const auto bedOrChamber = isBed ? OM::GetFirstBed() : OM::GetFirstChamber();							if (bedOrChamber == nullptr)
+							{
+								break;
+							}
+							const auto heaterIndex = bedOrChamber->index;
 							SerialIo::Sendf("M14%d P%d S%d\n", isBed ? 0 : 1, heaterIndex, val);
 						}
 						break;
@@ -2015,7 +2020,12 @@ namespace UI
 					case evAdjustChamberStandbyTemp:
 						{
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedStandbyTemp;
-							const auto heaterIndex = (isBed ? OM::GetFirstBed() : OM::GetFirstChamber())->index;
+							const auto bedOrChamber = isBed ? OM::GetFirstBed() : OM::GetFirstChamber();
+							if (bedOrChamber == nullptr)
+							{
+								break;
+							}
+							const auto heaterIndex = bedOrChamber->index;
 							SerialIo::Sendf("M14%d P%d R%d\n", isBed ? 0 : 1, heaterIndex, val);
 						}
 						break;
@@ -2181,7 +2191,11 @@ namespace UI
 
 			case evSelectBed:
 				{
-					auto bed = OM::GetFirstBed();
+					const auto bed = OM::GetFirstBed();
+					if (bed == nullptr)
+					{
+						break;
+					}
 					const auto slot = bed->slot;
 					if (slot >= MaxHeaters)
 					{
@@ -2200,7 +2214,11 @@ namespace UI
 
 			case evSelectChamber:
 				{
-					auto chamber = OM::GetFirstChamber();
+					const auto chamber = OM::GetFirstChamber();
+					if (chamber == nullptr)
+					{
+						break;
+					}
 					const auto slot = chamber->slot;
 					if (slot >= MaxHeaters)
 					{

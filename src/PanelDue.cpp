@@ -1132,6 +1132,8 @@ void Reconnect()
 	SetStatus(nullptr);
 	// Send first round of data fetching again
 	SerialIo::SendString("M409 F\"d99f\"\n");
+	// And set the last poll time to now
+	lastPollTime = SystemTick::GetTickCount();
 }
 
 // Try to get an integer value from a string. If it is actually a floating point value, round it.

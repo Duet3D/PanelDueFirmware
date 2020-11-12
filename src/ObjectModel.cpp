@@ -288,7 +288,7 @@ namespace OM
 
 	Bed* GetFirstBed()
 	{
-		return beds;
+		return Find<Bed>(beds, [](auto bed) { return bed->heater > -1; });
 	}
 
 	Bed* GetBedForHeater(const size_t heater)
@@ -318,7 +318,7 @@ namespace OM
 
 	Chamber* GetFirstChamber()
 	{
-		return chambers;
+		return Find<Chamber>(chambers, [](auto chamber) { return chamber->heater > -1; });
 	}
 
 	Chamber* GetChamberForHeater(const size_t heater)
