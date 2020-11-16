@@ -2545,7 +2545,7 @@ namespace UI
 				break;
 
 			case evKey:
-				if (userCommandBuffers[currentUserCommandBuffer].cat((char)bp.GetIParam()))
+				if (!userCommandBuffers[currentUserCommandBuffer].cat((char)bp.GetIParam()))
 				{
 					userCommandField->SetChanged();
 				}
