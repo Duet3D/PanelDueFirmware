@@ -71,7 +71,7 @@ static TextButtonWithLabel *babystepMinusButton, *babystepPlusButton;
 static IntegerField *fpSizeField, *fpFilamentField, *filePopupTitleField;
 static ProgressBar *printProgressBar;
 static SingleButton *tabControl, *tabPrint, *tabMsg, *tabSetup;
-static ButtonBase *filesButton, *pauseButton, *resumeButton, *cancelButton, *babystepButton;
+static ButtonBase *filesButton, *pauseButton, *resumeButton, *cancelButton, *babystepButton, *reprintButton;
 static TextField *timeLeftField, *zProbe;
 static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
 static StaticTextField *moveAxisRows[MaxDisplayableAxes];
@@ -95,6 +95,7 @@ static ButtonPress currentExtrudeRatePress, currentExtrudeAmountPress;
 
 static String<machineNameLength> machineName;
 static String<printingFileLength> printingFile;
+static String<printingFileLength> lastJobFileName;
 static String<zprobeBufLength> zprobeBuf;
 static String<generatedByTextLength> generatedByText;
 static String<lastModifiedTextLength> lastModifiedText;
@@ -987,6 +988,11 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 	const PixelNumber offset = 0;
 #endif
 
+	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
+	reprintButton = new TextButton(row8 + offset, speedColumn, pauseColumn - speedColumn - fieldSpacing, strings->reprint, evReprint);
+	reprintButton->Show(false);
+	mgr.AddField(reprintButton);
+
 	DisplayField::SetDefaultColours(colours.progressBarColour,colours. progressBarBackColour);
 	mgr.AddField(printProgressBar = new ProgressBar(row8 + offset + (rowHeight - progressBarHeight)/2, margin, progressBarHeight, DisplayX - 2 * margin));
 	mgr.Show(printProgressBar, false);
@@ -1187,6 +1193,7 @@ namespace UI
 		mgr.Show(pauseButton, false);
 		mgr.Show(babystepButton, false);
 		mgr.Show(filesButton, true);
+		mgr.Show(reprintButton, lastJobFileName.strlen() > 0);
 	}
 
 	void ShowPauseButton()
@@ -1196,6 +1203,7 @@ namespace UI
 		mgr.Show(filesButton, false);
 		mgr.Show(pauseButton, true);
 		mgr.Show(babystepButton, true);
+		mgr.Show(reprintButton, false);
 	}
 
 	void ShowResumeAndCancelButtons()
@@ -1205,6 +1213,7 @@ namespace UI
 		mgr.Show(filesButton, false);
 		mgr.Show(resumeButton, true);
 		mgr.Show(cancelButton, true);
+		mgr.Show(reprintButton, false);
 	}
 
 	// Show or hide an axis on the move button grid and on the axis display
@@ -1340,6 +1349,7 @@ namespace UI
 				// Starting a new print, so clear the times
 				timesLeft[0] = timesLeft[1] = timesLeft[2] = 0;
 			}
+			SetLastFileSimulated(newStatus == PrinterStatus::simulating);
 			[[fallthrough]];
 		case PrinterStatus::paused:
 		case PrinterStatus::pausing:
@@ -1572,6 +1582,25 @@ namespace UI
 				nameField->SetChanged();
 			}
 		}
+	}
+
+	void SetLastJobFileName(const char data[])
+	{
+		if (!lastJobFileName.Similar(data))
+		{
+			lastJobFileName.copy(data);
+			if (!PrintInProgress())
+			{
+				mgr.Show(reprintButton, lastJobFileName.strlen() > 0);
+			}
+		}
+	}
+
+	void SetLastFileSimulated(const bool lastFileSimulated)
+	{
+		TextButton* redoButton = static_cast<TextButton*>(reprintButton);
+		redoButton->SetEvent(lastFileSimulated ? evResimulate : evReprint, 0);
+		redoButton->SetText(lastFileSimulated ? strings->resimulate : strings->reprint);
 	}
 
 	// This is called just before the main polling loop starts. Display the default page.
@@ -2326,6 +2355,26 @@ namespace UI
 					SerialIo::SendChar('\n');
 					PrintingFilenameChanged(currentFile);
 					currentFile = nullptr;							// allow the file list to be updated
+					CurrentButtonReleased();
+					PrintStarted();
+				}
+				break;
+
+			case evReprint:
+			case evResimulate:
+				if (lastJobFileName.strlen() > 0)
+				{
+					SerialIo::SendString((ev == evResimulate) ? "M37 P" : "M32 ");
+					if (GetFirmwareFeatures() & quoteFilenames)
+					{
+						SerialIo::SendQuoted(lastJobFileName.c_str());
+					}
+					else
+					{
+						SerialIo::SendString(lastJobFileName.c_str());
+					}
+					SerialIo::SendChar('\n');
+					PrintingFilenameChanged(lastJobFileName.c_str());
 					CurrentButtonReleased();
 					PrintStarted();
 				}

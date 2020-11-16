@@ -43,6 +43,8 @@ namespace UI
 	extern void Spin();
 	extern void PrintStarted();
 	extern void PrintingFilenameChanged(const char data[]);
+	extern void SetLastJobFileName(const char data[]);
+	extern void SetLastFileSimulated(const bool lastFileSimulated);
 	extern void ShowDefaultPage();
 	extern void UpdatePrintingFields();
 	extern void SetPrintProgressPercent(unsigned int percent);

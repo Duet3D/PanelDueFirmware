@@ -368,6 +368,8 @@ enum ReceivedDataEvent
 	rcvJobFileFilename,
 	rcvJobFileSize,
 	rcvJobFilePosition,
+	rcvJobLastFileName,
+	rcvJobLastFileSimulated,
 	rcvJobTimesLeftFilament,
 	rcvJobTimesLeftFile,
 	rcvJobTimesLeftLayer,
@@ -467,6 +469,8 @@ static FieldTableEntry fieldTable[] =
 	{ rcvJobFileFilename, 				"job:file:fileName" },
 	{ rcvJobFileSize, 					"job:file:size" },
 	{ rcvJobFilePosition,				"job:filePosition" },
+	{ rcvJobLastFileName,				"job:lastFileName" },
+	{ rcvJobLastFileSimulated,			"job:lastFileSimulated" },
 	{ rcvJobTimesLeftFilament,			"job:timesLeft:filament" },
 	{ rcvJobTimesLeftFile,				"job:timesLeft:file" },
 	{ rcvJobTimesLeftLayer,				"job:timesLeft:layer" },
@@ -1699,6 +1703,22 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 					UI::SetPrintProgressPercent((unsigned int)(((ival*100.0f)/fileSize) + 0.5));
 				}
 
+			}
+		}
+		break;
+
+	case rcvJobLastFileName:
+		ShowLine;
+		UI::SetLastJobFileName(data);
+		break;
+
+	case rcvJobLastFileSimulated:
+		ShowLine;
+		{
+			bool lastFileSimulated;
+			if (GetBool(data, lastFileSimulated))
+			{
+				UI::SetLastFileSimulated(lastFileSimulated);
 			}
 		}
 		break;
