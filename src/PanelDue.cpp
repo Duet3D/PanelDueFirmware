@@ -57,10 +57,10 @@ extern uint16_t _esplash[];							// defined in linker script
 #define DEBUG	(0)
 
 // Controlling constants
-const uint32_t defaultPrinterPollInterval = 1000;			// poll interval in milliseconds
-constexpr uint32_t slowPrinterPollInterval = defaultPrinterPollInterval * 4;	// poll interval in milliseconds when screensaver active
-const uint32_t printerResponseInterval = 700;		// shortest time after a response that we send another poll (gives printer time to catch up)
-const uint32_t printerPollTimeout = 4000;			// poll timeout in milliseconds
+constexpr uint32_t defaultPrinterPollInterval = 500;	// poll interval in milliseconds
+constexpr uint32_t defaultPrinterResponseInterval = defaultPrinterPollInterval * 0.7;		// shortest time after a response that we send another poll (gives printer time to catch up)
+constexpr uint32_t slowPrinterPollInterval = 4000;		// poll interval in milliseconds when screensaver active
+const uint32_t printerPollTimeout = 2000;			// poll timeout in milliseconds
 const uint32_t FileInfoRequestTimeout = 8000;		// file info request timeout in milliseconds
 const uint32_t touchBeepLength = 20;				// beep length in ms
 const uint32_t touchBeepFrequency = 4500;			// beep frequency in Hz. Resonant frequency of the piezo sounder is 4.5kHz.
@@ -139,6 +139,9 @@ static uint32_t lastTouchTime;
 static uint32_t ignoreTouchTime;
 static uint32_t lastPollTime;
 static uint32_t lastResponseTime = 0;
+static uint32_t lastOutOfBufferResponse = 0;
+static uint8_t oobCounter = 0;
+static bool outOfBuffers = false;
 static uint32_t lastActionTime = 0;							// the last time anything significant happened
 static FirmwareFeatures firmwareFeatures = 0;
 static bool isDimmed = false;								// true if we have dimmed the display
@@ -157,7 +160,9 @@ static int8_t lastTool = -1;
 static uint8_t mountedVolumesCounted = 0;
 static uint32_t remoteUpTime = 0;
 static bool initialized = false;
+static float pollIntervalMultiplier = 1.0;
 static uint32_t printerPollInterval = defaultPrinterPollInterval;
+static uint32_t printerResponseInterval = defaultPrinterResponseInterval;
 
 const ColourScheme *colours = &colourSchemes[0];
 
@@ -934,11 +939,25 @@ extern void SetBrightness(int percent)
 	RestoreBrightness();
 }
 
-void DeactivateScreensaver() {
+void UpdatePollRate()
+{
+	if (screensaverActive)
+	{
+		printerPollInterval = slowPrinterPollInterval;
+	}
+	else
+	{
+		printerPollInterval = defaultPrinterPollInterval * pollIntervalMultiplier;
+		printerResponseInterval = defaultPrinterResponseInterval * pollIntervalMultiplier;
+	}
+}
+
+void DeactivateScreensaver()
+{
 	if (screensaverActive) {
 		UI::DeactivateScreensaver();
 		screensaverActive = false;
-		printerPollInterval = defaultPrinterPollInterval;
+		UpdatePollRate();
 	}
 }
 
@@ -972,7 +991,7 @@ void ActivateScreensaver()
 		}
 		screensaverActive = true;
 		UI::ActivateScreensaver();
-		printerPollInterval = slowPrinterPollInterval;
+		UpdatePollRate();
 	}
 	else
 	{
@@ -1193,6 +1212,11 @@ void StartReceivedMessage()
 
 void SeqsRequestDone(const ReceivedDataEvent rde)
 {
+	// If we ran out of buffers we have to redo the previous request
+	if (outOfBuffers)
+	{
+		return;
+	}
 	switch (rde)
 	{
 	case rcvOMKeyBoards:
@@ -1248,6 +1272,7 @@ void EndReceivedMessage()
 	ShowLine;
 	lastResponseTime = SystemTick::GetTickCount();
 	SeqsRequestDone(currentResponseType);
+	outOfBuffers = false;							// Reset the out-of-buffers flag
 	currentResponseType = rcvUnknown;
 
 	if (newMessageSeq != messageSeq)
@@ -1438,6 +1463,29 @@ const OMRequestParams* GetOMRequestParams()
 	default:
 		return nullptr;
 	}
+}
+
+void HandleOutOfBufferResponse() {
+
+	const uint32_t now = SystemTick::GetTickCount();
+
+	// We received the previous out-of-buffer within 10s
+	if (now - lastOutOfBufferResponse <= 10000) {
+		++oobCounter;
+	} else {
+		// Reset it if it was more than 10s ago - glitches happen
+		oobCounter = 0;
+	}
+
+	// Slow down the poll interval by 10% if we see too many out-of-buffer in short time
+	if (oobCounter >= 3) {
+		pollIntervalMultiplier += 0.1;
+		UpdatePollRate();
+		oobCounter = 0;
+		MessageLog::AppendMessage("Slowing down poll rate");
+	}
+	lastOutOfBufferResponse = now;
+	outOfBuffers = true;
 }
 
 // Public functions called by the SerialIo module
@@ -2098,7 +2146,8 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 				}
 				else if (i == -1)
 				{
-					// RRF ran out of buffers
+					// This is not actually part of M20 but RRF ran out of buffers
+					HandleOutOfBufferResponse();
 				}
 			}
 		}
@@ -2282,6 +2331,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 
 void ParserErrorEncountered()
 {
+	MessageLog::AppendMessage("Error parsing response");
 	// TODO: Handle parser errors
 }
 
@@ -2517,9 +2567,10 @@ int main(void)
 		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
 		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
 		const uint32_t now = SystemTick::GetTickCount();
-		if (   UI::DoPolling()										// don't poll while we are in the Setup page
+		if (   (UI::DoPolling()										// don't poll while we are in the Setup page
 		    && now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
-			&& now - lastResponseTime >= printerResponseInterval	// and we haven't had a response too recently
+			&& now - lastResponseTime >= printerResponseInterval)	// and we haven't had a response too recently
+			|| (!initialized && (now - lastPollTime > now - lastResponseTime))	// but if we are initializing do it as fast as possible where
 		   )
 		{
 			if (now - lastPollTime > now - lastResponseTime)		// if we've had a response since the last poll
