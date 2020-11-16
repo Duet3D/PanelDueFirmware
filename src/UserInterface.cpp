@@ -1607,6 +1607,10 @@ namespace UI
 
 		const unsigned int stat = (unsigned int)GetStatus();
 		statusField->SetValue((stat < NumStatusStrings) ? strings->statusValues[stat] : "unknown status");
+		if (!PrintInProgress())
+		{
+			mgr.Refresh(true);		// Ending a print creates a popup and that will prevent removing some of the elements hidden so force it here
+		}
 	}
 
 	// Set the percentage of print completed
