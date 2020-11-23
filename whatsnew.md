@@ -1,3 +1,20 @@
+# Version 3.2.4## Upgrade Notes:
+- This release is compatible with RepRapFirmware 3.2-beta1 or later. It will partially work with RepRapFirmware 3.1.1 but not with any older version.
+
+# Limitations
+- Due to the lack of RAM this build will not run on version 1 or early version 2 PanelDue boards that use the `ATSAM3S2B` chip.
+    - Version 1.0, 1.1 and earlier v2 PanelDue: `ATSAM3S2B` processor (64MHz, 32kb RAM, 128kB flash) - these are the ones that the new firmware probably won't run on.
+    - Version 2 PanelDue manufactured from August 2016: `ATSAM3S4B` processor (64MHz, 48kb RAM, 256kb flash). Will run the new firmware, but not as fast as version 3 will.
+    - Version 3 PanelDue, including all 5i and 7i: `ATSAM4S4B` processor, 120MHz, 64kB RAM, 256kb flash. Will run the new firmware.
+- There will be no reliable status updates coming from RepRapFirmware while waiting for heaters to reach temperature (and some other cases) before RRF 3.2-beta3.2.
+
+## New and changed features:
+* Add button to reprint/resimulate last file
+
+## Bug fixes:
+* For PanelDue v2 the wrong linker script was used resulting in PanelDueFirmware not booting
+* After a print/simulation has finished some of the elements partially remained on screen
+
 # Version 3.2.3
 ## Upgrade Notes:
 - This release is compatible with RepRapFirmware 3.2-beta1 or later. It will partially work with RepRapFirmware 3.1.1 but not with any older version.

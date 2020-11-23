@@ -130,6 +130,8 @@ SECTIONS
         _erelocate = .;
     } > ram
 
+    _esplash = _etext + (_erelocate - _srelocate);
+
     /* .bss section which is used for uninitialized data */ 
     .bss (NOLOAD) :
     { 
