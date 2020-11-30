@@ -1,4 +1,5 @@
-# Version 3.2.4## Upgrade Notes:
+# Version 3.2.4
+## Upgrade Notes:
 - This release is compatible with RepRapFirmware 3.2-beta1 or later. It will partially work with RepRapFirmware 3.1.1 but not with any older version.
 
 # Limitations
