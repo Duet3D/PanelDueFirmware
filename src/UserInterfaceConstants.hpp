@@ -27,7 +27,7 @@ static const float _ecv_array babystepAmountsF[] = { 0.01, 0.02, 0.05, 0.1 };
 
 #if DISPLAY_X == 480
 
-const unsigned int MaxHeaters = 5;
+const unsigned int MaxSlots = 5;
 #define MaxDisplayableAxes	(4)
 
 const PixelNumber margin = 2;
@@ -73,7 +73,7 @@ extern uint8_t glcd19x21[];				// declare which fonts we will be using
 #define DEFAULT_FONT	glcd19x21
 
 #elif DISPLAY_X == 800
-const unsigned int MaxHeaters = 7;
+const unsigned int MaxSlots = 7;
 #define MaxDisplayableAxes (6)
 
 const PixelNumber margin = 4;
@@ -124,7 +124,7 @@ extern uint8_t glcd28x32[];				// declare which fonts we will be using
 #endif
 
 const PixelNumber buttonHeight = rowTextHeight + 4;
-const PixelNumber tempButtonWidth = (DISPLAY_X + fieldSpacing - bedColumn)/MaxHeaters - fieldSpacing;
+const PixelNumber tempButtonWidth = (DISPLAY_X + fieldSpacing - bedColumn)/MaxSlots - fieldSpacing;
 
 const PixelNumber row1 = 0;										// we don't need a top margin
 const PixelNumber row2 = row1 + rowHeight - 2;					// the top row never has buttons so it can be shorter

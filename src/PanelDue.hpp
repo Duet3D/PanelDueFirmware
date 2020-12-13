@@ -3,7 +3,7 @@
  *
  * Created: 06/12/2014 14:23:38
  *  Author: David
- */ 
+ */
 
 #ifndef PANELDUE_H_
 #define PANELDUE_H_
@@ -35,6 +35,7 @@ enum class DisplayDimmerType : uint8_t
 	NumTypes
 };
 
+extern bool IsPrintingStatus(PrinterStatus status);
 extern bool PrintInProgress();
 extern PrinterStatus GetStatus();
 extern void DelayTouchLong();

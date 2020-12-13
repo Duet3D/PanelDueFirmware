@@ -22,10 +22,17 @@
 extern "C" {
 #endif
 
+void Reset()
+{
+	rstc_start_software_reset(RSTC);
+	__builtin_unreachable();
+}
+
 // Switch into boot mode and reset
 void EraseAndReset()
 {
-	cpu_irq_disable();
+	cpu_irq_disable();									// disable interrupts before we call any flash functions. We don't enable them again.
+	WDT->WDT_CR = WDT_CR_KEY_PASSWD | WDT_CR_WDRSTT;	// kick the watchdog
 
 #if SAM4S
 #define IFLASH_ADDR					IFLASH0_ADDR
@@ -42,7 +49,7 @@ void EraseAndReset()
 
     flash_clear_gpnvm(1);			// tell the system to boot from ROM next time
 	rstc_start_software_reset(RSTC);
-	for(;;) {}
+	__builtin_unreachable();
 }
 
 #ifdef __cplusplus

@@ -7,7 +7,7 @@
 
 #include "ObjectModel.hpp"
 
-template<class T>
+template<typename T>
 T* GetOrCreate(T*& start, size_t index, bool create)
 {
 	T* ret = start;
@@ -44,7 +44,7 @@ T* GetOrCreate(T*& start, size_t index, bool create)
 	return ret;
 }
 
-template<class T>
+template<typename T>
 size_t GetElementCount(T*& start)
 {
 	size_t count = 0;
@@ -334,6 +334,46 @@ namespace OM
 	void IterateChambers(std::function<void(Chamber*)> func, const size_t startAt)
 	{
 		Iterate(chambers, func, startAt);
+	}
+
+	void GetHeaterSlots(
+			const size_t heaterIndex,
+			HeaterSlots& heaterSlots,
+			const bool addTools,
+			const bool addBeds,
+			const bool addChambers)
+	{
+		if (addBeds)
+		{
+			IterateBeds(
+				[&](auto bed) {
+					if (bed->slot < MaxSlots && bed->heater == (int)heaterIndex)
+					{
+						heaterSlots.Add(bed->slot);
+					}
+				});
+		}
+		if (addChambers)
+		{
+			IterateChambers(
+				[&](auto chamber) {
+					if (chamber->slot < MaxSlots && chamber->heater == (int)heaterIndex)
+					{
+						heaterSlots.Add(chamber->slot);
+					}
+				});
+		}
+		if (addTools)
+		{
+			IterateTools(
+				[&](auto tool) {
+					if (tool->slot < MaxSlots && tool->heater == (int)heaterIndex)
+					{
+						heaterSlots.Add(tool->slot);
+					}
+				});
+		}
+
 	}
 
 	size_t RemoveAxis(const size_t index, const bool allFollowing)

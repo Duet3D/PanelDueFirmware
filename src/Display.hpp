@@ -3,7 +3,7 @@
  *
  * Created: 04/11/2014 09:43:43
  *  Author: David
- */ 
+ */
 
 
 #ifndef DISPLAY_H_
@@ -47,7 +47,7 @@ typedef uint8_t event_t;
 const event_t nullEvent = 0;
 
 enum class TextAlignment : uint8_t { Left, Centre, Right };
-	
+
 class ButtonBase;
 
 // Small by-value class to identify what button has been pressed
@@ -55,22 +55,22 @@ class ButtonPress
 {
 	ButtonBase * null button;
 	unsigned int index;
-	
+
 public:
 	ButtonPress();
-	ButtonPress(ButtonBase *b, unsigned int pi);	
+	ButtonPress(ButtonBase *b, unsigned int pi);
 	void Set(ButtonBase *b, unsigned int pi);
 	void Clear();
-	
+
 	bool IsValid() const { return button != nullptr; }
 	ButtonBase * GetButton() const { return button; }
 	unsigned int GetIndex() const { return index; }
 
-	event_t GetEvent() const;		
+	event_t GetEvent() const;
 	int GetIParam() const;
 	const char* _ecv_array GetSParam() const;
 	bool operator==(const ButtonPress& other) const;
-	
+
 	bool operator!=(const ButtonPress& other) const { return !operator==(other); }
 };
 
@@ -86,15 +86,15 @@ protected:
 			underlined : 1,						// really belongs in class FieldWithText, but stored here to save space
 			border : 1,							// really belongs in class FieldWithText, but stored here to save space
 			textRows : 2;						// really belongs in class FieldWithText, but stored here to save space
-	
+
 	static LcdFont defaultFont;
 	static Colour defaultFcolour, defaultBcolour;
 	static Colour defaultButtonBorderColour, defaultGradColour, defaultPressedBackColour, defaultPressedGradColour;
 	static Palette defaultIconPalette;
-	
+
 protected:
 	DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw);
-	
+
 	void SetTextRows(const char * _ecv_array t);
 	virtual PixelNumber GetHeight() const = 0;
 	virtual void CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) { UNUSED(x); UNUSED(y); UNUSED(bestError); UNUSED(best); }
@@ -123,7 +123,7 @@ public:
 	static void SetDefaultColours(Colour pf, Colour pb, Colour pbb, Colour pg, Colour pbp, Colour pgp, Palette pal);
 	static void SetDefaultFont(LcdFont pf) { defaultFont = pf; }
 	static ButtonPress FindEvent(PixelNumber x, PixelNumber y, DisplayField * null p);
-	
+
 	// Icon management
 	static PixelNumber GetIconWidth(Icon ic) { return ic[0]; }
 	static PixelNumber GetIconHeight(Icon ic) { return ic[1]; }
@@ -141,7 +141,7 @@ protected:
 	DisplayField * null root;
 	PopupWindow * null next;
 	Colour backgroundColour;
-	
+
 public:
 	Window(Colour pb);
 	virtual PixelNumber Xpos() const { return 0; }
@@ -181,9 +181,10 @@ class PopupWindow : public Window
 private:
 	PixelNumber height, width, xPos, yPos;
 	Colour borderColour;
-	
+	bool roundedCorners;
+
 public:
-	PopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder);
+	PopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder, bool roundCorners = true);
 
 	PixelNumber GetHeight() const { return height; }
 	PixelNumber GetWidth() const { return width; }
@@ -215,10 +216,10 @@ class FieldWithText : public DisplayField
 {
 	LcdFont font;
 	TextAlignment align;
-	
+
 protected:
 	PixelNumber GetHeight() const override;
-	
+
 	virtual void PrintText() const = 0;
 
 	FieldWithText(PixelNumber py, PixelNumber px, PixelNumber pw, TextAlignment pa, bool withBorder, bool isUnderlined = false)
@@ -228,7 +229,7 @@ protected:
 		border = withBorder;
 		textRows = 1;
 	}
-		
+
 public:
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override final;
 };
@@ -238,7 +239,7 @@ class TextField : public FieldWithText
 {
 	const char* _ecv_array null label;
 	const char* _ecv_array null text;
-	
+
 protected:
 	void PrintText() const override;
 
@@ -349,12 +350,8 @@ public:
 	// Change the value
 	void SetValue(const char* _ecv_array null pt, bool forceUpdate = false)
 	{
-		if (strcmp(text, pt) == 0)
+		if (!forceUpdate && strcmp(text, pt) == 0)
 		{
-			if (forceUpdate)
-			{
-				changed = true;
-			}
 			return;
 		}
 		text = pt;
@@ -396,9 +393,9 @@ class SingleButton : public ButtonBase
 
 protected:
 	SingleButton(PixelNumber py, PixelNumber px, PixelNumber pw);
-	
+
 	void DrawOutline(PixelNumber xOffset, PixelNumber yOffset) const;
-	
+
 public:
 	bool IsButton() const override final { return true; }
 
@@ -413,7 +410,7 @@ public:
 	//float GetFParam() const { return param.fParam; }
 
 	void Press(bool p, int index) override;
-	
+
 	static void SetTextMargin(PixelNumber p) { textMargin = p; }
 	static void SetIconMargin(PixelNumber p) { iconMargin = p; }
 };
@@ -421,7 +418,7 @@ public:
 class ButtonWithText : public SingleButton
 {
 	static LcdFont font;
-	
+
 protected:
 	PixelNumber GetHeight() const override;
 
@@ -432,7 +429,7 @@ public:
 		: SingleButton(py, px, pw) {}
 
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override final;
-	
+
 	static void SetFont(LcdFont f) { font = f; }
 };
 
@@ -453,7 +450,7 @@ protected:
 	unsigned int numButtons;
 	int whichPressed;
 	PixelNumber step;
-	
+
 public:
 	ButtonRow(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ps, unsigned int nb, event_t e);
 };
@@ -558,7 +555,7 @@ public:
 // Standard button with an icon
 class IconButton : public SingleButton
 {
-	
+
 protected:
 	Icon icon;
 	PixelNumber GetHeight() const override { return GetIconHeight(icon) + 2 * iconMargin + 2; }
@@ -703,9 +700,9 @@ public:
 		: DisplayField(py, px, pw), lastNumPixelsSet(0), height(ph), percent(0)
 	{
 	}
-	
+
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override;
-	
+
 	PixelNumber GetHeight() const override { return height; }
 
 	void SetPercent(uint8_t pc)

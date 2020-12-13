@@ -43,7 +43,7 @@ namespace UI
 	extern void Spin();
 	extern void PrintStarted();
 	extern void PrintingFilenameChanged(const char data[]);
-	extern void SetLastJobFileName(const char data[]);
+	extern void LastJobFileNameAvailable(const bool available);
 	extern void SetLastFileSimulated(const bool lastFileSimulated);
 	extern void ShowDefaultPage();
 	extern void UpdatePrintingFields();
@@ -65,6 +65,7 @@ namespace UI
 	extern void UpdateFileFilament(int len);
 	extern void UpdateFanPercent(int rpm);
 	extern void UpdateActiveTemperature(size_t index, int ival);
+	extern void UpdateToolTemp(size_t toolIndex, float temp, bool active);
 	extern void UpdateStandbyTemperature(size_t index, int ival);
 	extern void UpdateExtrusionFactor(size_t index, int ival);
 	extern void UpdatePrintTimeText(uint32_t seconds, bool isSimulated);

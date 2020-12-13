@@ -1,3 +1,24 @@
+# Version 3.2.5
+## Upgrade Notes:
+- This release is compatible with RepRapFirmware 3.2-beta1 or later. It will partially work with RepRapFirmware 3.1.1 but not with any older version.
+
+# Limitations
+- Due to the lack of RAM this build will not run on version 1 or early version 2 PanelDue boards that use the `ATSAM3S2B` chip.
+    - Version 1.0, 1.1 and earlier v2 PanelDue: `ATSAM3S2B` processor (64MHz, 32kb RAM, 128kB flash) - these are the ones that the new firmware probably won't run on.
+    - Version 2 PanelDue manufactured from August 2016: `ATSAM3S4B` processor (64MHz, 48kb RAM, 256kb flash). Will run the new firmware, but not as fast as version 3 will.
+    - Version 3 PanelDue, including all 5i and 7i: `ATSAM4S4B` processor, 120MHz, 64kB RAM, 256kb flash. Will run the new firmware.
+- There will be no reliable status updates coming from RepRapFirmware while waiting for heaters to reach temperature (and some other cases) before RRF 3.2-beta3.2.
+
+## Bug fixes:
+* Unnecessary refresh for each printer state change
+* Forcing an update on a text field could be stuck
+* Title in Alert/Message window was hidden
+* Tool active/standby temp was the one from the heater instead of the tool
+* Reprint/resimulate failed for filenames with more than 40 characters (including path)
+* If a heater was shared between tools/beds/chambers current temp was only updated for the first one displayed
+* Homing status was not updated after a reset of the panel
+* Screensaver left pixels with the background color of the underlying screen in the corners
+
 # Version 3.2.4
 ## Upgrade Notes:
 - This release is compatible with RepRapFirmware 3.2-beta1 or later. It will partially work with RepRapFirmware 3.1.1 but not with any older version.

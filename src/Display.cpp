@@ -3,7 +3,7 @@
  *
  * Created: 04/11/2014 09:42:47
  *  Author: David
- */ 
+ */
 
 #include "Display.hpp"
 #include "ColourSchemes.hpp"
@@ -107,10 +107,10 @@ void DisplayField::Show(bool v)
 		visible = changed = v;
 	}
 }
-	
+
 // Find the best match to a touch event in a list of fields
 ButtonPress DisplayField::FindEvent(PixelNumber x, PixelNumber y, DisplayField * null p)
-{	
+{
 	int bestError = maxXerror + maxYerror;
 	ButtonPress best;
 	while (p != nullptr)
@@ -127,7 +127,7 @@ void DisplayField::SetColours(Colour pf, Colour pb)
 	{
 		fcolour = pf;
 		bcolour = pb;
-		changed = true;	
+		changed = true;
 	}
 }
 
@@ -181,7 +181,7 @@ void Window::AddField(DisplayField *d)
 bool Window::ObscuredByPopup(const DisplayField *p) const
 {
 	return next != nullptr
-			&& (  (   p->GetMaxY() >= next->Ypos() && p->GetMinY() < next->Ypos() + next->GetHeight() 
+			&& (  (   p->GetMaxY() >= next->Ypos() && p->GetMinY() < next->Ypos() + next->GetHeight()
 				   && p->GetMaxX() >= next->Xpos() && p->GetMinX() < next->Xpos() + next->GetWidth()
 				  )
 				|| next->ObscuredByPopup(p)
@@ -205,7 +205,7 @@ ButtonPress Window::FindEvent(PixelNumber x, PixelNumber y)
 ButtonPress Window::FindEventOutsidePopup(PixelNumber x, PixelNumber y)
 {
 	if (next == nullptr) return ButtonPress();
-	
+
 	ButtonPress f = DisplayField::FindEvent(x, y, root);
 	return (f.IsValid() && Visible(f.GetButton())) ? f : ButtonPress();
 }
@@ -252,7 +252,7 @@ void Window::ClearPopup(bool redraw, PopupWindow *whichOne)
 		{
 			pw = pw->next;
 		}
-		
+
 		if (whichOne == nullptr || whichOne == pw->next)
 		{
 			const PixelNumber xmin = pw->next->Xpos(), xmax = xmin + pw->next->GetWidth() - 1, ymin = pw->next->Ypos(), ymax = ymin + pw->next->GetHeight() - 1;
@@ -312,7 +312,7 @@ void Window::Redraw(DisplayField *f)
 			return;
 		}
 	}
-	
+
 	// Else we didn't find the field in our window, so look in nested windows
 	if (next != nullptr)
 	{
@@ -333,7 +333,7 @@ void Window::Show(DisplayField * null f, bool v)
 			{
 				if (ObscuredByPopup(f))
 				{
-					// nothing to do		
+					// nothing to do
 				}
 				else if (v)
 				{
@@ -347,7 +347,7 @@ void Window::Show(DisplayField * null f, bool v)
 				return;
 			}
 		}
-		
+
 		// Else we didn't find it, so maybe it is in a popup field
 		if (next != nullptr)
 		{
@@ -413,8 +413,8 @@ void MainWindow::ClearAllPopups()
 	}
 }
 
-PopupWindow::PopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder)
-	: Window(pb), height(ph), width(pw), borderColour(pBorder)
+PopupWindow::PopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder, bool roundCorners)
+	: Window(pb), height(ph), width(pw), borderColour(pBorder), roundedCorners(roundCorners)
 {
 }
 
@@ -424,14 +424,29 @@ void PopupWindow::Refresh(bool full)
 	{
 		// Draw a rectangle inside the border
 		lcd.setColor(backgroundColour);
-		lcd.fillRoundRect(xPos + 1, yPos + 2, xPos + width - 2, yPos + height - 3);
+		if (roundedCorners)
+		{
+			lcd.fillRoundRect(xPos + 1, yPos + 2, xPos + width - 2, yPos + height - 3);
+		}
+		else
+		{
+			lcd.fillRect(xPos, yPos, xPos + width, yPos + height);
+		}
 
 		// Draw a double border
 		lcd.setColor(borderColour);
-		lcd.drawRoundRect(xPos, yPos, xPos + width - 1, yPos + height - 1);
-		lcd.drawRoundRect(xPos + 1, yPos + 1, xPos + width - 2, yPos + height - 2);
+		if (roundedCorners)
+		{
+			lcd.drawRoundRect(xPos, yPos, xPos + width - 1, yPos + height - 1);
+			lcd.drawRoundRect(xPos + 1, yPos + 1, xPos + width - 2, yPos + height - 2);
+		}
+		else
+		{
+			lcd.drawRect(xPos, yPos, xPos + width - 1, yPos + height - 1);
+			lcd.drawRect(xPos + 1, yPos + 1, xPos + width - 2, yPos + height - 2);
+		}
 	}
-	
+
 	for (DisplayField * null p = root; p != nullptr; p = p->next)
 	{
 		if (p->IsVisible() && (full || !ObscuredByPopup(p)))
@@ -439,7 +454,7 @@ void PopupWindow::Refresh(bool full)
 			p->Refresh(full, xPos, yPos);
 		}
 	}
-	
+
 	if (next != nullptr)
 	{
 		next->Refresh(full);
@@ -637,7 +652,7 @@ ButtonBase::ButtonBase(PixelNumber py, PixelNumber px, PixelNumber pw)
 	: DisplayField(py, px, pw),
 	  borderColour(defaultButtonBorderColour), gradColour(defaultGradColour),
 	  pressedBackColour(defaultPressedBackColour), pressedGradColour(defaultPressedGradColour), evt(nullEvent), pressed(false)
-{	
+{
 }
 
 PixelNumber ButtonBase::textMargin = 1;
@@ -1024,7 +1039,7 @@ void ProgressBar::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 		else if (pixelsSet < lastNumPixelsSet)
 		{
 			lcd.setColor(bcolour);
-			lcd.fillRect(x + xOffset + pixelsSet + 1, y + yOffset + 1, x + xOffset + lastNumPixelsSet, y + yOffset + height - 2);	
+			lcd.fillRect(x + xOffset + pixelsSet + 1, y + yOffset + 1, x + xOffset + lastNumPixelsSet, y + yOffset + height - 2);
 		}
 		changed = false;
 		lastNumPixelsSet = pixelsSet;

@@ -3,7 +3,7 @@
  *
  * Created: 07/11/2015 11:46:58
  *  Author: David
- */ 
+ */
 
 
 #ifndef RESET_H_
@@ -16,11 +16,8 @@ extern "C" {
 #endif
 
 // Restart the hardware
-inline void Reset()
-{
-	rstc_start_software_reset(RSTC);
-}
-void EraseAndReset() noexcept;
+void Reset() noexcept __attribute__((noreturn));
+void EraseAndReset() noexcept __attribute__((noreturn));
 
 #ifdef __cplusplus
 }
