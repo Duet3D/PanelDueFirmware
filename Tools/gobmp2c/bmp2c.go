@@ -26,7 +26,13 @@ func main() {
 	if outfile == "-" {
 		buf = bufio.NewWriter(os.Stdout)
 	} else {
-		of, err := os.OpenFile(outfile, os.O_APPEND|os.O_WRONLY, 0644)
+		var of *os.File
+		var err error
+		if !binaryOutput {
+			of, err = os.OpenFile(outfile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+		} else {
+			of, err = os.Create(outfile)
+		}
 		if err != nil {
 			panic(err)
 		}
