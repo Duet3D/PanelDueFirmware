@@ -65,7 +65,7 @@ namespace UI
 	extern void UpdateFileFilament(int len);
 	extern void UpdateFanPercent(int rpm);
 	extern void UpdateActiveTemperature(size_t index, int ival);
-	extern void UpdateToolTemp(size_t toolIndex, float temp, bool active);
+	extern void UpdateToolTemp(size_t toolIndex, int32_t temp, bool active);
 	extern void UpdateStandbyTemperature(size_t index, int ival);
 	extern void UpdateExtrusionFactor(size_t index, int ival);
 	extern void UpdatePrintTimeText(uint32_t seconds, bool isSimulated);

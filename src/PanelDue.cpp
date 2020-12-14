@@ -2033,8 +2033,8 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 			{
 				return;
 			}
-			float temp;
-			if (GetFloat(data, temp))
+			int32_t temp;
+			if (GetInteger(data, temp))
 			{
 				UI::UpdateToolTemp(indices[0], temp, rde == rcvToolsActive);
 			}

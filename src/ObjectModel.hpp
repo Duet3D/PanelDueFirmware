@@ -64,8 +64,8 @@ namespace OM {
 		// tool number
 		uint8_t index = 0;
 		int8_t heater = -1;				// only look at the first heater as we only display one
-		float activeTemp = 0.0f;
-		float standbyTemp = 0.0f;
+		int16_t activeTemp = 0;
+		int16_t standbyTemp = 0;
 		int8_t extruder = -1;			// only look at the first extruder as we only display one
 		Spindle* spindle = nullptr;		// only look at the first spindle as we only display one
 		float offsets[MaxTotalAxes];

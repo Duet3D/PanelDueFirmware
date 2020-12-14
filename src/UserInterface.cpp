@@ -989,7 +989,14 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 #endif
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	reprintButton = new TextButton(row8 + offset, speedColumn, pauseColumn - speedColumn - fieldSpacing, strings->reprint, evReprint);
+	const PixelNumber reprintRow =
+#if DISPLAY_X == 800
+			row9
+#else
+			row8
+#endif
+			;
+	reprintButton = new TextButton(reprintRow, speedColumn, pauseColumn - speedColumn - fieldSpacing, strings->reprint, evReprint);
 	reprintButton->Show(false);
 	mgr.AddField(reprintButton);
 
@@ -1747,7 +1754,7 @@ namespace UI
 		UpdateField(fanSpeed, rpm);
 	}
 
-	void UpdateToolTemp(size_t toolIndex, float temp, bool active)
+	void UpdateToolTemp(size_t toolIndex, int32_t temp, bool active)
 	{
 		auto tool = OM::GetOrCreateTool(toolIndex);
 		if (active)
@@ -1760,7 +1767,7 @@ namespace UI
 		}
 		if (tool->slot < MaxSlots)
 		{
-			UpdateField((active ? activeTemps : standbyTemps)[tool->slot], (int) (temp+0.5f));
+			UpdateField((active ? activeTemps : standbyTemps)[tool->slot], temp);
 		}
 	}
 
@@ -2962,9 +2969,9 @@ namespace UI
 			const int evActiveParam = hasSpindle ? tool->spindle->index : tool->index;
 
 			activeTemps[slot]->SetEvent(evForActive, evActiveParam);
-			activeTemps[slot]->SetValue((int) (tool->activeTemp+0.5f));
+			activeTemps[slot]->SetValue(tool->activeTemp);
 			standbyTemps[slot]->SetEvent(evAdjustToolStandbyTemp, tool->index);
-			standbyTemps[slot]->SetValue((int) (tool->standbyTemp+0.5f));
+			standbyTemps[slot]->SetValue(tool->standbyTemp);
 			extrusionFactors[slot]->SetEvent(extrusionFactors[slot]->GetEvent(), tool->extruder);
 			++slot;
 		});

@@ -8,13 +8,17 @@
     - Version 2 PanelDue manufactured from August 2016: `ATSAM3S4B` processor (64MHz, 48kb RAM, 256kb flash). Will run the new firmware, but not as fast as version 3 will.
     - Version 3 PanelDue, including all 5i and 7i: `ATSAM4S4B` processor, 120MHz, 64kB RAM, 256kb flash. Will run the new firmware.
 - There will be no reliable status updates coming from RepRapFirmware while waiting for heaters to reach temperature (and some other cases) before RRF 3.2-beta3.2.
+- Reprint/resimulate button on DSF setups will only work with DSF 3.2-beta5 (or RC1 whatever will be version after beta4)
+
+## Changed:
+* Tool active/standby temp is now the one from the tool instead of the heater
 
 ## Bug fixes:
 * Unnecessary refresh for each printer state change
-* Forcing an update on a text field could be stuck
+* Forcing an update on a text field could get stuck
 * Title in Alert/Message window was hidden
-* Tool active/standby temp was the one from the heater instead of the tool
 * Reprint/resimulate failed for filenames with more than 40 characters (including path)
+* Reprint/resimulate button collided with axes positions on 5"/7" screens
 * If a heater was shared between tools/beds/chambers current temp was only updated for the first one displayed
 * Homing status was not updated after a reset of the panel
 * Screensaver left pixels with the background color of the underlying screen in the corners
