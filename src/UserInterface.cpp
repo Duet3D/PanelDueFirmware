@@ -1555,9 +1555,7 @@ namespace UI
 			const int ch = encoder->GetChange();
 			if (ch != 0 && currentTab != tabSetup)
 			{
-				SerialIo::SendString("G91\nG1 X");
-				SerialIo::SendInt(ch);
-				SerialIo::SendString(" F600\nG90\n");
+				SerialIo::Sendf("G91 G1 X%d F600 G90\n", ch);
 			}
 			lastEncoderCommandSentAt = SystemTick::GetTickCount();
 		}
