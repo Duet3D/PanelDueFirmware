@@ -32,12 +32,13 @@ void Reset()
 void EraseAndReset()
 {
 	cpu_irq_disable();									// disable interrupts before we call any flash functions. We don't enable them again.
-	WDT->WDT_CR = WDT_CR_KEY_PASSWD | WDT_CR_WDRSTT;	// kick the watchdog
 
 #if SAM4S
 #define IFLASH_ADDR					IFLASH0_ADDR
 #define IFLASH_PAGE_SIZE			IFLASH0_PAGE_SIZE
 #define IFLASH_NB_OF_PAGES			(IFLASH0_SIZE / IFLASH_PAGE_SIZE)
+
+	WDT->WDT_CR = WDT_CR_KEY_PASSWD | WDT_CR_WDRSTT;	// kick the watchdog
 #endif
 
     for(size_t i = 0; i <= IFLASH_NB_OF_PAGES; i++)
