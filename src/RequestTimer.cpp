@@ -3,7 +3,7 @@
  *
  * Created: 06/11/2015 14:22:55
  *  Author: David
- */ 
+ */
 
 #include "RequestTimer.hpp"
 #include "asf.h"
@@ -31,16 +31,16 @@ bool RequestTimer::Process()
 
 	if (timerState == ready && OkToSend())
 	{
-		SerialIo::SendString(command);
+		SerialIo::Sendf(command);
 		if (extra != nullptr)
 		{
 			if (quoteArgument)
 			{
-				SerialIo::SendQuoted(not_null(extra));
+				SerialIo::Sendf("\"%s\"", not_null(extra));
 			}
 			else
 			{
-				SerialIo::SendString(not_null(extra));
+				SerialIo::Sendf(not_null(extra));
 			}
 		}
 		SerialIo::SendChar('\n');

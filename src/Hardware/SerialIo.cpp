@@ -3,7 +3,7 @@
  *
  * Created: 09/11/2014 09:20:26
  *  Author: David
- */ 
+ */
 
 #include "SerialIo.hpp"
 #include "asf.h"
@@ -71,10 +71,10 @@ namespace SerialIo
 #endif
 		uart_enable_interrupt(UARTn, UART_IER_RXRDY | UART_IER_OVRE | UART_IER_FRAME);
 	}
-	
+
 	uint16_t numChars = 0;
 	uint8_t checksum = 0;
-	
+
 	// Send a character to the 3D printer.
 	// A typical command string is only about 12 characters long, which at 115200 baud takes just over 1ms to send.
 	// So there is no particular reason to use interrupts, and by so doing so we avoid having to handle buffer full situations.
@@ -82,12 +82,12 @@ namespace SerialIo
 	{
 		while(uart_write(UARTn, c) != 0) { }
 	}
-	
+
 	void SendCharAndChecksum(char c)
 	{
 		checksum ^= c;
 		RawSendChar(c);
-		++numChars;	
+		++numChars;
 	}
 
 	void SendChar(char c)
@@ -120,13 +120,13 @@ namespace SerialIo
 				checksum = 0;
 				// Send a dummy line number
 				SendCharAndChecksum('N');
-				SendInt(lineNumber++);			// numChars is no longer zero, so only recurses once
+				Sendf("%d", lineNumber++);			// numChars is no longer zero, so only recurses once
 				SendCharAndChecksum(' ');
 			}
 			SendCharAndChecksum(c);
 		}
 	}
-	
+
 	size_t Sendf(const char *fmt, ...) noexcept
 	{
 		va_list vargs;
@@ -140,63 +140,15 @@ namespace SerialIo
 		}, fmt, vargs);
 	}
 
-	void SendString(const char * _ecv_array s)
-	{
-		while (*s != 0)
-		{
-			SendChar(*s++);
-		}
-	}
-
-	void SendQuoted(const char * _ecv_array s)
-	{
-		SendChar('"');
-		SendString(s);
-		SendChar('"');
-	}
-
 	void SendFilename(const char * _ecv_array dir, const char * _ecv_array name)
 	{
-		if (GetFirmwareFeatures() & quoteFilenames)
-		{
-			SendChar('"');
-		}
-		if (*dir != 0)
-		{
-			// We have a directory, so send it followed by '/' if necessary
-			char c;
-			while ((c = *dir) != 0)
-			{
-				SendChar(c);
-				++dir;
-			}
-			if (c != '/')
-			{
-				SendChar('/');
-			}
-
-		}
-		SendString(name);
-		if (GetFirmwareFeatures() & quoteFilenames)
-		{
-			SendChar('"');
-		}
-	}
-
-	void SendInt(int i)
-	decrease(i < 0; i)
-	{
-		if (i < 0)
-		{
-			SendChar('-');
-			i = -i;
-		}
-		if (i >= 10)
-		{
-			SendInt(i/10);
-			i %= 10;
-		}
-		SendChar((char)((char)i + '0'));
+		const char* quote = (GetFirmwareFeatures() & quoteFilenames) ? "\"" : "";
+		Sendf("%s%s%s%s%s",
+				quote,
+				dir,
+				((dir[strlen(dir)-1] != '/') ? "/" : ""),
+				name,
+				quote);
 	}
 
 	// Receive data processing
@@ -205,11 +157,11 @@ namespace SerialIo
 	static volatile size_t nextIn = 0;
 	static size_t nextOut = 0;
 	static bool inError = false;
-	
+
 	// Enumeration to represent the json parsing state.
 	// We don't allow nested objects or nested arrays, so we don't need a state stack.
 	// An additional variable elementCount is 0 if we are not in an array, else the number of elements we have found (including the current one)
-	enum JsonState 
+	enum JsonState
 	{
 		jsBegin,			// initial state, expecting '{'
 		jsExpectId,			// just had '{' so expecting a quoted ID
@@ -225,7 +177,7 @@ namespace SerialIo
 		jsCharsVal,			// receiving an alphanumeric value such as true, false, null
 		jsError				// something went wrong
 	};
-	
+
 	JsonState state = jsBegin;
 
 	// fieldId is the name of the field being received. A '^' character indicates the position of an _ecv_array index, and a ':' character indicates a field separator.
@@ -233,7 +185,7 @@ namespace SerialIo
 	String<300> fieldVal;	// long enough for about 6 lines of message
 	size_t arrayIndices[MaxArrayNesting];
 	size_t arrayDepth = 0;
-	
+
 	static void RemoveLastId()
 	{
 #if DEBUG
@@ -284,7 +236,7 @@ namespace SerialIo
 		ProcessReceivedValue(fieldId.GetRef(), fieldVal.c_str(), arrayIndices);
 		fieldVal.Clear();
 	}
-	
+
 	static void EndArray()
 	{
 #if DEBUG
@@ -297,7 +249,7 @@ namespace SerialIo
 			RemoveLastIdChar();
 		}
 	}
-	
+
 	// Look for combining characters in the string value and convert them if possible
 	static void ConvertUnicode()
 	{
@@ -552,7 +504,7 @@ namespace SerialIo
 						break;
 					}
 					break;
-						
+
 				case jsId:				// expecting an identifier, or in the middle of one
 					switch (c)
 					{
@@ -580,7 +532,7 @@ namespace SerialIo
 						break;
 					}
 					break;
-	
+
 				case jsHadId:			// had a quoted identifier, expecting ':'
 					switch(c)
 					{
@@ -671,7 +623,7 @@ namespace SerialIo
 						}
 					}
 					break;
-					
+
 				case jsStringVal:		// just had '"' and expecting a string value
 					switch (c)
 					{
@@ -744,7 +696,7 @@ namespace SerialIo
 						}
 #endif
 					break;
-					
+
 				case jsIntVal:			// receiving an integer value
 					if (CheckValueCompleted(c, true))
 					{
@@ -819,7 +771,7 @@ namespace SerialIo
 			}
 		}
 	}
-	
+
 	// Called by the ISR to store a received character.
 	// If the buffer is full, we wait for the next end-of-line.
 	void receiveChar(char c)
@@ -842,7 +794,7 @@ namespace SerialIo
 			}
 		}
 	}
-	
+
 	// Called by the ISR to signify an error. We wait for the next end of line.
 	void receiveError()
 	{
@@ -871,9 +823,9 @@ extern "C" {
 		{
 			UARTn->UART_CR |= UART_CR_RSTSTA;
 			SerialIo::receiveError();
-		}	
+		}
 	}
-	
+
 };
 
 // End

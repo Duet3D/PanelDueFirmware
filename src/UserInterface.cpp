@@ -1990,10 +1990,10 @@ namespace UI
 	static void DoEmergencyStop()
 	{
 		// We send M112 for the benefit of old firmware, and F0 0F (an invalid UTF8 sequence) for new firmware
-		SerialIo::SendString("M112 ;" "\xF0" "\x0F" "\n");
+		SerialIo::Sendf("M112 ;" "\xF0" "\x0F" "\n");
 		TouchBeep();											// needed when we are called from ProcessTouchOutsidePopup
 		Delay(1000);
-		SerialIo::SendString("M999\n");
+		SerialIo::Sendf("M999\n");
 		Delay(1000);
 		Reconnect();
 	}
@@ -2264,7 +2264,7 @@ namespace UI
 					}
 					if (heaterStatus[slot] == HeaterStatus::active)			// if bed is active
 					{
-						SerialIo::SendString("M144\n");
+						SerialIo::Sendf("M144\n");
 					}
 					else
 					{
@@ -2299,7 +2299,7 @@ namespace UI
 					{
 						if (head == currentTool)		// if head is active
 						{
-							SerialIo::SendString("T-1\n");
+							SerialIo::Sendf("T-1\n");
 						}
 						else
 						{
@@ -2324,7 +2324,7 @@ namespace UI
 						{
 							// It's a regular file
 							currentFile = fileName;
-							SerialIo::SendString(((GetFirmwareFeatures() & noM20M36) == 0) ? "M36 " : "M408 S36 P");			// ask for the file info
+							SerialIo::Sendf(((GetFirmwareFeatures() & noM20M36) == 0) ? "M36 " : "M408 S36 P");			// ask for the file info
 							SerialIo::SendFilename(CondStripDrive(FileManager::GetFilesDir()), currentFile);
 							SerialIo::SendChar('\n');
 							FileSelected(currentFile);
@@ -2359,7 +2359,7 @@ namespace UI
 						}
 						else
 						{
-							SerialIo::SendString("M98 P");
+							SerialIo::Sendf("M98 P");
 							const char * _ecv_array const dir = (ev == evMacroControlPage) ? FileManager::GetMacrosRootDir() : FileManager::GetMacrosDir();
 							SerialIo::SendFilename(CondStripDrive(dir), fileName);
 							SerialIo::SendChar('\n');
@@ -2378,7 +2378,7 @@ namespace UI
 				mgr.ClearPopup();			// clear the file list popup
 				if (currentFile != nullptr)
 				{
-					SerialIo::SendString((ev == evSimulateFile) ? "M37 P" : "M32 ");
+					SerialIo::Sendf((ev == evSimulateFile) ? "M37 P" : "M32 ");
 					SerialIo::SendFilename(CondStripDrive(StripPrefix(FileManager::GetFilesDir())), currentFile);
 					SerialIo::SendChar('\n');
 					PrintingFilenameChanged(currentFile);
@@ -2392,8 +2392,7 @@ namespace UI
 			case evResimulate:
 				if (lastJobFileNameAvailable)
 				{
-					SerialIo::SendString((ev == evResimulate) ? "M37 P" : "M32 ");
-					SerialIo::SendString("{job.lastFileName}\n");
+					SerialIo::Sendf("%s {job.lastFileName}\n", (ev == evResimulate) ? "M37 P" : "M32 ");
 					CurrentButtonReleased();
 					PrintStarted();
 				}
@@ -2416,8 +2415,7 @@ namespace UI
 			case evPausePrint:
 			case evResumePrint:
 			case evReset:
-				SerialIo::SendString(bp.GetSParam());
-				SerialIo::SendChar('\n');
+				SerialIo::Sendf("%s\n", bp.GetSParam());
 				break;
 
 			case evHomeAxis:
@@ -2601,7 +2599,7 @@ namespace UI
 					if (currentFile != nullptr)
 					{
 						mgr.ClearPopup();						// clear the file info popup
-						SerialIo::SendString("M30 ");
+						SerialIo::Sendf("M30 ");
 						SerialIo::SendFilename(CondStripDrive(StripPrefix(FileManager::GetFilesDir())), currentFile);
 						SerialIo::SendChar('\n');
 						FileManager::RefreshFilesList();
@@ -2682,8 +2680,7 @@ namespace UI
 			case evSendKeyboardCommand:
 				if (userCommandBuffers[currentUserCommandBuffer].strlen() != 0)
 				{
-					SerialIo::SendString(userCommandBuffers[currentUserCommandBuffer].c_str());
-					SerialIo::SendChar('\n');
+					SerialIo::Sendf("%s\n", userCommandBuffers[currentUserCommandBuffer].c_str());
 
 					// Add the command to the history if it was different frmo the previous command
 					size_t prevBuffer = (currentUserCommandBuffer + numUserCommandBuffers - 1) % numUserCommandBuffers;
@@ -2698,8 +2695,7 @@ namespace UI
 				break;
 
 			case evCloseAlert:
-				SerialIo::SendString(bp.GetSParam());
-				SerialIo::SendChar('\n');
+				SerialIo::Sendf("%s\n", bp.GetSParam());
 				ClearAlertOrResponse();
 				break;
 

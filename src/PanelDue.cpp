@@ -1147,7 +1147,7 @@ void Reconnect()
 	initialized = false;
 	SetStatus(nullptr);
 	// Send first round of data fetching again
-	SerialIo::SendString("M409 F\"d99f\"\n");
+	SerialIo::Sendf("M409 F\"d99f\"\n");
 	// And set the last poll time to now
 	lastPollTime = SystemTick::GetTickCount();
 }
@@ -2478,7 +2478,7 @@ int main(void)
 	mgr.Refresh(true);								// draw the screen for the first time
 	UI::UpdatePrintingFields();
 
-	SerialIo::SendString("M409 F\"d99f\"\n");		// Get initial status
+	SerialIo::Sendf("M409 F\"d99f\"\n");		// Get initial status
 	lastPollTime = SystemTick::GetTickCount();
 
 	// Hide all tools and heater related columns initially
@@ -2620,14 +2620,14 @@ int main(void)
 					// Otherwise just send a normal poll command
 					if (!done)
 					{
-						SerialIo::SendString("M409 F\"d99f\"\n");
+						SerialIo::Sendf("M409 F\"d99f\"\n");
 					}
 				}
 				lastPollTime = SystemTick::GetTickCount();
 			}
             else if (now - lastPollTime >= printerPollTimeout)      // last response was most likely incomplete start over
             {
-                SerialIo::SendString("M409 F\"d99f\"\n");
+                SerialIo::Sendf("M409 F\"d99f\"\n");
                 lastPollTime = SystemTick::GetTickCount();
             }
 		}
