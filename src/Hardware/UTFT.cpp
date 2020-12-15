@@ -1880,31 +1880,6 @@ int UTFT::printf(const char* fmt, ...) noexcept
 	return ret;
 }
 
-int UTFT::printf(size_t maxLength, const char* fmt, ...) noexcept
-{
-	va_list vargs;
-	va_start(vargs, fmt);
-	size_t count = 0;
-	int ret = vuprintf([&count, this, maxLength](char c) -> bool
-						{
-							if (c == '\n' || count >= maxLength)
-							{
-								return false;
-							}
-							if (c != 0)
-							{
-								write(c);
-								++count;
-							}
-							return true;
-						},
-						fmt,
-						vargs
-					  );
-	va_end(vargs);
-	return ret;
-}
-
 void UTFT::clearToMargin()
 {
 	if (textXpos < textRightMargin)

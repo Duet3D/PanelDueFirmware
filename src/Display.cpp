@@ -96,7 +96,7 @@ void DisplayField::SetPosition(PixelNumber x, PixelNumber y)
 /*static*/ PixelNumber DisplayField::GetTextWidth(const char* _ecv_array s, PixelNumber maxWidth, size_t maxChars)
 {
 	lcd.setTextPos(0, 9999, maxWidth);
-	lcd.printf(maxChars, s);				// dummy print to get text width
+	lcd.printf("%.*s", maxChars, s);				// dummy print to get text width
 	return lcd.getTextX();
 }
 
@@ -620,7 +620,7 @@ void FloatField::PrintText() const
 	{
 		lcd.printf(label);
 	}
-	lcd.printf(format, val);
+	lcd.printf("%.*f", numDecimals, val);
 	if (units != nullptr)
 	{
 		lcd.printf(units);
@@ -909,7 +909,7 @@ size_t IntegerButton::PrintText(size_t offset) const
 size_t FloatButton::PrintText(size_t offset) const
 {
 	UNUSED(offset);
-	size_t ret = lcd.printf(format, val);
+	size_t ret = lcd.printf("%.*f", numDecimals, val);
 	if (units != nullptr)
 	{
 		ret += lcd.printf(units);

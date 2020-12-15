@@ -270,7 +270,7 @@ class FloatField : public FieldWithText
 	const char* _ecv_array null label;
 	const char* _ecv_array null units;
 	float val;
-	char _ecv_array format[5];
+	uint8_t numDecimals;
 
 protected:
 	void PrintText() const override;
@@ -278,12 +278,8 @@ protected:
 public:
 	FloatField(PixelNumber py, PixelNumber px, PixelNumber pw, TextAlignment pa, uint8_t pd,
 			const char * _ecv_array pl = nullptr, const char * _ecv_array null pu = nullptr, bool withBorder = false)
-		: FieldWithText(py, px, pw, pa, withBorder), label(pl), units(pu), val(0.0), format("%.2f")
+		: FieldWithText(py, px, pw, pa, withBorder), label(pl), units(pu), val(0.0), numDecimals(pd)
 	{
-		if (pd != 2)
-		{
-			format[2] = pd + '0';
-		}
 	}
 
 	float GetValue() const noexcept { return val; }
@@ -666,18 +662,14 @@ class FloatButton : public ButtonWithText
 {
 	const char * _ecv_array null units;
 	float val;
-	char _ecv_array format[5];
+	uint8_t numDecimals;
 
 protected:
 	size_t PrintText(size_t offset) const override;
 
 public:
 	FloatButton(PixelNumber py, PixelNumber px, PixelNumber pw, uint8_t pd, const char * _ecv_array pt = nullptr)
-		: ButtonWithText(py, px, pw), units(pt), val(0.0), format("%.2f") {
-		if (pd != 2)
-		{
-			format[2] = pd + '0';
-		}
+		: ButtonWithText(py, px, pw), units(pt), val(0.0), numDecimals(pd) {
 	}
 
 	float GetValue() const { return val; }

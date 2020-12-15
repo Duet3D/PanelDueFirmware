@@ -134,7 +134,6 @@ public:
 	void setTextPos(uint16_t x, uint16_t y, uint16_t rm = 9999);
 	void clearToMargin();
 	int printf(const char* fmt, ...) noexcept;
-	int printf(size_t maxLength, const char* fmt, ...) noexcept;
 
 	void setFont(const uint8_t* font);
 	void drawBitmap16(int x, int y, int sx, int sy, const uint16_t *data, int scale = 1, bool byCols = true);

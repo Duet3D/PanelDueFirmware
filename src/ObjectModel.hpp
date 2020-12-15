@@ -20,7 +20,12 @@
 
 #include "ToolStatus.hpp"
 #include "UserInterfaceConstants.hpp"
+#include <General/FreelistManager.h>
 #include "General/Vector.hpp"
+
+#ifndef UNUSED
+# define UNUSED(_x)	(void)(_x)
+#endif
 
 namespace OM {
 	enum Workplaces
@@ -39,43 +44,91 @@ namespace OM {
 
 	struct Axis
 	{
-		uint8_t index = 0;
-		float babystep = 0.0f;
-		char letter[2] = {'\0', '\0'};
-		float workplaceOffsets[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+		void* operator new(size_t sz) noexcept { UNUSED(sz); return FreelistManager::Allocate<Axis>(); }
+		void operator delete(void* p) noexcept { FreelistManager::Release<Axis>(p); }
+
+		uint8_t index;
+		float babystep;
+		char letter[2];
+		float workplaceOffsets[9];
 		uint8_t homed : 1,
 			visible : 1,
 			slot : 6;
-		Axis* next = nullptr;
+
+		void Reset()
+		{
+			index = 0;
+			babystep = 0.0f;
+			letter[0] = 0;
+			letter[1] = 0;
+			for (size_t i = 0; i < MaxTotalWorkplaces; ++i)
+			{
+				workplaceOffsets[i] = 0.0f;
+			}
+			homed = false;
+			visible = false;
+			slot = MaxSlots;
+		}
 	};
 
 	struct Spindle
 	{
+		void* operator new(size_t sz) noexcept { UNUSED(sz); return FreelistManager::Allocate<Spindle>(); }
+		void operator delete(void* p) noexcept { FreelistManager::Release<Spindle>(p); }
+
 		// Index within configured spindles
-		uint8_t index = 0;
-		uint16_t active = 0;
-		uint16_t max = 0;
-		int8_t tool = -1;
-		Spindle* next = nullptr;
+		uint8_t index;
+		uint16_t active;
+		uint16_t max;
+		int8_t tool;
+
+		void Reset()
+		{
+			index = 0;
+			active = 0;
+			max = 0;
+			tool = -1;
+		}
 	};
 
 	struct Tool
 	{
+		void* operator new(size_t sz) noexcept { UNUSED(sz); return FreelistManager::Allocate<Tool>(); }
+		void operator delete(void* p) noexcept { FreelistManager::Release<Tool>(p); }
+
 		// tool number
-		uint8_t index = 0;
-		int8_t heater = -1;				// only look at the first heater as we only display one
-		int16_t activeTemp = 0;
-		int16_t standbyTemp = 0;
-		int8_t extruder = -1;			// only look at the first extruder as we only display one
-		Spindle* spindle = nullptr;		// only look at the first spindle as we only display one
+		uint8_t index;
+		int8_t heater;				// only look at the first heater as we only display one
+		int16_t activeTemp;
+		int16_t standbyTemp;
+		int8_t extruder;			// only look at the first extruder as we only display one
+		Spindle* spindle;		// only look at the first spindle as we only display one
 		float offsets[MaxTotalAxes];
-		ToolStatus status = ToolStatus::off;
-		uint8_t slot = MaxSlots;
-		Tool* next = nullptr;
+		ToolStatus status;
+		uint8_t slot;
+
+		void Reset()
+		{
+			index = 0;
+			heater = -1;				// only look at the first heater as we only display one
+			activeTemp = 0;
+			standbyTemp = 0;
+			extruder = -1;			// only look at the first extruder as we only display one
+			spindle = nullptr;		// only look at the first spindle as we only display one
+			for (size_t i = 0; i < MaxTotalAxes; ++i)
+			{
+				offsets[i] = 0.0f;
+			}
+			status = ToolStatus::off;
+			slot = MaxSlots;
+		}
 	};
 
 	struct BedOrChamber
 	{
+		void* operator new(size_t sz) noexcept { UNUSED(sz); return FreelistManager::Allocate<BedOrChamber>(); }
+		void operator delete(void* p) noexcept { FreelistManager::Release<BedOrChamber>(p); }
+
 		// Index within configured heaters
 		uint8_t index = 0;
 		// Id of heater
@@ -83,9 +136,12 @@ namespace OM {
 		// Slot for display on panel
 		uint8_t slot = MaxSlots;
 
-		BedOrChamber* next = nullptr;
-
-		void Reset() { index = 0; heater = -1; slot = MaxSlots; }
+		void Reset()
+		{
+			index = 0;
+			heater = -1;
+			slot = MaxSlots;
+		}
 	};
 
 	typedef BedOrChamber Bed;

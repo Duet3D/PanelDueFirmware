@@ -7,164 +7,109 @@
 
 #include "ObjectModel.hpp"
 
-template<typename T>
-T* GetOrCreate(T*& start, size_t index, bool create)
+typedef Vector<OM::Axis*, MaxTotalAxes> AxisList;
+typedef Vector<OM::Spindle*, MaxSlots> SpindleList;
+typedef Vector<OM::Tool*, MaxSlots> ToolList;
+typedef Vector<OM::Bed*, MaxSlots> BedList;
+typedef Vector<OM::Chamber*, MaxSlots> ChamberList;
+
+static AxisList axes;
+static SpindleList spindles;
+static ToolList tools;
+static BedList beds;
+static ChamberList chambers;
+
+template<typename L, typename T>
+T* GetOrCreate(L& list, size_t index, bool create)
 {
-	T* ret = start;
-	for (; ret != nullptr; ret = ret->next)
+	const size_t count = list.Size();
+	for (size_t i = 0; i < count; ++i)
 	{
-		if (ret->index == index)
+		if (list[i]->index == index)
 		{
-			break;
+			return list[i];
 		}
 	}
 
-	// Not found, create new
-	if (ret == nullptr && create)
+	if (create)
 	{
-		ret = new T;
-		ret->index = index;
-		if (start == nullptr || start->index > index)
-		{
-			ret->next = start;
-			start = ret;
-		}
-		else
-		{
-			// Insert it at the correct spot
-			auto current = start;
-			while (current->next != nullptr && current->next->index < index)
-			{
-				current = current->next;
-			}
-			ret->next = current->next;
-			current->next = ret;
-		}
+		T* elem = new T;
+		elem->Reset();
+		elem->index = index;
+		list.Add(elem);
+		list.Sort([] (T* e1, T* e2) { return e1->index > e2->index; });
+		return elem;
 	}
-	return ret;
+
+	return nullptr;
 }
 
-template<typename T>
-size_t GetElementCount(T*& start)
+template<typename L, typename T>
+T* Find(L& list, std::function<bool(T*)> filter)
 {
-	size_t count = 0;
-	for (auto elem = start; elem != nullptr; elem = elem->next)
+	const size_t count = list.Size();
+	for (size_t i = 0; i < count; ++i)
 	{
-		++count;
-	}
-	return count;
-}
-
-template<typename T>
-T* Find(T*& start, std::function<bool(T*)> filter)
-{
-	for (auto elem = start; elem != nullptr; elem = elem->next)
-	{
-		if (filter(elem))
+		if (filter(list[i]))
 		{
-			return elem;
+			return list[i];
 		}
 	}
 	return nullptr;
 }
 
-template<typename T>
-void Iterate(T*& start, std::function<void(T*)> func, const size_t startAt)
+template<typename L, typename T>
+void Iterate(L& list, std::function<void(T*)> func, const size_t startAt)
 {
-	size_t counter = 0;
-	for (auto elem = start; elem != nullptr; elem = elem->next)
+	const size_t count = list.Size();
+	for (size_t i = 0; i < count; ++i)
 	{
-		if (counter >= startAt)
+		if (list[i]->index >= startAt)
 		{
-			func(elem);
+			func(list[i]);
 		}
-		++counter;
 	}
 }
 
-template<typename T>
-bool IterateWhile(T*& start, std::function<bool(T*)> func, const size_t startAt)
+template<typename L, typename T>
+bool IterateWhile(L& list, std::function<bool(T*)> func, const size_t startAt)
 {
-	size_t counter = 0;
-	for (auto elem = start; elem != nullptr; elem = elem->next)
+	const size_t count = list.Size();
+	for (size_t i = 0; i < count; ++i)
 	{
-		if (counter >= startAt)
+		if (list[i]->index >= startAt)
 		{
-			if(!func(elem))
+			if(!func(list[i]))
 			{
 				return false;
 			}
 		}
-		++counter;
 	}
 	return true;
 }
 
-template<typename T>
-size_t Remove(T*& start, size_t index, bool allFollowing)
+template<typename L, typename T>
+size_t Remove(L& list, size_t index, bool allFollowing)
 {
 	size_t removed = 0;
 	// Nothing to do on an empty list
-	if (start == nullptr)
+	if (list.IsEmpty())
 	{
 		return removed;
 	}
 
-	if (!allFollowing)	// We are looking for an exact match
+	const size_t count = list.Size();
+	for (size_t i = count - 1; i > 0; --i)
 	{
-		if (start->index == index)
+		T* elem = list[i];
+		if (elem->index == index || (allFollowing && elem->index > index))
 		{
-			auto toDelete = start;
-			start = start->next;
-			delete toDelete;
+			delete elem;
+			list.Erase(i);
 			++removed;
-		}
-		else
-		{
-			T* toDelete = start;
-			T* prev;
-			do
+			if (!allFollowing)
 			{
-				prev = toDelete;
-				toDelete = toDelete->next;
-			} while (toDelete != nullptr && toDelete->index != index);
-
-			if (toDelete != nullptr)
-			{
-				prev->next = toDelete->next;
-				delete toDelete;
-				++removed;
-			}
-		}
-	}
-	else	// we want to delete eveything with elem->index >= index
-	{
-		// We need to delete the full list
-		if (start->index >= index)
-		{
-			while (start != nullptr)
-			{
-				auto toDelete = start;
-				start = start->next;
-				delete toDelete;
-				++removed;
-			}
-		}
-		else
-		{
-			for (auto s = start; s != nullptr; s = s->next)
-			{
-				if (s->next == nullptr || s->next->index < index)
-				{
-					continue;
-				}
-				// If we get here then s->next->index >= index
-				for (auto toDelete = s->next; toDelete != nullptr; toDelete = s->next)
-				{
-					s->next = toDelete->next;
-					delete toDelete;
-					++removed;
-				}
+				break;
 			}
 		}
 	}
@@ -173,11 +118,6 @@ size_t Remove(T*& start, size_t index, bool allFollowing)
 
 namespace OM
 {
-	static Axis* axes;
-	static Spindle* spindles;
-	static Tool* tools;
-	static Bed* beds;
-	static Chamber* chambers;
 
 	Axis* FindAxis(std::function<bool(Axis*)> filter)
 	{
@@ -190,7 +130,7 @@ namespace OM
 		{
 			return nullptr;
 		}
-		return GetOrCreate(axes, index, false);
+		return GetOrCreate<AxisList, Axis>(axes, index, false);
 	}
 
 	Axis* GetAxisInSlot(const size_t slot)
@@ -199,7 +139,7 @@ namespace OM
 		{
 			return nullptr;
 		}
-		return Find<Axis>(axes, [slot](auto axis) { return axis->slot == slot; });
+		return Find<AxisList, Axis>(axes, [slot](Axis* axis) { return axis->slot == slot; });
 	}
 
 	Axis* GetOrCreateAxis(const size_t index)
@@ -208,7 +148,7 @@ namespace OM
 		{
 			return nullptr;
 		}
-		return GetOrCreate(axes, index, true);
+		return GetOrCreate<AxisList, Axis>(axes, index, true);
 	}
 
 	void IterateAxes(std::function<void(Axis*)> func, const size_t startAt)
@@ -223,12 +163,12 @@ namespace OM
 
 	Spindle* GetSpindle(const size_t index)
 	{
-		return GetOrCreate(spindles, index, false);
+		return GetOrCreate<SpindleList, Spindle>(spindles, index, false);
 	}
 
 	Spindle* GetOrCreateSpindle(const size_t index)
 	{
-		return GetOrCreate(spindles, index, true);
+		return GetOrCreate<SpindleList, Spindle>(spindles, index, true);
 	}
 
 	void IterateSpindles(std::function<void(Spindle*)> func, const size_t startAt)
@@ -243,12 +183,12 @@ namespace OM
 
 	Tool* GetTool(const size_t index)
 	{
-		return GetOrCreate(tools, index, false);
+		return GetOrCreate<ToolList, Tool>(tools, index, false);
 	}
 
 	Tool* GetOrCreateTool(const size_t index)
 	{
-		return GetOrCreate(tools, index, true);
+		return GetOrCreate<ToolList, Tool>(tools, index, true);
 	}
 
 	void IterateTools(std::function<void(Tool*)> func, const size_t startAt)
@@ -263,42 +203,42 @@ namespace OM
 
 	Spindle* GetSpindleForTool(const size_t toolNumber)
 	{
-		return Find<Spindle>(spindles, [toolNumber](auto spindle) { return spindle->tool == (int)toolNumber; });
+		return Find<SpindleList, Spindle>(spindles, [toolNumber](Spindle* spindle) { return spindle->tool == (int)toolNumber; });
 	}
 
 	Tool* GetToolForExtruder(const size_t extruder)
 	{
-		return Find<Tool>(tools, [extruder](auto tool) { return tool->extruder == (int)extruder; });
+		return Find<ToolList, Tool>(tools, [extruder](Tool* tool) { return tool->extruder == (int)extruder; });
 	}
 
 	Tool* GetToolForHeater(const size_t heater)
 	{
-		return Find<Tool>(tools, [heater](auto tool) { return tool->heater == (int)heater; });
+		return Find<ToolList, Tool>(tools, [heater](Tool* tool) { return tool->heater == (int)heater; });
 	}
 
 	Bed* GetBed(const size_t index)
 	{
-		return GetOrCreate(beds, index, false);
+		return GetOrCreate<BedList, Bed>(beds, index, false);
 	}
 
 	Bed* GetOrCreateBed(const size_t index)
 	{
-		return GetOrCreate(beds, index, true);
+		return GetOrCreate<BedList, Bed>(beds, index, true);
 	}
 
 	Bed* GetFirstBed()
 	{
-		return Find<Bed>(beds, [](auto bed) { return bed->heater > -1; });
+		return Find<BedList, Bed>(beds, [](Bed* bed) { return bed->heater > -1; });
 	}
 
 	Bed* GetBedForHeater(const size_t heater)
 	{
-		return Find<Bed>(beds, [heater](auto bed) { return bed->heater == (int)heater; });
+		return Find<BedList, Bed>(beds, [heater](Bed* bed) { return bed->heater == (int)heater; });
 	}
 
 	size_t GetBedCount()
 	{
-		return GetElementCount(beds);
+		return beds.Size();
 	}
 
 	void IterateBeds(std::function<void(Bed*)> func, const size_t startAt)
@@ -308,27 +248,27 @@ namespace OM
 
 	Chamber* GetChamber(const size_t index)
 	{
-		return GetOrCreate(chambers, index, false);
+		return GetOrCreate<ChamberList, Chamber>(chambers, index, false);
 	}
 
 	Chamber* GetOrCreateChamber(const size_t index)
 	{
-		return GetOrCreate(chambers, index, true);
+		return GetOrCreate<ChamberList, Chamber>(chambers, index, true);
 	}
 
 	Chamber* GetFirstChamber()
 	{
-		return Find<Chamber>(chambers, [](auto chamber) { return chamber->heater > -1; });
+		return Find<ChamberList, Chamber>(chambers, [](Chamber* chamber) { return chamber->heater > -1; });
 	}
 
 	Chamber* GetChamberForHeater(const size_t heater)
 	{
-		return Find<Chamber>(chambers, [heater](auto chamber) { return chamber->heater == (int)heater; });
+		return Find<ChamberList, Chamber>(chambers, [heater](Chamber* chamber) { return chamber->heater == (int)heater; });
 	}
 
 	size_t GetChamberCount()
 	{
-		return GetElementCount(chambers);
+		return chambers.Size();
 	}
 
 	void IterateChambers(std::function<void(Chamber*)> func, const size_t startAt)
@@ -346,7 +286,7 @@ namespace OM
 		if (addBeds)
 		{
 			IterateBeds(
-				[&](auto bed) {
+				[&heaterSlots, heaterIndex](Bed* bed) {
 					if (bed->slot < MaxSlots && bed->heater == (int)heaterIndex)
 					{
 						heaterSlots.Add(bed->slot);
@@ -356,7 +296,7 @@ namespace OM
 		if (addChambers)
 		{
 			IterateChambers(
-				[&](auto chamber) {
+				[&heaterSlots, heaterIndex](Chamber* chamber) {
 					if (chamber->slot < MaxSlots && chamber->heater == (int)heaterIndex)
 					{
 						heaterSlots.Add(chamber->slot);
@@ -366,7 +306,7 @@ namespace OM
 		if (addTools)
 		{
 			IterateTools(
-				[&](auto tool) {
+				[&heaterSlots, heaterIndex](Tool* tool) {
 					if (tool->slot < MaxSlots && tool->heater == (int)heaterIndex)
 					{
 						heaterSlots.Add(tool->slot);
@@ -378,27 +318,27 @@ namespace OM
 
 	size_t RemoveAxis(const size_t index, const bool allFollowing)
 	{
-		return Remove(axes, index, allFollowing);
+		return Remove<AxisList, Axis>(axes, index, allFollowing);
 	}
 
 	size_t RemoveSpindle(const size_t index, const bool allFollowing)
 	{
-		return Remove(spindles, index, allFollowing);
+		return Remove<SpindleList, Spindle>(spindles, index, allFollowing);
 	}
 
 	size_t RemoveTool(const size_t index, const bool allFollowing)
 	{
-		return Remove(tools, index, allFollowing);
+		return Remove<ToolList, Tool>(tools, index, allFollowing);
 	}
 
 	size_t RemoveBed(const size_t index, const bool allFollowing)
 	{
-		return Remove(beds, index, allFollowing);
+		return Remove<BedList, Bed>(beds, index, allFollowing);
 	}
 
 	size_t RemoveChamber(const size_t index, const bool allFollowing)
 	{
-		return Remove(chambers, index, allFollowing);
+		return Remove<ChamberList, Chamber>(chambers, index, allFollowing);
 	}
 }
 
