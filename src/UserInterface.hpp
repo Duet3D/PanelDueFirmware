@@ -63,7 +63,7 @@ namespace UI
 	extern void UpdateFileLayerHeight(float f);
 	extern void UpdateFileSize(int size);
 	extern void UpdateFileFilament(int len);
-	extern void UpdateFanPercent(int rpm);
+	extern void UpdateFanPercent(size_t fanIndex, int rpm);
 	extern void UpdateActiveTemperature(size_t index, int ival);
 	extern void UpdateToolTemp(size_t toolIndex, int32_t temp, bool active);
 	extern void UpdateStandbyTemperature(size_t index, int ival);
@@ -93,6 +93,7 @@ namespace UI
 	extern void SetCurrentTool(int32_t tool);
 	extern void UpdateToolStatus(size_t index, ToolStatus status);
 	extern void SetToolExtruder(size_t toolIndex, int8_t extruder);
+	extern void SetToolFan(size_t toolIndex, int8_t fan);
 	extern void SetToolHeater(size_t toolIndex, int8_t heater);
 	extern void SetToolOffset(size_t toolIndex, size_t axisIndex, float offset);
 

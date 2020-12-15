@@ -104,6 +104,7 @@ namespace OM {
 		int16_t standbyTemp;
 		int8_t extruder;			// only look at the first extruder as we only display one
 		Spindle* spindle;		// only look at the first spindle as we only display one
+		int8_t fan;
 		float offsets[MaxTotalAxes];
 		ToolStatus status;
 		uint8_t slot;
@@ -116,6 +117,7 @@ namespace OM {
 			standbyTemp = 0;
 			extruder = -1;			// only look at the first extruder as we only display one
 			spindle = nullptr;		// only look at the first spindle as we only display one
+			fan = -1;
 			for (size_t i = 0; i < MaxTotalAxes; ++i)
 			{
 				offsets[i] = 0.0f;
@@ -169,6 +171,7 @@ namespace OM {
 	Tool* GetTool(const size_t index);
 	Tool* GetOrCreateTool(const size_t index);
 	Tool* GetToolForExtruder(const size_t extruder);
+	Tool* GetToolForFan(const size_t fan);
 	Tool* GetToolForHeater(const size_t heater);
 	void IterateTools(stdext::inplace_function<void(Tool*)> func, const size_t startAt = 0);
 	bool IterateToolsWhile(stdext::inplace_function<bool(Tool*)> func, const size_t startAt = 0);

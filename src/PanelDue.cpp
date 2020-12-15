@@ -414,6 +414,7 @@ enum ReceivedDataEvent
 	// Keys from tools response
 	rcvToolsActive,
 	rcvToolsExtruders,
+	rcvToolsFans,
 	rcvToolsHeaters,
 	rcvToolsOffsets,
 	rcvToolsNumber,
@@ -517,6 +518,7 @@ static FieldTableEntry fieldTable[] =
 	// M409 K"tools" response
 	{ rcvToolsActive, 					"tools^:active^" },
 	{ rcvToolsExtruders,				"tools^:extruders^" },
+	{ rcvToolsFans,						"tools^:fans^" },
 	{ rcvToolsHeaters,					"tools^:heaters^" },
 	{ rcvToolsNumber, 					"tools^:number" },
 	{ rcvToolsOffsets, 					"tools^:offsets^" },
@@ -1567,13 +1569,12 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	// Fans section
 	case rcvFansActualValue:
 		ShowLine;
-		if (indices[0] == 0)			// currently we only handle one fan
 		{
 			float f;
 			bool b = GetFloat(data, f);
 			if (b && f >= 0.0 && f <= 1.0)
 			{
-				UI::UpdateFanPercent((int)((f * 100.0f) + 0.5f));
+				UI::UpdateFanPercent(indices[0], (int)((f * 100.0f) + 0.5f));
 			}
 		}
 		break;
@@ -2052,6 +2053,21 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 			if (GetInteger(data, extruder))
 			{
 				UI::SetToolExtruder(indices[0], extruder);
+			}
+		}
+		break;
+
+	case rcvToolsFans:
+		ShowLine;
+		{
+			if (indices[1] > 0)
+			{
+				return;
+			}
+			int32_t fan;
+			if (GetInteger(data, fan))
+			{
+				UI::SetToolFan(indices[0], fan);
 			}
 		}
 		break;

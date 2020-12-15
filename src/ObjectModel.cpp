@@ -211,6 +211,11 @@ namespace OM
 		return Find<ToolList, Tool>(tools, [extruder](Tool* tool) { return tool->extruder == (int)extruder; });
 	}
 
+	Tool* GetToolForFan(const size_t fan)
+	{
+		return Find<ToolList, Tool>(tools, [fan](Tool* tool) { return tool->fan == (int)fan; });
+	}
+
 	Tool* GetToolForHeater(const size_t heater)
 	{
 		return Find<ToolList, Tool>(tools, [heater](Tool* tool) { return tool->heater == (int)heater; });
