@@ -2394,7 +2394,7 @@ namespace UI
 			case evResimulate:
 				if (lastJobFileNameAvailable)
 				{
-					SerialIo::Sendf("%s {job.lastFileName}\n", (ev == evResimulate) ? "M37 P" : "M32 ");
+					SerialIo::Sendf("%s{job.lastFileName}\n", (ev == evResimulate) ? "M37 P" : "M32 ");
 					CurrentButtonReleased();
 					PrintStarted();
 				}
