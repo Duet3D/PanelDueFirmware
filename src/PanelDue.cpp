@@ -1703,7 +1703,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	case rcvJobLastFileName:
 		ShowLine;
-		UI::LastJobFileNameAvailable(data != 0);
+		UI::LastJobFileNameAvailable(true);	// If we get here there is a filename
 		break;
 
 	case rcvJobLastFileSimulated:
@@ -2019,6 +2019,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 					seqs.Reset();
 					Reconnect();
 					UI::ResetBedsAndChambers();
+					UI::LastJobFileNameAvailable(false);
 				}
 				remoteUpTime = uival;
 			}
