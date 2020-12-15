@@ -45,7 +45,7 @@ T* GetOrCreate(L& list, size_t index, bool create)
 }
 
 template<typename L, typename T>
-T* Find(L& list, std::function<bool(T*)> filter)
+T* Find(L& list, stdext::inplace_function<bool(T*)> filter)
 {
 	const size_t count = list.Size();
 	for (size_t i = 0; i < count; ++i)
@@ -59,7 +59,7 @@ T* Find(L& list, std::function<bool(T*)> filter)
 }
 
 template<typename L, typename T>
-void Iterate(L& list, std::function<void(T*)> func, const size_t startAt)
+void Iterate(L& list, stdext::inplace_function<void(T*)> func, const size_t startAt)
 {
 	const size_t count = list.Size();
 	for (size_t i = 0; i < count; ++i)
@@ -72,7 +72,7 @@ void Iterate(L& list, std::function<void(T*)> func, const size_t startAt)
 }
 
 template<typename L, typename T>
-bool IterateWhile(L& list, std::function<bool(T*)> func, const size_t startAt)
+bool IterateWhile(L& list, stdext::inplace_function<bool(T*)> func, const size_t startAt)
 {
 	const size_t count = list.Size();
 	for (size_t i = 0; i < count; ++i)
@@ -119,7 +119,7 @@ size_t Remove(L& list, size_t index, bool allFollowing)
 namespace OM
 {
 
-	Axis* FindAxis(std::function<bool(Axis*)> filter)
+	Axis* FindAxis(stdext::inplace_function<bool(Axis*)> filter)
 	{
 		return Find(axes, filter);
 	}
@@ -151,12 +151,12 @@ namespace OM
 		return GetOrCreate<AxisList, Axis>(axes, index, true);
 	}
 
-	void IterateAxes(std::function<void(Axis*)> func, const size_t startAt)
+	void IterateAxes(stdext::inplace_function<void(Axis*)> func, const size_t startAt)
 	{
 		Iterate(axes, func, startAt);
 	}
 
-	bool IterateAxesWhile(std::function<bool(Axis*)> func, const size_t startAt)
+	bool IterateAxesWhile(stdext::inplace_function<bool(Axis*)> func, const size_t startAt)
 	{
 		return IterateWhile(axes, func, startAt);
 	}
@@ -171,12 +171,12 @@ namespace OM
 		return GetOrCreate<SpindleList, Spindle>(spindles, index, true);
 	}
 
-	void IterateSpindles(std::function<void(Spindle*)> func, const size_t startAt)
+	void IterateSpindles(stdext::inplace_function<void(Spindle*)> func, const size_t startAt)
 	{
 		Iterate(spindles, func, startAt);
 	}
 
-	bool IterateSpindlesWhile(std::function<bool(Spindle*)> func, const size_t startAt)
+	bool IterateSpindlesWhile(stdext::inplace_function<bool(Spindle*)> func, const size_t startAt)
 	{
 		return IterateWhile(spindles, func, startAt);
 	}
@@ -191,12 +191,12 @@ namespace OM
 		return GetOrCreate<ToolList, Tool>(tools, index, true);
 	}
 
-	void IterateTools(std::function<void(Tool*)> func, const size_t startAt)
+	void IterateTools(stdext::inplace_function<void(Tool*)> func, const size_t startAt)
 	{
 		Iterate(tools, func, startAt);
 	}
 
-	bool IterateToolsWhile(std::function<bool(Tool*)> func, const size_t startAt)
+	bool IterateToolsWhile(stdext::inplace_function<bool(Tool*)> func, const size_t startAt)
 	{
 		return IterateWhile(tools, func, startAt);
 	}
@@ -241,7 +241,7 @@ namespace OM
 		return beds.Size();
 	}
 
-	void IterateBeds(std::function<void(Bed*)> func, const size_t startAt)
+	void IterateBeds(stdext::inplace_function<void(Bed*)> func, const size_t startAt)
 	{
 		Iterate(beds, func, startAt);
 	}
@@ -271,7 +271,7 @@ namespace OM
 		return chambers.Size();
 	}
 
-	void IterateChambers(std::function<void(Chamber*)> func, const size_t startAt)
+	void IterateChambers(stdext::inplace_function<void(Chamber*)> func, const size_t startAt)
 	{
 		Iterate(chambers, func, startAt);
 	}

@@ -10,18 +10,19 @@
 
 #include <cstdint>
 
-#undef array
-#undef vsnprintf
-#undef snprintf
-#include <functional>
-// Also reinstate the safeguards against using the wrong *snprintf versions
-#define vsnprintf(b, m, f, a) static_assert(false, "Do not use vsnprintf, use SafeVsnprintf instead")
-#define snprintf(b, m, f, ...) static_assert(false, "Do not use snprintf, use SafeSnprintf instead")
+//#undef array
+//#undef vsnprintf
+//#undef snprintf
+//#include <functional>
+//// Also reinstate the safeguards against using the wrong *snprintf versions
+//#define vsnprintf(b, m, f, a) static_assert(false, "Do not use vsnprintf, use SafeVsnprintf instead")
+//#define snprintf(b, m, f, ...) static_assert(false, "Do not use snprintf, use SafeSnprintf instead")
 
 #include "ToolStatus.hpp"
 #include "UserInterfaceConstants.hpp"
 #include <General/FreelistManager.h>
-#include "General/Vector.hpp"
+#include <General/Vector.hpp>
+#include <General/inplace_function.h>
 
 #ifndef UNUSED
 # define UNUSED(_x)	(void)(_x)
@@ -152,39 +153,39 @@ namespace OM {
 
 	typedef Vector<uint8_t, MaxSlots> HeaterSlots;
 
-	Axis* FindAxis(std::function<bool(Axis*)> filter);
+	Axis* FindAxis(stdext::inplace_function<bool(Axis*)> filter);
 	Axis* GetAxis(const size_t index);
 	Axis* GetAxisInSlot(const size_t slot);
 	Axis* GetOrCreateAxis(const size_t index);
-	void IterateAxes(std::function<void(Axis*)> func, const size_t startAt = 0);
-	bool IterateAxesWhile(std::function<bool(Axis*)> func, const size_t startAt = 0);
+	void IterateAxes(stdext::inplace_function<void(Axis*)> func, const size_t startAt = 0);
+	bool IterateAxesWhile(stdext::inplace_function<bool(Axis*)> func, const size_t startAt = 0);
 
 	Spindle* GetSpindle(const size_t index);
 	Spindle* GetOrCreateSpindle(const size_t index);
 	Spindle* GetSpindleForTool(const size_t toolNumber);
-	void IterateSpindles(std::function<void(Spindle*)> func, const size_t startAt = 0);
-	bool IterateSpindlesWhile(std::function<bool(Spindle*)> func, const size_t startAt = 0);
+	void IterateSpindles(stdext::inplace_function<void(Spindle*)> func, const size_t startAt = 0);
+	bool IterateSpindlesWhile(stdext::inplace_function<bool(Spindle*)> func, const size_t startAt = 0);
 
 	Tool* GetTool(const size_t index);
 	Tool* GetOrCreateTool(const size_t index);
 	Tool* GetToolForExtruder(const size_t extruder);
 	Tool* GetToolForHeater(const size_t heater);
-	void IterateTools(std::function<void(Tool*)> func, const size_t startAt = 0);
-	bool IterateToolsWhile(std::function<bool(Tool*)> func, const size_t startAt = 0);
+	void IterateTools(stdext::inplace_function<void(Tool*)> func, const size_t startAt = 0);
+	bool IterateToolsWhile(stdext::inplace_function<bool(Tool*)> func, const size_t startAt = 0);
 
 	Bed* GetBed(const size_t index);
 	Bed* GetOrCreateBed(const size_t index);
 	Bed* GetFirstBed();
 	Bed* GetBedForHeater(const size_t heater);
 	size_t GetBedCount();
-	void IterateBeds(std::function<void(Bed*)> func, const size_t startAt = 0);
+	void IterateBeds(stdext::inplace_function<void(Bed*)> func, const size_t startAt = 0);
 
 	Chamber* GetChamber(const size_t index);
 	Chamber* GetOrCreateChamber(const size_t index);
 	Chamber* GetFirstChamber();
 	Chamber* GetChamberForHeater(const size_t heater);
 	size_t GetChamberCount();
-	void IterateChambers(std::function<void(Chamber*)> func, const size_t startAt = 0);
+	void IterateChambers(stdext::inplace_function<void(Chamber*)> func, const size_t startAt = 0);
 
 	void GetHeaterSlots(
 			const size_t heaterIndex,
