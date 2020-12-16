@@ -17,6 +17,8 @@
 ## Bug fixes:
 * Fix memory leaks
 * Show fan value of current tool instead of hard-coded fan with number 0
+* Fix reprint/resimulate button not sending the correct command (3.2.6+1)
+* Fix reprint/resimulate button not hiding when mainboard restarts (3.2.6+1)
 
 
 # Version 3.2.5
