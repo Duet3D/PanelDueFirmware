@@ -2324,53 +2324,74 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 {
 	if (indices[0] == 0 && strcmp(id, "files^") == 0)
 	{
+		ShowLine;
 		FileManager::BeginReceivingFiles();				// received an empty file list - need to tell the file manager about it
 	}
 	else if (currentResponseType == rcvOMKeyHeat)
 	{
 		if (strcasecmp(id, "heat:bedHeaters^") == 0)
 		{
+			ShowLine;
 			OM::RemoveBed(lastBed + 1, true);
-			UI::AllToolsSeen();
+			if (initialized)
+			{
+				UI::AllToolsSeen();
+			}
 		}
 		else if (strcasecmp(id, "heat:chamberHeaters^") == 0)
 		{
+			ShowLine;
 			OM::RemoveChamber(lastChamber + 1, true);
-			UI::AllToolsSeen();
+			if (initialized)
+			{
+				UI::AllToolsSeen();
+			}
 		}
 	}
 	else if (currentResponseType == rcvOMKeyMove && strcasecmp(id, "move:axes^") == 0)
 	{
+		ShowLine;
 		OM::RemoveAxis(indices[0], true);
-		numAxes = constrain<unsigned int>(visibleAxesCounted, MIN_AXES, MaxTotalAxes);
+		numAxes = constrain<unsigned int>(visibleAxesCounted, MIN_AXES, MaxDisplayableAxes);
 		UI::UpdateGeometry(numAxes, isDelta);
 	}
 	else if (currentResponseType == rcvOMKeySpindles)
 	{
 		if (strcasecmp(id, "spindles^") == 0)
 		{
+			ShowLine;
 			OM::RemoveSpindle(lastSpindle + 1, true);
-			UI::AllToolsSeen();
+			if (initialized)
+			{
+				UI::AllToolsSeen();
+			}
 		}
 	}
 	else if (currentResponseType == rcvOMKeyTools)
 	{
 		if (strcasecmp(id, "tools^") == 0)
 		{
+			ShowLine;
 			OM::RemoveTool(lastTool + 1, true);
-			UI::AllToolsSeen();
+			if (initialized)
+			{
+				UI::AllToolsSeen();
+			}
 		}
 		else if (strcasecmp(id, "tools^:extruders^") == 0 && indices[1] == 0)
 		{
+			ShowLine;
 			UI::SetToolExtruder(indices[0], -1);			// No extruder defined for this tool
 		}
 		else if (strcasecmp(id, "tools^:heaters^") == 0 && indices[1] == 0)
 		{
+			ShowLine;
 			UI::SetToolHeater(indices[0], -1);				// No heater defined for this tool
 		}
 	}
 	else if (currentResponseType == rcvOMKeyVolumes && strcasecmp(id, "volumes^") == 0)
 	{
+		ShowLine;
 		FileManager::SetNumVolumes(mountedVolumesCounted);
 	}
 }
@@ -2629,7 +2650,11 @@ int main(void)
 				}
 				else {
 					// Once we get here the first time we will have work all seqs once
-					initialized = true;
+					if (!initialized)
+					{
+						UI::AllToolsSeen();
+						initialized = true;
+					}
 
 					// First check for specific info we need to fetch
 					bool done = FileManager::ProcessTimers();

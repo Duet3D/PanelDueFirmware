@@ -19,8 +19,9 @@ static ToolList tools;
 static BedList beds;
 static ChamberList chambers;
 
+
 template<typename L, typename T>
-T* GetOrCreate(L& list, size_t index, bool create)
+T* GetOrCreate(L& list, const size_t index, const bool create)
 {
 	const size_t count = list.Size();
 	for (size_t i = 0; i < count; ++i)
@@ -36,7 +37,10 @@ T* GetOrCreate(L& list, size_t index, bool create)
 		T* elem = new T;
 		elem->Reset();
 		elem->index = index;
-		list.Add(elem);
+		if (!list.Add(elem))
+		{
+			return nullptr;
+		}
 		list.Sort([] (T* e1, T* e2) { return e1->index > e2->index; });
 		return elem;
 	}
@@ -89,23 +93,25 @@ bool IterateWhile(L& list, stdext::inplace_function<bool(T*)> func, const size_t
 }
 
 template<typename L, typename T>
-size_t Remove(L& list, size_t index, bool allFollowing)
+size_t Remove(L& list, const size_t index, const bool allFollowing)
 {
-	size_t removed = 0;
-	// Nothing to do on an empty list
-	if (list.IsEmpty())
+	// Nothing to do on an empty list or
+	// if the last element is already smaller than what we look for
+	if (list.IsEmpty() || list[list.Size()-1]->index < index)
 	{
-		return removed;
+		return 0;
 	}
 
+	size_t removed = 0;
 	const size_t count = list.Size();
-	for (size_t i = count - 1; i > 0; --i)
+	for (size_t i = count; i != 0;)
 	{
+		--i;
 		T* elem = list[i];
 		if (elem->index == index || (allFollowing && elem->index > index))
 		{
-			delete elem;
 			list.Erase(i);
+			delete elem;
 			++removed;
 			if (!allFollowing)
 			{

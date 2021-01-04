@@ -1721,7 +1721,11 @@ namespace UI
 	// Update the homed status of the specified axis. If the axis is -1 then it represents the "all homed" status.
 	void UpdateHomedStatus(size_t axisIndex, bool isHomed)
 	{
-		auto axis = OM::GetOrCreateAxis(axisIndex);
+		OM::Axis *axis = OM::GetOrCreateAxis(axisIndex);
+		if (axis == nullptr)
+		{
+			return;
+		}
 		axis->homed = isHomed;
 		const size_t slot = axis->slot;
 		if (slot < MaxDisplayableAxes)
@@ -1758,7 +1762,11 @@ namespace UI
 
 	void UpdateToolTemp(size_t toolIndex, int32_t temp, bool active)
 	{
-		auto tool = OM::GetOrCreateTool(toolIndex);
+		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+		if (tool == nullptr)
+		{
+			return;
+		}
 		if (active)
 		{
 			tool->activeTemp = temp;
@@ -2850,7 +2858,8 @@ namespace UI
 	// Return true if this should be called again for the next button.
 	bool UpdateMacroShortList(unsigned int buttonIndex, const char * _ecv_array null fileName)
 	{
-		if (buttonIndex >= ARRAY_SIZE(controlPageMacroButtons) || controlPageMacroButtons[buttonIndex] == nullptr || numToolColsUsed == 0 || numToolColsUsed >= MaxSlots - 2)
+		const bool tooFewSpace = numToolColsUsed >= (MaxSlots - (DISPLAY_X == 480 ? 1 : 2));
+		if (buttonIndex >= ARRAY_SIZE(controlPageMacroButtons) || controlPageMacroButtons[buttonIndex] == nullptr || numToolColsUsed == 0 || tooFewSpace)
 		{
 			return false;
 		}
@@ -2935,16 +2944,18 @@ namespace UI
 			standbyTemps[slot]->SetEvent(isBed ? evAdjustBedStandbyTemp : evAdjustChamberStandbyTemp, bedOrChamber->heater);
 			++slot;
 		}
-		return slot;
+		return count;
 	}
 
 	void AllToolsSeen()
 	{
 		size_t slot = 0;
+		size_t bedCount = 0;
+		size_t chamberCount = 0;
 		auto firstBed = OM::GetFirstBed();
 		if (firstBed != nullptr)
 		{
-			AddBedOrChamber(firstBed, slot);
+			bedCount = AddBedOrChamber(firstBed, slot);
 		}
 		OM::IterateTools([&slot](OM::Tool* tool)
 		{
@@ -2976,8 +2987,21 @@ namespace UI
 		auto firstChamber = OM::GetFirstChamber();
 		if (firstChamber != nullptr)
 		{
-			AddBedOrChamber(firstChamber, slot, false);
+			chamberCount = AddBedOrChamber(firstChamber, slot, false);
 		}
+
+		// Fill remaining space with additional beds
+		if (slot < MaxSlots && bedCount > 1)
+		{
+			OM::IterateBeds([&slot](OM::Bed* bed) { AddBedOrChamber(bed, slot); }, 1);
+		}
+
+		// Fill remaining space with additional chambers
+		if (slot < MaxSlots && chamberCount > 1)
+		{
+			OM::IterateChambers([&slot](OM::Chamber* chamber) { AddBedOrChamber(chamber, slot, false); }, 1);
+		}
+
 		numToolColsUsed = slot;
 		for (size_t i = slot; i < MaxSlots; ++i)
 		{
@@ -2994,6 +3018,10 @@ namespace UI
 	void SetSpindleActive(size_t index, uint16_t active)
 	{
 		auto spindle = OM::GetOrCreateSpindle(index);
+		if (spindle == nullptr)
+		{
+			return;
+		}
 		spindle->active = active;
 		if (spindle->tool > -1)
 		{
@@ -3008,6 +3036,10 @@ namespace UI
 	void SetSpindleCurrent(size_t index, uint16_t current)
 	{
 		auto spindle = OM::GetOrCreateSpindle(index);
+		if (spindle == nullptr)
+		{
+			return;
+		}
 		if (spindle->tool > -1)
 		{
 			auto tool = OM::GetTool(spindle->tool);
@@ -3020,12 +3052,19 @@ namespace UI
 
 	void SetSpindleMax(size_t index, uint16_t max)
 	{
-		OM::GetOrCreateSpindle(index)->max = max;
+		OM::Spindle *spindle = OM::GetOrCreateSpindle(index);		if (spindle != nullptr)
+		{
+			spindle->max = max;
+		}
 	}
 
 	void UpdateToolStatus(size_t toolIndex, ToolStatus status)
 	{
 		auto tool = OM::GetTool(toolIndex);
+		if (tool == nullptr)
+		{
+			return;
+		}
 		tool->status = status;
 		if (tool->slot < MaxSlots)
 		{
@@ -3038,30 +3077,49 @@ namespace UI
 
 	void SetToolExtruder(size_t toolIndex, int8_t extruder)
 	{
-		OM::GetOrCreateTool(toolIndex)->extruder = extruder;
+		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);		if (tool != nullptr)
+		{
+			tool->extruder = extruder;
+		}
 	}
 
 	void SetToolFan(size_t toolIndex, int8_t fan)
 	{
-		OM::GetOrCreateTool(toolIndex)->fan = fan;
+		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+		if (tool != nullptr)
+		{
+			tool->fan = fan;
+		}
 	}
 
 	void SetToolHeater(size_t toolIndex, int8_t heater)
 	{
-		OM::GetOrCreateTool(toolIndex)->heater = heater;
+		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+		if (tool != nullptr)
+		{
+			tool->heater = heater;
+		}
 	}
 
 	void SetToolOffset(size_t toolIndex, size_t axisIndex, float offset)
 	{
 		if (axisIndex < MaxTotalAxes)
 		{
-			OM::GetOrCreateTool(toolIndex)->offsets[axisIndex] = offset;
+			OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+			if (tool != nullptr)
+			{
+				tool->offsets[axisIndex] = offset;
+			}
 		}
 	}
 
 	void SetSpindleTool(int8_t spindle, int8_t toolIndex)
 	{
 		auto sp = OM::GetOrCreateSpindle(spindle);
+		if (sp == nullptr)
+		{
+			return;
+		}
 		sp->tool = toolIndex;
 		if (toolIndex == -1)
 		{
@@ -3074,7 +3132,11 @@ namespace UI
 		}
 		else
 		{
-			OM::GetOrCreateTool(toolIndex)->spindle = sp;
+			OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+			if (tool != nullptr)
+			{
+				tool->spindle = sp;
+			}
 		}
 	}
 
@@ -3082,7 +3144,11 @@ namespace UI
 	{
 		if (index < MaxTotalAxes)
 		{
-			auto axis = OM::GetOrCreateAxis(index);
+			OM::Axis *axis = OM::GetOrCreateAxis(index);
+			if (axis == nullptr)
+			{
+				return;
+			}
 			axis->babystep = f;
 			// In first initialization we will see babystep before letter
 			// so this won;t be true hence it is also set in UpdateGeometry
@@ -3097,7 +3163,10 @@ namespace UI
 	{
 		if (index < MaxTotalAxes)
 		{
-			OM::GetOrCreateAxis(index)->letter[0] = l;
+			OM::Axis *axis = OM::GetOrCreateAxis(index);			if (axis != nullptr)
+			{
+				axis->letter[0] = l;
+			}
 		}
 	}
 
@@ -3105,7 +3174,11 @@ namespace UI
 	{
 		if (index < MaxTotalAxes)
 		{
-			OM::GetOrCreateAxis(index)->visible = v;
+			OM::Axis *axis = OM::GetOrCreateAxis(index);
+			if (axis != nullptr)
+			{
+				axis->visible = v;
+			}
 		}
 	}
 
@@ -3113,7 +3186,11 @@ namespace UI
 	{
 		if (axisIndex < MaxTotalAxes && workplaceIndex < OM::Workplaces::MaxTotalWorkplaces)
 		{
-			OM::GetOrCreateAxis(axisIndex)->workplaceOffsets[workplaceIndex] = offset;
+			OM::Axis *axis = OM::GetOrCreateAxis(axisIndex);
+			if (axis != nullptr)
+			{
+				axis->workplaceOffsets[workplaceIndex] = offset;
+			}
 		}
 	}
 
@@ -3122,12 +3199,18 @@ namespace UI
 		if (bed)
 		{
 			auto bed = OM::GetOrCreateBed(heaterIndex);
-			bed->heater = heaterNumber;
+			if (bed != nullptr)
+			{
+				bed->heater = heaterNumber;
+			}
 		}
 		else
 		{
 			auto chamber = OM::GetOrCreateChamber(heaterIndex);
-			chamber->heater = heaterNumber;
+			if (chamber != nullptr)
+			{
+				chamber->heater = heaterNumber;
+			}
 		}
 	}
 
