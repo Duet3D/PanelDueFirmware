@@ -6,7 +6,7 @@ If you are already setup to build the latest version of the firmware, then follo
 
 1. Download the code from this github project (preferably by using a git client to be able to keep it up to date) to a folder called C:/Eclipse/PanelDue.
 
-2. Open Eclipse and ask it to import the Paneldue Peoject into the same workspace as the RepRapFirmware.
+2. Open Eclipse and ask it to import the Paneldue Project into the same workspace as the RepRapFirmware.
 
 3. Right click RRFLibraries. Build Configurations -> Set Active -> SAM3S_4S.  
 
