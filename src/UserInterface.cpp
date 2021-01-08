@@ -1760,25 +1760,18 @@ namespace UI
 		}
 	}
 
-	void UpdateToolTemp(size_t toolIndex, int32_t temp, bool active)
+	void UpdateToolTemp(size_t toolIndex, size_t toolHeaterIndex, int32_t temp, bool active)
 	{
 		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
-		if (tool == nullptr)
+
+		// If we do not handle this tool or the heater is not displayed anyway back off
+		if (tool == nullptr || tool->slot + toolHeaterIndex >= MaxSlots)
 		{
 			return;
 		}
-		if (active)
-		{
-			tool->activeTemp = temp;
-		}
-		else
-		{
-			tool->standbyTemp = temp;
-		}
-		if (tool->slot < MaxSlots)
-		{
-			UpdateField((active ? activeTemps : standbyTemps)[tool->slot], temp);
-		}
+
+		tool->UpdateTemp(toolHeaterIndex, temp, active);
+		UpdateField((active ? activeTemps : standbyTemps)[tool->slot], temp);
 	}
 
 	void UpdateTemperature(size_t heaterIndex, int ival, IntegerButton** fields)
@@ -2152,7 +2145,8 @@ namespace UI
 				if (fieldBeingAdjusted.IsValid())
 				{
 					IntegerButton *ib = static_cast<IntegerButton*>(fieldBeingAdjusted.GetButton());
-					int newValue = ib->GetValue() + bp.GetIParam();
+					const int change = bp.GetIParam();
+					int newValue = ib->GetValue() + change;
 					switch(fieldBeingAdjusted.GetEvent())
 					{
 					case evAdjustToolActiveTemp:
@@ -2172,6 +2166,12 @@ namespace UI
 						{
 							auto spindle = OM::GetSpindle(fieldBeingAdjusted.GetIParam());
 							newValue = constrain<int>(newValue, -spindle->max, spindle->max);
+
+							// If a change will lead us below the min speed for spindle skip to the other side
+							if (newValue > -spindle->min && newValue < spindle->min)
+							{
+								newValue = (change < 0) ? -spindle->min : spindle->min;
+							}
 						}
 						break;
 
@@ -2947,6 +2947,29 @@ namespace UI
 		return count;
 	}
 
+	void ManageCurrentActiveStandbyFields(
+			size_t& slot,
+			const bool showCurrent = false,
+			const Event activeEvent = evNull,
+			const int activeEventValue = -1,
+			const int activeValue = 0,
+			const Event standbyEvent = evNull,
+			const int standbyEventValue = -1,
+			const int standbyValue = 0
+			)
+	{
+		mgr.Show(currentTemps[slot], showCurrent);
+		mgr.Show(activeTemps[slot], activeEvent != evNull);
+		mgr.Show(standbyTemps[slot], standbyEvent != evNull);
+
+		activeTemps[slot]->SetEvent(activeEvent, activeEventValue);
+		activeTemps[slot]->SetValue(activeValue);
+		standbyTemps[slot]->SetEvent(standbyEvent, standbyEventValue);
+		standbyTemps[slot]->SetValue(standbyValue);
+
+		++slot;
+	}
+
 	void AllToolsSeen()
 	{
 		size_t slot = 0;
@@ -2960,29 +2983,45 @@ namespace UI
 		OM::IterateTools([&slot](OM::Tool* tool)
 		{
 			tool->slot = slot;
-			const bool hasHeater = tool->heater > -1;
-			const bool hasSpindle = tool->spindle != nullptr;
-			const bool hasExtruder = tool->extruder > -1;
-			toolButtons[slot]->SetEvent(evSelectHead, tool->index);
-			toolButtons[slot]->SetIntVal(tool->index);
-			toolButtons[slot]->SetPrintText(true);
-			toolButtons[slot]->SetIcon(hasSpindle ? IconSpindle : IconNozzle);
-			mgr.Show(toolButtons[slot], true);
-			mgr.Show(currentTemps[slot], hasHeater || hasSpindle);
-			mgr.Show(activeTemps[slot], hasHeater || hasSpindle);
-			mgr.Show(standbyTemps[slot], hasHeater);
-			mgr.Show(extrusionFactors[slot], hasExtruder);
+			if (slot < MaxSlots)
+			{
+				const bool hasHeater = !tool->heaters.IsEmpty();
+				const bool hasSpindle = tool->spindle != nullptr;
+				const bool hasExtruder = tool->extruder > -1;
+				toolButtons[slot]->SetEvent(evSelectHead, tool->index);
+				toolButtons[slot]->SetIntVal(tool->index);
+				toolButtons[slot]->SetPrintText(true);
+				toolButtons[slot]->SetIcon(hasSpindle ? IconSpindle : IconNozzle);
+				mgr.Show(toolButtons[slot], true);
+				mgr.Show(extrusionFactors[slot], hasExtruder);
 
-			// Set tool number for change event
-			const event_t evForActive = hasHeater ? evAdjustToolActiveTemp : hasSpindle ? evAdjustActiveRPM : evNull;
-			const int evActiveParam = hasSpindle ? tool->spindle->index : tool->index;
+				extrusionFactors[slot]->SetEvent(extrusionFactors[slot]->GetEvent(), tool->extruder);
 
-			activeTemps[slot]->SetEvent(evForActive, evActiveParam);
-			activeTemps[slot]->SetValue(tool->activeTemp);
-			standbyTemps[slot]->SetEvent(evAdjustToolStandbyTemp, tool->index);
-			standbyTemps[slot]->SetValue(tool->standbyTemp);
-			extrusionFactors[slot]->SetEvent(extrusionFactors[slot]->GetEvent(), tool->extruder);
-			++slot;
+				// Spindle takes precedence
+				if (hasSpindle)
+				{
+					ManageCurrentActiveStandbyFields(slot, true, evAdjustActiveRPM, tool->spindle->index);
+				}
+				else if (hasHeater)
+				{
+					tool->IterateHeaters([&slot, &tool](OM::ToolHeater* toolHeater)
+					{
+						if (slot < MaxSlots)
+						{
+							ManageCurrentActiveStandbyFields(
+									slot,
+									true,
+									evAdjustToolActiveTemp, tool->index, toolHeater->activeTemp,
+									evAdjustToolStandbyTemp, tool->index, toolHeater->standbyTemp);
+						}
+					});
+				}
+				else
+				{
+					// Hides everything by default
+					ManageCurrentActiveStandbyFields(slot);
+				}
+			}
 		});
 		auto firstChamber = OM::GetFirstChamber();
 		if (firstChamber != nullptr)
@@ -3050,11 +3089,18 @@ namespace UI
 		}
 	}
 
-	void SetSpindleMax(size_t index, uint16_t max)
+	void SetSpindleLimit(size_t index, uint16_t value, bool max)
 	{
 		OM::Spindle *spindle = OM::GetOrCreateSpindle(index);		if (spindle != nullptr)
 		{
-			spindle->max = max;
+			if (max)
+			{
+				spindle->max = value;
+			}
+			else
+			{
+				spindle->min = value;
+			}
 		}
 	}
 
@@ -3092,12 +3138,36 @@ namespace UI
 		}
 	}
 
-	void SetToolHeater(size_t toolIndex, int8_t heater)
+	bool RemoveToolHeaters(const size_t toolIndex, const uint8_t firstIndexToDelete)
 	{
 		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
-		if (tool != nullptr)
+		if (tool == nullptr)
 		{
-			tool->heater = heater;
+			return false;
+		}
+		return tool->RemoveHeatersFrom(firstIndexToDelete) > 0;
+	}
+
+	void SetToolHeater(size_t toolIndex, uint8_t toolHeaterIndex, int8_t heaterIndex)
+	{
+		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+		if (tool == nullptr)
+		{
+			return;
+		}
+		OM::ToolHeater *toolHeater = tool->GetOrCreateHeater(toolHeaterIndex);
+		if (toolHeater == nullptr)
+		{
+			return;
+		}
+		const bool heaterOrderChanged = (int) toolHeater->index != heaterIndex;
+		toolHeater->index = heaterIndex;
+
+		// If the order of heaters changed we need to update the temperatures here
+		if (heaterOrderChanged)
+		{
+			UpdateToolTemp(toolIndex, toolHeater->index, toolHeater->activeTemp, true);
+			UpdateToolTemp(toolIndex, toolHeater->index, toolHeater->standbyTemp, false);
 		}
 	}
 

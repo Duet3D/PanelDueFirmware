@@ -397,6 +397,7 @@ enum ReceivedDataEvent
 	rcvSpindlesActive,
 	rcvSpindlesCurrent,
 	rcvSpindlesMax,
+	rcvSpindlesMin,
 	rcvSpindlesTool,
 
 	// Keys from state response
@@ -501,6 +502,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvSpindlesActive, 				"spindles^:active" },
 	{ rcvSpindlesCurrent,				"spindles^:current" },
 	{ rcvSpindlesMax, 					"spindles^:max" },
+	{ rcvSpindlesMin, 					"spindles^:min" },
 	{ rcvSpindlesTool, 					"spindles^:tool" },
 
 	// M409 K"state" response
@@ -1905,6 +1907,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvSpindlesMax:
+	case rcvSpindlesMin:
 		ShowLine;
 		// fans also has a field "result^:max"
 		if (currentResponseType != rcvOMKeySpindles)
@@ -1912,10 +1915,10 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 			break;
 		}
 		{
-			uint32_t max;
-			if (GetUnsignedInteger(data, max))
+			uint32_t speedLimit;
+			if (GetUnsignedInteger(data, speedLimit))
 			{
-				UI::SetSpindleMax(indices[0], max);
+				UI::SetSpindleLimit(indices[0], speedLimit, rde == rcvSpindlesMax);
 			}
 		}
 		break;
@@ -2031,14 +2034,14 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	case rcvToolsStandby:
 		ShowLine;
 		{
-			if (indices[1] > 0)
+			if (indices[1] >= MaxSlots)
 			{
-				return;
+				break;
 			}
 			int32_t temp;
 			if (GetInteger(data, temp))
 			{
-				UI::UpdateToolTemp(indices[0], temp, rde == rcvToolsActive);
+				UI::UpdateToolTemp(indices[0], indices[1], temp, rde == rcvToolsActive);
 			}
 		}
 		break;
@@ -2048,7 +2051,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		{
 			if (indices[1] > 0)
 			{
-				return;
+				break;
 			}
 			int32_t extruder;
 			if (GetInteger(data, extruder))
@@ -2063,7 +2066,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		{
 			if (indices[1] > 0)
 			{
-				return;
+				break;
 			}
 			int32_t fan;
 			if (GetInteger(data, fan))
@@ -2076,14 +2079,14 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	case rcvToolsHeaters:
 		ShowLine;
 		{
-			if (indices[1] > 0)
+			if (indices[1] >= MaxSlots)
 			{
-				return;
+				break;
 			}
-			int32_t heater;
-			if (GetInteger(data, heater))
+			int32_t heaterIndex;
+			if (GetInteger(data, heaterIndex))
 			{
-				UI::SetToolHeater(indices[0], heater);
+				UI::SetToolHeater(indices[0], indices[1], heaterIndex);
 			}
 		}
 		break;
@@ -2383,10 +2386,14 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 			ShowLine;
 			UI::SetToolExtruder(indices[0], -1);			// No extruder defined for this tool
 		}
-		else if (strcasecmp(id, "tools^:heaters^") == 0 && indices[1] == 0)
+		else if (strcasecmp(id, "tools^:heaters^") == 0)
 		{
 			ShowLine;
-			UI::SetToolHeater(indices[0], -1);				// No heater defined for this tool
+			// Remove all heaters no longer defined
+			if (UI::RemoveToolHeaters(indices[0], indices[1]) && initialized)
+			{
+				UI::AllToolsSeen();
+			}
 		}
 	}
 	else if (currentResponseType == rcvOMKeyVolumes && strcasecmp(id, "volumes^") == 0)

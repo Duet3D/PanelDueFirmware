@@ -20,8 +20,8 @@ const size_t NumColourSchemes = 3;
 
 #else
 
-static const char* _ecv_array const axisNames[] = { "X", "Y", "Z", "U", "V", "W", "A", "B", "C", "D", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l" };
-constexpr size_t MaxTotalAxes = ARRAY_SIZE(axisNames);
+static const char* _ecv_array const axisNames[] = { "X", "Y", "Z", "U", "V", "W" };
+constexpr size_t MaxTotalAxes = 15;		// This needs to be kept in sync with the maximum in RRF for any build configuration
 static const char* _ecv_array const babystepAmounts[] = { "0.01", "0.02", "0.05", "0.1" };
 static const float _ecv_array babystepAmountsF[] = { 0.01, 0.02, 0.05, 0.1 };
 

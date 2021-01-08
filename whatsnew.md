@@ -1,25 +1,25 @@
 # Version 3.2.7
 ## Upgrade Notes:
-- This release is compatible with RepRapFirmware 3.2-beta1 or later. It will partially work with RepRapFirmware 3.1.1 but not with any older version.
+- This release is compatible with RepRapFirmware 3.2 or later. It will partially work with RepRapFirmware 3.1.1 but not with any older version.
 
 # Limitations
 - Due to the lack of RAM this build will not run on version 1 or early version 2 PanelDue boards that use the `ATSAM3S2B` chip.
     - Version 1.0, 1.1 and earlier v2 PanelDue: `ATSAM3S2B` processor (64MHz, 32kb RAM, 128kB flash) - these are the ones that the new firmware probably won't run on.
     - Version 2 PanelDue manufactured from August 2016: `ATSAM3S4B` processor (64MHz, 48kb RAM, 256kb flash). Will run the new firmware, but not as fast as version 3 will.
     - Version 3 PanelDue, including all 5i and 7i: `ATSAM4S4B` processor, 120MHz, 64kB RAM, 256kb flash. Will run the new firmware.
-- There will be no reliable status updates coming from RepRapFirmware while waiting for heaters to reach temperature (and some other cases) before RRF 3.2-beta3.2.
-- Reprint/resimulate button on DSF setups will only work with DSF 3.2-RC1 or later
 
 ## Changed:
 * Fill left screen estate with addtional bed and chamber heaters
+* Support tools with multiple heaters
 * Reduced flickering while initialization
-* Reduced minimum number of axes to 2 to be in line with RRF
-* Added newly supported axes names (lower-case) to be in line with RRF
+* Bring minimum and maximum axes count in line with RRF
+* Respect spindle minimum RPM
 
 ## Bug fixes:
 * First bed/chamber/tool/axis could not be removed
 * On 4.3" macro shortcut buttons would not show up even if there was enough space left
-* If >7 tools or beds were defined this could lead to illegal memory accesses
+* If more tools or beds that can be displayed were defined this could lead to illegal memory access
+* Fix possible memory leaks in object model representation
 
 
 # Version 3.2.6

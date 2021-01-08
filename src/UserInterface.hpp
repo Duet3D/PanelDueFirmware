@@ -65,7 +65,7 @@ namespace UI
 	extern void UpdateFileFilament(int len);
 	extern void UpdateFanPercent(size_t fanIndex, int rpm);
 	extern void UpdateActiveTemperature(size_t index, int ival);
-	extern void UpdateToolTemp(size_t toolIndex, int32_t temp, bool active);
+	extern void UpdateToolTemp(size_t toolIndex, size_t toolHeaterIndex, int32_t temp, bool active);
 	extern void UpdateStandbyTemperature(size_t index, int ival);
 	extern void UpdateExtrusionFactor(size_t index, int ival);
 	extern void UpdatePrintTimeText(uint32_t seconds, bool isSimulated);
@@ -94,7 +94,8 @@ namespace UI
 	extern void UpdateToolStatus(size_t index, ToolStatus status);
 	extern void SetToolExtruder(size_t toolIndex, int8_t extruder);
 	extern void SetToolFan(size_t toolIndex, int8_t fan);
-	extern void SetToolHeater(size_t toolIndex, int8_t heater);
+	extern void SetToolHeater(size_t toolIndex, uint8_t toolHeaterIndex, int8_t heaterIndex);
+	extern bool RemoveToolHeaters(const size_t toolIndex, const uint8_t firstIndexToDelete);
 	extern void SetToolOffset(size_t toolIndex, size_t axisIndex, float offset);
 
 	extern void SetBedOrChamberHeater(const uint8_t heaterIndex, const int8_t heaterNumber, bool bed = true);
@@ -102,7 +103,7 @@ namespace UI
 
 	extern void SetSpindleActive(size_t index, uint16_t active);
 	extern void SetSpindleCurrent(size_t index, uint16_t current);
-	extern void SetSpindleMax(size_t index, uint16_t max);
+	extern void SetSpindleLimit(size_t index, uint16_t value, bool max);
 	extern void SetSpindleTool(int8_t spindle, int8_t toolIndex);
 }
 
