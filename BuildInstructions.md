@@ -1,22 +1,39 @@
-Instructions for building PanelDueFirmware under Windows (version 1.18 and later)
-=================================================================================
+# Instructions for building the Paneldue Firmware
 
-1. Download and install the gcc cross-compiler. To build firmware version 1.18 and later, you need version 2017-q2-update. You can download an installer for this version from https://developer.arm.com/open-source/gnu-toolchain/gnu-rm/downloads.
+## Building with RepRapFirmware
 
-2. Download and install Eclipse Oxygen for C/C++ Developers, from http://www.eclipse.org/downloads/eclipse-packages/.
+If you are already setup to build the latest version of the firmware, then follow these instructions to be able to build the firmware.
 
-3. In Eclipse create new workspace C:/Eclipse/PanelDue. Then exit Eclipse.
+1. Download the code from this github project (preferably by using a git client to be able to keep it up to date) to a folder called C:/Eclipse/PanelDue.
 
-4. Download this github project as a zip file and unzip it into C:/Eclipse/PanelDue. Then rename folder PanelDueFirmware-dev in that folder to PanelDue.
+2. Open Eclipse and ask it to import the Paneldue Project into the same workspace as the RepRapFirmware.
 
-5. Delete the bmp2c subfolder. The files in it are not part of the firmware.
+3. Right click RRFLibraries. Build Configurations -> Set Active -> SAM3S_4S.  
 
-6. Load Eclipse and tell it to import the PanelDue project.
+4. Right click PanelDueFirmware. Build Configurations -> Set Active -> Pick the correct line for the screen you are building for.  
 
-7. Edit the build variable GccPath to be the path where you installed the cross-compiler.
+5. Build the PanelDue project
 
-8. Ensure there is a copy of make.exe on your PATH. Of you don't have make, try changing the build settings to "Use internal builder".
+## Building Standalone
 
-9. Build the PanelDue project
+1. Download and install the latest version of the [Arm Gcc Cross Compiler](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads). Ensure that you select the option at the end to install to path.
 
-D Crocker, updated 2018-03-07.
+2. Download and install the latest [Eclipse IDE for C/C++](https://www.eclipse.org/downloads/packages/installer).
+
+3. Download the latest [windows build tools](https://github.com/xpack-dev-tools/windows-build-tools-xpack/releases/). Extract the contents to C:\windows-build-tools. Add this location to [path](https://docs.alfresco.com/4.2/tasks/fot-addpath.html).  
+
+4. Create the folder C:\Eclipse.  
+
+5. Download or git clone the master branch of this github project into C:\Eclipse.  
+
+6. Download or git clone the dev branch of [RRFLibraries](https://github.com/Duet3D/RRFLibraries) into C:\Eclipse.  
+
+7. Load Eclipse and set the workspace as C:\Eclipse.  
+
+8. File -> Open Projects from the File System. Set the import source as C:\Eclipse and finish.  
+
+9. Right click RRFLibraries. Build Configurations -> Set Active -> SAM3S_4S.  
+
+10. Right click PanelDueFirmware. Build Configurations -> Set Active -> Pick the correct line for the screen you are building for.  
+
+11. Build the PanelDue project
