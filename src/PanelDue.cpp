@@ -338,7 +338,7 @@ enum ReceivedDataEvent
 	rcvBoardsFirmwareName,
 
 	// Keys for fans response
-	rcvFansActualValue,
+	rcvFansRequestedValue,
 
 	// Keys for heat response
 	rcvHeatBedHeaters,
@@ -443,7 +443,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvBoardsFirmwareName, 			"boards^:firmwareName" },
 
 	// M409 K"fans" response
-	{ rcvFansActualValue,				"fans^:actualValue" },
+	{ rcvFansRequestedValue,			"fans^:requestedValue" },
 
 	// M409 K"heat" response
 	{ rcvHeatBedHeaters,				"heat:bedHeaters^" },
@@ -1569,7 +1569,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	// Fans section
-	case rcvFansActualValue:
+	case rcvFansRequestedValue:
 		ShowLine;
 		{
 			float f;
