@@ -3,7 +3,7 @@
  *
  * Created: 01/09/2016 13:13:29
  *  Author: David
- */ 
+ */
 
 #ifndef OEM_COLOURS
 
@@ -28,7 +28,7 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 		.standbyBackColour = lightYellow,
 		.tuningBackColour = lightGreen,
 		.errorTextColour = white,
-		.errorBackColour = magenta,
+		.errorBackColour = byzantine,
 
 		.popupBorderColour = black,
 		.popupBackColour = lightBlue,
@@ -45,9 +45,9 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 		.buttonPressedTextColour = black,
 		.buttonTextBackColour = white,
 		.buttonImageBackColour = white,
-		.buttonGradColour = UTFT::fromRGB(255-8-1, 255-4-1, 255-8),
+		.buttonGradColour = UTFT::fromRGB(255-8-8, 255-8-4, 255-8),
 		.buttonPressedBackColour = lightGreen,
-		.buttonPressedGradColour = UTFT::fromRGB(255-8-1, 255-8-1, 255-8),
+		.buttonPressedGradColour = UTFT::fromRGB(255-8-8, 255-8-4, 255-8),
 		.buttonBorderColour = black,
 		.homedButtonBackColour = lightBlue,
 		.notHomedButtonBackColour = lightOrange,
@@ -59,9 +59,9 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 		.progressBarBackColour = white,
 
 		.stopButtonTextColour = white,
-		.stopButtonBackColour = UTFT::fromRGB(255, 32, 32)			// need enough G and B to allow for the gradient
+		.stopButtonBackColour = UTFT::fromRGB(255, 24, 32)			// need enough G and B to allow for the gradient
 	},
-	
+
 	// Dark colour scheme #1
 
 	{
@@ -78,7 +78,7 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 		.standbyBackColour = yellow,
 		.tuningBackColour = darkGreen,
 		.errorTextColour = white,
-		.errorBackColour = magenta,
+		.errorBackColour = byzantine,
 
 		.popupBorderColour = white,
 		.popupBackColour = darkBlue,
@@ -95,11 +95,11 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 		.buttonPressedTextColour = white,
 		.buttonTextBackColour = black,
 		.buttonImageBackColour = grey,
-		.buttonGradColour = 0,	//UTFT::fromRGB(8, 4, 8),
+		.buttonGradColour = UTFT::fromRGB(8, 4, 8),
 		.buttonPressedBackColour = darkGreen,
-		.buttonPressedGradColour = 0,	//UTFT::fromRGB(8, 8, 8),
+		.buttonPressedGradColour = UTFT::fromRGB(8, 8, 8),
 		.buttonBorderColour = white,
-		.homedButtonBackColour = blue,
+		.homedButtonBackColour = UTFT::fromRGB(0,0,255-16), // blue needs to reduce to allow for gradient
 		.notHomedButtonBackColour = darkOrange,
 		.pauseButtonBackColour = darkOrange,
 		.resumeButtonBackColour = darkYellow,
@@ -109,7 +109,7 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 		.progressBarBackColour = black,
 
 		.stopButtonTextColour = white,
-		.stopButtonBackColour = red
+		.stopButtonBackColour = UTFT::fromRGB(255-16, 0, 0)			// need reduce R to allow for the gradient
 	},
 
 	// Dark colour scheme #2

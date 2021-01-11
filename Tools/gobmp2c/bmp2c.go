@@ -62,7 +62,7 @@ func main() {
 				y--
 				for x := b.Bounds().Min.X; x < b.Bounds().Max.X; x++ {
 					c := b.At(x, y)
-					oc := convertTo16BitColor(c.RGBA())
+					oc := to16BitColor(c.RGBA())
 					if repeatCount > 0 && (lastData != oc || repeatCount == 1<<16) {
 						writeBinary(buf, uint16(repeatCount-1))
 						writeBinary(buf, lastData)
@@ -119,7 +119,7 @@ func getPaletteIndex(r, g, b, a uint32) int {
 	// 0x0000, 0xffff, 0x20e4, 0xffdf, 0x18e3, 0xf79e, 0xc986, 0xd30c,
 	// 0xc103, 0xff52, 0xfffb, 0x4569, 0x9492, 0x0000, 0x0000, 0x0000
 
-	switch convertTo16BitColor(r, g, b, a) {
+	switch to16BitColor(r, g, b, a) {
 	case 0xffff: // e.g. 0xffffff
 		return 1
 	case 0x20e4: // e.g. 0x201c20
@@ -149,8 +149,15 @@ func getPaletteIndex(r, g, b, a uint32) int {
 	}
 }
 
-func convertTo16BitColor(r, g, b, a uint32) uint16 {
+func to16BitColor(r, g, b, a uint32) uint16 {
 	return uint16((r&0xF8)<<8) | uint16((g&0xFC)<<3) | uint16((b&0xF8)>>3)
+}
+
+func toRGB(color uint16) (r, g, b uint32) {
+	r = uint32((color >> 11) << 3)
+	g = uint32(((color >> 5) & 0x3F) << 2)
+	b = uint32((color & 0x1F) << 3)
+	return r, g, b
 }
 
 func writeBinary(w io.Writer, data interface{}) error {

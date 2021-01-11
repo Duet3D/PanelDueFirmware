@@ -3,7 +3,7 @@
  *
  * Created: 01/09/2016 13:13:05
  *  Author: David
- */ 
+ */
 
 #ifndef COLOURSCHEME_H_
 #define COLOURSCHEME_H_
@@ -33,7 +33,7 @@ const Colour
 	darkGreen = UTFT::fromRGB(0, 96, 0),
 	turquoise = UTFT::fromRGB(0,128,128),
 	blue = UTFT::fromRGB(0,0,255),
-	magenta = UTFT::fromRGB(128,0,128),
+	byzantine = UTFT::fromRGB(170,24,170),	// we need the 24 green to not wrap around with gradient
 	lightBlue = UTFT::fromRGB(224, 224, 255),
 	darkBlue = UTFT::fromRGB(0, 0, 64);
 
