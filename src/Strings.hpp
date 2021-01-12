@@ -1,10 +1,10 @@
 /*
-   Strings.hpp
-
-    Created on: 27 Feb 2017
-        Author: David
-
-   The encoding used for this file must be UTF-8 to ensure that accented characters are displayed correctly.
+ * Strings.hpp
+ *
+ * Created on: 27 Feb 2017
+ *       Author: David
+ *
+ * The encoding used for this file must be UTF-8 to ensure that accented characters are displayed correctly.
 */
 
 #ifndef SRC_STRINGS_HPP_
@@ -17,7 +17,7 @@
 #include "UserInterfaceConstants.hpp"
 
 #define CSTRING const char * const _ecv_array
-#define Newline      "\n"
+#define Newline       "\n"
 #define DegreeSymbol  "\u00B0"
 
 constexpr unsigned int NumLanguages = 6;
@@ -621,14 +621,14 @@ const StringTable LanguageTables[NumLanguages] =
 
     // Setup page
     "Гучність ",              // note space at end
-    "Калібрувати дотик",
-    "Відзеркалити дисплей",
-    "Перевернути дисплей",
+    "Калібрув. дотик",
+    "Відзеркалити дисп.",
+    "Перевернути диспл.",
     "Тема",
     "Яскравість -",
     "Яскравість +",
-    "Зберегти налаштування",
-    "Скинути налаштування",
+    "Зберегти налашт.",
+    "Скинути налашт.",
     "Зберегти & Перезавантажити",
     "Вичерпаний час очікування на інформацію ",          // note space at end
     "Заставка ",           // note space at end
