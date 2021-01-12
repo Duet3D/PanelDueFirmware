@@ -1,8 +1,8 @@
 /*
  * Strings.hpp
  *
- * Created on: 27 Feb 2017
- *       Author: David
+ *  Created on: 27 Feb 2017
+ *      Author: David
  *
  * The encoding used for this file must be UTF-8 to ensure that accented characters are displayed correctly.
 */
@@ -641,7 +641,7 @@ const StringTable LanguageTables[NumLanguages] =
     "Ви впевнені?",
     "Доторкніться до точки",
     "Рухати головку",
-    "К-сть екструзії (мм/с)",
+    "Кількість екструзії (мм/с)",
     "Швидкість (мм/с)",
     "Екструдувати",
     "Ретракт",
