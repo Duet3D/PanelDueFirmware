@@ -20,7 +20,7 @@
 #define Newline			"\n"
 #define DegreeSymbol	"\u00B0"
 
-constexpr unsigned int NumLanguages = 5;
+constexpr unsigned int NumLanguages = 5 + USE_CYRILLIC_CHARACTERS;
 constexpr unsigned int NumStatusStrings = 14;
 
 struct StringTable
@@ -699,7 +699,125 @@ const StringTable LanguageTables[NumLanguages] =
 			"Pohasnout při nečinnosti",
 			"Pohasnout vždy"
 		}
+	},
+
+#if USE_CYRILLIC_CHARACTERS
+	// Ukrainian
+	{
+		"uk",
+
+		// Main page strings
+		"Контроль",
+		"Друк",
+		"Консоль",
+		"Налаштування",
+		"Поточна" THIN_SPACE DEGREE_SYMBOL "C",
+		"Активна" THIN_SPACE DEGREE_SYMBOL "C",
+		"Очікувана" THIN_SPACE DEGREE_SYMBOL "C",
+		"Рух",
+		"Екструзія",
+		"Макро",
+		"СТОП",
+
+		// Print page
+		"Екструдер" THIN_SPACE "%",
+		"Швидкість ",             // note space at end
+		"Вентилятор ",               // note space at end
+		"Залишилось часу: ",
+		"файл ",              // note space at end
+		", філамент ",            // note space at end
+		", шар ",             // note space at end
+		"-",
+		"Пауза",
+		"Мікрокрок",
+		"Продовжиити",
+		"Відмінити",
+		"Друкувати знову",
+		"Симулювати знову",
+		"Встановити",
+
+		// Setup page
+		"Гучність ",              // note space at end
+		"Калібрув. дотик",
+		"Відзеркалити дисп.",
+		"Перевернути диспл.",
+		"Тема",
+		"Яскравість -",
+		"Яскравість +",
+		"Зберегти налашт.",
+		"Скинути налашт.",
+		"Зберегти & Перезавантажити",
+		"Вичерпаний час очікування на інформацію ",          // note space at end
+		"Заставка ",           // note space at end
+		"Мікрокрок ",            // note space at end
+		"Подача ",            // note space at end
+
+		// Misc
+		"Підтвердіть скинення до заводських налаштуванб",
+		"Підтвердіть видалення файлу",
+		"Ви впевнені?",
+		"Доторкніться до точки",
+		"Рухати головку",
+		"Кількість екструзії (мм/с)",
+		"Швидкість (мм/с)",
+		"Екструдувати",
+		"Ретракт",
+		"Мікрокрок",
+		"Поточне зміщення Z: ",
+		"Повідомлення",
+		"Повідомлення",
+		"Версія прошивки Panel Due ",  // note space at end
+		"Відповідь",
+
+		// File popup
+		"Файли на картці ",       // note the space on the end
+		"Макроси",
+		"Помилка ",           // note the space at the end
+		" доступу до SD-картки",     // note the space at the start
+		"Ім'я файлу: ",
+		"Розмір: ",
+		"Висота шару: ",
+		"Висота об'єктуt: ",
+		"Потрібен філамент: ",
+		"Автор слайсу: ",
+		"Востаннє змінено: ",
+		"Приблизний час друку: ",
+		"Симульований час друку: ",
+		"Симулювати",
+
+		// Printer status strings
+		{
+			"Підключення",
+			"Бездіяльність",
+			"Друкую",
+			"Зупинено",
+			"Запуск",
+			"Зупинений",
+			"Зайнятий",
+			"Зупиняю",
+			"Продовжую",
+			"Завантаження прошивки",
+			"Змінюю інструмент",
+			"Симулюю",
+			"Зачекайте",
+			"Ініціалізовую",
+		},
+
+		// Theme names
+		{
+			"Світла тема",
+			"Темна тема 1",
+			"Темна тема 2"
+		},
+
+		// Display dimming types
+		{
+			"Ніколи не тьмяніти",
+			"Тьмяніти за бездіяльності",
+			"Завжди тьмяніти"
+		}
 	}
+#endif
 };
 
 #endif /* SRC_STRINGS_HPP_ */

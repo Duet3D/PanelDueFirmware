@@ -110,7 +110,6 @@ static size_t currentUserCommandBuffer = 0, currentHistoryBuffer = 0;
 static unsigned int numToolColsUsed = 0;
 static unsigned int numHeaterAndToolColumns = 0;
 static int oldIntValue;
-HeaterStatus heaterStatus[MaxSlots];
 static Event eventToConfirm = evNull;
 static uint8_t numVisibleAxes = 0;						// initialise to 0 so we refresh the macros list when we receive the number of axes
 static uint8_t numDisplayedAxes = 0;
@@ -736,7 +735,16 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	static const char* _ecv_array const keysEN[8] = { "1234567890-+", "QWERTYUIOP[]", "ASDFGHJKL:@", "ZXCVBNM,./", "!\"#$%^&*()_=", "qwertyuiop{}", "asdfghjkl;'", "zxcvbnm<>?" };
 	static const char* _ecv_array const keysDE[8] = { "1234567890-+", "QWERTZUIOP[]", "ASDFGHJKL:@", "YXCVBNM,./", "!\"#$%^&*()_=", "qwertzuiop{}", "asdfghjkl;'", "yxcvbnm<>?" };
 	static const char* _ecv_array const keysFR[8] = { "1234567890-+", "AZERTWUIOP[]", "QSDFGHJKLM@", "YXCVBN.,:/", "!\"#$%^&*()_=", "azertwuiop{}", "qsdfghjklm'", "yxcvbn<>;?" };
-	static const char* _ecv_array const * const keyboards[] = { keysEN, keysDE, keysFR, keysEN, keysEN };		// Spain and Czech keyboard layout is same as English
+	static const char* _ecv_array const * const keyboards[] = {
+			keysEN,	// English
+			keysDE,	// German
+			keysFR,	// French
+			keysEN,	// Spanish
+			keysEN,	// Czech
+#if USE_CYRILLIC_CHARACTERS
+			keysEN	// Ukrainian
+#endif
+	};
 
 	static_assert(ARRAY_SIZE(keyboards) >= NumLanguages, "Wrong number of keyboard entries");
 
@@ -1300,32 +1308,34 @@ namespace UI
 		{
 			return;
 		}
+		const Colour foregroundColour =	(status == HeaterStatus::fault)
+					? colours->errorTextColour
+					: colours->infoTextColour;
+		const Colour backgroundColour =
+					  (status == HeaterStatus::standby) ? colours->standbyBackColour
+					: (status == HeaterStatus::active)  ? colours->activeBackColour
+					: (status == HeaterStatus::fault)   ? colours->errorBackColour
+					: (status == HeaterStatus::tuning)  ? colours->tuningBackColour
+					: colours->defaultBackColour;
 		const size_t count = heaterSlots.Size();
 		for (size_t i = 0; i < count; ++i)
 		{
-			heaterStatus[heaterSlots[i]] = status;
-			if (currentTemps[heaterSlots[i]] != nullptr)
-			{
-				Colour backgroundColour = (status == HeaterStatus::standby) ? colours->standbyBackColour
-							: (status == HeaterStatus::active) ? colours->activeBackColour
-							: (status == HeaterStatus::fault) ? colours->errorBackColour
-							: (status == HeaterStatus::tuning) ? colours->tuningBackColour
-							: colours->defaultBackColour;
-				const Colour foregroundColour =	(status == HeaterStatus::fault)
-							? colours->errorTextColour
-							: colours->infoTextColour;
-				currentTemps[heaterSlots[i]]->SetColours(foregroundColour, backgroundColour);
+			currentTemps[heaterSlots[i]]->SetColours(foregroundColour, backgroundColour);
 
-				// If it's a bed or a chamber we use a different background color
-				// FIXME: this information could be added to the GetHeaterSlots() result
-				if (OM::GetBedForHeater(heaterIndex) != nullptr || OM::GetChamberForHeater(heaterIndex) != nullptr)
-				{
-					if (backgroundColour == colours->defaultBackColour)
-					{
-						backgroundColour = colours->buttonImageBackColour;
-					}
-					toolButtons[heaterSlots[i]]->SetColours(foregroundColour, backgroundColour);
-				}
+			// If it's a bed or a chamber we use a different background color
+			// FIXME: this information could be added to the GetHeaterSlots() result
+			OM::BedOrChamber* bedOrChamber = OM::GetBedForHeater(heaterIndex);
+			if (bedOrChamber == nullptr)
+			{
+				bedOrChamber = OM::GetChamberForHeater(heaterIndex);
+			}
+			if (bedOrChamber != nullptr)
+			{
+				bedOrChamber->heaterStatus = status;
+				const Colour bOCBgColor = (backgroundColour == colours->defaultBackColour)
+					? colours->buttonImageBackColour
+					: backgroundColour;
+				toolButtons[heaterSlots[i]]->SetColours(foregroundColour, bOCBgColor);
 			}
 		}
 	}
@@ -1736,7 +1746,7 @@ namespace UI
 		UpdateAllHomed();
 	}
 
-	// UIpdate the Z probe text
+	// Update the Z probe text
 	void UpdateZProbe(const char data[])
 	{
 		zprobeBuf.copy(data);
@@ -2064,8 +2074,9 @@ namespace UI
 					case evAdjustBedActiveTemp:
 					case evAdjustChamberActiveTemp:
 						{
+							int bedOrChamberIndex = bp.GetIParam();
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedActiveTemp;
-							const auto bedOrChamber = isBed ? OM::GetFirstBed() : OM::GetFirstChamber();							if (bedOrChamber == nullptr)
+							const auto bedOrChamber = isBed ? OM::GetBed(bedOrChamberIndex) : OM::GetChamber(bedOrChamberIndex);							if (bedOrChamber == nullptr)
 							{
 								break;
 							}
@@ -2083,8 +2094,9 @@ namespace UI
 					case evAdjustBedStandbyTemp:
 					case evAdjustChamberStandbyTemp:
 						{
+							int bedOrChamberIndex = bp.GetIParam();
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedStandbyTemp;
-							const auto bedOrChamber = isBed ? OM::GetFirstBed() : OM::GetFirstChamber();
+							const auto bedOrChamber = isBed ? OM::GetBed(bedOrChamberIndex) : OM::GetChamber(bedOrChamberIndex);
 							if (bedOrChamber == nullptr)
 							{
 								break;
@@ -2262,42 +2274,36 @@ namespace UI
 
 			case evSelectBed:
 				{
-					const auto bed = OM::GetFirstBed();
-					if (bed == nullptr)
+					int bedIndex = bp.GetIParam();
+					const OM::Bed* bed = OM::GetBed(bedIndex);
+					if (bed == nullptr || bed->slot >= MaxSlots)
 					{
 						break;
 					}
 					const auto slot = bed->slot;
-					if (slot >= MaxSlots)
+					if (bed->heaterStatus == HeaterStatus::active)			// if bed is active
 					{
-						break;
-					}
-					if (heaterStatus[slot] == HeaterStatus::active)			// if bed is active
-					{
-						SerialIo::Sendf("M144\n");
+						SerialIo::Sendf("M144 P%d\n", bedIndex);
 					}
 					else
 					{
-						SerialIo::Sendf("M140 P%d S%d\n", bed->index, activeTemps[slot]->GetValue());
+						SerialIo::Sendf("M140 P%d S%d\n", bedIndex,	activeTemps[slot]->GetValue());
 					}
 				}
 				break;
 
 			case evSelectChamber:
 				{
-					const auto chamber = OM::GetFirstChamber();
-					if (chamber == nullptr)
+					const int chamberIndex = bp.GetIParam();
+					const OM::Chamber* chamber = OM::GetChamber(chamberIndex);
+					if (chamber == nullptr || chamber->slot >= MaxSlots)
 					{
 						break;
 					}
 					const auto slot = chamber->slot;
-					if (slot >= MaxSlots)
-					{
-						break;
-					}
 					SerialIo::Sendf("M141 P%d S%d\n",
-							chamber->index,
-							(heaterStatus[slot] == HeaterStatus::active ? -274 : activeTemps[slot]->GetValue()));
+							chamberIndex,
+							(chamber->heaterStatus == HeaterStatus::active ? -274 : activeTemps[slot]->GetValue()));
 				}
 				break;
 
@@ -2936,6 +2942,7 @@ namespace UI
 			mgr.Show(currentTemps[slot], true);
 			mgr.Show(activeTemps[slot], true);
 			mgr.Show(standbyTemps[slot], true);
+			mgr.Show(extrusionFactors[slot], false);
 			toolButtons[slot]->SetEvent(isBed ? evSelectBed : evSelectChamber, bedOrChamber->index);
 			toolButtons[slot]->SetIcon(isBed ? IconBed : IconChamber);
 			toolButtons[slot]->SetIntVal(bedOrChamber->index);
@@ -2993,8 +3000,8 @@ namespace UI
 				toolButtons[slot]->SetPrintText(true);
 				toolButtons[slot]->SetIcon(hasSpindle ? IconSpindle : IconNozzle);
 				mgr.Show(toolButtons[slot], true);
-				mgr.Show(extrusionFactors[slot], hasExtruder);
 
+				mgr.Show(extrusionFactors[slot], hasExtruder);
 				extrusionFactors[slot]->SetEvent(extrusionFactors[slot]->GetEvent(), tool->extruder);
 
 				// Spindle takes precedence

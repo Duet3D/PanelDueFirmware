@@ -3,7 +3,7 @@
  *
  * Created: 16/01/2015 13:18:16
  *  Author: David
- */ 
+ */
 
 
 #ifndef CONFIGURATION_H_
@@ -53,6 +53,8 @@
 #define IS_24BIT		(true)
 #define IS_ER			(false)
 #endif
+
+#define USE_CYRILLIC_CHARACTERS		(0)
 
 const uint32_t DefaultBaudRate = 57600;
 const uint32_t DimDisplayTimeout = 60000;				// dim this display after no activity for this number of milliseconds

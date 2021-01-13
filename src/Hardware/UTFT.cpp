@@ -1977,6 +1977,12 @@ size_t UTFT::writeNative(uint16_t c)
     {
 		c = 0x007F;			// replace unsupported characters by square box
     }
+#if USE_CYRILLIC_CHARACTERS
+    else if (c >= 1025 && c <= 1169)
+    {
+    	c -= 641;				// Cyrillic characters are shifted down to save space
+    }
+#endif
 
 	uint8_t ySize = cfont.y_size;
     const uint8_t bytesPerColumn = (ySize + 7)/8;

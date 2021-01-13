@@ -9,6 +9,7 @@
 #define SRC_OBJECTMODEL_HPP_
 
 #include <cstdint>
+#include "HeaterStatus.hpp"
 #include "ToolStatus.hpp"
 #include "UserInterfaceConstants.hpp"
 #include <General/FreelistManager.h>
@@ -112,6 +113,7 @@ namespace OM {
 		uint8_t index;
 		// Id of heater
 		int8_t heater;
+		HeaterStatus heaterStatus;
 		// Slot for display on panel
 		uint8_t slot;
 
@@ -140,6 +142,7 @@ namespace OM {
 	void IterateTools(stdext::inplace_function<void(Tool*)> func, const size_t startAt = 0);
 	size_t RemoveTool(const size_t index, const bool allFollowing);
 
+	Bed* GetBed(const size_t index);
 	Bed* GetOrCreateBed(const size_t index);
 	Bed* GetFirstBed();
 	Bed* GetBedForHeater(const size_t heater);
@@ -147,6 +150,7 @@ namespace OM {
 	void IterateBeds(stdext::inplace_function<void(Bed*)> func, const size_t startAt = 0);
 	size_t RemoveBed(const size_t index, const bool allFollowing);
 
+	Chamber* GetChamber(const size_t index);
 	Chamber* GetOrCreateChamber(const size_t index);
 	Chamber* GetFirstChamber();
 	Chamber* GetChamberForHeater(const size_t heater);

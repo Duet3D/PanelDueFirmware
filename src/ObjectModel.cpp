@@ -238,6 +238,7 @@ void OM::BedOrChamber::Reset()
 {
 	index = 0;
 	heater = -1;
+	heaterStatus = HeaterStatus::off;
 	slot = MaxSlots;
 }
 
@@ -306,6 +307,11 @@ namespace OM
 		return Find<ToolList, Tool>(tools, [fan](Tool* tool) { return tool->fan == (int)fan; });
 	}
 
+	Bed* GetBed(const size_t index)
+	{
+		return GetOrCreate<BedList, Bed>(beds, index, false);
+	}
+
 	Bed* GetOrCreateBed(const size_t index)
 	{
 		return GetOrCreate<BedList, Bed>(beds, index, true);
@@ -329,6 +335,11 @@ namespace OM
 	void IterateBeds(stdext::inplace_function<void(Bed*)> func, const size_t startAt)
 	{
 		Iterate(beds, func, startAt);
+	}
+
+	Chamber* GetChamber(const size_t index)
+	{
+		return GetOrCreate<ChamberList, Chamber>(chambers, index, false);
 	}
 
 	Chamber* GetOrCreateChamber(const size_t index)
