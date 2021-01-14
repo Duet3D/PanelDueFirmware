@@ -363,10 +363,12 @@ namespace OM
 				[&heaterSlots, heaterIndex](Tool* tool) {
 					if (tool->slot < MaxSlots)
 					{
-						const int8_t heaterSubSlot = tool->HasHeater(heaterIndex);
-						if (heaterSubSlot > -1)
+						for (size_t i = 0; tool->slot + i < MaxSlots; ++i)
 						{
-							heaterSlots.Add(tool->slot + heaterSubSlot);
+						   if (tool->heaters[i] == (int) heaterIndex)
+						   {
+								   heaterSlots.Add(tool->slot + i);
+						   }
 						}
 					}
 				});

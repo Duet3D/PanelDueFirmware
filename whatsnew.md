@@ -13,6 +13,7 @@
 * Removed unused fonts
 * Move heater status into bed and chamber only to save some RAM
 * Simplify tool heater represenation to further save some RAM
+* Support multiplexed heaters
 
 ## Bug fixes:
 * Fan used `fans[].actualValue` instead of `fans[].requestedValue`
