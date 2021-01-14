@@ -1780,8 +1780,7 @@ namespace UI
 			return;
 		}
 
-		tool->UpdateTemp(toolHeaterIndex, temp, active);
-		UpdateField((active ? activeTemps : standbyTemps)[tool->slot], temp);
+		UpdateField((active ? activeTemps : standbyTemps)[tool->slot+toolHeaterIndex], temp);
 	}
 
 	void UpdateTemperature(size_t heaterIndex, int ival, IntegerButton** fields)
@@ -2959,20 +2958,19 @@ namespace UI
 			const bool showCurrent = false,
 			const Event activeEvent = evNull,
 			const int activeEventValue = -1,
-			const int activeValue = 0,
 			const Event standbyEvent = evNull,
-			const int standbyEventValue = -1,
-			const int standbyValue = 0
+			const int standbyEventValue = -1
 			)
 	{
 		mgr.Show(currentTemps[slot], showCurrent);
 		mgr.Show(activeTemps[slot], activeEvent != evNull);
 		mgr.Show(standbyTemps[slot], standbyEvent != evNull);
 
+		currentTemps[slot]->SetValue(0.0f);
 		activeTemps[slot]->SetEvent(activeEvent, activeEventValue);
-		activeTemps[slot]->SetValue(activeValue);
+		activeTemps[slot]->SetValue(0);
 		standbyTemps[slot]->SetEvent(standbyEvent, standbyEventValue);
-		standbyTemps[slot]->SetValue(standbyValue);
+		standbyTemps[slot]->SetValue(0);
 
 		++slot;
 	}
@@ -2992,7 +2990,7 @@ namespace UI
 			tool->slot = slot;
 			if (slot < MaxSlots)
 			{
-				const bool hasHeater = !tool->heaters.IsEmpty();
+				const bool hasHeater = tool->heaters[0] > -1;
 				const bool hasSpindle = tool->spindle != nullptr;
 				const bool hasExtruder = tool->extruder > -1;
 				toolButtons[slot]->SetEvent(evSelectHead, tool->index);
@@ -3011,15 +3009,16 @@ namespace UI
 				}
 				else if (hasHeater)
 				{
-					tool->IterateHeaters([&slot, &tool](OM::ToolHeater* toolHeater)
+					tool->IterateHeaters([&slot, &tool](uint8_t heaterIndex)
 					{
+						UNUSED(heaterIndex);
 						if (slot < MaxSlots)
 						{
 							ManageCurrentActiveStandbyFields(
 									slot,
 									true,
-									evAdjustToolActiveTemp, tool->index, toolHeater->activeTemp,
-									evAdjustToolStandbyTemp, tool->index, toolHeater->standbyTemp);
+									evAdjustToolActiveTemp, tool->index,
+									evAdjustToolStandbyTemp, tool->index);
 						}
 					});
 				}
@@ -3162,20 +3161,7 @@ namespace UI
 		{
 			return;
 		}
-		OM::ToolHeater *toolHeater = tool->GetOrCreateHeater(toolHeaterIndex);
-		if (toolHeater == nullptr)
-		{
-			return;
-		}
-		const bool heaterOrderChanged = (int) toolHeater->index != heaterIndex;
-		toolHeater->index = heaterIndex;
-
-		// If the order of heaters changed we need to update the temperatures here
-		if (heaterOrderChanged)
-		{
-			UpdateToolTemp(toolIndex, toolHeater->index, toolHeater->activeTemp, true);
-			UpdateToolTemp(toolIndex, toolHeater->index, toolHeater->standbyTemp, false);
-		}
+		tool->SetHeater(toolHeaterIndex, heaterIndex);
 	}
 
 	void SetToolOffset(size_t toolIndex, size_t axisIndex, float offset)

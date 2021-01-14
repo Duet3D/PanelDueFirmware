@@ -12,6 +12,7 @@
 * Added Ukrainian translation (disabled for now) - thanks vitaliy172
 * Removed unused fonts
 * Move heater status into bed and chamber only to save some RAM
+* Simplify tool heater represenation to further save some RAM
 
 ## Bug fixes:
 * Fan used `fans[].actualValue` instead of `fans[].requestedValue`

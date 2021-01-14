@@ -142,54 +142,20 @@ void OM::Spindle::Reset()
 	tool = -1;
 }
 
-void OM::ToolHeater::Reset()
+void OM::Tool::SetHeater(const uint8_t toolHeaterIndex, const uint8_t heaterIndex)
 {
-	index = 0;
-	activeTemp = 0;
-	standbyTemp = 0;
-}
-
-OM::ToolHeater* OM::Tool::GetOrCreateHeater(const uint8_t heaterIndex)
-{
-	if (heaterIndex < heaters.Size())
+	if (toolHeaterIndex >= MaxSlots)
 	{
-		return heaters[heaterIndex];
+		return;
 	}
-
-	if (heaters.Full())
-	{
-		return nullptr;
-	}
-	ToolHeater* th = new ToolHeater;
-	th->Reset();
-	heaters.Add(th);
-	return th;
-}
-
-size_t OM::Tool::RemoveHeatersFrom(const uint8_t heaterIndex)
-{
-	const size_t count = heaters.Size();
-	if (heaterIndex >= count)
-	{
-		return 0;
-	}
-	size_t removed = 0;
-	for (size_t i = count; i > heaterIndex;)
-	{
-		--i;
-		delete heaters[i];
-		++removed;
-	}
-	heaters.Truncate(heaterIndex);
-	return removed;
+	heaters[toolHeaterIndex] = heaterIndex;
 }
 
 int8_t OM::Tool::HasHeater(const uint8_t heaterIndex) const
 {
-	const size_t count = heaters.Size();
-	for (size_t i = 0; i < count; ++i)
+	for (size_t i = 0; i < MaxSlots; ++i)
 	{
-		if (heaters[i]->index == (int) heaterIndex)
+		if (heaters[i] == (int) heaterIndex)
 		{
 			return i;
 		}
@@ -197,32 +163,29 @@ int8_t OM::Tool::HasHeater(const uint8_t heaterIndex) const
 	return -1;
 }
 
-void OM::Tool::IterateHeaters(stdext::inplace_function<void(ToolHeater*)> func, const size_t startAt)
+size_t OM::Tool::RemoveHeatersFrom(const uint8_t toolHeaterIndex)
 {
-	Iterate<ToolHeaters, ToolHeater>(heaters, func, startAt);
+	size_t removed = 0;
+	for (size_t i = toolHeaterIndex; i < MaxSlots; ++i)
+	{
+		heaters[i] = -1;
+		++removed;
+	}
+	return removed;
 }
 
-void OM::Tool::UpdateTemp(const uint8_t heaterIndex, const int32_t temp, const bool active)
+void OM::Tool::IterateHeaters(stdext::inplace_function<void(uint8_t)> func, const size_t startAt)
 {
-	ToolHeater* toolHeater = GetOrCreateHeater(heaterIndex);
-	if (toolHeater == nullptr)
+	for (size_t i = startAt; i < MaxSlots && heaters[i] > -1; ++i)
 	{
-		return;
-	}
-	if (active)
-	{
-		toolHeater->activeTemp = temp;
-	}
-	else
-	{
-		toolHeater->standbyTemp = temp;
+		func((uint8_t)heaters[i]);
 	}
 }
 
 void OM::Tool::Reset()
 {
 	index = 0;
-	heaters.Clear();
+	RemoveHeatersFrom(0);
 	extruder = -1;
 	spindle = nullptr;
 	fan = -1;
