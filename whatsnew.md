@@ -1,6 +1,6 @@
 # Version 3.2.8
 ## Upgrade Notes:
-- This release is compatible with RepRapFirmware 3.2 or later. It will partially work with RepRapFirmware 3.1.1 but not with any older version.
+- This release is compatible with RepRapFirmware 3.2 or later.
 
 # Limitations
 - Due to the lack of RAM this build will not run on version 1 or early version 2 PanelDue boards that use the `ATSAM3S2B` chip.
@@ -13,6 +13,7 @@
 * Removed unused fonts
 * Move heater status into bed and chamber only to save some RAM
 * Support multiplexed heaters
+* Add color gradient to buttons in Dark 1 theme
 
 ## Bug fixes:
 * Fan used `fans[].actualValue` instead of `fans[].requestedValue`
