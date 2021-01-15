@@ -142,20 +142,58 @@ void OM::Spindle::Reset()
 	tool = -1;
 }
 
-void OM::Tool::SetHeater(const uint8_t toolHeaterIndex, const uint8_t heaterIndex)
+void OM::ToolHeater::Reset()
 {
-	if (toolHeaterIndex >= MaxSlots)
+	index = 0;
+	activeTemp = 0;
+	standbyTemp = 0;
+}
+
+void OM::Tool::operator delete(void * p)
+{
+	Tool* t = static_cast<Tool*>(p);
+	for (size_t i = 0; i < MaxHeatersPerTool; ++i)
 	{
-		return;
+		delete t->heaters[i];
 	}
-	heaters[toolHeaterIndex] = heaterIndex;
+	FreelistManager::Release<Tool>(p);
+}
+
+OM::ToolHeater* OM::Tool::GetOrCreateHeater(const uint8_t toolHeaterIndex)
+{
+	if (toolHeaterIndex >= MaxHeatersPerTool)
+	{
+		return nullptr;
+	}
+	if (heaters[toolHeaterIndex] != nullptr)
+	{
+		return heaters[toolHeaterIndex];
+	}
+	ToolHeater* th = new ToolHeater;
+	th->Reset();
+	heaters[toolHeaterIndex] = th;
+	return th;
+}
+
+bool OM::Tool::GetHeaterTemps(const StringRef& ref, const bool active)
+{
+	for (size_t i = 0; i < MaxHeatersPerTool && heaters[i] != nullptr; ++i)
+	{
+		if (i > 0)
+		{
+			ref.cat(':');
+		}
+		ref.catf("%d", (active ? heaters[i]->activeTemp : heaters[i]->standbyTemp));
+	}
+
+	return !ref.IsEmpty();
 }
 
 int8_t OM::Tool::HasHeater(const uint8_t heaterIndex) const
 {
-	for (size_t i = 0; i < MaxSlots; ++i)
+	for (size_t i = 0; i < MaxHeatersPerTool && heaters[i] != nullptr; ++i)
 	{
-		if (heaters[i] == (int) heaterIndex)
+		if (heaters[i]->index == (int) heaterIndex)
 		{
 			return i;
 		}
@@ -163,29 +201,54 @@ int8_t OM::Tool::HasHeater(const uint8_t heaterIndex) const
 	return -1;
 }
 
-size_t OM::Tool::RemoveHeatersFrom(const uint8_t toolHeaterIndex)
+void OM::Tool::IterateHeaters(stdext::inplace_function<void(ToolHeater*)> func, const size_t startAt)
 {
-	size_t removed = 0;
-	for (size_t i = toolHeaterIndex; i < MaxSlots; ++i)
+	for (size_t i = startAt; i < MaxHeatersPerTool && heaters[i] != nullptr; ++i)
 	{
-		heaters[i] = -1;
+		func(heaters[i]);
+	}
+}
+
+size_t OM::Tool::RemoveHeatersFrom(const uint8_t heaterIndex)
+{
+	if (heaterIndex >= MaxHeatersPerTool)
+	{
+		return 0;
+	}
+	size_t removed = 0;
+	for (size_t i = heaterIndex; i < MaxHeatersPerTool && heaters[i] != nullptr; ++i)
+	{
+		delete heaters[i];
+		heaters[i] = nullptr;
 		++removed;
 	}
 	return removed;
 }
 
-void OM::Tool::IterateHeaters(stdext::inplace_function<void(uint8_t)> func, const size_t startAt)
+void OM::Tool::UpdateTemp(const uint8_t toolHeaterIndex, const int32_t temp, const bool active)
 {
-	for (size_t i = startAt; i < MaxSlots && heaters[i] > -1; ++i)
+	ToolHeater* toolHeater = GetOrCreateHeater(toolHeaterIndex);
+	if (toolHeater == nullptr)
 	{
-		func((uint8_t)heaters[i]);
+		return;
+	}
+	if (active)
+	{
+		toolHeater->activeTemp = temp;
+	}
+	else
+	{
+		toolHeater->standbyTemp = temp;
 	}
 }
 
 void OM::Tool::Reset()
 {
 	index = 0;
-	RemoveHeatersFrom(0);
+	for (size_t i = 0; i < MaxHeatersPerTool; ++i)
+	{
+		heaters[i] = nullptr;
+	}
 	extruder = -1;
 	spindle = nullptr;
 	fan = -1;
@@ -365,7 +428,7 @@ namespace OM
 					{
 						for (size_t i = 0; tool->slot + i < MaxSlots; ++i)
 						{
-						   if (tool->heaters[i] == (int) heaterIndex)
+						   if (tool->heaters[i]->index == (int) heaterIndex)
 						   {
 								   heaterSlots.Add(tool->slot + i);
 						   }

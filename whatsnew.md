@@ -12,7 +12,6 @@
 * Added Ukrainian translation (disabled for now) - thanks vitaliy172
 * Removed unused fonts
 * Move heater status into bed and chamber only to save some RAM
-* Simplify tool heater represenation to further save some RAM
 * Support multiplexed heaters
 
 ## Bug fixes:
@@ -20,6 +19,7 @@
 * Color gradient for heater-fault was broken on Light theme
 * Additional bed and heater buttons alwaysed controlled the first bed or chamber respectively
 * Extrusion factor could be shown for an element without an extruder
+* Active/standby controls for tools with multiple heaters always set all heaters of this tool
 
 # Version 3.2.7
 ## Upgrade Notes:

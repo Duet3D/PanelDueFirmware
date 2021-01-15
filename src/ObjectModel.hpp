@@ -13,6 +13,7 @@
 #include "ToolStatus.hpp"
 #include "UserInterfaceConstants.hpp"
 #include <General/FreelistManager.h>
+#include <General/StringRef.h>
 #include <General/Vector.hpp>
 #include <General/inplace_function.h>
 
@@ -66,14 +67,26 @@ namespace OM {
 		void Reset();
 	};
 
+	struct ToolHeater
+	{
+		void* operator new(size_t sz) noexcept { UNUSED(sz); return FreelistManager::Allocate<ToolHeater>(); }
+		void operator delete(void* p) noexcept { FreelistManager::Release<ToolHeater>(p); }
+
+		uint8_t index;	// This is the heater number
+		int16_t activeTemp;
+		int16_t standbyTemp;
+
+		void Reset();
+	};
+
 	struct Tool
 	{
 		void* operator new(size_t sz) noexcept { UNUSED(sz); return FreelistManager::Allocate<Tool>(); }
-		void operator delete(void* p) noexcept { FreelistManager::Release<Tool>(p); }
+		void operator delete(void* p) noexcept;
 
 		// tool number
 		uint8_t index;
-		int8_t heaters[MaxSlots];
+		ToolHeater* heaters[MaxHeatersPerTool];
 		int8_t extruder;			// only look at the first extruder as we only display one
 		Spindle* spindle;			// only look at the first spindle as we only display one
 		int8_t fan;
@@ -81,10 +94,12 @@ namespace OM {
 		ToolStatus status;
 		uint8_t slot;
 
+		ToolHeater* GetOrCreateHeater(const uint8_t toolHeaterIndex);
+		bool GetHeaterTemps(const StringRef& ref, const bool active);
 		int8_t HasHeater(const uint8_t heaterIndex) const;
-		void IterateHeaters(stdext::inplace_function<void(uint8_t)> func, const size_t startAt = 0);
-		size_t RemoveHeatersFrom(const uint8_t heaterIndex);
-		void SetHeater(const uint8_t toolHeaterIndex, const uint8_t heaterIndex);
+		void IterateHeaters(stdext::inplace_function<void(ToolHeater*)> func, const size_t startAt = 0);
+		size_t RemoveHeatersFrom(const uint8_t toolHeaterIndex);
+		void UpdateTemp(const uint8_t toolHeaterIndex, const int32_t temp, const bool active);
 
 		void Reset();
 	};

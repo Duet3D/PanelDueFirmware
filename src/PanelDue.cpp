@@ -2034,7 +2034,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	case rcvToolsStandby:
 		ShowLine;
 		{
-			if (indices[1] >= MaxSlots)
+			if (indices[1] >= MaxHeatersPerTool)
 			{
 				break;
 			}
@@ -2079,7 +2079,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	case rcvToolsHeaters:
 		ShowLine;
 		{
-			if (indices[1] >= MaxSlots)
+			if (indices[1] >= MaxHeatersPerTool)
 			{
 				break;
 			}

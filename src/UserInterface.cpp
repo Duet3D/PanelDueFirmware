@@ -1780,7 +1780,8 @@ namespace UI
 			return;
 		}
 
-		UpdateField((active ? activeTemps : standbyTemps)[tool->slot+toolHeaterIndex], temp);
+		tool->UpdateTemp(toolHeaterIndex, temp, active);
+		UpdateField((active ? activeTemps : standbyTemps)[tool->slot + toolHeaterIndex], temp);
 	}
 
 	void UpdateTemperature(size_t heaterIndex, int ival, IntegerButton** fields)
@@ -2083,12 +2084,6 @@ namespace UI
 							SerialIo::Sendf("M14%d P%d S%d\n", isBed ? 0 : 1, heaterIndex, val);
 						}
 						break;
-					case evAdjustToolActiveTemp:
-						{
-							int toolNumber = fieldBeingAdjusted.GetIParam();
-							SerialIo::Sendf("%s%d S%d\n", ((GetFirmwareFeatures() & noG10Temps) == 0) ? "G10 P" : "M104 T", toolNumber, val);
-						}
-						break;
 
 					case evAdjustBedStandbyTemp:
 					case evAdjustChamberStandbyTemp:
@@ -2105,10 +2100,77 @@ namespace UI
 						}
 						break;
 
+					case evAdjustToolActiveTemp:
+						{
+							int toolNumber = fieldBeingAdjusted.GetIParam();
+							OM::Tool* tool = OM::GetTool(toolNumber);
+							if (tool == nullptr)
+							{
+								break;
+							}
+
+							// Find the slot for this button to determine which heater index it is
+							// TODO: This block (and the one below in standby) should be put in a function if possible
+							{
+								ButtonBase *button = fieldBeingAdjusted.GetButton();
+								size_t slot = MaxSlots;
+								for (size_t i = 0; i < MaxSlots; ++i)
+								{
+									if (activeTemps[i] == button)
+									{
+										slot = i;
+										break;
+									}
+								}
+								if (slot >= MaxSlots || (slot - tool->slot) >= MaxSlots)
+								{
+									break;
+								}
+								tool->UpdateTemp(slot - tool->slot, val, true);
+							}
+
+							String<maxUserCommandLength> heaterTemps;
+							if (tool->GetHeaterTemps(heaterTemps.GetRef(), true))
+							{
+								SerialIo::Sendf("G10 P%d S%s\n", toolNumber, heaterTemps.c_str());
+							}
+						}
+						break;
+
 					case evAdjustToolStandbyTemp:
 						{
 							int toolNumber = fieldBeingAdjusted.GetIParam();
-							SerialIo::Sendf("G10 P%d R%d\n", toolNumber, val);
+							OM::Tool* tool = OM::GetTool(toolNumber);
+							if (tool == nullptr)
+							{
+								break;
+							}
+
+							// Find the slot for this button to determine which heater index it is
+							// TODO: This block (and the one above in active) should be put in a function if possible
+							{
+								ButtonBase *button = fieldBeingAdjusted.GetButton();
+								size_t slot = MaxSlots;
+								for (size_t i = 0; i < MaxSlots; ++i)
+								{
+									if (standbyTemps[i] == button)
+									{
+										slot = i;
+										break;
+									}
+								}
+								if (slot >= MaxSlots || (slot - tool->slot) >= MaxSlots)
+								{
+									break;
+								}
+								tool->UpdateTemp(slot - tool->slot, val, false);
+							}
+
+							String<maxUserCommandLength> heaterTemps;
+							if (tool->GetHeaterTemps(heaterTemps.GetRef(), false))
+							{
+								SerialIo::Sendf("G10 P%d R%s\n", toolNumber, heaterTemps.c_str());
+							}
 						}
 						break;
 
@@ -2990,7 +3052,7 @@ namespace UI
 			tool->slot = slot;
 			if (slot < MaxSlots)
 			{
-				const bool hasHeater = tool->heaters[0] > -1;
+				const bool hasHeater = tool->heaters[0] != nullptr;
 				const bool hasSpindle = tool->spindle != nullptr;
 				const bool hasExtruder = tool->extruder > -1;
 				toolButtons[slot]->SetEvent(evSelectHead, tool->index);
@@ -3009,9 +3071,9 @@ namespace UI
 				}
 				else if (hasHeater)
 				{
-					tool->IterateHeaters([&slot, &tool](uint8_t heaterIndex)
+					tool->IterateHeaters([&slot, &tool](OM::ToolHeater* toolHeater)
 					{
-						UNUSED(heaterIndex);
+						UNUSED(toolHeater);
 						if (slot < MaxSlots)
 						{
 							ManageCurrentActiveStandbyFields(
@@ -3161,7 +3223,12 @@ namespace UI
 		{
 			return;
 		}
-		tool->SetHeater(toolHeaterIndex, heaterIndex);
+		OM::ToolHeater *toolHeater = tool->GetOrCreateHeater(toolHeaterIndex);
+		if (toolHeater == nullptr)
+		{
+			return;
+		}
+		toolHeater->index = heaterIndex;
 	}
 
 	void SetToolOffset(size_t toolIndex, size_t axisIndex, float offset)
