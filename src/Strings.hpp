@@ -701,6 +701,123 @@ const StringTable LanguageTables[NumLanguages] =
 		}
 	},
 
+	// Italian
+	{
+		// ISO-639.1 language code
+		"it",
+
+		// Main page strings
+		"Controlla",
+		"Stampa",
+		"Console",
+		"Impostazioni",
+		"Corrente" THIN_SPACE DEGREE_SYMBOL "C",
+		"Attiva" THIN_SPACE DEGREE_SYMBOL "C",
+		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
+		"Muovi",
+		"Estrusione",
+		"Macro",
+		"FERMA",
+
+		// Print page
+		"Estrusore" THIN_SPACE "%",
+		"Velocità ",							// note space at end
+		"Ventola ",								// note space at end
+		"Tempo rimanente: ",
+		"file ",							// note space at end
+		", filamento ",						// note space at end
+		", layer ",							// note space at end
+		"n/a",
+		"Pausa",
+		"Baby step",
+		"Riprendi",
+		"Cancella",
+		"Stampa di nuovo",
+		"Simula di nuovo",
+		"Imposta",
+
+		// Setup page
+		"Volume ",							// note space at end
+		"Calibra touch",
+		"Specchia schermo",
+		"Inverti schermo",
+		"Tema",
+		"Luminosità -",
+		"Luminosità +",
+		"Salva impostazioni",
+		"Resetta impostazioni",
+		"Salva & Riavvia",
+		"Info timeout ",					// note space at end
+		"Salvaschermo ",					// note space at end
+		"Babystep ",						// note space at end
+		"Feedrate ",						// note space at end
+
+		// Misc
+		"Conferma reset impostazioni",
+		"Confirma eliminazione file",
+		"Sei sicuro?",
+		"Tocca il punto",
+		"Muovi testa",
+		"Quantità estrusione (mm)",
+		"Velocità (mm/s)",
+		"Estrudi",
+		"Retrai",
+		"Baby stepping",
+		"Z offset corrente: ",
+		"Messaggio",
+		"Messaggi",
+		"Versione firmware Panel Due ",	// note space at end
+		"Risposta",
+
+		// File popup
+		"File su card ",				// note the space on the end
+		"Macro",
+		"Errore ",						// note the space at the end
+		" accedendo alla SD card",			// note the space at the start
+		"Nome file: ",
+		"Dimensione: ",
+		"Altezza layer: ",
+		"Altezza oggetto: ",
+		"Filamento necessario: ",
+		"Slice effettuato con: ",
+		"Ultima modifica: ",
+		"Tempo di stampa stimato: ",
+		"Tempo di stampa simulato: ",
+		"Simula",
+
+		// Printer status strings
+		{
+			"Connettendo",
+			"Idle",
+			"Stampando",
+			"Fermato",
+			"Avviando",
+			"Pausa",
+			"Occupato",
+			"Pausa",
+			"Riprendendo",
+			"Caricamento firmware",
+			"Cambiando tool",
+			"Simulando",
+			"Standby",
+			"Inizializzando",
+		},
+
+		// Theme names
+		{
+			"Tema chiaro",
+			"Tema scuro 1",
+			"Tema scuro 2"
+		},
+
+		// Display dimming types
+		{
+			"Non attenuare",
+			"Attenua se idle",
+			"Attenua sempre"
+		}
+ 	},
+
 #if USE_CYRILLIC_CHARACTERS
 	// Ukrainian
 	{
