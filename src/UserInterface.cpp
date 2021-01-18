@@ -741,6 +741,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 			keysFR,	// French
 			keysEN,	// Spanish
 			keysEN,	// Czech
+			keysEN,	// Italian
 #if USE_CYRILLIC_CHARACTERS
 			keysEN	// Ukrainian
 #endif

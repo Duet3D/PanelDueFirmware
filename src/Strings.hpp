@@ -20,7 +20,7 @@
 #define Newline			"\n"
 #define DegreeSymbol	"\u00B0"
 
-constexpr unsigned int NumLanguages = 5 + USE_CYRILLIC_CHARACTERS;
+constexpr unsigned int NumLanguages = 6 + USE_CYRILLIC_CHARACTERS;
 constexpr unsigned int NumStatusStrings = 14;
 
 struct StringTable
