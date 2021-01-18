@@ -710,7 +710,7 @@ const StringTable LanguageTables[NumLanguages] =
 		"Controlla",
 		"Stampa",
 		"Console",
-		"Impostazioni",
+		"Configura",
 		"Corrente" THIN_SPACE DEGREE_SYMBOL "C",
 		"Attiva" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
