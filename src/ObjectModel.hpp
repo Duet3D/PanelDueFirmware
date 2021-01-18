@@ -72,7 +72,7 @@ namespace OM {
 		void* operator new(size_t sz) noexcept { UNUSED(sz); return FreelistManager::Allocate<ToolHeater>(); }
 		void operator delete(void* p) noexcept { FreelistManager::Release<ToolHeater>(p); }
 
-		uint8_t index;	// This is the heater number
+		uint8_t heaterIndex;	// This is the heater number
 		int16_t activeTemp;
 		int16_t standbyTemp;
 
@@ -97,7 +97,7 @@ namespace OM {
 		ToolHeater* GetOrCreateHeater(const uint8_t toolHeaterIndex);
 		bool GetHeaterTemps(const StringRef& ref, const bool active);
 		int8_t HasHeater(const uint8_t heaterIndex) const;
-		void IterateHeaters(stdext::inplace_function<void(ToolHeater*)> func, const size_t startAt = 0);
+		void IterateHeaters(stdext::inplace_function<void(ToolHeater*, size_t)> func, const size_t startAt = 0);
 		size_t RemoveHeatersFrom(const uint8_t toolHeaterIndex);
 		void UpdateTemp(const uint8_t toolHeaterIndex, const int32_t temp, const bool active);
 

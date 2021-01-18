@@ -127,7 +127,7 @@ namespace SerialIo
 		}
 	}
 
-	size_t Sendf(const char *fmt, ...) noexcept
+	size_t Sendf(const char *fmt, ...)
 	{
 		va_list vargs;
 		va_start(vargs, fmt);
@@ -456,7 +456,7 @@ namespace SerialIo
 #if DEBUG
 						MessageLog::AppendMessage("ParserErrorEncountered");
 #endif
-					ParserErrorEncountered(); // Notify the consumer that we ran into an error
+					ParserErrorEncountered(fieldId.c_str(), fieldVal.c_str(), arrayIndices); // Notify the consumer that we ran into an error
 				}
 				state = jsBegin;		// abandon current parse (if any) and start again
 			}

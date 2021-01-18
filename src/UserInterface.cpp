@@ -1322,8 +1322,7 @@ namespace UI
 		{
 			currentTemps[heaterSlots[i]]->SetColours(foregroundColour, backgroundColour);
 
-			// If it's a bed or a chamber we use a different background color
-			// FIXME: this information could be added to the GetHeaterSlots() result
+			// If it's a bed or a chamber we update colors for the tool button as well
 			OM::BedOrChamber* bedOrChamber = OM::GetBedForHeater(heaterIndex);
 			if (bedOrChamber == nullptr)
 			{
@@ -2011,6 +2010,21 @@ namespace UI
 		Reconnect();
 	}
 
+	// Make this into a template if we need something else than IntegerButton** as list
+	size_t GetButtonSlot(IntegerButton** buttonList, ButtonBase* button)
+	{
+		size_t slot = MaxSlots;
+		for (size_t i = 0; i < MaxSlots; ++i)
+		{
+			if (buttonList[i] == button)
+			{
+				slot = i;
+				break;
+			}
+		}
+		return slot;
+	}
+
 	// Process a touch event
 	void ProcessTouch(ButtonPress bp)
 	{
@@ -2110,18 +2124,8 @@ namespace UI
 							}
 
 							// Find the slot for this button to determine which heater index it is
-							// TODO: This block (and the one below in standby) should be put in a function if possible
 							{
-								ButtonBase *button = fieldBeingAdjusted.GetButton();
-								size_t slot = MaxSlots;
-								for (size_t i = 0; i < MaxSlots; ++i)
-								{
-									if (activeTemps[i] == button)
-									{
-										slot = i;
-										break;
-									}
-								}
+								size_t slot = GetButtonSlot(activeTemps, fieldBeingAdjusted.GetButton());
 								if (slot >= MaxSlots || (slot - tool->slot) >= MaxSlots)
 								{
 									break;
@@ -2147,18 +2151,8 @@ namespace UI
 							}
 
 							// Find the slot for this button to determine which heater index it is
-							// TODO: This block (and the one above in active) should be put in a function if possible
 							{
-								ButtonBase *button = fieldBeingAdjusted.GetButton();
-								size_t slot = MaxSlots;
-								for (size_t i = 0; i < MaxSlots; ++i)
-								{
-									if (standbyTemps[i] == button)
-									{
-										slot = i;
-										break;
-									}
-								}
+								size_t slot = GetButtonSlot(standbyTemps, fieldBeingAdjusted.GetButton());
 								if (slot >= MaxSlots || (slot - tool->slot) >= MaxSlots)
 								{
 									break;
@@ -3028,7 +3022,6 @@ namespace UI
 		mgr.Show(activeTemps[slot], activeEvent != evNull);
 		mgr.Show(standbyTemps[slot], standbyEvent != evNull);
 
-		currentTemps[slot]->SetValue(0.0f);
 		activeTemps[slot]->SetEvent(activeEvent, activeEventValue);
 		activeTemps[slot]->SetValue(0);
 		standbyTemps[slot]->SetEvent(standbyEvent, standbyEventValue);
@@ -3071,9 +3064,10 @@ namespace UI
 				}
 				else if (hasHeater)
 				{
-					tool->IterateHeaters([&slot, &tool](OM::ToolHeater* toolHeater)
+					tool->IterateHeaters([&slot, &tool](OM::ToolHeater* toolHeater, size_t index)
 					{
 						UNUSED(toolHeater);
+						UNUSED(index);
 						if (slot < MaxSlots)
 						{
 							ManageCurrentActiveStandbyFields(
@@ -3228,7 +3222,7 @@ namespace UI
 		{
 			return;
 		}
-		toolHeater->index = heaterIndex;
+		toolHeater->heaterIndex = heaterIndex;
 	}
 
 	void SetToolOffset(size_t toolIndex, size_t axisIndex, float offset)
@@ -3342,12 +3336,6 @@ namespace UI
 				chamber->heater = heaterNumber;
 			}
 		}
-	}
-
-	void ResetBedsAndChambers()
-	{
-		OM::RemoveBed(0, true);
-		OM::RemoveChamber(0, true);
 	}
 }
 

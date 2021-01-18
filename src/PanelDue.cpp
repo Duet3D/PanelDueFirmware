@@ -428,8 +428,8 @@ enum ReceivedDataEvent
 
 struct FieldTableEntry
 {
-	ReceivedDataEvent rde;
-	const char* varName;
+	ReceivedDataEvent val;
+	const char* key;
 };
 
 // The following tables will be sorted once on startup so entries can be better grouped for code maintenance
@@ -777,28 +777,10 @@ bool PrintInProgress()
 	return IsPrintingStatus(status);
 }
 
-// Search an ordered table for a matching string
-ReceivedDataEvent bsearch(const FieldTableEntry _ecv_array table[], size_t numElems, const char* key)
+template<typename T>
+int compare(const void* lp, const void* rp)
 {
-	size_t low = 0u, high = numElems;
-	while (high > low)
-	{
-		const size_t mid = (high - low)/2 + low;
-		const int t = strcasecmp(key, table[mid].varName);
-		if (t == 0)
-		{
-			return table[mid].rde;
-		}
-		if (t > 0)
-		{
-			low = mid + 1u;
-		}
-		else
-		{
-			high = mid;
-		}
-	}
-	return (low < numElems && strcasecmp(key, table[low].varName) == 0) ? table[low].rde : rcvUnknown;
+	return strcasecmp(((T*) lp)->key, ((T*) rp)->key);
 }
 
 // Return true if sending a command or file list request to the printer now is a good idea.
@@ -1117,10 +1099,7 @@ void SetStatus(const char * sts)
 						printerStatusMap,
 						ARRAY_SIZE(printerStatusMap),
 						sizeof(PrinterStatusMapEntry),
-						[](auto a, auto b)
-						{
-							return strcasecmp(((PrinterStatusMapEntry*) a)->key, ((PrinterStatusMapEntry*)b)->key);
-						});
+						compare<PrinterStatusMapEntry>);
 		if (statusFromMap != nullptr)
 		{
 			newStatus = statusFromMap->val;
@@ -1150,6 +1129,10 @@ void Reconnect()
 {
 	initialized = false;
 	SetStatus(nullptr);
+
+	seqs.Reset();
+	UI::LastJobFileNameAvailable(false);
+
 	// Send first round of data fetching again
 	SerialIo::Sendf("M409 F\"d99f\"\n");
 	// And set the last poll time to now
@@ -1515,14 +1498,28 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		}
 	}
 
-	const ReceivedDataEvent rde = bsearch(fieldTable, ARRAY_SIZE(fieldTable), id.c_str());
+	const FieldTableEntry key = {ReceivedDataEvent::rcvUnknown, id.c_str()};
+	const FieldTableEntry* searchResult = (FieldTableEntry*) bsearch(
+			&key,
+			fieldTable,
+			ARRAY_SIZE(fieldTable),
+			sizeof(FieldTableEntry),
+			compare<FieldTableEntry>);
+	const ReceivedDataEvent rde = searchResult->val;
 	switch (rde)
 	{
 	// M409 section
 	case rcvKey:
 		ShowLine;
 		{
-			currentResponseType = bsearch(keyResponseTypeTable, ARRAY_SIZE(keyResponseTypeTable), data);
+			const FieldTableEntry key = {ReceivedDataEvent::rcvUnknown, data};
+			const FieldTableEntry* searchResult = (FieldTableEntry*) bsearch(
+					&key,
+					keyResponseTypeTable,
+					ARRAY_SIZE(keyResponseTypeTable),
+					sizeof(FieldTableEntry),
+					compare<FieldTableEntry>);
+			currentResponseType = searchResult->val;
 			switch (currentResponseType) {
 			case rcvOMKeyHeat:
 				lastBed = -1;
@@ -1658,10 +1655,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 							heaterStatusMap,
 							ARRAY_SIZE(heaterStatusMap),
 							sizeof(HeaterStatusMapEntry),
-							[](auto a, auto b)
-							{
-								return strcasecmp(((HeaterStatusMapEntry*) a)->key, ((HeaterStatusMapEntry*)b)->key);
-							});
+							compare<HeaterStatusMapEntry>);
 			const HeaterStatus status = (statusFromMap != nullptr) ? statusFromMap->val : HeaterStatus::off;
 			UI::UpdateHeaterStatus(indices[0], status);
 		}
@@ -2019,10 +2013,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 				// Controller was restarted
 				if (uival < remoteUpTime)
 				{
-					seqs.Reset();
 					Reconnect();
-					UI::ResetBedsAndChambers();
-					UI::LastJobFileNameAvailable(false);
 				}
 				remoteUpTime = uival;
 			}
@@ -2123,10 +2114,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 							toolStatusMap,
 							ARRAY_SIZE(toolStatusMap),
 							sizeof(ToolStatusMapEntry),
-							[](auto a, auto b)
-							{
-								return strcasecmp(((ToolStatusMapEntry*) a)->key, ((ToolStatusMapEntry*)b)->key);
-							});
+							compare<ToolStatusMapEntry>);
 			const ToolStatus status = (statusFromMap != nullptr) ? statusFromMap->val : ToolStatus::off;
 			UI::UpdateToolStatus(indices[0], status);
 		}
@@ -2296,10 +2284,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 							controlCommandMap,
 							ARRAY_SIZE(controlCommandMap),
 							sizeof(ControlCommandMapEntry),
-							[](auto a, auto b)
-							{
-								return strcasecmp(((ControlCommandMapEntry*) a)->key, ((ControlCommandMapEntry*)b)->key);
-							});
+							compare<ControlCommandMapEntry>);
 			const ControlCommand controlCommand = (controlCommandFromMap != nullptr) ? controlCommandFromMap->val : ControlCommand::invalid;
 			switch (controlCommand)
 			{
@@ -2403,7 +2388,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 }
 
-void ParserErrorEncountered()
+void ParserErrorEncountered(const char* id, const char* data, const size_t indices[])
 {
 	MessageLog::AppendMessage("Error parsing response");
 	// TODO: Handle parser errors
@@ -2541,7 +2526,7 @@ int main(void)
 			sizeof(FieldTableEntry),
 			[](const void* a, const void* b)
 			{
-				return strcasecmp(((FieldTableEntry*) a)->varName, ((FieldTableEntry*) b)->varName);
+				return strcasecmp(((FieldTableEntry*) a)->key, ((FieldTableEntry*) b)->key);
 			});
 
 	seqs.Reset();
@@ -2592,6 +2577,10 @@ int main(void)
 							TouchBeep();		// give audible feedback of the touch, unless adjusting the volume
 						}
 						UI::ProcessTouch(bp);
+						if (!initialized)		// Last button press was E-Stop
+						{
+							continue;
+						}
 					}
 					else
 					{

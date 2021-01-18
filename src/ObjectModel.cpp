@@ -144,7 +144,7 @@ void OM::Spindle::Reset()
 
 void OM::ToolHeater::Reset()
 {
-	index = 0;
+	heaterIndex = 0;
 	activeTemp = 0;
 	standbyTemp = 0;
 }
@@ -193,7 +193,7 @@ int8_t OM::Tool::HasHeater(const uint8_t heaterIndex) const
 {
 	for (size_t i = 0; i < MaxHeatersPerTool && heaters[i] != nullptr; ++i)
 	{
-		if (heaters[i]->index == (int) heaterIndex)
+		if (heaters[i]->heaterIndex == (int) heaterIndex)
 		{
 			return i;
 		}
@@ -201,11 +201,11 @@ int8_t OM::Tool::HasHeater(const uint8_t heaterIndex) const
 	return -1;
 }
 
-void OM::Tool::IterateHeaters(stdext::inplace_function<void(ToolHeater*)> func, const size_t startAt)
+void OM::Tool::IterateHeaters(stdext::inplace_function<void(ToolHeater*, size_t)> func, const size_t startAt)
 {
 	for (size_t i = startAt; i < MaxHeatersPerTool && heaters[i] != nullptr; ++i)
 	{
-		func(heaters[i]);
+		func(heaters[i], i);
 	}
 }
 
@@ -403,7 +403,7 @@ namespace OM
 		if (addBeds)
 		{
 			IterateBeds(
-				[&heaterSlots, heaterIndex](Bed* bed) {
+				[&heaterSlots, &heaterIndex](Bed* bed) {
 					if (bed->slot < MaxSlots && bed->heater == (int)heaterIndex)
 					{
 						heaterSlots.Add(bed->slot);
@@ -413,7 +413,7 @@ namespace OM
 		if (addChambers)
 		{
 			IterateChambers(
-				[&heaterSlots, heaterIndex](Chamber* chamber) {
+				[&heaterSlots, &heaterIndex](Chamber* chamber) {
 					if (chamber->slot < MaxSlots && chamber->heater == (int)heaterIndex)
 					{
 						heaterSlots.Add(chamber->slot);
@@ -423,16 +423,15 @@ namespace OM
 		if (addTools)
 		{
 			IterateTools(
-				[&heaterSlots, heaterIndex](Tool* tool) {
+				[&heaterSlots, &heaterIndex](Tool* tool) {
 					if (tool->slot < MaxSlots)
 					{
-						for (size_t i = 0; tool->slot + i < MaxSlots; ++i)
-						{
-						   if (tool->heaters[i]->index == (int) heaterIndex)
-						   {
-								   heaterSlots.Add(tool->slot + i);
-						   }
-						}
+						tool->IterateHeaters([&tool, &heaterSlots, &heaterIndex](ToolHeater* th, size_t index) {
+							if (tool->slot + index < MaxSlots && th->heaterIndex == (int) heaterIndex)
+							{
+								heaterSlots.Add(tool->slot + index);
+							}
+						});
 					}
 				});
 		}

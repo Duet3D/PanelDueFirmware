@@ -24,7 +24,7 @@ extern void ProcessReceivedValue(StringRef id, const char val[], const size_t in
 extern void ProcessArrayEnd(const char id[], const size_t indices[]);
 extern void StartReceivedMessage();
 extern void EndReceivedMessage();
-extern void ParserErrorEncountered();
+extern void ParserErrorEncountered(const char* id, const char* data, const size_t indices[]);
 
 // Functions called from module UserInterface
 enum class DisplayDimmerType : uint8_t

@@ -99,7 +99,6 @@ namespace UI
 	extern void SetToolOffset(size_t toolIndex, size_t axisIndex, float offset);
 
 	extern void SetBedOrChamberHeater(const uint8_t heaterIndex, const int8_t heaterNumber, bool bed = true);
-	extern void ResetBedsAndChambers();
 
 	extern void SetSpindleActive(size_t index, uint16_t active);
 	extern void SetSpindleCurrent(size_t index, uint16_t current);
