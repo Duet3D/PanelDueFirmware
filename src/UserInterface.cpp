@@ -1764,7 +1764,8 @@ namespace UI
 	void UpdateFanPercent(size_t fanIndex, int rpm)
 	{
 		auto tool = OM::GetToolForFan(fanIndex);
-		if (tool != nullptr && tool->index == currentTool)
+		if ((tool != nullptr && tool->index == currentTool)
+				|| (currentTool == NoTool && fanIndex == 0))
 		{
 			UpdateField(fanSpeed, rpm);
 		}

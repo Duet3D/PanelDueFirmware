@@ -25,6 +25,7 @@ constexpr size_t MaxTotalAxes = 15;		// This needs to be kept in sync with the m
 constexpr size_t MaxHeatersPerTool = 8;
 static const char* _ecv_array const babystepAmounts[] = { "0.01", "0.02", "0.05", "0.1" };
 static const float _ecv_array babystepAmountsF[] = { 0.01, 0.02, 0.05, 0.1 };
+constexpr unsigned int NoTool = -1;
 
 #if DISPLAY_X == 480
 
