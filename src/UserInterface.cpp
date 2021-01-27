@@ -1208,8 +1208,8 @@ namespace UI
 		mgr.Show(cancelButton, false);
 		mgr.Show(pauseButton, false);
 		mgr.Show(babystepButton, false);
-		mgr.Show(filesButton, true);
 		mgr.Show(reprintButton, lastJobFileNameAvailable);
+		mgr.Show(filesButton, true);
 	}
 
 	void ShowPauseButton()
@@ -1217,9 +1217,9 @@ namespace UI
 		mgr.Show(resumeButton, false);
 		mgr.Show(cancelButton, false);
 		mgr.Show(filesButton, false);
+		mgr.Show(reprintButton, false);
 		mgr.Show(pauseButton, true);
 		mgr.Show(babystepButton, true);
-		mgr.Show(reprintButton, false);
 	}
 
 	void ShowResumeAndCancelButtons()
@@ -1227,9 +1227,9 @@ namespace UI
 		mgr.Show(pauseButton, false);
 		mgr.Show(babystepButton, false);
 		mgr.Show(filesButton, false);
+		mgr.Show(reprintButton, false);
 		mgr.Show(resumeButton, true);
 		mgr.Show(cancelButton, true);
-		mgr.Show(reprintButton, false);
 	}
 
 	// Show or hide an axis on the move button grid and on the axis display
@@ -3066,10 +3066,8 @@ namespace UI
 				}
 				else if (hasHeater)
 				{
-					tool->IterateHeaters([&slot, &tool](OM::ToolHeater* toolHeater, size_t index)
+					tool->IterateHeaters([&slot, &tool](OM::ToolHeater*, size_t)
 					{
-						UNUSED(toolHeater);
-						UNUSED(index);
 						if (slot < MaxSlots)
 						{
 							ManageCurrentActiveStandbyFields(
