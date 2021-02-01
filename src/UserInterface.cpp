@@ -1204,6 +1204,8 @@ namespace UI
 
 	void ShowFilesButton()
 	{
+		// First hide everything removed then show everything new
+		// otherwise remnants of the to-be-hidden might remain
 		mgr.Show(resumeButton, false);
 		mgr.Show(cancelButton, false);
 		mgr.Show(pauseButton, false);
@@ -1214,6 +1216,8 @@ namespace UI
 
 	void ShowPauseButton()
 	{
+		// First hide everything removed then show everything new
+		// otherwise remnants of the to-be-hidden might remain
 		mgr.Show(resumeButton, false);
 		mgr.Show(cancelButton, false);
 		mgr.Show(filesButton, false);
@@ -1224,6 +1228,8 @@ namespace UI
 
 	void ShowResumeAndCancelButtons()
 	{
+		// First hide everything removed then show everything new
+		// otherwise remnants of the to-be-hidden might remain
 		mgr.Show(pauseButton, false);
 		mgr.Show(babystepButton, false);
 		mgr.Show(filesButton, false);
