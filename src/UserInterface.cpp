@@ -1202,6 +1202,7 @@ namespace UI
 #endif
 	}
 
+	// This is called when no job is active/paused
 	void ShowFilesButton()
 	{
 		// First hide everything removed then show everything new
@@ -1210,10 +1211,12 @@ namespace UI
 		mgr.Show(cancelButton, false);
 		mgr.Show(pauseButton, false);
 		mgr.Show(babystepButton, false);
+		mgr.Show(printProgressBar, false);
 		mgr.Show(reprintButton, lastJobFileNameAvailable);
 		mgr.Show(filesButton, true);
 	}
 
+	// This is called when a job is active
 	void ShowPauseButton()
 	{
 		// First hide everything removed then show everything new
@@ -1224,8 +1227,10 @@ namespace UI
 		mgr.Show(reprintButton, false);
 		mgr.Show(pauseButton, true);
 		mgr.Show(babystepButton, true);
+		mgr.Show(printProgressBar, true);
 	}
 
+	// This is called when a job is paused
 	void ShowResumeAndCancelButtons()
 	{
 		// First hide everything removed then show everything new
@@ -1234,6 +1239,7 @@ namespace UI
 		mgr.Show(babystepButton, false);
 		mgr.Show(filesButton, false);
 		mgr.Show(reprintButton, false);
+		mgr.Show(printProgressBar, true);
 		mgr.Show(resumeButton, true);
 		mgr.Show(cancelButton, true);
 	}
@@ -1644,7 +1650,6 @@ namespace UI
 			ShowFilesButton();
 		}
 
-		mgr.Show(printProgressBar, PrintInProgress());
 	//	mgr.Show(printingField, PrintInProgress());
 
 		// Don't enable the time left field when we start printing, instead this will get enabled when we receive a suitable message
@@ -2996,27 +3001,6 @@ namespace UI
 		}
 	}
 
-	size_t AddBedOrChamber(OM::BedOrChamber *bedOrChamber, size_t &slot, const bool isBed = true) {
-		const size_t count = (isBed ? OM::GetBedCount() : OM::GetChamberCount());
-		bedOrChamber->slot = MaxSlots;
-		if (slot < MaxSlots && bedOrChamber->heater > -1) {
-			bedOrChamber->slot = slot;
-			mgr.Show(toolButtons[slot], true);
-			mgr.Show(currentTemps[slot], true);
-			mgr.Show(activeTemps[slot], true);
-			mgr.Show(standbyTemps[slot], true);
-			mgr.Show(extrusionFactors[slot], false);
-			toolButtons[slot]->SetEvent(isBed ? evSelectBed : evSelectChamber, bedOrChamber->index);
-			toolButtons[slot]->SetIcon(isBed ? IconBed : IconChamber);
-			toolButtons[slot]->SetIntVal(bedOrChamber->index);
-			toolButtons[slot]->SetPrintText(count > 1);
-			activeTemps[slot]->SetEvent(isBed ? evAdjustBedActiveTemp : evAdjustChamberActiveTemp, bedOrChamber->heater);
-			standbyTemps[slot]->SetEvent(isBed ? evAdjustBedStandbyTemp : evAdjustChamberStandbyTemp, bedOrChamber->heater);
-			++slot;
-		}
-		return count;
-	}
-
 	void ManageCurrentActiveStandbyFields(
 			size_t& slot,
 			const bool showCurrent = false,
@@ -3034,8 +3018,31 @@ namespace UI
 		activeTemps[slot]->SetValue(0);
 		standbyTemps[slot]->SetEvent(standbyEvent, standbyEventValue);
 		standbyTemps[slot]->SetValue(0);
+	}
 
-		++slot;
+	size_t AddBedOrChamber(OM::BedOrChamber *bedOrChamber, size_t &slot, const bool isBed = true) {
+		const size_t count = (isBed ? OM::GetBedCount() : OM::GetChamberCount());
+		bedOrChamber->slot = MaxSlots;
+		if (slot < MaxSlots && bedOrChamber->heater > -1) {
+			bedOrChamber->slot = slot;
+			mgr.Show(toolButtons[slot], true);
+			ManageCurrentActiveStandbyFields(
+					slot,
+					true,
+					isBed ? evAdjustBedActiveTemp : evAdjustChamberActiveTemp,
+					bedOrChamber->heater,
+					isBed ? evAdjustBedStandbyTemp : evAdjustChamberStandbyTemp,
+					bedOrChamber->heater
+					);
+			mgr.Show(extrusionFactors[slot], false);
+			toolButtons[slot]->SetEvent(isBed ? evSelectBed : evSelectChamber, bedOrChamber->index);
+			toolButtons[slot]->SetIcon(isBed ? IconBed : IconChamber);
+			toolButtons[slot]->SetIntVal(bedOrChamber->index);
+			toolButtons[slot]->SetPrintText(count > 1);
+
+			++slot;
+		}
+		return count;
 	}
 
 	void AllToolsSeen()
@@ -3069,6 +3076,7 @@ namespace UI
 				if (hasSpindle)
 				{
 					ManageCurrentActiveStandbyFields(slot, true, evAdjustActiveRPM, tool->spindle->index);
+					++slot;
 				}
 				else if (hasHeater)
 				{
@@ -3081,6 +3089,7 @@ namespace UI
 									true,
 									evAdjustToolActiveTemp, tool->index,
 									evAdjustToolStandbyTemp, tool->index);
+							++slot;
 						}
 					});
 				}
@@ -3088,6 +3097,7 @@ namespace UI
 				{
 					// Hides everything by default
 					ManageCurrentActiveStandbyFields(slot);
+					++slot;
 				}
 			}
 		});

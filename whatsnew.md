@@ -1,3 +1,20 @@
+# Version 3.2.10
+## Upgrade Notes:
+- This release is compatible with RepRapFirmware 3.2 or later.
+
+# Limitations
+- Due to the lack of RAM this build will not run on version 1 or early version 2 PanelDue boards that use the `ATSAM3S2B` chip.
+    - Version 1.0, 1.1 and earlier v2 PanelDue: `ATSAM3S2B` processor (64MHz, 32kb RAM, 128kB flash) - these are the ones that the new firmware probably won't run on.
+    - Version 2 PanelDue manufactured from August 2016: `ATSAM3S4B` processor (64MHz, 48kb RAM, 256kb flash). Will run the new firmware, but not as fast as version 3 will.
+    - Version 3 PanelDue, including all 5i and 7i: `ATSAM4S4B` processor, 120MHz, 64kB RAM, 256kb flash. Will run the new firmware.
+    
+## Changed:
+* Added Italian language - thanks @brisma
+* If no tool is selected show fan speed of Fan 0
+
+## Bug fixes:
+* Try to fix reprint/resimulate button visibility glitch
+
 # Version 3.2.9
 ## Upgrade Notes:
 - This release is compatible with RepRapFirmware 3.2 or later.

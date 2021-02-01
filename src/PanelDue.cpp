@@ -2388,7 +2388,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 }
 
-void ParserErrorEncountered(const char* id, const char* data, const size_t indices[])
+void ParserErrorEncountered(const char*, const char*, const size_t[])	// For now we don't use the parameters
 {
 	MessageLog::AppendMessage("Error parsing response");
 	// TODO: Handle parser errors
