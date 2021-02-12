@@ -1,6 +1,7 @@
 # Version 3.2.10
 ## Upgrade Notes:
 - This release is compatible with RepRapFirmware 3.2 or later.
+- Flashing this release will reset the configuration to defaults
 
 # Limitations
 - Due to the lack of RAM this build will not run on version 1 or early version 2 PanelDue boards that use the `ATSAM3S2B` chip.
@@ -14,7 +15,7 @@
 * Add a new setting so multiple heaters of one tool can be combined into one (as it was until 3.2.6)
 
 ## Bug fixes:
-* Try to fix reprint/resimulate button visibility glitch
+* Try a few graphic glitches
 
 # Version 3.2.9
 ## Upgrade Notes:
