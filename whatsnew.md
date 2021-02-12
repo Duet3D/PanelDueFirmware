@@ -11,6 +11,7 @@
 ## Changed:
 * Added Italian language - thanks @brisma
 * If no tool is selected show fan speed of Fan 0
+* Add a new setting so multiple heaters of one tool can be combined into one (as it was until 3.2.6)
 
 ## Bug fixes:
 * Try to fix reprint/resimulate button visibility glitch
