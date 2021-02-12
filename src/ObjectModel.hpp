@@ -17,10 +17,6 @@
 #include <General/Vector.hpp>
 #include <General/inplace_function.h>
 
-#ifndef UNUSED
-# define UNUSED(_x)	(void)(_x)
-#endif
-
 namespace OM {
 	enum Workplaces
 	{
@@ -38,7 +34,7 @@ namespace OM {
 
 	struct Axis
 	{
-		void* operator new(size_t sz) noexcept { UNUSED(sz); return FreelistManager::Allocate<Axis>(); }
+		void* operator new(size_t) noexcept { return FreelistManager::Allocate<Axis>(); }
 		void operator delete(void* p) noexcept { FreelistManager::Release<Axis>(p); }
 
 		uint8_t index;
@@ -54,7 +50,7 @@ namespace OM {
 
 	struct Spindle
 	{
-		void* operator new(size_t sz) noexcept { UNUSED(sz); return FreelistManager::Allocate<Spindle>(); }
+		void* operator new(size_t) noexcept { return FreelistManager::Allocate<Spindle>(); }
 		void operator delete(void* p) noexcept { FreelistManager::Release<Spindle>(p); }
 
 		// Index within configured spindles
@@ -69,7 +65,7 @@ namespace OM {
 
 	struct ToolHeater
 	{
-		void* operator new(size_t sz) noexcept { UNUSED(sz); return FreelistManager::Allocate<ToolHeater>(); }
+		void* operator new(size_t) noexcept { return FreelistManager::Allocate<ToolHeater>(); }
 		void operator delete(void* p) noexcept { FreelistManager::Release<ToolHeater>(p); }
 
 		uint8_t heaterIndex;	// This is the heater number
@@ -81,7 +77,7 @@ namespace OM {
 
 	struct Tool
 	{
-		void* operator new(size_t sz) noexcept { UNUSED(sz); return FreelistManager::Allocate<Tool>(); }
+		void* operator new(size_t) noexcept { return FreelistManager::Allocate<Tool>(); }
 		void operator delete(void* p) noexcept;
 
 		// tool number
@@ -106,7 +102,7 @@ namespace OM {
 
 	struct BedOrChamber
 	{
-		void* operator new(size_t sz) noexcept { UNUSED(sz); return FreelistManager::Allocate<BedOrChamber>(); }
+		void* operator new(size_t) noexcept { return FreelistManager::Allocate<BedOrChamber>(); }
 		void operator delete(void* p) noexcept { FreelistManager::Release<BedOrChamber>(p); }
 
 		// Index within configured heaters
@@ -123,7 +119,7 @@ namespace OM {
 	typedef BedOrChamber Bed;
 	typedef BedOrChamber Chamber;
 
-	typedef Vector<uint8_t, MaxSlots> HeaterSlots;
+	typedef Vector<uint8_t, MaxSlots> Slots;
 
 	Axis* GetAxis(const size_t index);
 	Axis* GetOrCreateAxis(const size_t index);
@@ -160,7 +156,7 @@ namespace OM {
 
 	void GetHeaterSlots(
 			const size_t heaterIndex,
-			HeaterSlots& heaterSlots,
+			Slots& slots,
 			const bool addTools = true,
 			const bool addBeds = true,
 			const bool addChambers = true);

@@ -116,6 +116,8 @@ struct StringTable
 	// Display dimmer types
 	CSTRING displayDimmingNames[(unsigned int)DisplayDimmerType::NumTypes];
 
+	CSTRING heaterCombineTypeNames[(unsigned int)HeaterCombineType::NumTypes];
+
 };
 
 const StringTable LanguageTables[NumLanguages] =
@@ -234,6 +236,12 @@ const StringTable LanguageTables[NumLanguages] =
 			"Never dim",
 			"Dim if idle",
 			"Always dim"
+		},
+
+		// Heater combine types
+		{
+			"Heat's not comb.",
+			"Heaters comb.",
 		}
  	},
 
@@ -350,6 +358,12 @@ const StringTable LanguageTables[NumLanguages] =
 			"Dimmen aus",
 			"Dim bei idle",				// shortened due to space limitations, ideally "Nur im Standby dimmen"
 			"Dimmen ein"
+		},
+
+		// Heater combine types
+		{
+			"Heat's not comb.",
+			"Heaters comb.",
 		}
 	},
 
@@ -466,6 +480,12 @@ const StringTable LanguageTables[NumLanguages] =
 			"Jamais Dim",
 			"Idle Dim",
 			"Toujours Dim"
+		},
+
+		// Heater combine types
+		{
+			"Heat's not comb.",
+			"Heaters comb.",
 		}
 	},
 
@@ -583,6 +603,12 @@ const StringTable LanguageTables[NumLanguages] =
 			"Atenuar en espera",
 			"Siempre Atenuar",
 		},
+
+		// Heater combine types
+		{
+			"Heat's not comb.",
+			"Heaters comb.",
+		}
 	},
 
 	// Czech
@@ -698,6 +724,12 @@ const StringTable LanguageTables[NumLanguages] =
 			"Nikdy neztlumit jas",
 			"Pohasnout při nečinnosti",
 			"Pohasnout vždy"
+		},
+
+		// Heater combine types
+		{
+			"Heat's not comb.",
+			"Heaters comb.",
 		}
 	},
 
@@ -815,6 +847,12 @@ const StringTable LanguageTables[NumLanguages] =
 			"Non attenuare",
 			"Attenua se idle",
 			"Attenua sempre"
+		},
+
+		// Heater combine types
+		{
+			"Heat's not comb.",
+			"Heaters comb.",
 		}
  	},
 
@@ -932,6 +970,12 @@ const StringTable LanguageTables[NumLanguages] =
 			"Ніколи не тьмяніти",
 			"Тьмяніти за бездіяльності",
 			"Завжди тьмяніти"
+		},
+
+		// Heater combine types
+		{
+			"Heat's not comb.",
+			"Heaters comb.",
 		}
 	}
 #endif

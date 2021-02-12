@@ -79,7 +79,7 @@ static StaticTextField *nameField, *statusField;
 static StaticTextField *screensaverText;
 static IntegerButton *activeTemps[MaxSlots], *standbyTemps[MaxSlots];
 static IntegerButton *spd, *extrusionFactors[MaxSlots], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton, *screensaverTimeoutButton, *feedrateAmountButton;
-static TextButton *languageButton, *coloursButton, *dimmingTypeButton;
+static TextButton *languageButton, *coloursButton, *dimmingTypeButton, *heaterCombiningButton;
 static TextButtonWithLabel *babystepAmountButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
@@ -434,6 +434,18 @@ void ChangeDisplayDimmerType()
 		newType = (DisplayDimmerType)0;
 	}
 	SetDisplayDimmerType(newType);
+}
+
+// Cyce through available heater combine types and repaint
+void ChangeHeaterCombineType()
+{
+	HeaterCombineType newType = (HeaterCombineType) ((uint8_t)GetHeaterCombineType() + 1);
+	if (newType == HeaterCombineType::NumTypes)
+	{
+		newType = (HeaterCombineType)0;
+	}
+	SetHeaterCombineType(newType);
+	UI::AllToolsSeen();
 }
 
 // Update an integer field, provided it isn't the one being adjusted
@@ -1077,6 +1089,8 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	feedrateAmountButton = AddIntegerButton(row7, 2, 3, strings->feedrate, nullptr, evSetFeedrate);
 	feedrateAmountButton->SetValue(GetFeedrate());
 
+	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
+
 	setupRoot = mgr.GetRoot();
 }
 
@@ -1300,7 +1314,7 @@ namespace UI
 
 	void UpdateCurrentTemperature(size_t heaterIndex, float fval)
 	{
-		OM::HeaterSlots heaterSlots;
+		OM::Slots heaterSlots;
 		OM::GetHeaterSlots(heaterIndex, heaterSlots);
 		if (heaterSlots.IsEmpty())
 		{
@@ -1315,7 +1329,7 @@ namespace UI
 
 	void UpdateHeaterStatus(const size_t heaterIndex, const HeaterStatus status)
 	{
-		OM::HeaterSlots heaterSlots;
+		OM::Slots heaterSlots;
 		OM::GetHeaterSlots(heaterIndex, heaterSlots);
 		if (heaterSlots.IsEmpty())
 		{
@@ -1793,12 +1807,15 @@ namespace UI
 		}
 
 		tool->UpdateTemp(toolHeaterIndex, temp, active);
-		UpdateField((active ? activeTemps : standbyTemps)[tool->slot + toolHeaterIndex], temp);
+		if (toolHeaterIndex == 0 || GetHeaterCombineType() == HeaterCombineType::notCombined)
+		{
+			UpdateField((active ? activeTemps : standbyTemps)[tool->slot + toolHeaterIndex], temp);
+		}
 	}
 
 	void UpdateTemperature(size_t heaterIndex, int ival, IntegerButton** fields)
 	{
-		OM::HeaterSlots heaterSlots;
+		OM::Slots heaterSlots;
 		OM::GetHeaterSlots(heaterIndex, heaterSlots, false);	// Ignore tools
 		if (heaterSlots.IsEmpty())
 		{
@@ -2136,20 +2153,29 @@ namespace UI
 								break;
 							}
 
-							// Find the slot for this button to determine which heater index it is
+							if (GetHeaterCombineType() == HeaterCombineType::combined)
 							{
-								size_t slot = GetButtonSlot(activeTemps, fieldBeingAdjusted.GetButton());
-								if (slot >= MaxSlots || (slot - tool->slot) >= MaxSlots)
-								{
-									break;
-								}
-								tool->UpdateTemp(slot - tool->slot, val, true);
+								tool->UpdateTemp(0, val, true);
+								SerialIo::Sendf("G10 P%d S%d\n", toolNumber, tool->heaters[0]->activeTemp);
 							}
-
-							String<maxUserCommandLength> heaterTemps;
-							if (tool->GetHeaterTemps(heaterTemps.GetRef(), true))
+							else
 							{
-								SerialIo::Sendf("G10 P%d S%s\n", toolNumber, heaterTemps.c_str());
+
+								// Find the slot for this button to determine which heater index it is
+								{
+									size_t slot = GetButtonSlot(activeTemps, fieldBeingAdjusted.GetButton());
+									if (slot >= MaxSlots || (slot - tool->slot) >= MaxSlots)
+									{
+										break;
+									}
+									tool->UpdateTemp(slot - tool->slot, val, true);
+								}
+
+								String<maxUserCommandLength> heaterTemps;
+								if (tool->GetHeaterTemps(heaterTemps.GetRef(), true))
+								{
+									SerialIo::Sendf("G10 P%d S%s\n", toolNumber, heaterTemps.c_str());
+								}
 							}
 						}
 						break;
@@ -2163,20 +2189,29 @@ namespace UI
 								break;
 							}
 
-							// Find the slot for this button to determine which heater index it is
+							if (GetHeaterCombineType() == HeaterCombineType::combined)
 							{
-								size_t slot = GetButtonSlot(standbyTemps, fieldBeingAdjusted.GetButton());
-								if (slot >= MaxSlots || (slot - tool->slot) >= MaxSlots)
-								{
-									break;
-								}
-								tool->UpdateTemp(slot - tool->slot, val, false);
+								tool->UpdateTemp(0, val, false);
+								SerialIo::Sendf("G10 P%d S%d\n", toolNumber, tool->heaters[0]->standbyTemp);
 							}
-
-							String<maxUserCommandLength> heaterTemps;
-							if (tool->GetHeaterTemps(heaterTemps.GetRef(), false))
+							else
 							{
-								SerialIo::Sendf("G10 P%d R%s\n", toolNumber, heaterTemps.c_str());
+
+								// Find the slot for this button to determine which heater index it is
+								{
+									size_t slot = GetButtonSlot(standbyTemps, fieldBeingAdjusted.GetButton());
+									if (slot >= MaxSlots || (slot - tool->slot) >= MaxSlots)
+									{
+										break;
+									}
+									tool->UpdateTemp(slot - tool->slot, val, false);
+								}
+
+								String<maxUserCommandLength> heaterTemps;
+								if (tool->GetHeaterTemps(heaterTemps.GetRef(), false))
+								{
+									SerialIo::Sendf("G10 P%d R%s\n", toolNumber, heaterTemps.c_str());
+								}
 							}
 						}
 						break;
@@ -2670,6 +2705,11 @@ namespace UI
 				dimmingTypeButton->SetText(strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()]);
 				break;
 
+			case evSetHeaterCombineType:
+				ChangeHeaterCombineType();
+				heaterCombiningButton->SetText(strings->heaterCombineTypeNames[(unsigned int)GetHeaterCombineType()]);
+				break;
+
 			case evYes:
 				CurrentButtonReleased();
 				mgr.ClearPopup();								// clear the yes/no popup
@@ -3080,18 +3120,34 @@ namespace UI
 				}
 				else if (hasHeater)
 				{
-					tool->IterateHeaters([&slot, &tool](OM::ToolHeater*, size_t)
+					if (GetHeaterCombineType() == HeaterCombineType::notCombined)
 					{
-						if (slot < MaxSlots)
+						tool->IterateHeaters([&slot, &tool](OM::ToolHeater*, size_t index)
 						{
-							ManageCurrentActiveStandbyFields(
-									slot,
-									true,
-									evAdjustToolActiveTemp, tool->index,
-									evAdjustToolStandbyTemp, tool->index);
-							++slot;
-						}
-					});
+							if (slot < MaxSlots)
+							{
+								if (index > 0)
+								{
+									mgr.Show(toolButtons[slot], false);
+								}
+								ManageCurrentActiveStandbyFields(
+										slot,
+										true,
+										evAdjustToolActiveTemp, tool->index,
+										evAdjustToolStandbyTemp, tool->index);
+								++slot;
+							}
+						});
+					}
+					else
+					{
+						ManageCurrentActiveStandbyFields(
+								slot,
+								true,
+								evAdjustToolActiveTemp, tool->index,
+								evAdjustToolStandbyTemp, tool->index);
+						++slot;
+					}
 				}
 				else
 				{

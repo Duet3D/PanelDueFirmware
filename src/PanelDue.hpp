@@ -26,7 +26,6 @@ extern void StartReceivedMessage();
 extern void EndReceivedMessage();
 extern void ParserErrorEncountered(const char* id, const char* data, const size_t indices[]);
 
-// Functions called from module UserInterface
 enum class DisplayDimmerType : uint8_t
 {
 	never = 0,				// never dim the display
@@ -35,6 +34,14 @@ enum class DisplayDimmerType : uint8_t
 	NumTypes
 };
 
+enum class HeaterCombineType : uint8_t
+{
+	notCombined = 0,
+	combined,
+	NumTypes
+};
+
+// Functions called from module UserInterface
 extern bool IsPrintingStatus(PrinterStatus status);
 extern bool PrintInProgress();
 extern PrinterStatus GetStatus();
@@ -68,6 +75,8 @@ extern uint8_t GetBabystepAmountIndex();
 extern void SetBabystepAmountIndex(uint8_t babystepAmountIndex);
 extern uint16_t GetFeedrate();
 extern void SetFeedrate(uint16_t feedrate);
+extern HeaterCombineType GetHeaterCombineType();
+extern void SetHeaterCombineType(HeaterCombineType combine);
 extern FirmwareFeatures GetFirmwareFeatures();
 extern const char* _ecv_array CondStripDrive(const char* _ecv_array arg);
 extern void Reconnect();

@@ -157,10 +157,10 @@ struct FlashData
 {
 	// The magic value should be changed whenever the layout of the NVRAM changes
 	// We now use a different magic value for each display size, to force the "touch the spot" screen to be displayed when you change the display size
-	static const uint32_t magicVal = 0x3AB63A40 + DISPLAY_TYPE;
+	static const uint32_t magicVal = 0x3AB64A40 + DISPLAY_TYPE;
 	static const uint32_t muggleVal = 0xFFFFFFFF;
 
-	uint32_t magic;
+	alignas(4) uint32_t magic;
 	uint32_t baudRate;
 	uint16_t xmin;
 	uint16_t xmax;
@@ -177,10 +177,10 @@ struct FlashData
 	uint32_t screensaverTimeout;
 	uint8_t babystepAmountIndex;
 	uint16_t feedrate;
-	uint8_t padding[1];
-	char dummy;								// must be at a multiple of 4 bytes from the start because flash is read/written in whole dwords
+	HeaterCombineType heaterCombineType;
+	alignas(4) char dummy;								// must be at a multiple of 4 bytes from the start because flash is read/written in whole dwords
 
-	FlashData() : magic(muggleVal) { }
+	FlashData() : magic(muggleVal) { SetDefaults(); }
 	bool operator==(const FlashData& other);
 	bool operator!=(const FlashData& other) { return !operator==(other); }
 	bool IsValid() const;
@@ -208,7 +208,8 @@ bool FlashData::IsValid() const
 		&& colourScheme < NumColourSchemes
 		&& displayDimmerType < DisplayDimmerType::NumTypes
 		&& babystepAmountIndex < ARRAY_SIZE(babystepAmounts)
-		&& feedrate > 0;
+		&& feedrate > 0
+		&& heaterCombineType < HeaterCombineType::NumTypes;
 }
 
 bool FlashData::operator==(const FlashData& other)
@@ -229,7 +230,8 @@ bool FlashData::operator==(const FlashData& other)
 		&& infoTimeout == other.infoTimeout
 		&& screensaverTimeout == other.screensaverTimeout
 		&& babystepAmountIndex == other.babystepAmountIndex
-		&& feedrate == other.feedrate;
+		&& feedrate == other.feedrate
+		&& heaterCombineType == other.heaterCombineType;
 }
 
 void FlashData::SetDefaults()
@@ -250,6 +252,7 @@ void FlashData::SetDefaults()
 	screensaverTimeout = DefaultScreensaverTimeout;
 	babystepAmountIndex = DefaultBabystepAmountIndex;
 	feedrate = DefaultFeedrate;
+	heaterCombineType = HeaterCombineType::notCombined;
 	magic = magicVal;
 }
 
@@ -1059,6 +1062,16 @@ uint16_t GetFeedrate()
 void SetFeedrate(uint16_t feedrate)
 {
 	nvData.feedrate = feedrate;
+}
+
+HeaterCombineType GetHeaterCombineType()
+{
+	return nvData.heaterCombineType;
+}
+
+void SetHeaterCombineType(HeaterCombineType combine)
+{
+	nvData.heaterCombineType = combine;
 }
 
 // Factory reset

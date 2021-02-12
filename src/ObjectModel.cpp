@@ -6,6 +6,7 @@
  */
 
 #include "ObjectModel.hpp"
+#include "PanelDue.hpp"
 
 typedef Vector<OM::Axis*, MaxTotalAxes> AxisList;
 typedef Vector<OM::Spindle*, MaxSlots> SpindleList;
@@ -395,7 +396,7 @@ namespace OM
 
 	void GetHeaterSlots(
 			const size_t heaterIndex,
-			HeaterSlots& heaterSlots,
+			Slots& slots,
 			const bool addTools,
 			const bool addBeds,
 			const bool addChambers)
@@ -403,35 +404,45 @@ namespace OM
 		if (addBeds)
 		{
 			IterateBeds(
-				[&heaterSlots, &heaterIndex](Bed* bed) {
+				[&slots, &heaterIndex](Bed* bed) {
 					if (bed->slot < MaxSlots && bed->heater == (int)heaterIndex)
 					{
-						heaterSlots.Add(bed->slot);
+						slots.Add(bed->slot);
 					}
 				});
 		}
 		if (addChambers)
 		{
 			IterateChambers(
-				[&heaterSlots, &heaterIndex](Chamber* chamber) {
+				[&slots, &heaterIndex](Chamber* chamber) {
 					if (chamber->slot < MaxSlots && chamber->heater == (int)heaterIndex)
 					{
-						heaterSlots.Add(chamber->slot);
+						slots.Add(chamber->slot);
 					}
 				});
 		}
 		if (addTools)
 		{
 			IterateTools(
-				[&heaterSlots, &heaterIndex](Tool* tool) {
+				[&slots, &heaterIndex](Tool* tool) {
 					if (tool->slot < MaxSlots)
 					{
-						tool->IterateHeaters([&tool, &heaterSlots, &heaterIndex](ToolHeater* th, size_t index) {
-							if (tool->slot + index < MaxSlots && th->heaterIndex == (int) heaterIndex)
+						if (GetHeaterCombineType() == HeaterCombineType::notCombined)
+						{
+							tool->IterateHeaters([&tool, &slots, &heaterIndex](ToolHeater* th, size_t index) {
+								if (tool->slot + index < MaxSlots && th->heaterIndex == (int) heaterIndex)
+								{
+									slots.Add(tool->slot + index);
+								}
+							});
+						}
+						else
+						{
+							if (tool->slot < MaxSlots && tool->heaters[0] != nullptr && tool->heaters[0]->heaterIndex == (int) heaterIndex)
 							{
-								heaterSlots.Add(tool->slot + index);
+								slots.Add(tool->slot);
 							}
-						});
+						}
 					}
 				});
 		}
