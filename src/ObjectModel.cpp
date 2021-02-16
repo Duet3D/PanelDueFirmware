@@ -324,16 +324,6 @@ namespace OM
 		Iterate(tools, func, startAt);
 	}
 
-	Tool* GetToolForExtruder(const size_t extruder)
-	{
-		return Find<ToolList, Tool>(tools, [extruder](Tool* tool) { return tool->extruder == (int)extruder; });
-	}
-
-	Tool* GetToolForFan(const size_t fan)
-	{
-		return Find<ToolList, Tool>(tools, [fan](Tool* tool) { return tool->fan == (int)fan; });
-	}
-
 	Bed* GetBed(const size_t index)
 	{
 		return GetOrCreate<BedList, Bed>(beds, index, false);
@@ -347,11 +337,6 @@ namespace OM
 	Bed* GetFirstBed()
 	{
 		return Find<BedList, Bed>(beds, [](Bed* bed) { return bed->heater > -1; });
-	}
-
-	Bed* GetBedForHeater(const size_t heater)
-	{
-		return Find<BedList, Bed>(beds, [heater](Bed* bed) { return bed->heater == (int)heater; });
 	}
 
 	size_t GetBedCount()
@@ -377,11 +362,6 @@ namespace OM
 	Chamber* GetFirstChamber()
 	{
 		return Find<ChamberList, Chamber>(chambers, [](Chamber* chamber) { return chamber->heater > -1; });
-	}
-
-	Chamber* GetChamberForHeater(const size_t heater)
-	{
-		return Find<ChamberList, Chamber>(chambers, [heater](Chamber* chamber) { return chamber->heater == (int)heater; });
 	}
 
 	size_t GetChamberCount()

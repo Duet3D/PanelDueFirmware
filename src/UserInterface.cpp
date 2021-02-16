@@ -1344,25 +1344,30 @@ namespace UI
 					: (status == HeaterStatus::fault)   ? colours->errorBackColour
 					: (status == HeaterStatus::tuning)  ? colours->tuningBackColour
 					: colours->defaultBackColour;
+		const Colour bOCBgColor = (backgroundColour == colours->defaultBackColour)
+			? colours->buttonImageBackColour
+			: backgroundColour;
 		const size_t count = heaterSlots.Size();
 		for (size_t i = 0; i < count; ++i)
 		{
-			currentTemps[heaterSlots[i]]->SetColours(foregroundColour, backgroundColour);
+			const size_t slot = heaterSlots[i];
+			currentTemps[slot]->SetColours(foregroundColour, backgroundColour);
 
 			// If it's a bed or a chamber we update colors for the tool button as well
-			OM::BedOrChamber* bedOrChamber = OM::GetBedForHeater(heaterIndex);
-			if (bedOrChamber == nullptr)
-			{
-				bedOrChamber = OM::GetChamberForHeater(heaterIndex);
-			}
-			if (bedOrChamber != nullptr)
-			{
-				bedOrChamber->heaterStatus = status;
-				const Colour bOCBgColor = (backgroundColour == colours->defaultBackColour)
-					? colours->buttonImageBackColour
-					: backgroundColour;
-				toolButtons[heaterSlots[i]]->SetColours(foregroundColour, bOCBgColor);
-			}
+			OM::IterateBeds([&heaterIndex, &status, &foregroundColour, &bOCBgColor, &slot](OM::Bed* bed) {
+				if (bed->heater == (int)heaterIndex)
+				{
+					bed->heaterStatus = status;
+					toolButtons[slot]->SetColours(foregroundColour, bOCBgColor);
+				}
+			});
+			OM::IterateChambers([&heaterIndex, &status, &foregroundColour, &bOCBgColor, &slot](OM::Chamber* chamber) {
+				if (chamber->heater == (int)heaterIndex)
+				{
+					chamber->heaterStatus = status;
+					toolButtons[slot]->SetColours(foregroundColour, bOCBgColor);
+				}
+			});
 		}
 	}
 
@@ -1788,11 +1793,23 @@ namespace UI
 	// Update the fan RPM
 	void UpdateFanPercent(size_t fanIndex, int rpm)
 	{
-		auto tool = OM::GetToolForFan(fanIndex);
-		if ((tool != nullptr && tool->index == currentTool)
-				|| (currentTool == NoTool && fanIndex == 0))
+		if (currentTool == NoTool)
 		{
-			UpdateField(fanSpeed, rpm);
+			if (fanIndex == 0)
+			{
+				UpdateField(fanSpeed, rpm);
+			}
+		}
+		else
+		{
+			// There might be multiple tools using the same fan and one of them might
+			// be the active one but not necessarily the first one so we need to iterate
+			OM::IterateTools([&fanIndex, &rpm](OM::Tool* tool) {
+				if (tool->index == currentTool && tool->fan == (int)fanIndex)
+				{
+					UpdateField(fanSpeed, rpm);
+				}
+			});
 		}
 	}
 
@@ -1843,14 +1860,12 @@ namespace UI
 	// Update an extrusion factor
 	void UpdateExtrusionFactor(size_t index, int ival)
 	{
-		auto tool = OM::GetToolForExtruder(index);
-		if (tool != nullptr)
-		{
-			if (tool->slot < MaxSlots)
+		OM::IterateTools([&index, &ival](OM::Tool* tool) {
+			if (tool->extruder == (int) index && tool->slot < MaxSlots)
 			{
 				UpdateField(extrusionFactors[tool->slot], ival);
 			}
-		}
+		});
 	}
 
 	// Update the print speed factor

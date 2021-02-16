@@ -133,15 +133,12 @@ namespace OM {
 
 	Tool* GetTool(const size_t index);
 	Tool* GetOrCreateTool(const size_t index);
-	Tool* GetToolForExtruder(const size_t extruder);
-	Tool* GetToolForFan(const size_t fan);
 	void IterateTools(stdext::inplace_function<void(Tool*)> func, const size_t startAt = 0);
 	size_t RemoveTool(const size_t index, const bool allFollowing);
 
 	Bed* GetBed(const size_t index);
 	Bed* GetOrCreateBed(const size_t index);
 	Bed* GetFirstBed();
-	Bed* GetBedForHeater(const size_t heater);
 	size_t GetBedCount();
 	void IterateBeds(stdext::inplace_function<void(Bed*)> func, const size_t startAt = 0);
 	size_t RemoveBed(const size_t index, const bool allFollowing);
@@ -149,7 +146,6 @@ namespace OM {
 	Chamber* GetChamber(const size_t index);
 	Chamber* GetOrCreateChamber(const size_t index);
 	Chamber* GetFirstChamber();
-	Chamber* GetChamberForHeater(const size_t heater);
 	size_t GetChamberCount();
 	void IterateChambers(stdext::inplace_function<void(Chamber*)> func, const size_t startAt = 0);
 	size_t RemoveChamber(const size_t index, const bool allFollowing);
