@@ -41,7 +41,7 @@
 #include "PrinterStatus.hpp"
 #include "ToolStatus.hpp"
 #include "UserInterface.hpp"
-#include "ObjectModel.hpp"
+#include <ObjectModel/ObjectModel.hpp>
 #include "ControlCommands.hpp"
 
 #ifdef OEM
@@ -401,7 +401,7 @@ enum ReceivedDataEvent
 	rcvSpindlesCurrent,
 	rcvSpindlesMax,
 	rcvSpindlesMin,
-	rcvSpindlesTool,
+	rcvSpindlesState,
 
 	// Keys from state response
 	rcvStateCurrentTool,
@@ -422,6 +422,8 @@ enum ReceivedDataEvent
 	rcvToolsHeaters,
 	rcvToolsOffsets,
 	rcvToolsNumber,
+	rcvToolsSpindle,
+	rcvToolsSpindleRpm,
 	rcvToolsStandby,
 	rcvToolsState,
 
@@ -506,7 +508,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvSpindlesCurrent,				"spindles^:current" },
 	{ rcvSpindlesMax, 					"spindles^:max" },
 	{ rcvSpindlesMin, 					"spindles^:min" },
-	{ rcvSpindlesTool, 					"spindles^:tool" },
+	{ rcvSpindlesState, 				"spindles^:state" },
 
 	// M409 K"state" response
 	{ rcvStateCurrentTool,				"state:currentTool" },
@@ -527,6 +529,8 @@ static FieldTableEntry fieldTable[] =
 	{ rcvToolsHeaters,					"tools^:heaters^" },
 	{ rcvToolsNumber, 					"tools^:number" },
 	{ rcvToolsOffsets, 					"tools^:offsets^" },
+	{ rcvToolsSpindle, 					"tools^:spindle" },
+	{ rcvToolsSpindleRpm,				"tools^:spindleRpm" },
 	{ rcvToolsStandby, 					"tools^:standby^" },
 	{ rcvToolsState, 					"tools^:state" },
 
@@ -1930,14 +1934,19 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		}
 		break;
 
-	case rcvSpindlesTool:
+	case rcvSpindlesState:
 		ShowLine;
 		{
-			int32_t toolNumber;
-			if (GetInteger(data, toolNumber))
-			{
-				UI::SetSpindleTool(indices[0], toolNumber);
-			}
+			const OM::SpindleStateMapEntry key = (OM::SpindleStateMapEntry) {data, OM::SpindleState::stopped};
+			const OM::SpindleStateMapEntry * statusFromMap =
+					(OM::SpindleStateMapEntry *) bsearch(
+							&key,
+							OM::spindleStateMap,
+							ARRAY_SIZE(OM::spindleStateMap),
+							sizeof(OM::SpindleStateMapEntry),
+							compare<OM::SpindleStateMapEntry>);
+			const OM::SpindleState state = (statusFromMap != nullptr) ? statusFromMap->val : OM::SpindleState::stopped;
+			UI::SetSpindleState(indices[0], state);
 		}
 		break;
 
@@ -2113,6 +2122,17 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 			if (GetFloat(data, offset))
 			{
 				UI::SetToolOffset(indices[0], indices[1], offset);
+			}
+		}
+		break;
+
+	case rcvToolsSpindle:
+		ShowLine;
+		{
+			int32_t spindleNumber;
+			if (GetInteger(data, spindleNumber))
+			{
+				UI::SetToolSpindle(indices[0], spindleNumber);
 			}
 		}
 		break;

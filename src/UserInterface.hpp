@@ -15,6 +15,7 @@
 #include "Events.hpp"
 #include "HeaterStatus.hpp"
 #include "ToolStatus.hpp"
+#include <ObjectModel/Spindle.hpp>
 
 extern IntegerField *freeMem;
 extern StaticTextField *debugField;
@@ -95,15 +96,16 @@ namespace UI
 	extern void SetToolExtruder(size_t toolIndex, int8_t extruder);
 	extern void SetToolFan(size_t toolIndex, int8_t fan);
 	extern void SetToolHeater(size_t toolIndex, uint8_t toolHeaterIndex, int8_t heaterIndex);
+	extern void SetToolSpindle(int8_t toolIndex, int8_t spindleNumber);
 	extern bool RemoveToolHeaters(const size_t toolIndex, const uint8_t firstIndexToDelete);
 	extern void SetToolOffset(size_t toolIndex, size_t axisIndex, float offset);
 
 	extern void SetBedOrChamberHeater(const uint8_t heaterIndex, const int8_t heaterNumber, bool bed = true);
 
-	extern void SetSpindleActive(size_t index, uint16_t active);
-	extern void SetSpindleCurrent(size_t index, uint16_t current);
-	extern void SetSpindleLimit(size_t index, uint16_t value, bool max);
-	extern void SetSpindleTool(int8_t spindle, int8_t toolIndex);
+	extern void SetSpindleActive(size_t spindleIndex, uint32_t activeRpm);
+	extern void SetSpindleCurrent(size_t spindleIndex, uint32_t currentRpm);
+	extern void SetSpindleLimit(size_t spindleIndex, uint32_t value, bool max);
+	extern void SetSpindleState(size_t spindleIndex, OM::SpindleState state);
 }
 
 #endif /* SRC_USERINTERFACE_HPP_ */

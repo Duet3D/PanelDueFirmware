@@ -23,7 +23,7 @@
 #include "Hardware/SysTick.hpp"
 #include "Strings.hpp"
 #include "Version.hpp"
-#include "ObjectModel.hpp"
+#include <ObjectModel/ObjectModel.hpp>
 
 // Public fields
 TextField *fwVersionField, *userCommandField;
@@ -2171,7 +2171,7 @@ namespace UI
 							if (GetHeaterCombineType() == HeaterCombineType::combined)
 							{
 								tool->UpdateTemp(0, val, true);
-								SerialIo::Sendf("G10 P%d S%d\n", toolNumber, tool->heaters[0]->activeTemp);
+								SerialIo::Sendf("M568 P%d S%d\n", toolNumber, tool->heaters[0]->activeTemp);
 							}
 							else
 							{
@@ -2189,7 +2189,7 @@ namespace UI
 								String<maxUserCommandLength> heaterTemps;
 								if (tool->GetHeaterTemps(heaterTemps.GetRef(), true))
 								{
-									SerialIo::Sendf("G10 P%d S%s\n", toolNumber, heaterTemps.c_str());
+									SerialIo::Sendf("M568 P%d S%s\n", toolNumber, heaterTemps.c_str());
 								}
 							}
 						}
@@ -2207,7 +2207,7 @@ namespace UI
 							if (GetHeaterCombineType() == HeaterCombineType::combined)
 							{
 								tool->UpdateTemp(0, val, false);
-								SerialIo::Sendf("G10 P%d S%d\n", toolNumber, tool->heaters[0]->standbyTemp);
+								SerialIo::Sendf("M568 P%d S%d\n", toolNumber, tool->heaters[0]->standbyTemp);
 							}
 							else
 							{
@@ -2225,7 +2225,7 @@ namespace UI
 								String<maxUserCommandLength> heaterTemps;
 								if (tool->GetHeaterTemps(heaterTemps.GetRef(), false))
 								{
-									SerialIo::Sendf("G10 P%d R%s\n", toolNumber, heaterTemps.c_str());
+									SerialIo::Sendf("M568 P%d R%s\n", toolNumber, heaterTemps.c_str());
 								}
 							}
 						}
@@ -2298,7 +2298,7 @@ namespace UI
 							newValue = constrain<int>(newValue, -spindle->max, spindle->max);
 
 							// If a change will lead us below the min speed for spindle skip to the other side
-							if (newValue > -spindle->min && newValue < spindle->min)
+							if (newValue > (int)-spindle->min && newValue < (int)spindle->min)
 							{
 								newValue = (change < 0) ? -spindle->min : spindle->min;
 							}
@@ -3203,44 +3203,52 @@ namespace UI
 		AdjustControlPageMacroButtons();
 	}
 
-	void SetSpindleActive(size_t index, uint16_t active)
+	void SetSpindleActive(size_t spindleIndex, uint32_t activeRpm)
 	{
-		auto spindle = OM::GetOrCreateSpindle(index);
+		auto spindle = OM::GetOrCreateSpindle(spindleIndex);
 		if (spindle == nullptr)
 		{
 			return;
 		}
-		spindle->active = active;
-		if (spindle->tool > -1)
-		{
-			auto tool = OM::GetTool(spindle->tool);
-			if (tool != nullptr && tool->slot < MaxSlots)
+		spindle->active = activeRpm;
+		OM::IterateTools([spindleIndex](OM::Tool* tool) {
+			if (tool->slot < MaxSlots && tool->spindle != nullptr && tool->spindle->index == spindleIndex)
 			{
-				activeTemps[tool->slot]->SetValue((int)active);
+				activeTemps[tool->slot]->SetValue(tool->spindle->active);
 			}
-		}
+		});
 	}
 
-	void SetSpindleCurrent(size_t index, uint16_t current)
+	void UpdateSpindleCurrent(OM::Spindle* spindle)
 	{
-		auto spindle = OM::GetOrCreateSpindle(index);
+		OM::IterateTools([spindle](OM::Tool* tool) {
+			if (tool->slot < MaxSlots && tool->spindle == spindle)
+			{
+				const OM::SpindleState state = spindle->state;
+				currentTemps[tool->slot]->SetValue(
+						(state == OM::SpindleState::stopped)
+							? 0
+							: (state == OM::SpindleState::forward)
+							  	  ? spindle->current
+							  	  : -spindle->current);
+			}
+		});
+	}
+
+	void SetSpindleCurrent(size_t spindleIndex, uint32_t current)
+	{
+		auto spindle = OM::GetOrCreateSpindle(spindleIndex);
 		if (spindle == nullptr)
 		{
 			return;
 		}
-		if (spindle->tool > -1)
-		{
-			auto tool = OM::GetTool(spindle->tool);
-			if (tool != nullptr && tool->slot < MaxSlots)
-			{
-				currentTemps[tool->slot]->SetValue(current);
-			}
-		}
+		spindle->current = current;
+		UpdateSpindleCurrent(spindle);
 	}
 
-	void SetSpindleLimit(size_t index, uint16_t value, bool max)
+	void SetSpindleLimit(size_t spindleIndex, uint32_t value, bool max)
 	{
-		OM::Spindle *spindle = OM::GetOrCreateSpindle(index);		if (spindle != nullptr)
+		OM::Spindle *spindle = OM::GetOrCreateSpindle(spindleIndex);		if (spindle != nullptr)
 		{
 			if (max)
 			{
@@ -3250,6 +3258,21 @@ namespace UI
 			{
 				spindle->min = value;
 			}
+		}
+	}
+
+	void SetSpindleState(size_t spindleIndex, OM::SpindleState state)
+	{
+		OM::Spindle* spindle = OM::GetOrCreateSpindle(spindleIndex);
+		if (spindle == nullptr)
+		{
+			return;
+		}
+		const bool changed = spindle->state != state;
+		spindle->state = state;
+		if (changed)
+		{
+			UpdateSpindleCurrent(spindle);
 		}
 	}
 
@@ -3324,30 +3347,26 @@ namespace UI
 		}
 	}
 
-	void SetSpindleTool(int8_t spindle, int8_t toolIndex)
+	void SetToolSpindle(int8_t toolIndex, int8_t spindleNumber)
 	{
-		auto sp = OM::GetOrCreateSpindle(spindle);
-		if (sp == nullptr)
+		// FIXME: this does only work for the new approach but no longer with the old one
+		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+		if (tool == nullptr)
 		{
 			return;
 		}
-		sp->tool = toolIndex;
-		if (toolIndex == -1)
+		if (spindleNumber == -1)
 		{
-			OM::IterateTools([&sp](OM::Tool* tool) {
-				if (tool->spindle == sp)
-				{
-					tool->spindle = nullptr;
-				}
-			});
+			tool->spindle = nullptr;
 		}
 		else
 		{
-			OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
-			if (tool != nullptr)
+			OM::Spindle* spindle = OM::GetSpindle(spindleNumber);
+			if (spindle == nullptr)
 			{
-				tool->spindle = sp;
+				return;
 			}
+			tool->spindle = spindle;
 		}
 	}
 
