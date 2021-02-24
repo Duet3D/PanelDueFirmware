@@ -89,7 +89,7 @@ void DisplayField::SetPosition(PixelNumber x, PixelNumber y)
 {
 	lcd.setFont(DisplayField::defaultFont);
 	lcd.setTextPos(0, 9999, maxWidth);
-	lcd.printf(s);						// dummy print to get text width
+	lcd.printf("%s", s);						// dummy print to get text width
 	return lcd.getTextX();
 }
 
@@ -606,11 +606,11 @@ void TextField::PrintText() const
 {
 	if (label != nullptr)
 	{
-		lcd.printf(label);
+		lcd.printf("%s", label);
 	}
 	if (text != nullptr)
 	{
-		lcd.printf(text);
+		lcd.printf("%s", text);
 	}
 }
 
@@ -618,12 +618,12 @@ void FloatField::PrintText() const
 {
 	if (label != nullptr)
 	{
-		lcd.printf(label);
+		lcd.printf("%s", label);
 	}
 	lcd.printf("%.*f", numDecimals, val);
 	if (units != nullptr)
 	{
-		lcd.printf(units);
+		lcd.printf("%s", units);
 	}
 }
 
@@ -631,12 +631,12 @@ void IntegerField::PrintText() const
 {
 	if (label != nullptr)
 	{
-		lcd.printf(label);
+		lcd.printf("%s", label);
 	}
 	lcd.printf("%d", val);
 	if (units != nullptr)
 	{
-		lcd.printf(units);
+		lcd.printf("%s", units);
 	}
 }
 
@@ -644,7 +644,7 @@ void StaticTextField::PrintText() const
 {
 	if (text != nullptr)
 	{
-		lcd.printf(text);
+		lcd.printf("%s", text);
 	}
 }
 
@@ -773,7 +773,7 @@ size_t TextButton::PrintText(size_t offset) const
 {
 	if (text != nullptr)
 	{
-		return lcd.printf(text + offset);
+		return lcd.printf("%s", text + offset);
 	}
 	return 0;
 }
@@ -793,7 +793,7 @@ size_t TextButtonWithLabel::PrintText(size_t offset) const
 	size_t w = 0;
 	if (label != nullptr)
 	{
-		w += lcd.printf(label);
+		w += lcd.printf("%s", label);
 	}
 	w += TextButton::PrintText(offset);
 	return w;
@@ -853,7 +853,7 @@ size_t IconButtonWithText::PrintText() const
 	}
 	if (text != nullptr)
 	{
-		ret += lcd.printf(text);
+		ret += lcd.printf("%s", text);
 	}
 	else {
 		ret += lcd.printf("%d", val);
@@ -896,12 +896,12 @@ size_t IntegerButton::PrintText(size_t offset) const
 	size_t ret = 0;
 	if (label != nullptr)
 	{
-		ret += lcd.printf(label);
+		ret += lcd.printf("%s", label);
 	}
 	ret += lcd.printf("%d", val);
 	if (units != nullptr)
 	{
-		ret += lcd.printf(units);
+		ret += lcd.printf("%s", units);
 	}
 	return ret;
 }
@@ -912,7 +912,7 @@ size_t FloatButton::PrintText(size_t offset) const
 	size_t ret = lcd.printf("%.*f", numDecimals, val);
 	if (units != nullptr)
 	{
-		ret += lcd.printf(units);
+		ret += lcd.printf("%s", units);
 	}
 	return ret;
 }
