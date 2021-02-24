@@ -12,12 +12,16 @@
 #include "Spindle.hpp"
 #include "ToolStatus.hpp"
 #include "UserInterfaceConstants.hpp"
+#include <General/Bitmap.h>
 #include <General/FreelistManager.h>
 #include <General/StringRef.h>
 #include <General/inplace_function.h>
 
 namespace OM
 {
+	typedef Bitmap<uint8_t> ExtrudersBitmap;		// Type of a bitmap representing a set of extruder drive numbers
+	typedef Bitmap<uint16_t> FansBitmap;			// Type of a bitmap representing a set of fan numbers
+
 	struct ToolHeater
 	{
 		void* operator new(size_t) noexcept { return FreelistManager::Allocate<ToolHeater>(); }
@@ -38,10 +42,10 @@ namespace OM
 		// tool number
 		uint8_t index;
 		ToolHeater* heaters[MaxHeatersPerTool];
-		int8_t extruder;			// only look at the first extruder as we only display one
+		ExtrudersBitmap extruders;
+		FansBitmap fans;
 		Spindle* spindle;
 		int32_t spindleRpm;
-		int8_t fan;
 		float offsets[MaxTotalAxes];
 		ToolStatus status;
 		uint8_t slot;
@@ -58,7 +62,7 @@ namespace OM
 
 	Tool* GetTool(const size_t index);
 	Tool* GetOrCreateTool(const size_t index);
-	void IterateTools(stdext::inplace_function<void(Tool*)> func, const size_t startAt = 0);
+	bool IterateToolsWhile(stdext::inplace_function<bool(Tool*&, size_t)> func, const size_t startAt = 0);
 	size_t RemoveTool(const size_t index, const bool allFollowing);
 }
 

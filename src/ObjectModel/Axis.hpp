@@ -46,8 +46,7 @@ namespace OM
 
 	Axis* GetAxis(const size_t index);
 	Axis* GetOrCreateAxis(const size_t index);
-	void IterateAxes(stdext::inplace_function<void(Axis*)> func, const size_t startAt = 0);
-	bool IterateAxesWhile(stdext::inplace_function<bool(Axis*)> func, const size_t startAt = 0);
+	bool IterateAxesWhile(stdext::inplace_function<bool(Axis*&, size_t)> func, const size_t startAt = 0);
 	size_t RemoveAxis(const size_t index, const bool allFollowing);
 }
 

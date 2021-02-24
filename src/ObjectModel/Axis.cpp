@@ -48,14 +48,9 @@ namespace OM
 		return GetOrCreate<AxisList, Axis>(axes, index, true);
 	}
 
-	void IterateAxes(stdext::inplace_function<void(Axis*)> func, const size_t startAt)
+	bool IterateAxesWhile(stdext::inplace_function<bool(Axis*&, size_t)> func, const size_t startAt)
 	{
-		Iterate(axes, func, startAt);
-	}
-
-	bool IterateAxesWhile(stdext::inplace_function<bool(Axis*)> func, const size_t startAt)
-	{
-		return IterateWhile(axes, func, startAt);
+		return axes.IterateWhile(func, startAt);
 	}
 
 	size_t RemoveAxis(const size_t index, const bool allFollowing)

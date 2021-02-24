@@ -72,15 +72,15 @@ const uint32_t shortTouchDelay = 100;				// how long we ignore new touches while
 struct HostFirmwareType
 {
 	const char* _ecv_array const name;
-	const FirmwareFeatures features;
+	FirmwareFeatureMap features;
 };
 
 const HostFirmwareType firmwareTypes[] =
 {
-	{ "RepRapFirmware", quoteFilenames },
-	{ "Smoothie", 	noGcodesFolder | noStandbyTemps | noG10Temps | noDriveNumber | noM20M36 },
-	{ "Repetier", 	noGcodesFolder | noStandbyTemps | noG10Temps },
-	{ "Marlin",		noGcodesFolder | noStandbyTemps | noG10Temps }
+	{ "RepRapFirmware", FirmwareFeatureMap::MakeFromRaw(1 << quoteFilenames) },
+	{ "Smoothie", 		FirmwareFeatureMap::MakeFromRaw(1 << noGcodesFolder | 1 << noStandbyTemps | 1 << noG10Temps | 1 << noDriveNumber | 1 << noM20M36) },
+	{ "Repetier", 		FirmwareFeatureMap::MakeFromRaw(1 << noGcodesFolder | 1 << noStandbyTemps | 1 << noG10Temps) },
+	{ "Marlin",			FirmwareFeatureMap::MakeFromRaw(1 << noGcodesFolder | 1 << noStandbyTemps | 1 << noG10Temps) }
 };
 
 // Variables
@@ -127,7 +127,7 @@ static uint32_t lastOutOfBufferResponse = 0;
 static uint8_t oobCounter = 0;
 static bool outOfBuffers = false;
 static uint32_t lastActionTime = 0;							// the last time anything significant happened
-static FirmwareFeatures firmwareFeatures = 0;
+static FirmwareFeatureMap firmwareFeatures;
 static bool isDimmed = false;								// true if we have dimmed the display
 static bool screensaverActive = false;						// true if screensaver is active
 static bool isDelta = false;
@@ -402,6 +402,7 @@ enum ReceivedDataEvent
 	rcvSpindlesMax,
 	rcvSpindlesMin,
 	rcvSpindlesState,
+	rcvSpindlesTool,
 
 	// Keys from state response
 	rcvStateCurrentTool,
@@ -509,6 +510,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvSpindlesMax, 					"spindles^:max" },
 	{ rcvSpindlesMin, 					"spindles^:min" },
 	{ rcvSpindlesState, 				"spindles^:state" },
+	{ rcvSpindlesTool,	 				"spindles^:tool" },
 
 	// M409 K"state" response
 	{ rcvStateCurrentTool,				"state:currentTool" },
@@ -740,7 +742,7 @@ const OMRequestParams* GetNextToPoll()
 }
 
 // Return the host firmware features
-FirmwareFeatures GetFirmwareFeatures()
+FirmwareFeatureMap GetFirmwareFeatures()
 {
 	return firmwareFeatures;
 }
@@ -748,7 +750,7 @@ FirmwareFeatures GetFirmwareFeatures()
 // Strip the drive letter prefix from a file path if the host firmware doesn't support it
 const char* _ecv_array CondStripDrive(const char* _ecv_array arg)
 {
-	return ((firmwareFeatures & noDriveNumber) != 0 && isdigit(arg[0]) && arg[1] == ':')
+	return ((firmwareFeatures.IsBitSet(noDriveNumber)) != 0 && isdigit(arg[0]) && arg[1] == ':')
 			? arg + 2
 			: arg;
 }
@@ -1569,7 +1571,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 			{
 				if (stringStartsWith(data, firmwareTypes[i].name))
 				{
-					const FirmwareFeatures newFeatures = firmwareTypes[i].features;
+					const FirmwareFeatureMap newFeatures = firmwareTypes[i].features;
 					if (newFeatures != firmwareFeatures)
 					{
 						firmwareFeatures = newFeatures;
@@ -1892,9 +1894,13 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	case rcvSpindlesActive:
 		ShowLine;
 		{
-			uint32_t active;
-			if (GetUnsignedInteger(data, active))
+			int32_t active;
+			if (GetInteger(data, active))
 			{
+				if (active < 0)
+				{
+					firmwareFeatures.SetBit(m568TempAndRPM);
+				}
 				UI::SetSpindleActive(indices[0], active);
 			}
 
@@ -1909,9 +1915,13 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	case rcvSpindlesCurrent:
 		ShowLine;
 		{
-			uint32_t current;
-			if (GetUnsignedInteger(data, current))
+			int32_t current;
+			if (GetInteger(data, current))
 			{
+				if (current < 0)
+				{
+					firmwareFeatures.SetBit(m568TempAndRPM);
+				}
 				UI::SetSpindleCurrent(indices[0], current);
 			}
 		}
@@ -1947,6 +1957,18 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 							compare<OM::SpindleStateMapEntry>);
 			const OM::SpindleState state = (statusFromMap != nullptr) ? statusFromMap->val : OM::SpindleState::stopped;
 			UI::SetSpindleState(indices[0], state);
+		}
+		break;
+
+	case rcvSpindlesTool:
+		ShowLine;
+		{
+			int32_t toolNumber;
+			if (GetInteger(data, toolNumber))
+			{
+				firmwareFeatures.ClearBit(m568TempAndRPM);
+				UI::SetSpindleTool(indices[0], toolNumber);
+			}
 		}
 		break;
 
@@ -2062,12 +2084,8 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	case rcvToolsExtruders:
 		ShowLine;
 		{
-			if (indices[1] > 0)
-			{
-				break;
-			}
-			int32_t extruder;
-			if (GetInteger(data, extruder))
+			uint32_t extruder;
+			if (GetUnsignedInteger(data, extruder))
 			{
 				UI::SetToolExtruder(indices[0], extruder);
 			}
@@ -2077,12 +2095,8 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	case rcvToolsFans:
 		ShowLine;
 		{
-			if (indices[1] > 0)
-			{
-				break;
-			}
-			int32_t fan;
-			if (GetInteger(data, fan))
+			uint32_t fan;
+			if (GetUnsignedInteger(data, fan))
 			{
 				UI::SetToolFan(indices[0], fan);
 			}
@@ -2096,8 +2110,8 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 			{
 				break;
 			}
-			int32_t heaterIndex;
-			if (GetInteger(data, heaterIndex))
+			uint32_t heaterIndex;
+			if (GetUnsignedInteger(data, heaterIndex))
 			{
 				UI::SetToolHeater(indices[0], indices[1], heaterIndex);
 			}
@@ -2132,6 +2146,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 			int32_t spindleNumber;
 			if (GetInteger(data, spindleNumber))
 			{
+				firmwareFeatures.SetBit(m568TempAndRPM);
 				UI::SetToolSpindle(indices[0], spindleNumber);
 			}
 		}
@@ -2511,15 +2526,6 @@ int main(void)
 
 	MessageLog::Init();
 
-#ifdef OEM
-	// Display the splash screen unless it was a software reset (we use software reset to change the language or colour scheme)
-	if (rstc_get_reset_cause(RSTC) != RSTC_SOFTWARE_RESET)
-	{
-		lcd.fillScr(black);
-		lcd.drawCompressedBitmapBottomToTop(0, 0, DISPLAY_X, DISPLAY_Y, splashScreenImage);
-		Delay(5000);								// hold it there for 5 seconds
-	}
-#else
 	// Display the splash screen if one has been appended to the file, unless it was a software reset (we use software reset to change the language or colour scheme)
 	// The splash screen data comprises the number of X pixels, then the number of Y pixels, then the data
 	if (rstc_get_reset_cause(RSTC) != RSTC_SOFTWARE_RESET && _esplash[0] == DISPLAY_X && _esplash[1] == DISPLAY_Y)
@@ -2536,7 +2542,6 @@ int main(void)
 			}
 		} while (SystemTick::GetTickCount() - now < 5000);		// hold it there for 5 seconds or until touched
 	}
-#endif
 
 	mgr.Refresh(true);								// draw the screen for the first time
 	UI::UpdatePrintingFields();

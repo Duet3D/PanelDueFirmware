@@ -46,9 +46,9 @@ namespace OM
 		return beds.Size();
 	}
 
-	void IterateBeds(stdext::inplace_function<void(Bed*)> func, const size_t startAt)
+	bool IterateBedsWhile(stdext::inplace_function<bool(Bed*&, size_t)> func, const size_t startAt)
 	{
-		Iterate(beds, func, startAt);
+		return beds.IterateWhile(func, startAt);
 	}
 
 	size_t RemoveBed(const size_t index, const bool allFollowing)
@@ -76,9 +76,9 @@ namespace OM
 		return chambers.Size();
 	}
 
-	void IterateChambers(stdext::inplace_function<void(Chamber*)> func, const size_t startAt)
+	bool IterateChambersWhile(stdext::inplace_function<bool(Chamber*&, size_t)> func, const size_t startAt)
 	{
-		Iterate(chambers, func, startAt);
+		return chambers.IterateWhile(func, startAt);
 	}
 
 	size_t RemoveChamber(const size_t index, const bool allFollowing)

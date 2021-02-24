@@ -77,7 +77,7 @@ extern uint16_t GetFeedrate();
 extern void SetFeedrate(uint16_t feedrate);
 extern HeaterCombineType GetHeaterCombineType();
 extern void SetHeaterCombineType(HeaterCombineType combine);
-extern FirmwareFeatures GetFirmwareFeatures();
+extern FirmwareFeatureMap GetFirmwareFeatures();
 extern const char* _ecv_array CondStripDrive(const char* _ecv_array arg);
 extern void Reconnect();
 extern void Delay(uint32_t milliSeconds);

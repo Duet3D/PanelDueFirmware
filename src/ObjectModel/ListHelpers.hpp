@@ -51,36 +51,6 @@ T* Find(L& list, stdext::inplace_function<bool(T*)> filter)
 }
 
 template<typename L, typename T>
-void Iterate(L& list, stdext::inplace_function<void(T*)> func, const size_t startAt)
-{
-	const size_t count = list.Size();
-	for (size_t i = 0; i < count; ++i)
-	{
-		if (list[i]->index >= startAt)
-		{
-			func(list[i]);
-		}
-	}
-}
-
-template<typename L, typename T>
-bool IterateWhile(L& list, stdext::inplace_function<bool(T*)> func, const size_t startAt)
-{
-	const size_t count = list.Size();
-	for (size_t i = 0; i < count; ++i)
-	{
-		if (list[i]->index >= startAt)
-		{
-			if(!func(list[i]))
-			{
-				return false;
-			}
-		}
-	}
-	return true;
-}
-
-template<typename L, typename T>
 size_t Remove(L& list, const size_t index, const bool allFollowing)
 {
 	// Nothing to do on an empty list or

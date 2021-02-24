@@ -142,7 +142,7 @@ namespace SerialIo
 
 	void SendFilename(const char * _ecv_array dir, const char * _ecv_array name)
 	{
-		const char* quote = (GetFirmwareFeatures() & quoteFilenames) ? "\"" : "";
+		const char* quote = GetFirmwareFeatures().IsBitSet(quoteFilenames) ? "\"" : "";
 		Sendf("%s%s%s%s%s",
 				quote,
 				dir,

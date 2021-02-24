@@ -395,7 +395,7 @@ PopupWindow *CreateIntPopupBar(const ColourScheme& colours, PixelNumber width, u
 // The M23 and M30 commands don't work if we send the full path, because "0:/gcodes/" gets prepended regardless.
 const char * _ecv_array StripPrefix(const char * _ecv_array dir)
 {
-	if ((GetFirmwareFeatures() && noGcodesFolder) == 0)			// if running RepRapFirmware
+	if (!GetFirmwareFeatures().IsBitSet(noGcodesFolder))			// if running RepRapFirmware
 	{
 		const size_t len = strlen(dir);
 		if (len >= 8 && memcmp(dir, "/gcodes/", 8) == 0)
@@ -1354,19 +1354,23 @@ namespace UI
 			currentTemps[slot]->SetColours(foregroundColour, backgroundColour);
 
 			// If it's a bed or a chamber we update colors for the tool button as well
-			OM::IterateBeds([&heaterIndex, &status, &foregroundColour, &bOCBgColor, &slot](OM::Bed* bed) {
+			OM::IterateBedsWhile([&heaterIndex, &status, &foregroundColour, &bOCBgColor, &slot](OM::Bed*& bed, size_t) {
 				if (bed->heater == (int)heaterIndex)
 				{
 					bed->heaterStatus = status;
 					toolButtons[slot]->SetColours(foregroundColour, bOCBgColor);
+					return false;
 				}
+				return true;
 			});
-			OM::IterateChambers([&heaterIndex, &status, &foregroundColour, &bOCBgColor, &slot](OM::Chamber* chamber) {
+			OM::IterateChambersWhile([&heaterIndex, &status, &foregroundColour, &bOCBgColor, &slot](OM::Chamber*& chamber, size_t) {
 				if (chamber->heater == (int)heaterIndex)
 				{
 					chamber->heaterStatus = status;
 					toolButtons[slot]->SetColours(foregroundColour, bOCBgColor);
+					return false;
 				}
+				return true;
 			});
 		}
 	}
@@ -1696,12 +1700,12 @@ namespace UI
 			isDelta = p_isDelta;
 			FileManager::RefreshMacrosList();
 			numDisplayedAxes = 0;
-			OM::IterateAxes([](OM::Axis* axis)
+			OM::IterateAxesWhile([](OM::Axis*& axis, size_t)
 			{
 				axis->slot = MaxTotalAxes;
 				if (!axis->visible)
 				{
-					return;
+					return true;
 				}
 				if (numDisplayedAxes < MaxDisplayableAxes)
 				{
@@ -1730,6 +1734,7 @@ namespace UI
 				{
 					babystepOffsetField->SetValue(axis->babystep);
 				}
+				return true;
 			});
 			// Hide axes possibly shown before
 			for (size_t i = numDisplayedAxes; i < MaxDisplayableAxes; ++i)
@@ -1743,7 +1748,7 @@ namespace UI
 	void UpdateAllHomed()
 	{
 		bool allHomed = true;
-		OM::IterateAxesWhile([&allHomed](OM::Axis* axis) {
+		OM::IterateAxesWhile([&allHomed](OM::Axis*& axis, size_t) {
 			if (axis->visible && !axis->homed)
 			{
 				allHomed = false;
@@ -1804,11 +1809,12 @@ namespace UI
 		{
 			// There might be multiple tools using the same fan and one of them might
 			// be the active one but not necessarily the first one so we need to iterate
-			OM::IterateTools([&fanIndex, &rpm](OM::Tool* tool) {
-				if (tool->index == currentTool && tool->fan == (int)fanIndex)
+			OM::IterateToolsWhile([&fanIndex, &rpm](OM::Tool*& tool, size_t) {
+				if (tool->index == currentTool && tool->fans.IsBitSet(fanIndex) && tool->fans.LowestSetBit() == fanIndex)
 				{
 					UpdateField(fanSpeed, rpm);
 				}
+				return true;
 			});
 		}
 	}
@@ -1860,11 +1866,12 @@ namespace UI
 	// Update an extrusion factor
 	void UpdateExtrusionFactor(size_t index, int ival)
 	{
-		OM::IterateTools([&index, &ival](OM::Tool* tool) {
-			if (tool->extruder == (int) index && tool->slot < MaxSlots)
+		OM::IterateToolsWhile([&index, &ival](OM::Tool*& tool, size_t) {
+			if (tool->extruders.IsBitSet(index) && tool->slot < MaxSlots)
 			{
 				UpdateField(extrusionFactors[tool->slot], ival);
 			}
+			return tool->slot < MaxSlots;
 		});
 	}
 
@@ -2035,12 +2042,12 @@ namespace UI
 	}
 
 	// This is called when the host firmware changes
-	void FirmwareFeaturesChanged(FirmwareFeatures newFeatures)
+	void FirmwareFeaturesChanged(FirmwareFeatureMap newFeatures)
 	{
 		// Some firmwares don't support tool standby temperatures
 		for (size_t i = 0; i < MaxSlots; ++i)
 		{
-			mgr.Show(standbyTemps[i], (newFeatures & noStandbyTemps) == 0);
+			mgr.Show(standbyTemps[i], !newFeatures.IsBitSet(noStandbyTemps));
 		}
 	}
 
@@ -2168,10 +2175,11 @@ namespace UI
 								break;
 							}
 
+							const bool useM568 = GetFirmwareFeatures().IsBitSet(m568TempAndRPM);
 							if (GetHeaterCombineType() == HeaterCombineType::combined)
 							{
 								tool->UpdateTemp(0, val, true);
-								SerialIo::Sendf("M568 P%d S%d\n", toolNumber, tool->heaters[0]->activeTemp);
+								SerialIo::Sendf("%s P%d S%d\n", (useM568 ? "M568" : "G10"), toolNumber, tool->heaters[0]->activeTemp);
 							}
 							else
 							{
@@ -2189,7 +2197,7 @@ namespace UI
 								String<maxUserCommandLength> heaterTemps;
 								if (tool->GetHeaterTemps(heaterTemps.GetRef(), true))
 								{
-									SerialIo::Sendf("M568 P%d S%s\n", toolNumber, heaterTemps.c_str());
+									SerialIo::Sendf("%s P%d S%s\n", (useM568 ? "M568" : "G10"), toolNumber, heaterTemps.c_str());
 								}
 							}
 						}
@@ -2204,10 +2212,11 @@ namespace UI
 								break;
 							}
 
+							const bool useM568 = GetFirmwareFeatures().IsBitSet(m568TempAndRPM);
 							if (GetHeaterCombineType() == HeaterCombineType::combined)
 							{
 								tool->UpdateTemp(0, val, false);
-								SerialIo::Sendf("M568 P%d S%d\n", toolNumber, tool->heaters[0]->standbyTemp);
+								SerialIo::Sendf("%s P%d S%d\n", (useM568 ? "M568" : "G10"), toolNumber, tool->heaters[0]->standbyTemp);
 							}
 							else
 							{
@@ -2225,7 +2234,7 @@ namespace UI
 								String<maxUserCommandLength> heaterTemps;
 								if (tool->GetHeaterTemps(heaterTemps.GetRef(), false))
 								{
-									SerialIo::Sendf("M568 P%d R%s\n", toolNumber, heaterTemps.c_str());
+									SerialIo::Sendf("%s P%d R%s\n", (useM568 ? "M568" : "G10"), toolNumber, heaterTemps.c_str());
 								}
 							}
 						}
@@ -2458,7 +2467,7 @@ namespace UI
 						{
 							// It's a regular file
 							currentFile = fileName;
-							SerialIo::Sendf(((GetFirmwareFeatures() & noM20M36) == 0) ? "M36 " : "M408 S36 P");			// ask for the file info
+							SerialIo::Sendf(GetFirmwareFeatures().IsBitSet(noM20M36) ? "M408 S36 P" : "M36 ");			// ask for the file info
 							SerialIo::SendFilename(CondStripDrive(FileManager::GetFilesDir()), currentFile);
 							SerialIo::SendChar('\n');
 							FileSelected(currentFile);
@@ -3110,14 +3119,14 @@ namespace UI
 		{
 			bedCount = AddBedOrChamber(firstBed, slot);
 		}
-		OM::IterateTools([&slot](OM::Tool* tool)
+		OM::IterateToolsWhile([&slot](OM::Tool*& tool, size_t)
 		{
 			tool->slot = slot;
 			if (slot < MaxSlots)
 			{
 				const bool hasHeater = tool->heaters[0] != nullptr;
 				const bool hasSpindle = tool->spindle != nullptr;
-				const bool hasExtruder = tool->extruder > -1;
+				const bool hasExtruder = tool->extruders.IsNonEmpty();
 				toolButtons[slot]->SetEvent(evSelectHead, tool->index);
 				toolButtons[slot]->SetIntVal(tool->index);
 				toolButtons[slot]->SetPrintText(true);
@@ -3125,7 +3134,10 @@ namespace UI
 				mgr.Show(toolButtons[slot], true);
 
 				mgr.Show(extrusionFactors[slot], hasExtruder);
-				extrusionFactors[slot]->SetEvent(extrusionFactors[slot]->GetEvent(), tool->extruder);
+				if (hasExtruder)
+				{
+					extrusionFactors[slot]->SetEvent(extrusionFactors[slot]->GetEvent(), (int) tool->extruders.LowestSetBit());
+				}
 
 				// Spindle takes precedence
 				if (hasSpindle)
@@ -3171,6 +3183,7 @@ namespace UI
 					++slot;
 				}
 			}
+			return slot < MaxSlots;
 		});
 		auto firstChamber = OM::GetFirstChamber();
 		if (firstChamber != nullptr)
@@ -3181,13 +3194,19 @@ namespace UI
 		// Fill remaining space with additional beds
 		if (slot < MaxSlots && bedCount > 1)
 		{
-			OM::IterateBeds([&slot](OM::Bed* bed) { AddBedOrChamber(bed, slot); }, 1);
+			OM::IterateBedsWhile([&slot](OM::Bed*& bed, size_t) {
+				AddBedOrChamber(bed, slot);
+				return slot < MaxSlots;
+			}, 1);
 		}
 
 		// Fill remaining space with additional chambers
 		if (slot < MaxSlots && chamberCount > 1)
 		{
-			OM::IterateChambers([&slot](OM::Chamber* chamber) { AddBedOrChamber(chamber, slot, false); }, 1);
+			OM::IterateChambersWhile([&slot](OM::Chamber*& chamber, size_t) {
+				AddBedOrChamber(chamber, slot, false);
+				return slot < MaxSlots;
+			}, 1);
 		}
 
 		numToolColsUsed = slot;
@@ -3203,25 +3222,42 @@ namespace UI
 		AdjustControlPageMacroButtons();
 	}
 
-	void SetSpindleActive(size_t spindleIndex, uint32_t activeRpm)
+	void SetSpindleActive(size_t spindleIndex, int32_t activeRpm)
 	{
 		auto spindle = OM::GetOrCreateSpindle(spindleIndex);
 		if (spindle == nullptr)
 		{
 			return;
 		}
-		spindle->active = activeRpm;
-		OM::IterateTools([spindleIndex](OM::Tool* tool) {
-			if (tool->slot < MaxSlots && tool->spindle != nullptr && tool->spindle->index == spindleIndex)
+		spindle->active = abs(activeRpm);
+		if (!GetFirmwareFeatures().IsBitSet(m568TempAndRPM))
+		{
+			if (activeRpm == 0)
+			{
+				spindle->state = OM::SpindleState::stopped;
+			}
+			else if (activeRpm > 0)
+			{
+				spindle->state = OM::SpindleState::forward;
+			}
+			else
+			{
+				spindle->state = OM::SpindleState::reverse;
+			}
+		}
+
+		OM::IterateToolsWhile([spindle](OM::Tool*& tool, size_t) {
+			if (tool->slot < MaxSlots && tool->spindle == spindle)
 			{
 				activeTemps[tool->slot]->SetValue(tool->spindle->active);
 			}
+			return tool->slot < MaxSlots;
 		});
 	}
 
 	void UpdateSpindleCurrent(OM::Spindle* spindle)
 	{
-		OM::IterateTools([spindle](OM::Tool* tool) {
+		OM::IterateToolsWhile([spindle](OM::Tool*& tool, size_t) {
 			if (tool->slot < MaxSlots && tool->spindle == spindle)
 			{
 				const OM::SpindleState state = spindle->state;
@@ -3232,17 +3268,33 @@ namespace UI
 							  	  ? spindle->current
 							  	  : -spindle->current);
 			}
+			return tool->slot < MaxSlots;
 		});
 	}
 
-	void SetSpindleCurrent(size_t spindleIndex, uint32_t current)
+	void SetSpindleCurrent(size_t spindleIndex, int32_t current)
 	{
 		auto spindle = OM::GetOrCreateSpindle(spindleIndex);
 		if (spindle == nullptr)
 		{
 			return;
 		}
-		spindle->current = current;
+		spindle->current = abs(current);
+		if (!GetFirmwareFeatures().IsBitSet(m568TempAndRPM))
+		{
+			if (current == 0)
+			{
+				spindle->state = OM::SpindleState::stopped;
+			}
+			else if (current > 0)
+			{
+				spindle->state = OM::SpindleState::forward;
+			}
+			else
+			{
+				spindle->state = OM::SpindleState::reverse;
+			}
+		}
 		UpdateSpindleCurrent(spindle);
 	}
 
@@ -3276,6 +3328,34 @@ namespace UI
 		}
 	}
 
+	// This handles the old path where tools were assigned to spindles
+	void SetSpindleTool(int8_t spindleNumber, int8_t toolIndex)
+	{
+		auto sp = OM::GetOrCreateSpindle(spindleNumber);
+		if (sp == nullptr)
+		{
+			return;
+		}
+		if (toolIndex == -1)
+		{
+			OM::IterateToolsWhile([sp](OM::Tool*& tool, size_t) {
+				if (tool->spindle == sp)
+				{
+					tool->spindle = nullptr;
+				}
+				return true;
+			});
+		}
+		else
+		{
+			OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+			if (tool != nullptr)
+			{
+				tool->spindle = sp;
+			}
+		}
+	}
+
 	void UpdateToolStatus(size_t toolIndex, ToolStatus status)
 	{
 		auto tool = OM::GetTool(toolIndex);
@@ -3293,20 +3373,20 @@ namespace UI
 		}
 	}
 
-	void SetToolExtruder(size_t toolIndex, int8_t extruder)
+	void SetToolExtruder(size_t toolIndex, uint8_t extruder)
 	{
 		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);		if (tool != nullptr)
 		{
-			tool->extruder = extruder;
+			tool->extruders.SetBit(extruder);
 		}
 	}
 
-	void SetToolFan(size_t toolIndex, int8_t fan)
+	void SetToolFan(size_t toolIndex, uint8_t fan)
 	{
 		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
 		if (tool != nullptr)
 		{
-			tool->fan = fan;
+			tool->fans.SetBit(fan);
 		}
 	}
 
@@ -3320,7 +3400,7 @@ namespace UI
 		return tool->RemoveHeatersFrom(firstIndexToDelete) > 0;
 	}
 
-	void SetToolHeater(size_t toolIndex, uint8_t toolHeaterIndex, int8_t heaterIndex)
+	void SetToolHeater(size_t toolIndex, uint8_t toolHeaterIndex, uint8_t heaterIndex)
 	{
 		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
 		if (tool == nullptr)
@@ -3347,9 +3427,10 @@ namespace UI
 		}
 	}
 
+	// This handles the new path were spindles are assigned to tools
 	void SetToolSpindle(int8_t toolIndex, int8_t spindleNumber)
 	{
-		// FIXME: this does only work for the new approach but no longer with the old one
+		// Old spindles[].tool is handled by SetSpindleTool
 		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
 		if (tool == nullptr)
 		{

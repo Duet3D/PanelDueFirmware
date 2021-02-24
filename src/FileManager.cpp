@@ -240,8 +240,8 @@ namespace FileManager
 	// Use the timer to send a command and repeat it if no response is received
 	void FileSet::SetPending()
 	{
-		timer.SetCommand(((GetFirmwareFeatures() & noM20M36) != 0) ? "M408 S20 P" : "M20 S2 P");
-		timer.SetArgument(CondStripDrive(requestedPath.c_str()), (GetFirmwareFeatures() & quoteFilenames) != 0);
+		timer.SetCommand(GetFirmwareFeatures().IsBitSet(noM20M36) ? "M408 S20 P" : "M20 S2 P");
+		timer.SetArgument(CondStripDrive(requestedPath.c_str()), GetFirmwareFeatures().IsBitSet(quoteFilenames));
 		timer.SetPending();
 	}
 
@@ -288,7 +288,7 @@ namespace FileManager
 
 	void FileSet::SetupRootPath()
 	{
-		requestedPath.copy((cardNumber == 0 && (GetFirmwareFeatures() & noGcodesFolder) == 0) ? filesRoot : "0:/");
+		requestedPath.copy((cardNumber == 0 && GetFirmwareFeatures().IsBitSet(noGcodesFolder)) ? "0:/" : filesRoot);
 	}
 
 	// This is called on the gcode files list when the firmware features are changed from the previous values

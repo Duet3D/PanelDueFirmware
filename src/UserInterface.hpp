@@ -71,7 +71,7 @@ namespace UI
 	extern void UpdateExtrusionFactor(size_t index, int ival);
 	extern void UpdatePrintTimeText(uint32_t seconds, bool isSimulated);
 	extern void UpdateSpeedPercent(int ival);
-	extern void FirmwareFeaturesChanged(FirmwareFeatures newFeatures);
+	extern void FirmwareFeaturesChanged(FirmwareFeatureMap newFeatures);
 	extern void ProcessTouch(ButtonPress bp);
 	extern void ProcessTouchOutsidePopup(ButtonPress bp)
 	pre(bp.IsValid());
@@ -93,19 +93,20 @@ namespace UI
 
 	extern void SetCurrentTool(int32_t tool);
 	extern void UpdateToolStatus(size_t index, ToolStatus status);
-	extern void SetToolExtruder(size_t toolIndex, int8_t extruder);
-	extern void SetToolFan(size_t toolIndex, int8_t fan);
-	extern void SetToolHeater(size_t toolIndex, uint8_t toolHeaterIndex, int8_t heaterIndex);
+	extern void SetToolExtruder(size_t toolIndex, uint8_t extruder);
+	extern void SetToolFan(size_t toolIndex, uint8_t fan);
+	extern void SetToolHeater(size_t toolIndex, uint8_t toolHeaterIndex, uint8_t heaterIndex);
 	extern void SetToolSpindle(int8_t toolIndex, int8_t spindleNumber);
 	extern bool RemoveToolHeaters(const size_t toolIndex, const uint8_t firstIndexToDelete);
 	extern void SetToolOffset(size_t toolIndex, size_t axisIndex, float offset);
 
 	extern void SetBedOrChamberHeater(const uint8_t heaterIndex, const int8_t heaterNumber, bool bed = true);
 
-	extern void SetSpindleActive(size_t spindleIndex, uint32_t activeRpm);
-	extern void SetSpindleCurrent(size_t spindleIndex, uint32_t currentRpm);
+	extern void SetSpindleActive(size_t spindleIndex, int32_t activeRpm);
+	extern void SetSpindleCurrent(size_t spindleIndex, int32_t currentRpm);
 	extern void SetSpindleLimit(size_t spindleIndex, uint32_t value, bool max);
 	extern void SetSpindleState(size_t spindleIndex, OM::SpindleState state);
+	extern void SetSpindleTool(int8_t spindleNumber, int8_t toolIndex);
 }
 
 #endif /* SRC_USERINTERFACE_HPP_ */

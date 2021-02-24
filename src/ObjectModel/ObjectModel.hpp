@@ -27,5 +27,4 @@ namespace OM {
 			const bool addChambers = true);
 }
 
-
 #endif /* SRC_OBJECTMODEL_OBJECTMODEL_HPP_ */

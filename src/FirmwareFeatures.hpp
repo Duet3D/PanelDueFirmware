@@ -8,13 +8,19 @@
 #ifndef SRC_FIRMWAREFEATURES_HPP_
 #define SRC_FIRMWAREFEATURES_HPP_
 
+#include <General/Bitmap.h>
+
 // Firmware features bitmap definition
-typedef uint32_t FirmwareFeatures;
-const FirmwareFeatures noGcodesFolder = 0x0001;		// gcodes files are in 0:/ not 0:/gcodes
-const FirmwareFeatures noStandbyTemps = 0x0002;		// firmware does not support separate tool active and standby temperatures
-const FirmwareFeatures noG10Temps = 0x0004;			// firmware does not support using G10 to set temperatures
-const FirmwareFeatures noDriveNumber = 0x0008;		// firmware does not handle drive numbers at the start of file paths
-const FirmwareFeatures noM20M36 = 0x0010;			// firmware does not handle M20 S2 or M36 commands. Use M408 S20 and M408 S36 instead.
-const FirmwareFeatures quoteFilenames = 0x0020;		// filenames should always be quoted in GCode commands
+typedef Bitmap<uint8_t> FirmwareFeatureMap;
+enum FirmwareFeatures : uint8_t
+{
+	noGcodesFolder = 0,		// gcodes files are in 0:/ not 0:/gcodes
+	noStandbyTemps,			// firmware does not support separate tool active and standby temperatures
+	noG10Temps,				// firmware does not support using G10 to set temperatures
+	noDriveNumber,			// firmware does not handle drive numbers at the start of file paths
+	noM20M36,				// firmware does not handle M20 S2 or M36 commands. Use M408 S20 and M408 S36 instead.
+	quoteFilenames,			// filenames should always be quoted in GCode commands
+	m568TempAndRPM,			// firmware supports M568 to set tool temps and tool spindle RPM
+};
 
 #endif /* SRC_FIRMWAREFEATURES_HPP_ */

@@ -122,10 +122,10 @@ namespace OM
 		{
 			heaters[i] = nullptr;
 		}
-		extruder = -1;
+		extruders.Clear();
 		spindle = nullptr;
 		spindleRpm = 0;
-		fan = -1;
+		fans.Clear();
 		for (size_t i = 0; i < MaxTotalAxes; ++i)
 		{
 			offsets[i] = 0.0f;
@@ -144,9 +144,9 @@ namespace OM
 		return GetOrCreate<ToolList, Tool>(tools, index, true);
 	}
 
-	void IterateTools(stdext::inplace_function<void(Tool*)> func, const size_t startAt)
+	bool IterateToolsWhile(stdext::inplace_function<bool(Tool*&, size_t)> func, const size_t startAt)
 	{
-		Iterate(tools, func, startAt);
+		return tools.IterateWhile(func, startAt);
 	}
 
 	size_t RemoveTool(const size_t index, const bool allFollowing)

@@ -20,33 +20,35 @@ namespace OM
 	{
 		if (addBeds)
 		{
-			IterateBeds(
-				[&slots, &heaterIndex](Bed* bed) {
+			IterateBedsWhile(
+				[&slots, heaterIndex](Bed*& bed, size_t) {
 					if (bed->slot < MaxSlots && bed->heater == (int)heaterIndex)
 					{
 						slots.Add(bed->slot);
 					}
+					return bed->slot < MaxSlots;
 				});
 		}
 		if (addChambers)
 		{
-			IterateChambers(
-				[&slots, &heaterIndex](Chamber* chamber) {
+			IterateChambersWhile(
+				[&slots, heaterIndex](Chamber*& chamber, size_t) {
 					if (chamber->slot < MaxSlots && chamber->heater == (int)heaterIndex)
 					{
 						slots.Add(chamber->slot);
 					}
+					return chamber->slot < MaxSlots;
 				});
 		}
 		if (addTools)
 		{
-			IterateTools(
-				[&slots, &heaterIndex](Tool* tool) {
+			IterateToolsWhile(
+				[&slots, heaterIndex](Tool*& tool, size_t) {
 					if (tool->slot < MaxSlots)
 					{
 						if (GetHeaterCombineType() == HeaterCombineType::notCombined)
 						{
-							tool->IterateHeaters([&tool, &slots, &heaterIndex](ToolHeater* th, size_t index) {
+							tool->IterateHeaters([tool, &slots, heaterIndex](ToolHeater* th, size_t index) {
 								if (tool->slot + index < MaxSlots && th->heaterIndex == (int) heaterIndex)
 								{
 									slots.Add(tool->slot + index);
@@ -61,6 +63,7 @@ namespace OM
 							}
 						}
 					}
+					return tool->slot < MaxSlots;
 				});
 		}
 	}
