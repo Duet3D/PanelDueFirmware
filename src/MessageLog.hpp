@@ -9,7 +9,8 @@
 #ifndef MESSAGELOG_H_
 #define MESSAGELOG_H_
 
-#include "Display.hpp"
+#include <cstddef>
+#include "DisplaySize.hpp"
 #include "ecv.h"
 #undef array
 #undef result
@@ -26,7 +27,7 @@ namespace MessageLog
 	void AppendMessage(const char* data);
 
 	// Add a message via printf to the end of the list immediately (mainly for debugging)
-	void AppendMessage(size_t maxLen, const char* format, ...);
+	void AppendMessageF(const char* format, ...) __attribute__((format (printf, 1, 0)));
 
 	// Save a message for possible display later
 	void SaveMessage(const char* data);

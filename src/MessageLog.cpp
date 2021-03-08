@@ -148,14 +148,14 @@ namespace MessageLog
 		UpdateMessages(true);
 	}
 
-	void AppendMessage(size_t maxLen, const char* format, ...)
+	void AppendMessageF(const char* fmt, ...)
 	{
-		char msg[maxLen];
+		String<256> formatString;
 		va_list vargs;
-		va_start(vargs, format);
-		SafeVsnprintf(msg, maxLen, format, vargs);
+		va_start(vargs, fmt);
+		formatString.vcatf(fmt, vargs);
 		va_end(vargs);
-		AppendMessage(msg);
+		AppendMessage(formatString.c_str());
 	}
 
 	// Save a message for possible display later
