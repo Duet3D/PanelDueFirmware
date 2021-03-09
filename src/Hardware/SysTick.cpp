@@ -5,10 +5,10 @@
  *  Author: David
  */ 
 
-#include "asf.h"
 #include "SysTick.hpp"
+#include <UI/UserInterface.hpp>
+#include "asf.h"
 #include "Buzzer.hpp"
-#include "UserInterface.hpp"
 
 namespace SystemTick
 {

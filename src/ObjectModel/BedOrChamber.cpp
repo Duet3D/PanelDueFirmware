@@ -6,9 +6,9 @@
  */
 
 #include "BedOrChamber.hpp"
-#include "UserInterfaceConstants.hpp"
 #include "ListHelpers.hpp"
 #include <General/Vector.hpp>
+#include <UI/UserInterfaceConstants.hpp>
 
 typedef Vector<OM::Bed*, MaxSlots> BedList;
 typedef Vector<OM::Chamber*, MaxSlots> ChamberList;

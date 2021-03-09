@@ -5,17 +5,17 @@
  *      Author: David
  */
 
-#ifndef SRC_USERINTERFACE_HPP_
-#define SRC_USERINTERFACE_HPP_
+#ifndef SRC_UI_USERINTERFACE_HPP_
+#define SRC_UI_USERINTERFACE_HPP_
 
-#include "ColourSchemes.hpp"
-#include "PrinterStatus.hpp"
-#include "Display.hpp"
 #include "FirmwareFeatures.hpp"
-#include "Events.hpp"
-#include "HeaterStatus.hpp"
-#include "ToolStatus.hpp"
+#include <ObjectModel/BedOrChamber.hpp>
+#include <ObjectModel/PrinterStatus.hpp>
 #include <ObjectModel/Spindle.hpp>
+#include <ObjectModel/Tool.hpp>
+#include <UI/ColourSchemes.hpp>
+#include <UI/Display.hpp>
+#include <UI/Events.hpp>
 
 extern IntegerField *freeMem;
 extern StaticTextField *debugField;
@@ -35,8 +35,8 @@ namespace UI
 	extern void ShowAxis(size_t axis, bool b, char axisLetter =  '\0');
 	extern void UpdateAxisPosition(size_t axis, float fval);
 	extern void UpdateCurrentTemperature(size_t heater, float fval);
-	extern void UpdateHeaterStatus(const size_t heater, const HeaterStatus status);
-	extern void ChangeStatus(PrinterStatus oldStatus, PrinterStatus newStatus);
+	extern void UpdateHeaterStatus(const size_t heater, const OM::HeaterStatus status);
+	extern void ChangeStatus(OM::PrinterStatus oldStatus, OM::PrinterStatus newStatus);
 	extern void UpdateTimesLeft(size_t index, unsigned int seconds);
 	extern bool ChangePage(ButtonBase *newTab);
 	extern bool DoPolling();
@@ -92,7 +92,7 @@ namespace UI
 	extern void SetAxisWorkplaceOffset(size_t axisIndex, size_t workplaceIndex, float offset);
 
 	extern void SetCurrentTool(int32_t tool);
-	extern void UpdateToolStatus(size_t index, ToolStatus status);
+	extern void UpdateToolStatus(size_t index, OM::ToolStatus status);
 	extern void SetToolExtruder(size_t toolIndex, uint8_t extruder);
 	extern void SetToolFan(size_t toolIndex, uint8_t fan);
 	extern void SetToolHeater(size_t toolIndex, uint8_t toolHeaterIndex, uint8_t heaterIndex);
@@ -109,4 +109,4 @@ namespace UI
 	extern void SetSpindleTool(int8_t spindleNumber, int8_t toolIndex);
 }
 
-#endif /* SRC_USERINTERFACE_HPP_ */
+#endif /* SRC_UI_USERINTERFACE_HPP_ */

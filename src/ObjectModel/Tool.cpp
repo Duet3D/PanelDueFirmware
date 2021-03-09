@@ -6,9 +6,9 @@
  */
 
 #include "Tool.hpp"
-#include "UserInterfaceConstants.hpp"
 #include "ListHelpers.hpp"
 #include <General/Vector.hpp>
+#include <UI/UserInterfaceConstants.hpp>
 
 typedef Vector<OM::Tool*, MaxSlots> ToolList;
 static ToolList tools;

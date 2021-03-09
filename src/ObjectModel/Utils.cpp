@@ -5,7 +5,11 @@
  *      Author: manuel
  */
 
-#include "ObjectModel.hpp"
+#include <ObjectModel/Utils.hpp>
+#include "Axis.hpp"
+#include "BedOrChamber.hpp"
+#include "Spindle.hpp"
+#include "Tool.hpp"
 #include "ListHelpers.hpp"
 #include "PanelDue.hpp"
 

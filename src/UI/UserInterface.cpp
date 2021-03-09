@@ -7,23 +7,26 @@
 
 #ifndef OEM_LAYOUT
 
-#include "UserInterface.hpp"
+#include <UI/UserInterface.hpp>
 
-#include "UserInterfaceConstants.hpp"
+#include <UI/UserInterfaceConstants.hpp>
 #include "PanelDue.hpp"
 #include "FileManager.hpp"
-#include "MessageLog.hpp"
+#include <UI/MessageLog.hpp>
 #include "Library/Misc.hpp"
-#include "General/String.h"
-#include "General/SafeVsnprintf.h"
 #include "Icons/Icons.hpp"
 #include "Hardware/Buzzer.hpp"
 #include "Hardware/Reset.hpp"
 #include "Hardware/SerialIo.hpp"
 #include "Hardware/SysTick.hpp"
-#include "Strings.hpp"
+#include <UI/Strings.hpp>
 #include "Version.hpp"
-#include <ObjectModel/ObjectModel.hpp>
+#include <ObjectModel/Axis.hpp>
+#include <ObjectModel/Utils.hpp>
+#include <General/SafeVsnprintf.h>
+#include <General/SimpleMath.h>
+#include <General/String.h>
+#include <General/StringFunctions.h>
 
 // Public fields
 TextField *fwVersionField, *userCommandField;
@@ -1327,7 +1330,7 @@ namespace UI
 		}
 	}
 
-	void UpdateHeaterStatus(const size_t heaterIndex, const HeaterStatus status)
+	void UpdateHeaterStatus(const size_t heaterIndex, const OM::HeaterStatus status)
 	{
 		OM::Slots heaterSlots;
 		OM::GetHeaterSlots(heaterIndex, heaterSlots);
@@ -1335,14 +1338,14 @@ namespace UI
 		{
 			return;
 		}
-		const Colour foregroundColour =	(status == HeaterStatus::fault)
+		const Colour foregroundColour =	(status == OM::HeaterStatus::fault)
 					? colours->errorTextColour
 					: colours->infoTextColour;
 		const Colour backgroundColour =
-					  (status == HeaterStatus::standby) ? colours->standbyBackColour
-					: (status == HeaterStatus::active)  ? colours->activeBackColour
-					: (status == HeaterStatus::fault)   ? colours->errorBackColour
-					: (status == HeaterStatus::tuning)  ? colours->tuningBackColour
+					  (status == OM::HeaterStatus::standby) ? colours->standbyBackColour
+					: (status == OM::HeaterStatus::active)  ? colours->activeBackColour
+					: (status == OM::HeaterStatus::fault)   ? colours->errorBackColour
+					: (status == OM::HeaterStatus::tuning)  ? colours->tuningBackColour
 					: colours->defaultBackColour;
 		const Colour bOCBgColor = (backgroundColour == colours->defaultBackColour)
 			? colours->buttonImageBackColour
@@ -1387,23 +1390,23 @@ namespace UI
 	static int timesLeft[3];
 	static String<50> timesLeftText;
 
-	void ChangeStatus(PrinterStatus oldStatus, PrinterStatus newStatus)
+	void ChangeStatus(OM::PrinterStatus oldStatus, OM::PrinterStatus newStatus)
 	{
 		switch (newStatus)
 		{
-		case PrinterStatus::printing:
-		case PrinterStatus::simulating:
-			if (oldStatus != PrinterStatus::paused && oldStatus != PrinterStatus::resuming)
+		case OM::PrinterStatus::printing:
+		case OM::PrinterStatus::simulating:
+			if (oldStatus != OM::PrinterStatus::paused && oldStatus != OM::PrinterStatus::resuming)
 			{
 				// Starting a new print, so clear the times
 				timesLeft[0] = timesLeft[1] = timesLeft[2] = 0;
 			}
-			SetLastFileSimulated(newStatus == PrinterStatus::simulating);
+			SetLastFileSimulated(newStatus == OM::PrinterStatus::simulating);
 			[[fallthrough]];
-		case PrinterStatus::paused:
-		case PrinterStatus::pausing:
-		case PrinterStatus::resuming:
-			if (oldStatus == PrinterStatus::connecting || oldStatus == PrinterStatus::idle)
+		case OM::PrinterStatus::paused:
+		case OM::PrinterStatus::pausing:
+		case OM::PrinterStatus::resuming:
+			if (oldStatus == OM::PrinterStatus::connecting || oldStatus == OM::PrinterStatus::idle)
 			{
 				ChangePage(tabPrint);
 			}
@@ -1413,7 +1416,7 @@ namespace UI
 			}
 			break;
 
-		case PrinterStatus::idle:
+		case OM::PrinterStatus::idle:
 			printingFile.Clear();
 			nameField->SetValue(machineName.c_str());		// if we are on the print tab then it may still be set to the file that was being printed
 			if (IsPrintingStatus(oldStatus))
@@ -1422,14 +1425,14 @@ namespace UI
 			}
 			__attribute__ ((fallthrough));
 			// no break
-		case PrinterStatus::configuring:
-			if (oldStatus == PrinterStatus::flashing)
+		case OM::PrinterStatus::configuring:
+			if (oldStatus == OM::PrinterStatus::flashing)
 			{
 				mgr.ClearAllPopups();						// clear the firmware update message
 			}
 			break;
 
-		case PrinterStatus::connecting:
+		case OM::PrinterStatus::connecting:
 			printingFile.Clear();
 			// We no longer clear the machine name here
 			mgr.ClearAllPopups();
@@ -1660,11 +1663,12 @@ namespace UI
 	// Update the fields that are to do with the printing status
 	void UpdatePrintingFields()
 	{
-		if (GetStatus() == PrinterStatus::printing || GetStatus() == PrinterStatus::simulating)
+	OM::PrinterStatus status = GetStatus();
+	if (status == OM::PrinterStatus::printing || status == OM::PrinterStatus::simulating)
 		{
 			ShowPauseButton();
 		}
-		else if (GetStatus() == PrinterStatus::paused)
+		else if (status == OM::PrinterStatus::paused)
 		{
 			ShowResumeAndCancelButtons();
 		}
@@ -1938,7 +1942,7 @@ namespace UI
 	// Process a new response. This is treated like a simple alert except that it times out and isn't cleared by a "clear alert" command from the host.
 	void NewResponseReceived(const char* _ecv_array text)
 	{
-		const bool isErrorMessage = stringStartsWith(text, "Error");
+		const bool isErrorMessage = StringStartsWith(text, "Error");
 		if (   alertMode < 2											// if the current alert doesn't require acknowledgement
 			&& (currentTab == tabControl || currentTab == tabPrint)
 			&& (isErrorMessage || infoTimeout != 0)
@@ -2408,7 +2412,7 @@ namespace UI
 						break;
 					}
 					const auto slot = bed->slot;
-					if (bed->heaterStatus == HeaterStatus::active)			// if bed is active
+					if (bed->heaterStatus == OM::HeaterStatus::active)			// if bed is active
 					{
 						SerialIo::Sendf("M144 P%d\n", bedIndex);
 					}
@@ -2430,7 +2434,7 @@ namespace UI
 					const auto slot = chamber->slot;
 					SerialIo::Sendf("M141 P%d S%d\n",
 							chamberIndex,
-							(chamber->heaterStatus == HeaterStatus::active ? -274 : activeTemps[slot]->GetValue()));
+							(chamber->heaterStatus == OM::HeaterStatus::active ? -274 : activeTemps[slot]->GetValue()));
 				}
 				break;
 
@@ -2438,7 +2442,7 @@ namespace UI
 				{
 					int head = bp.GetIParam();
 					// pressing a evSeelctHead button in the middle of active printing is almost always accidental (and fatal to the print job)
-					if (GetStatus() != PrinterStatus::printing && GetStatus() != PrinterStatus::simulating)
+					if (GetStatus() != OM::PrinterStatus::printing && GetStatus() != OM::PrinterStatus::simulating)
 					{
 						if (head == currentTool)		// if head is active
 						{
@@ -3356,7 +3360,7 @@ namespace UI
 		}
 	}
 
-	void UpdateToolStatus(size_t toolIndex, ToolStatus status)
+	void UpdateToolStatus(size_t toolIndex, OM::ToolStatus status)
 	{
 		auto tool = OM::GetTool(toolIndex);
 		if (tool == nullptr)
@@ -3366,8 +3370,8 @@ namespace UI
 		tool->status = status;
 		if (tool->slot < MaxSlots)
 		{
-			Colour c = /*(status == ToolStatus::standby) ? colours->standbyBackColour : */
-						(status == ToolStatus::active) ? colours->activeBackColour
+			Colour c = /*(status == OM::ToolStatus::standby) ? colours->standbyBackColour : */
+						(status == OM::ToolStatus::active) ? colours->activeBackColour
 						: colours->buttonImageBackColour;
 			toolButtons[tool->slot]->SetColours(colours->buttonTextColour, c);
 		}

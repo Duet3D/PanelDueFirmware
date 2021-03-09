@@ -12,10 +12,10 @@
 #undef result
 #undef value
 #include "asf.h"
+#include <cstring>
 #include "Buzzer.hpp"
 #include "SysTick.hpp"
-#include "Configuration.hpp"
-#include <cstring>
+#include <Configuration.hpp>
 
 namespace Buzzer
 {

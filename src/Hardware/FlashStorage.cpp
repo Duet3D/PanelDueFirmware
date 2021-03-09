@@ -1,7 +1,7 @@
 #include "FlashStorage.hpp"
-#include <Library/Misc.hpp>
 #include <chipid.h>
 #include <cstring>
+#include <General/SimpleMath.h>
 
 extern int __flash_start__,	__flash_end__;
 

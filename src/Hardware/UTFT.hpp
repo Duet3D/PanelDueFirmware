@@ -48,9 +48,9 @@
 #ifndef UTFT_h
 #define UTFT_h
 
-#include <General/SafeVsnprintf.h>
 #include "OneBitPort.hpp"
 #include "DisplayOrientation.hpp"
+#include <General/SafeVsnprintf.h>
 
 enum DisplayType {
 	HX8347A,

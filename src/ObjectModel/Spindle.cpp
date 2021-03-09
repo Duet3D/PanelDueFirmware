@@ -6,9 +6,9 @@
  */
 
 #include "Spindle.hpp"
-#include "UserInterfaceConstants.hpp"
 #include "ListHelpers.hpp"
 #include <General/Vector.hpp>
+#include <UI/UserInterfaceConstants.hpp>
 
 typedef Vector<OM::Spindle*, MaxSlots> SpindleList;
 static SpindleList spindles;

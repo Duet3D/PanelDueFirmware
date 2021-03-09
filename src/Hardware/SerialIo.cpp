@@ -7,9 +7,9 @@
 
 #include "SerialIo.hpp"
 #include "asf.h"
-#include "General/String.h"
-#include "General/SafeVsnprintf.h"
 #include "PanelDue.hpp"
+#include <General/String.h>
+#include <General/SafeVsnprintf.h>
 #define DEBUG (0)
 #if DEBUG
 # include "MessageLog.hpp"

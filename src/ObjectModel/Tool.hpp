@@ -10,12 +10,11 @@
 
 #include <cstdint>
 #include "Spindle.hpp"
-#include "ToolStatus.hpp"
-#include "UserInterfaceConstants.hpp"
 #include <General/Bitmap.h>
 #include <General/FreelistManager.h>
 #include <General/StringRef.h>
 #include <General/inplace_function.h>
+#include <UI/UserInterfaceConstants.hpp>
 
 namespace OM
 {
@@ -32,6 +31,28 @@ namespace OM
 		int16_t standbyTemp;
 
 		void Reset();
+	};
+
+	// Status that a tool may report to us.
+	enum class ToolStatus
+	{
+		off = 0,
+		active = 1,
+		standby = 2,
+	};
+
+	struct ToolStatusMapEntry
+	{
+		const char* key;
+		ToolStatus val;
+	};
+
+	// This table must be kept in case-insensitive alphabetical order of the search string.
+	const ToolStatusMapEntry toolStatusMap[] =
+	{
+		{"active",	ToolStatus::active },
+		{"off",		ToolStatus::off },
+		{"standby",	ToolStatus::standby },
 	};
 
 	struct Tool

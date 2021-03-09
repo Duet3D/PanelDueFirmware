@@ -7,6 +7,7 @@
 // 3. No pure virtual functions. This is because in release builds, having pure virtual functions causes huge amounts of the C++ library to be linked in
 //    (possibly because it wants to print a message if a pure virtual function is called).
 
+#include <UI/Display.hpp>
 #include "PanelDue.hpp"
 #include "asf.h"
 
@@ -14,34 +15,32 @@
 #include <cctype>
 #include <cmath>
 
-#include "Hardware/Mem.hpp"
-#include "Display.hpp"
-#include "Hardware/UTFT.hpp"
-#include "Hardware/UTouch.hpp"
-#include "Hardware/SerialIo.hpp"
-#include "Hardware/Buzzer.hpp"
-#include "Hardware/SysTick.hpp"
-#include "Hardware/Reset.hpp"
-#include "Library/Misc.hpp"
-#include "General/SafeStrtod.h"
+#include <Hardware/Mem.hpp>
+#include <Hardware/UTFT.hpp>
+#include <Hardware/UTouch.hpp>
+#include <Hardware/SerialIo.hpp>
+#include <Hardware/Buzzer.hpp>
+#include <Hardware/SysTick.hpp>
+#include <Hardware/Reset.hpp>
+#include <General/SafeStrtod.h>
+#include <General/SimpleMath.h>
+#include <General/StringFunctions.h>
 
 #if SAM4S
 #include "flash_efc.h"
 #else
-#include "Hardware/FlashStorage.hpp"
+#include <Hardware/FlashStorage.hpp>
 #endif
 
 #include "Configuration.hpp"
-#include "UserInterfaceConstants.hpp"
+#include <UI/UserInterfaceConstants.hpp>
 #include "FileManager.hpp"
 #include "RequestTimer.hpp"
-#include "MessageLog.hpp"
-#include "Events.hpp"
-#include "HeaterStatus.hpp"
-#include "PrinterStatus.hpp"
-#include "ToolStatus.hpp"
-#include "UserInterface.hpp"
-#include <ObjectModel/ObjectModel.hpp>
+#include <UI/MessageLog.hpp>
+#include <UI/Events.hpp>
+#include <UI/UserInterface.hpp>
+#include <ObjectModel/Axis.hpp>
+#include <ObjectModel/PrinterStatus.hpp>
 #include "ControlCommands.hpp"
 
 #ifdef OEM
@@ -280,7 +279,7 @@ void FlashData::Save() const
 
 FlashData nvData, savedNvData;
 
-static PrinterStatus status = PrinterStatus::connecting;
+static OM::PrinterStatus status = OM::PrinterStatus::connecting;
 
 enum ReceivedDataEvent
 {
@@ -776,9 +775,13 @@ void Delay(uint32_t milliSeconds)
 	while (SystemTick::GetTickCount() - now < milliSeconds) { }
 }
 
-bool IsPrintingStatus(PrinterStatus status)
+bool IsPrintingStatus(OM::PrinterStatus status)
 {
-	return status == PrinterStatus::printing || status == PrinterStatus::paused || status == PrinterStatus::pausing || status == PrinterStatus::resuming || status == PrinterStatus::simulating;
+	return status == OM::PrinterStatus::printing
+			|| status == OM::PrinterStatus::paused
+			|| status == OM::PrinterStatus::pausing
+			|| status == OM::PrinterStatus::resuming
+			|| status == OM::PrinterStatus::simulating;
 }
 
 bool PrintInProgress()
@@ -796,11 +799,14 @@ int compare(const void* lp, const void* rp)
 // We don't want to send these when the printer is busy with a previous command, because they will block normal status requests.
 bool OkToSend()
 {
-	return status == PrinterStatus::idle || status == PrinterStatus::printing || status == PrinterStatus::paused || status == PrinterStatus::off;
+	return status == OM::PrinterStatus::idle
+			|| status == OM::PrinterStatus::printing
+			|| status == OM::PrinterStatus::paused
+			|| status == OM::PrinterStatus::off;
 }
 
 // Return the printer status
-PrinterStatus GetStatus()
+OM::PrinterStatus GetStatus()
 {
 	return status;
 }
@@ -964,7 +970,7 @@ extern void RestoreBrightness()
 extern void DimBrightness()
 {
 	if (   (nvData.displayDimmerType == DisplayDimmerType::always)
-		|| (nvData.displayDimmerType == DisplayDimmerType::onIdle && (status == PrinterStatus::idle || status == PrinterStatus::off))
+		|| (nvData.displayDimmerType == DisplayDimmerType::onIdle && (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off))
 	   )
 	{
 		Buzzer::SetBacklight(nvData.brightness/8);
@@ -1104,21 +1110,21 @@ void SaveSettings()
 // This is called when the status changes
 void SetStatus(const char * sts)
 {
-	PrinterStatus newStatus = PrinterStatus::connecting;
+	OM::PrinterStatus newStatus = OM::PrinterStatus::connecting;
 	if (!initialized)
 	{
-		newStatus = PrinterStatus::panelInitializing;
+		newStatus = OM::PrinterStatus::panelInitializing;
 	}
 	else
 	{
-		const PrinterStatusMapEntry key = (PrinterStatusMapEntry) {sts, PrinterStatus::connecting};
-		const PrinterStatusMapEntry * statusFromMap =
-				(PrinterStatusMapEntry *) bsearch(
+		const OM::PrinterStatusMapEntry key = (OM::PrinterStatusMapEntry) {sts, OM::PrinterStatus::connecting};
+		const OM::PrinterStatusMapEntry * statusFromMap =
+				(OM::PrinterStatusMapEntry *) bsearch(
 						&key,
-						printerStatusMap,
-						ARRAY_SIZE(printerStatusMap),
-						sizeof(PrinterStatusMapEntry),
-						compare<PrinterStatusMapEntry>);
+						OM::printerStatusMap,
+						ARRAY_SIZE(OM::printerStatusMap),
+						sizeof(OM::PrinterStatusMapEntry),
+						compare<OM::PrinterStatusMapEntry>);
 		if (statusFromMap != nullptr)
 		{
 			newStatus = statusFromMap->val;
@@ -1133,7 +1139,7 @@ void SetStatus(const char * sts)
 		}
 		UI::ChangeStatus(status, newStatus);
 
-		if (status == PrinterStatus::configuring || (status == PrinterStatus::connecting && newStatus != PrinterStatus::configuring))
+		if (status == OM::PrinterStatus::configuring || (status == OM::PrinterStatus::connecting && newStatus != OM::PrinterStatus::configuring))
 		{
 			MessageLog::AppendMessage("Connected");
 		}
@@ -1209,7 +1215,7 @@ void StartReceivedMessage()
 	newMessageSeq = messageSeq;
 	MessageLog::BeginNewMessage();
 	FileManager::BeginNewMessage();
-	currentAlert.flags = 0;
+	currentAlert.flags.Clear();
 	ShowLine;
 }
 
@@ -1284,11 +1290,11 @@ void EndReceivedMessage()
 		MessageLog::DisplayNewMessage();
 	}
 	FileManager::EndReceivedMessage();
-	if ((currentAlert.flags & Alert::GotMode) != 0 && currentAlert.mode < 0)
+	if (currentAlert.flags.IsBitSet(Alert::GotMode) && currentAlert.mode < 0)
 	{
 		UI::ClearAlert();
 	}
-	else if (currentAlert.flags == Alert::GotAll && currentAlert.seq != lastAlertSeq)
+	else if (currentAlert.AllFlagsSet() && currentAlert.seq != lastAlertSeq)
 	{
 		UI::ProcessAlert(currentAlert);
 		lastAlertSeq = currentAlert.seq;
@@ -1494,7 +1500,7 @@ void HandleOutOfBufferResponse() {
 // Public functions called by the SerialIo module
 void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[])
 {
-	if (stringStartsWith(id.c_str(), "result"))
+	if (StringStartsWith(id.c_str(), "result"))
 	{
 		auto requestParams = GetOMRequestParams();
 		if (requestParams != nullptr)
@@ -1569,7 +1575,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		{
 			for (size_t i = 0; i < ARRAY_SIZE(firmwareTypes); ++i)
 			{
-				if (stringStartsWith(data, firmwareTypes[i].name))
+				if (StringStartsWith(data, firmwareTypes[i].name))
 				{
 					const FirmwareFeatureMap newFeatures = firmwareTypes[i].features;
 					if (newFeatures != firmwareFeatures)
@@ -1667,15 +1673,15 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	case rcvHeatHeatersState:
 		ShowLine;
 		{
-			const HeaterStatusMapEntry key = (HeaterStatusMapEntry) {data, HeaterStatus::off};
-			const HeaterStatusMapEntry * statusFromMap =
-					(HeaterStatusMapEntry *) bsearch(
+			const OM::HeaterStatusMapEntry key = (OM::HeaterStatusMapEntry) {data, OM::HeaterStatus::off};
+			const OM::HeaterStatusMapEntry * statusFromMap =
+					(OM::HeaterStatusMapEntry *) bsearch(
 							&key,
-							heaterStatusMap,
-							ARRAY_SIZE(heaterStatusMap),
-							sizeof(HeaterStatusMapEntry),
-							compare<HeaterStatusMapEntry>);
-			const HeaterStatus status = (statusFromMap != nullptr) ? statusFromMap->val : HeaterStatus::off;
+							OM::heaterStatusMap,
+							ARRAY_SIZE(OM::heaterStatusMap),
+							sizeof(OM::HeaterStatusMapEntry),
+							compare<OM::HeaterStatusMapEntry>);
+			const OM::HeaterStatus status = (statusFromMap != nullptr) ? statusFromMap->val : OM::HeaterStatus::off;
 			UI::UpdateHeaterStatus(indices[0], status);
 		}
 		break;
@@ -1827,7 +1833,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	case rcvMoveKinematicsName:
 		ShowLine;
-		if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
+		if (status != OM::PrinterStatus::configuring && status != OM::PrinterStatus::connecting)
 		{
 			isDelta = (strcasecmp(data, "delta") == 0);
 			UI::UpdateGeometry(numAxes, isDelta);
@@ -1848,7 +1854,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	// Network section
 	case rcvNetworkName:
 		ShowLine;
-		if (status != PrinterStatus::configuring && status != PrinterStatus::connecting)
+		if (status != OM::PrinterStatus::configuring && status != OM::PrinterStatus::connecting)
 		{
 			UI::UpdateMachineName(data);
 		}
@@ -1975,7 +1981,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	// State section
 	case rcvStateCurrentTool:
 		ShowLine;
-		if (status == PrinterStatus::connecting || status == PrinterStatus::panelInitializing)
+		if (status == OM::PrinterStatus::connecting || status == OM::PrinterStatus::panelInitializing)
 		{
 			break;
 		}
@@ -2001,21 +2007,21 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		ShowLine;
 		if (GetUnsignedInteger(data, currentAlert.controls))
 		{
-			currentAlert.flags |= Alert::GotControls;
+			currentAlert.flags.SetBit(Alert::GotControls);
 		}
 		break;
 
 	case rcvStateMessageBoxMessage:
 		ShowLine;
 		currentAlert.text.copy(data);
-		currentAlert.flags |= Alert::GotText;
+		currentAlert.flags.SetBit(Alert::GotText);
 		break;
 
 	case rcvStateMessageBoxMode:
 		ShowLine;
 		if (GetInteger(data, currentAlert.mode))
 		{
-			currentAlert.flags |= Alert::GotMode;
+			currentAlert.flags.SetBit(Alert::GotMode);
 		}
 		break;
 
@@ -2023,7 +2029,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		ShowLine;
 		if (GetUnsignedInteger(data, currentAlert.seq))
 		{
-			currentAlert.flags |= Alert::GotSeq;
+			currentAlert.flags.SetBit(Alert::GotSeq);
 		}
 		break;
 
@@ -2031,14 +2037,14 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		ShowLine;
 		if (GetFloat(data, currentAlert.timeout))
 		{
-			currentAlert.flags |= Alert::GotTimeout;
+			currentAlert.flags.SetBit(Alert::GotTimeout);
 		}
 		break;
 
 	case rcvStateMessageBoxTitle:
 		ShowLine;
 		currentAlert.title.copy(data);
-		currentAlert.flags |= Alert::GotTitle;
+		currentAlert.flags.SetBit(Alert::GotTitle);
 		break;
 
 	case rcvStateStatus:
@@ -2155,15 +2161,15 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	case rcvToolsState:
 		ShowLine;
 		{
-			const ToolStatusMapEntry key = (ToolStatusMapEntry) {data, ToolStatus::off};
-			const ToolStatusMapEntry * statusFromMap =
-					(ToolStatusMapEntry *) bsearch(
+			const OM::ToolStatusMapEntry key = (OM::ToolStatusMapEntry) {data, OM::ToolStatus::off};
+			const OM::ToolStatusMapEntry * statusFromMap =
+					(OM::ToolStatusMapEntry *) bsearch(
 							&key,
-							toolStatusMap,
-							ARRAY_SIZE(toolStatusMap),
-							sizeof(ToolStatusMapEntry),
-							compare<ToolStatusMapEntry>);
-			const ToolStatus status = (statusFromMap != nullptr) ? statusFromMap->val : ToolStatus::off;
+							OM::toolStatusMap,
+							ARRAY_SIZE(OM::toolStatusMap),
+							sizeof(OM::ToolStatusMapEntry),
+							compare<OM::ToolStatusMapEntry>);
+			const OM::ToolStatus status = (statusFromMap != nullptr) ? statusFromMap->val : OM::ToolStatus::off;
 			UI::UpdateToolStatus(indices[0], status);
 		}
 		break;

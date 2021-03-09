@@ -5,8 +5,8 @@
  *  Author: David
  */
 
-#include "Display.hpp"
-#include "ColourSchemes.hpp"
+#include <UI/ColourSchemes.hpp>
+#include <UI/Display.hpp>
 #include "Icons/Icons.hpp"
 
 #undef min

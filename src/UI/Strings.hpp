@@ -7,14 +7,14 @@
  * The encoding used for this file must be UTF-8 to ensure that accented characters are displayed correctly.
  */
 
-#ifndef SRC_STRINGS_HPP_
-#define SRC_STRINGS_HPP_
+#ifndef SRC_UI_STRINGS_HPP_
+#define SRC_UI_STRINGS_HPP_
 
 #include "ecv.h"
 #undef array
 #undef result
 #undef value
-#include "UserInterfaceConstants.hpp"
+#include <UI/UserInterfaceConstants.hpp>
 
 #define CSTRING const char * const _ecv_array
 #define Newline			"\n"
@@ -981,4 +981,4 @@ const StringTable LanguageTables[NumLanguages] =
 #endif
 };
 
-#endif /* SRC_STRINGS_HPP_ */
+#endif /* SRC_UI_STRINGS_HPP_ */

@@ -5,15 +5,15 @@
  *  Author: David
  */
 
-#include <cctype>
 #include "FileManager.hpp"
+#include <cctype>
 #include "PanelDue.hpp"
-#include "UserInterfaceConstants.hpp"
-#include "UserInterface.hpp"
-#include "Hardware/SerialIo.hpp"
-#include "Library/Misc.hpp"
-#include "General/Vector.hpp"
-#include "General/String.h"
+#include <Hardware/SerialIo.hpp>
+#include <Library/Misc.hpp>
+#include <UI/UserInterface.hpp>
+#include <UI/UserInterfaceConstants.hpp>
+#include <General/Vector.hpp>
+#include <General/String.h>
 
 #undef min
 #undef max

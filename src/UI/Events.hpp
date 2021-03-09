@@ -5,8 +5,8 @@
  *      Author: David
  */
 
-#ifndef SRC_EVENTS_HPP_
-#define SRC_EVENTS_HPP_
+#ifndef SRC_UI_EVENTS_HPP_
+#define SRC_UI_EVENTS_HPP_
 
 // Event numbers, used to say what we need to do when a field is touched
 // *** MUST leave value 0 free to mean "no event"
@@ -83,4 +83,4 @@ enum Event : uint8_t
 #endif
 };
 
-#endif /* SRC_EVENTS_HPP_ */
+#endif /* SRC_UI_EVENTS_HPP_ */

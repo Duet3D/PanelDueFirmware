@@ -9,7 +9,7 @@
 
 #include "ColourSchemes.hpp"
 #include "UserInterfaceConstants.hpp"
-#include "Icons/Icons.hpp"
+#include <Icons/Icons.hpp>
 
 const ColourScheme colourSchemes[NumColourSchemes] =
 {

@@ -6,7 +6,7 @@
  */ 
 
 #include "Mem.hpp"
-#include "Library/Misc.hpp"
+#include <General/SimpleMath.h>
 
 const uint32_t memPattern = 0xA5A5A5A5;
 

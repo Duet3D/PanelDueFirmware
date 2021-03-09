@@ -12,12 +12,12 @@
 #undef array
 #undef result
 #undef value
-#include "Hardware/UTFT.hpp"
-#include "Display.hpp"
+#include <Hardware/UTFT.hpp>
+#include <UI/Display.hpp>
 #include "RequestTimer.hpp"
-#include "PrinterStatus.hpp"
 #include "FirmwareFeatures.hpp"
-#include "General/String.h"
+#include <ObjectModel/PrinterStatus.hpp>
+#include <General/String.h>
 
 // Functions called from the serial I/O module
 extern void ProcessReceivedValue(StringRef id, const char val[], const size_t indices[]);
@@ -42,9 +42,9 @@ enum class HeaterCombineType : uint8_t
 };
 
 // Functions called from module UserInterface
-extern bool IsPrintingStatus(PrinterStatus status);
+extern bool IsPrintingStatus(OM::PrinterStatus status);
 extern bool PrintInProgress();
-extern PrinterStatus GetStatus();
+extern OM::PrinterStatus GetStatus();
 extern void DelayTouchLong();
 extern void ShortenTouchDelay();
 extern void TouchBeep();
@@ -102,17 +102,19 @@ struct Alert
 	float timeout;
 	String<50> title;
 	String<alertTextLength> text;
-	uint8_t flags;
+	Bitmap<uint8_t> flags;
 
-	static constexpr uint8_t GotMode = 0x01;
-	static constexpr uint8_t GotSeq = 0x02;
-	static constexpr uint8_t GotTimeout = 0x04;
-	static constexpr uint8_t GotTitle = 0x08;
-	static constexpr uint8_t GotText = 0x10;
-	static constexpr uint8_t GotControls = 0x20;
+	static constexpr uint8_t GotMode = 0;
+	static constexpr uint8_t GotSeq = 1;
+	static constexpr uint8_t GotTimeout = 2;
+	static constexpr uint8_t GotTitle = 3;
+	static constexpr uint8_t GotText = 4;
+	static constexpr uint8_t GotControls = 5;
 	static constexpr uint8_t GotAll = GotMode | GotSeq | GotTimeout | GotTitle | GotText | GotControls;
 
-	Alert() { flags = 0; }
+	Alert() : mode(0), seq(0), controls(0), timeout(0.0) { flags.Clear(); }
+
+	bool AllFlagsSet() const { return flags.GetRaw() == GotAll; }
 };
 
 #endif /* PANELDUE_H_ */

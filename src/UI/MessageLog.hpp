@@ -10,7 +10,7 @@
 #define MESSAGELOG_H_
 
 #include <cstddef>
-#include "DisplaySize.hpp"
+#include <UI/DisplaySize.hpp>
 #include "ecv.h"
 #undef array
 #undef result

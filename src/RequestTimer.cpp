@@ -7,8 +7,8 @@
 
 #include "RequestTimer.hpp"
 #include "asf.h"
-#include "Hardware/SysTick.hpp"
-#include "Hardware/SerialIo.hpp"
+#include <Hardware/SysTick.hpp>
+#include <Hardware/SerialIo.hpp>
 
 extern bool OkToSend();		// in PanelDue.cpp
 

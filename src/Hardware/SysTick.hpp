@@ -9,6 +9,8 @@
 #ifndef SYSTICK_H_
 #define SYSTICK_H_
 
+#include <cstdint>
+
 namespace SystemTick
 {
 	constexpr uint32_t TicksPerSecond = 1000;

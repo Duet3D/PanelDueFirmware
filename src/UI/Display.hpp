@@ -14,9 +14,9 @@
 #undef result
 #undef value
 #include <cstring>
-#include "Hardware/UTFT.hpp"
-#include "DisplaySize.hpp"
-#include <math.h>
+#include <cmath>
+#include <Hardware/UTFT.hpp>
+#include <UI/DisplaySize.hpp>
 
 #ifndef UNUSED
 # define UNUSED(_x)	(void)(_x)

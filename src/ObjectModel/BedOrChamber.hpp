@@ -10,12 +10,39 @@
 
 
 #include <cstdint>
-#include "HeaterStatus.hpp"
 #include <General/FreelistManager.h>
 #include <General/inplace_function.h>
 
 namespace OM
 {
+	enum class HeaterStatus
+	{
+		off = 0,
+		standby,
+		active,
+		fault,
+		tuning,
+		offline
+	};
+
+
+	struct HeaterStatusMapEntry
+	{
+		const char* key;
+		const HeaterStatus val;
+	};
+
+	// This table has to be kept in alphabetical order of the keys
+	const HeaterStatusMapEntry heaterStatusMap[] =
+	{
+		{ "active",		HeaterStatus::active },
+		{ "fault",		HeaterStatus::fault },
+		{ "off",	 	HeaterStatus::off },
+		{ "offline",	HeaterStatus::offline },
+		{ "standby",	HeaterStatus::standby },
+		{ "tuning",		HeaterStatus::tuning },
+	};
+
 	struct BedOrChamber
 	{
 		void* operator new(size_t) noexcept { return FreelistManager::Allocate<BedOrChamber>(); }

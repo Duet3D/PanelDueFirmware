@@ -5,8 +5,8 @@
  *      Author: David
  */
 
-#ifndef SRC_DISPLAYSIZE_HPP_
-#define SRC_DISPLAYSIZE_HPP_
+#ifndef SRC_UI_DISPLAYSIZE_HPP_
+#define SRC_UI_DISPLAYSIZE_HPP_
 
 #include "Configuration.hpp"
 #include "Hardware/DisplayOrientation.hpp"
@@ -61,4 +61,4 @@ const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientati
 const PixelNumber DisplayX = DISPLAY_X;
 const PixelNumber DisplayY = DISPLAY_Y;
 
-#endif /* SRC_DISPLAYSIZE_HPP_ */
+#endif /* SRC_UI_DISPLAYSIZE_HPP_ */

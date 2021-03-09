@@ -8,7 +8,7 @@
 #ifndef COLOURSCHEME_H_
 #define COLOURSCHEME_H_
 
-#include "Hardware/UTFT.hpp"
+#include <Hardware/UTFT.hpp>
 
 // Some common colours
 const Colour
