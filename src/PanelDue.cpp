@@ -43,14 +43,6 @@
 #include <ObjectModel/PrinterStatus.hpp>
 #include "ControlCommands.hpp"
 
-#ifdef OEM
-# if DISPLAY_X == 800
-#  include "OemSplashScreen_800_480.hpp"
-# else
-#  include "OemSplashScreen_480_272.hpp"
-# endif
-#endif
-
 extern uint16_t _esplash[];							// defined in linker script
 
 #define DEBUG	(0)

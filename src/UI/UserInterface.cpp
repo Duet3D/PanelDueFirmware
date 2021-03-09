@@ -5,8 +5,6 @@
  *      Author: David
  */
 
-#ifndef OEM_LAYOUT
-
 #include <UI/UserInterface.hpp>
 
 #include <UI/UserInterfaceConstants.hpp>
@@ -3529,7 +3527,5 @@ namespace UI
 		}
 	}
 }
-
-#endif
 
 // End

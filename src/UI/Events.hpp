@@ -77,10 +77,6 @@ enum Event : uint8_t
 	evEmergencyStop,
 
 	evJogZ, evCloseAlert
-
-#ifdef OEM_LAYOUT
-	, evOemJogPage, evOemSetIncrement, evOemAdjustUpDown, evOemDone, evOemSetBrightness, evOemAxisSelect, evOemDistanceSelect, evOemCardSelect
-#endif
 };
 
 #endif /* SRC_UI_EVENTS_HPP_ */

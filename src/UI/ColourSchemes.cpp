@@ -5,8 +5,6 @@
  *  Author: David
  */
 
-#ifndef OEM_COLOURS
-
 #include "ColourSchemes.hpp"
 #include "UserInterfaceConstants.hpp"
 #include <Icons/Icons.hpp>
@@ -162,7 +160,4 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 	}
 };
 
-#endif
-
 // End
-

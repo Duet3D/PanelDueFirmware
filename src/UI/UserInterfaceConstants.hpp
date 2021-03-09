@@ -13,12 +13,6 @@
 
 const size_t NumColourSchemes = 3;
 
-#ifdef OEM_LAYOUT
-
-#include "OemUserInterfaceConstants.hpp"
-
-#else
-
 static const char* _ecv_array const axisNames[] = { "X", "Y", "Z", "U", "V", "W" };
 constexpr size_t MaxTotalAxes = 15;		// This needs to be kept in sync with the maximum in RRF for any build configuration
 constexpr size_t MaxHeatersPerTool = 8;
@@ -207,7 +201,5 @@ const PixelNumber alertPopupHeight = 2 * popupTopMargin + 6 * rowTextHeight + 2 
 const PixelNumber babystepPopupWidth = (2 * fullPopupWidth)/3;
 const PixelNumber babystepPopupHeight = 3 * rowHeight + 2 * popupTopMargin;
 const PixelNumber babystepRowSpacing = rowHeight;
-
-#endif
 
 #endif /* SRC_UI_USERINTERFACECONSTANTS_HPP_ */
