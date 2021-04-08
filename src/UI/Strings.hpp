@@ -46,9 +46,10 @@ struct StringTable
 	CSTRING speed;
 	CSTRING fan;
 	CSTRING timeRemaining;
+	CSTRING simulated;
 	CSTRING file;
 	CSTRING filament;
-	CSTRING layer;
+	CSTRING slicer;
 	CSTRING notAvailable;
 	CSTRING pause;
 	CSTRING babystep;
@@ -145,9 +146,10 @@ const StringTable LanguageTables[NumLanguages] =
 		"Speed ",							// note space at end
 		"Fan ",								// note space at end
 		"Time left: ",
+		"sim'd ",							// note space at end
 		"file ",							// note space at end
-		", filament ",						// note space at end
-		", layer ",							// note space at end
+		"filament ",						// note space at end
+		"slicer ",							// note space at end
 		"n/a",
 		"Pause",
 		"Baby step",
@@ -269,8 +271,9 @@ const StringTable LanguageTables[NumLanguages] =
 		"Lüfter ",							// note space at end
 		"Restzeit: ",
 		"Datei ",							// note space at end
-		", Filament ",						// note space at end
-		", Layer ",							// note space at end. "Schicht" is too long.
+		"Simul. ",							// note space at end
+		"Filament ",						// note space at end
+		"Slicer ",							// note space at end
 		"n/v",
 		"Pause",
 		"Einzelschritt",
@@ -390,9 +393,10 @@ const StringTable LanguageTables[NumLanguages] =
 		"Vitesse ",								// note space at end
 		"Ventilo ",								// note space at end. "Ventilateur 0%" was too long to fit.
 		"Temps Restant: ",
+		"Simul. ",								// note space at end
 		"Fichier ",								// note space at end
-		", filament ",							// note space at end
-		", couche ",							// note space at end
+		"filament ",							// note space at end
+		"slicer ",								// note space at end
 		"n/a",
 		"Pause",
 		"Baby step",
@@ -512,9 +516,10 @@ const StringTable LanguageTables[NumLanguages] =
 		"Veloc. ",							// note space at end. "Velocidad" is too long.
 		"Ventil. ",							// note space at end. "Ventilador" is too lonh.
 		"Tiempo restante: ",
+		"simul. ",							// note space at end
 		"archivo ",							// note space at end
-		", filamento ",						// note space at end
-		", capa ",							// note space at end
+		"filamento ",						// note space at end
+		"slicer ",							// note space at end
 		"n/d",								// Not available / no disponible
 		"Pausa",
 		"Micro paso",						// Literal translation of baby step it's very odd in spanish...
@@ -634,9 +639,10 @@ const StringTable LanguageTables[NumLanguages] =
 		"Rychl. ",							// note space at end
 		"Vent. ",							// note space at end
 		"Čas do konce: ",
+		"simul. ",							// note space at end
+		"slicer ",							// note space at end
 		"soubor ",							// note space at end
-		", materiál ",						// note space at end
-		", vrstva ",						// note space at end
+		"materiál ",						// note space at end
 		"n/a",
 		"Pozastavit",
 		"Baby step",
@@ -756,9 +762,10 @@ const StringTable LanguageTables[NumLanguages] =
 		"Velocità ",							// note space at end
 		"Ventola ",								// note space at end
 		"Tempo rimanente: ",
+		"simul. ",							// note space at end
 		"file ",							// note space at end
-		", filamento ",						// note space at end
-		", layer ",							// note space at end
+		"filamento ",						// note space at end
+		"slicer ",							// note space at end
 		"n/a",
 		"Pausa",
 		"Baby step",
@@ -879,9 +886,10 @@ const StringTable LanguageTables[NumLanguages] =
 		"Швидкість ",             // note space at end
 		"Вентилятор ",               // note space at end
 		"Залишилось часу: ",
-		"файл ",              // note space at end
-		", філамент ",            // note space at end
-		", шар ",             // note space at end
+		"simul. ",						// note space at end
+		"файл ",              			// note space at end
+		"філамент ",           			// note space at end
+		"slicer ",						// note space at end
 		"-",
 		"Пауза",
 		"Мікрокрок",

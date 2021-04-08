@@ -1386,6 +1386,10 @@ namespace UI
 	}
 
 	static int timesLeft[3];
+	enum TimesLeft { file, filament, slicer };
+	static uint32_t simulatedTime;
+	static uint32_t jobDuration;
+	static uint32_t jobWarmUpDuration;
 	static String<50> timesLeftText;
 
 	void ChangeStatus(OM::PrinterStatus oldStatus, OM::PrinterStatus newStatus)
@@ -1464,23 +1468,77 @@ namespace UI
 		}
 	}
 
+	void UpdateTimesLeftText()
+	{
+		if (!PrintInProgress())
+		{
+			return;
+		}
+		size_t count = 0;
+		timesLeftText.Clear();
+		if (simulatedTime > 0)
+		{
+			timesLeftText.copy(strings->simulated);
+			AppendTimeLeft(simulatedTime + jobWarmUpDuration - jobDuration);
+			++count;
+		}
+		if (timesLeft[TimesLeft::slicer] > 0)
+		{
+			if (count > 0) {
+				timesLeftText.cat(", ");
+			}
+			timesLeftText.cat(strings->slicer);
+			AppendTimeLeft(timesLeft[TimesLeft::slicer]);
+			++count;
+		}
+		if ((count < 2 || (DisplayX >= 800 && count < 3)) && timesLeft[TimesLeft::filament] > 0)
+		{
+			if (count > 0) {
+				timesLeftText.cat(", ");
+			}
+			timesLeftText.cat(strings->filament);
+			AppendTimeLeft(timesLeft[TimesLeft::filament]);
+			++count;
+		}
+		if ((count < 2 || (DisplayX >= 800 && count < 3)) && timesLeft[TimesLeft::file] > 0)
+		{
+			if (count > 0) {
+				timesLeftText.cat(", ");
+			}
+			timesLeftText.cat(strings->file);
+			AppendTimeLeft(timesLeft[TimesLeft::file]);
+			++count;
+		}
+
+		timeLeftField->SetValue(timesLeftText.c_str());
+		mgr.Show(timeLeftField, true);
+	}
+
 	void UpdateTimesLeft(size_t index, unsigned int seconds)
 	{
 		if (index < (int)ARRAY_SIZE(timesLeft))
 		{
 			timesLeft[index] = seconds;
-			timesLeftText.copy(strings->file);
-			AppendTimeLeft(timesLeft[0]);
-			timesLeftText.cat(strings->filament);
-			AppendTimeLeft(timesLeft[1]);
-			if (DisplayX >= 800)
-			{
-				timesLeftText.cat(strings->layer);
-				AppendTimeLeft(timesLeft[2]);
-			}
-			timeLeftField->SetValue(timesLeftText.c_str());
-			mgr.Show(timeLeftField, true);
+			UpdateTimesLeftText();
 		}
+	}
+
+	void UpdateDuration(uint32_t duration)
+	{
+		jobDuration = duration;
+		UpdateTimesLeftText();
+	}
+
+	void UpdateWarmupDuration(uint32_t warmupDuration)
+	{
+		jobWarmUpDuration = warmupDuration;
+		UpdateTimesLeftText();
+	}
+
+	void SetSimulatedTime(uint32_t simdTime)
+	{
+		simulatedTime = simdTime;
+		UpdateTimesLeftText();
 	}
 
 	void SwitchToTab(ButtonBase *newTab) {

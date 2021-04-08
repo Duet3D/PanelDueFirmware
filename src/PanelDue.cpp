@@ -343,14 +343,17 @@ enum ReceivedDataEvent
 	rcvHeatHeatersState,
 
 	// Keys for job response
+	rcvJobDuration,
 	rcvJobFileFilename,
 	rcvJobFileSize,
 	rcvJobFilePosition,
+	rcvJobFileSimulatedTime,
 	rcvJobLastFileName,
 	rcvJobLastFileSimulated,
 	rcvJobTimesLeftFilament,
 	rcvJobTimesLeftFile,
-	rcvJobTimesLeftLayer,
+	rcvJobTimesLeftSlicer,
+	rcvJobWarmUpDuration,
 
 	// Keys for move response
 	rcvMoveAxesBabystep,
@@ -453,12 +456,14 @@ static FieldTableEntry fieldTable[] =
 	// M409 K"job" response
 	{ rcvJobFileFilename, 				"job:file:fileName" },
 	{ rcvJobFileSize, 					"job:file:size" },
+	{ rcvJobFileSimulatedTime, 			"job:file:simulatedTime" },
 	{ rcvJobFilePosition,				"job:filePosition" },
 	{ rcvJobLastFileName,				"job:lastFileName" },
 	{ rcvJobLastFileSimulated,			"job:lastFileSimulated" },
 	{ rcvJobTimesLeftFilament,			"job:timesLeft:filament" },
 	{ rcvJobTimesLeftFile,				"job:timesLeft:file" },
-	{ rcvJobTimesLeftLayer,				"job:timesLeft:layer" },
+	{ rcvJobTimesLeftSlicer,			"job:timesLeft:slicer" },
+	{ rcvJobWarmUpDuration,				"job:warmUpDuration" },
 
 	// M409 K"move" response
 	{ rcvMoveAxesBabystep, 				"move:axes^:babystep" },
@@ -1149,6 +1154,9 @@ void Reconnect()
 
 	seqs.Reset();
 	UI::LastJobFileNameAvailable(false);
+	UI::SetSimulatedTime(0);
+	UI::UpdateDuration(0);
+	UI::UpdateWarmupDuration(0);
 
 	// Send first round of data fetching again
 	SerialIo::Sendf("M409 F\"d99f\"\n");
@@ -1679,6 +1687,21 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	// Job section
+	case rcvJobDuration:
+		ShowLine;
+		{
+			uint32_t duration;
+			if (GetUnsignedInteger(data, duration))
+			{
+				UI::UpdateDuration(duration);
+			}
+			else
+			{
+				UI::UpdateDuration(0);
+			}
+		}
+		break;
+
 	case rcvJobFileFilename:
 		ShowLine;
 		UI::PrintingFilenameChanged(data);
@@ -1695,6 +1718,21 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 			else
 			{
 				fileSize = 0;
+			}
+		}
+		break;
+
+	case rcvJobFileSimulatedTime:
+		ShowLine;
+		{
+			uint32_t simulatedTime;
+			if (GetUnsignedInteger(data, simulatedTime))
+			{
+				UI::SetSimulatedTime(simulatedTime);
+			}
+			else
+			{
+				UI::SetSimulatedTime(0);
 			}
 		}
 		break;
@@ -1730,16 +1768,31 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		}
 		break;
 
-	case rcvJobTimesLeftFilament:
 	case rcvJobTimesLeftFile:
-	case rcvJobTimesLeftLayer:
+	case rcvJobTimesLeftFilament:
+	case rcvJobTimesLeftSlicer:
 		ShowLine;
 		{
-			int32_t i;
-			bool b = GetInteger(data, i);
-			if (b && i >= 0 && i < 10 * 24 * 60 * 60 && PrintInProgress())
+			int32_t timeLeft;
+			bool b = GetInteger(data, timeLeft);
+			if (b && timeLeft >= 0 && timeLeft < 10 * 24 * 60 * 60 && PrintInProgress())
 			{
-				UI::UpdateTimesLeft((rde == rcvJobTimesLeftFilament) ? 1 : (rde == rcvJobTimesLeftLayer) ? 2 : 0, i);
+				UI::UpdateTimesLeft((rde == rcvJobTimesLeftFilament) ? 1 : (rde == rcvJobTimesLeftSlicer) ? 2 : 0, timeLeft);
+			}
+		}
+		break;
+
+	case rcvJobWarmUpDuration:
+		ShowLine;
+		{
+			uint32_t warmUpDuration;
+			if (GetUnsignedInteger(data, warmUpDuration))
+			{
+				UI::UpdateWarmupDuration(warmUpDuration);
+			}
+			else
+			{
+				UI::UpdateWarmupDuration(0);
 			}
 		}
 		break;

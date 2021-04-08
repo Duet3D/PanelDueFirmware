@@ -38,6 +38,9 @@ namespace UI
 	extern void UpdateHeaterStatus(const size_t heater, const OM::HeaterStatus status);
 	extern void ChangeStatus(OM::PrinterStatus oldStatus, OM::PrinterStatus newStatus);
 	extern void UpdateTimesLeft(size_t index, unsigned int seconds);
+	extern void UpdateDuration(uint32_t duration);
+	extern void UpdateWarmupDuration(uint32_t warmupDuration);
+	extern void SetSimulatedTime(uint32_t simulatedTime);
 	extern bool ChangePage(ButtonBase *newTab);
 	extern bool DoPolling();
 	extern void Tick();
