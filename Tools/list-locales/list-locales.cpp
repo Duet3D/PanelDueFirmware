@@ -193,6 +193,12 @@ int main(int argc, char *argv[])
 		return print_all();
 	} else if (std::string("list").compare(argv[1]) == 0) {
 		return list_languages();
+	} else if (std::string("help").compare(argv[1]) == 0) {
+		std::cout << argv[0] << " all|list|help|LANGUAGE_NAMES..." << std::endl << std::endl;
+		std::cout << "all - print all translations" << std::endl
+			  << "list - list all language names" << std::endl
+			  << "help - print this help" << std::endl
+			  << "LANGUAGES_NAMES - pass a list of languages names to print languages' translations" << std::endl;
 	} else {
 		for (size_t i = 1; i < argc; i++) {
 			print_lang(argv[i]);
