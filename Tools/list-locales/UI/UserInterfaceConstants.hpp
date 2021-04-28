@@ -1,0 +1,8 @@
+#ifndef USER_INTERFACE_CONTANATS
+#define USER_INTERFACE_CONTANATS 1
+
+#define DEGREE_SYMBOL		"\xC2\xB0"
+#define THIN_SPACE		"\xC2\x80"
+
+#endif /* ifndef USER_INTERFACE_CONTANATS */
+
