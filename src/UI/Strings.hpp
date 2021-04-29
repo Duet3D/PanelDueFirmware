@@ -345,7 +345,8 @@ const StringTable LanguageTables[] =
 			"Firmware-Upload",
 			"Wechsle Tool",
 			"Simuliert",
-			"Stand-by"
+			"Stand-by",
+			"Initialisieren"
 		},
 
 		// Theme names
