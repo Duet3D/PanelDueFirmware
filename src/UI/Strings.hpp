@@ -462,13 +462,14 @@ const StringTable LanguageTables[] =
 			"Arrêt",
 			"Démarrage",
 			"Pause",
-			"Occupé"
+			"Occupé",
 			"Pause",
 			"Reprise",
 			"Flasher firmware",
 			"Changer outil",
 			"Simuler",
-			"En veille"
+			"En veille",
+			"Initialiser"
 		},
 
 		// Theme names
