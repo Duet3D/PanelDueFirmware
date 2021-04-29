@@ -29,7 +29,7 @@ enum class HeaterCombineType : uint8_t
 
 static int print_index(size_t index);
 
-static int print_all()
+static int print_all(void)
 {
 	const StringTable *orig = &LanguageTables[0];
 
@@ -175,7 +175,7 @@ static int print_lang(const char *name)
 	return 0;
 }
 
-static int list_languages()
+static int list_languages(void)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(LanguageTables); i++) {
 		const StringTable *lang = &LanguageTables[i];
