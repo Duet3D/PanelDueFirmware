@@ -26,7 +26,7 @@ DEPEND     = -E -MD -MP -MF
 CPP_STD    =
 
 
-INCLUDE    = -I../../src/UI -I./
+INCLUDE    = -I./ -I../../src
 OPTIMIZE   =
 #WARN       = -W -Wall -Wstrict-prototypes -Wundef
 

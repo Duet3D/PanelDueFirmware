@@ -23,7 +23,7 @@ enum class HeaterCombineType : uint8_t
 };
 
 
-#include <Strings.hpp>
+#include <UI/Strings.hpp>
 
 #define ARRAY_SIZE(arr) (sizeof(arr)/sizeof(arr[0]))
 
