@@ -20,7 +20,6 @@
 #define Newline			"\n"
 #define DegreeSymbol	"\u00B0"
 
-constexpr unsigned int NumLanguages = 6 + USE_CYRILLIC_CHARACTERS;
 constexpr unsigned int NumStatusStrings = 14;
 
 struct StringTable
@@ -121,7 +120,7 @@ struct StringTable
 
 };
 
-const StringTable LanguageTables[NumLanguages] =
+const StringTable LanguageTables[] =
 {
 	// English
 	{
@@ -346,7 +345,8 @@ const StringTable LanguageTables[NumLanguages] =
 			"Firmware-Upload",
 			"Wechsle Tool",
 			"Simuliert",
-			"Stand-by"
+			"Stand-by",
+			"Initialisieren"
 		},
 
 		// Theme names
@@ -463,13 +463,14 @@ const StringTable LanguageTables[NumLanguages] =
 			"Arrêt",
 			"Démarrage",
 			"Pause",
-			"Occupé"
+			"Occupé",
 			"Pause",
 			"Reprise",
 			"Flasher firmware",
 			"Changer outil",
 			"Simuler",
-			"En veille"
+			"En veille",
+			"Initialiser"
 		},
 
 		// Theme names
@@ -989,4 +990,5 @@ const StringTable LanguageTables[NumLanguages] =
 #endif
 };
 
+constexpr unsigned int NumLanguages = sizeof(LanguageTables) / sizeof(LanguageTables[0]);
 #endif /* SRC_UI_STRINGS_HPP_ */
