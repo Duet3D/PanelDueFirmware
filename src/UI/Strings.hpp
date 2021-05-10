@@ -30,6 +30,7 @@ struct StringTable
 	// Main page strings
 	CSTRING control;
 	CSTRING print;
+	CSTRING status;
 	CSTRING console;
 	CSTRING setup;
 	CSTRING current;
@@ -40,7 +41,7 @@ struct StringTable
 	CSTRING macro;
 	CSTRING stop;
 
-	// Print page
+	// Status page
 	CSTRING extruderPercent;
 	CSTRING speed;
 	CSTRING fan;
@@ -130,6 +131,7 @@ const StringTable LanguageTables[] =
 		// Main page strings
 		"Control",
 		"Print",
+		"Status",
 		"Console",
 		"Setup",
 		"Current" THIN_SPACE DEGREE_SYMBOL "C",
@@ -254,6 +256,7 @@ const StringTable LanguageTables[] =
 		// Main page strings
 		"Steuerung",
 		"Druck",
+		"Status",
 		"Konsole",
 		"Setup",
 		"Istwert" THIN_SPACE DEGREE_SYMBOL "C",
@@ -378,6 +381,7 @@ const StringTable LanguageTables[] =
 		// Main page strings
 		"Contrôle",
 		"Imprimer",
+		"Statut",
 		"Console",
 		"Installation",
 		"Actuel" THIN_SPACE DEGREE_SYMBOL "C",
@@ -502,6 +506,7 @@ const StringTable LanguageTables[] =
 		// Main page strings
 		"Control",
 		"Imprimir",
+		"Estatus",
 		"Consola",
 		"Configuración",
 		"Actual" THIN_SPACE DEGREE_SYMBOL "C",
@@ -625,6 +630,7 @@ const StringTable LanguageTables[] =
 		// Main page strings
 		"Ovládání",
 		"Tisk",
+		"Status",
 		"Konzole",
 		"Nastavení",
 		"Aktuální" THIN_SPACE DEGREE_SYMBOL "C",
@@ -748,6 +754,7 @@ const StringTable LanguageTables[] =
 		// Main page strings
 		"Controlla",
 		"Stampa",
+		"Status",
 		"Console",
 		"Configura",
 		"Corrente" THIN_SPACE DEGREE_SYMBOL "C",
@@ -872,6 +879,7 @@ const StringTable LanguageTables[] =
 		// Main page strings
 		"Контроль",
 		"Друк",
+		NULL,
 		"Консоль",
 		"Налаштування",
 		"Поточна" THIN_SPACE DEGREE_SYMBOL "C",
