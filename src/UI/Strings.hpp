@@ -880,7 +880,7 @@ const StringTable LanguageTables[] =
 		// Main page strings
 		"Контроль",
 		"Друк",
-		NULL,
+		"Друк",
 		"Консоль",
 		"Налаштування",
 		"Поточна" THIN_SPACE DEGREE_SYMBOL "C",
