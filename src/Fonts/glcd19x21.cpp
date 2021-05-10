@@ -14,6 +14,8 @@
 
 #include <asf.h>
 
+#include "Configuration.hpp"
+
 extern const uint8_t glcd19x21[] =
 {
 	19,			// character width in pixels

@@ -15,6 +15,7 @@
 #undef result
 #undef value
 #include <UI/UserInterfaceConstants.hpp>
+#include "Configuration.hpp"
 
 #define CSTRING const char * const _ecv_array
 #define Newline			"\n"

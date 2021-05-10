@@ -8,6 +8,7 @@
 #include <UI/UserInterface.hpp>
 
 #include <UI/UserInterfaceConstants.hpp>
+#include "Configuration.hpp"
 #include "PanelDue.hpp"
 #include "FileManager.hpp"
 #include <UI/MessageLog.hpp>
