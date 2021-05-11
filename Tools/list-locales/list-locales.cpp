@@ -1,5 +1,3 @@
-#define USE_CYRILLIC_CHARACTERS 1
-
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
