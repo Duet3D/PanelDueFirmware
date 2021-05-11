@@ -14,6 +14,8 @@
 
 #include <asf.h>
 
+#include "Configuration.hpp"
+
 extern const uint8_t glcd28x32[] =
 {
 	28,			// character width in pixels

@@ -1,5 +1,3 @@
-#define USE_CYRILLIC_CHARACTERS 1
-
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -56,6 +54,7 @@ static int print_index(size_t index)
 	PRINT_ENTRY(languageName);
 	PRINT_ENTRY(control);
 	PRINT_ENTRY(print);
+	PRINT_ENTRY(status);
 	PRINT_ENTRY(console);
 	PRINT_ENTRY(setup);
 	PRINT_ENTRY(current);

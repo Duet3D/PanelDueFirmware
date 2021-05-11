@@ -8,6 +8,7 @@
 #include <UI/UserInterface.hpp>
 
 #include <UI/UserInterfaceConstants.hpp>
+#include "Configuration.hpp"
 #include "PanelDue.hpp"
 #include "FileManager.hpp"
 #include <UI/MessageLog.hpp>
@@ -71,7 +72,7 @@ static FloatField *fpHeightField, *fpLayerHeightField, *babystepOffsetField;
 static TextButtonWithLabel *babystepMinusButton, *babystepPlusButton;
 static IntegerField *fpSizeField, *fpFilamentField, *filePopupTitleField;
 static ProgressBar *printProgressBar;
-static SingleButton *tabControl, *tabPrint, *tabMsg, *tabSetup;
+static SingleButton *tabControl, *tabStatus, *tabMsg, *tabSetup;
 static ButtonBase *filesButton, *pauseButton, *resumeButton, *cancelButton, *babystepButton, *reprintButton;
 static TextField *timeLeftField, *zProbe;
 static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
@@ -1101,7 +1102,7 @@ void CreateCommonFields(const ColourScheme& colours)
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour, colours.buttonBorderColour, colours.buttonGradColour,
 									colours.buttonPressedBackColour, colours.buttonPressedGradColour, colours.pal);
 	tabControl = AddTextButton(rowTabs, 0, 4, strings->control, evTabControl, nullptr);
-	tabPrint = AddTextButton(rowTabs, 1, 4, strings->print, evTabPrint, nullptr);
+	tabStatus = AddTextButton(rowTabs, 1, 4, strings->status, evTabStatus, nullptr);
 	tabMsg = AddTextButton(rowTabs, 2, 4, strings->console, evTabMsg, nullptr);
 	tabSetup = AddTextButton(rowTabs, 3, 4, strings->setup, evTabSetup, nullptr);
 }
@@ -1410,9 +1411,9 @@ namespace UI
 		case OM::PrinterStatus::resuming:
 			if (oldStatus == OM::PrinterStatus::connecting || oldStatus == OM::PrinterStatus::idle)
 			{
-				ChangePage(tabPrint);
+				ChangePage(tabStatus);
 			}
-			else if (currentTab == tabPrint)
+			else if (currentTab == tabStatus)
 			{
 				nameField->SetValue(printingFile.c_str());
 			}
@@ -1547,7 +1548,7 @@ namespace UI
 			mgr.SetRoot(controlRoot);
 			nameField->SetValue(machineName.c_str());
 			break;
-		case evTabPrint:
+		case evTabStatus:
 			mgr.SetRoot(printRoot);
 			nameField->SetValue(
 					PrintInProgress() ? printingFile.c_str() : machineName.c_str());
@@ -1678,7 +1679,7 @@ namespace UI
 	// This is called when we have just started a file print
 	void PrintStarted()
 	{
-		ChangePage(tabPrint);
+		ChangePage(tabStatus);
 	}
 
 	// This is called when we have just received the name of the file being printed
@@ -1687,7 +1688,7 @@ namespace UI
 		if (!printingFile.Similar(data))
 		{
 			printingFile.copy(data);
-			if (currentTab == tabPrint && PrintInProgress())
+			if (currentTab == tabStatus && PrintInProgress())
 			{
 				nameField->SetChanged();
 			}
@@ -2000,7 +2001,7 @@ namespace UI
 	{
 		const bool isErrorMessage = StringStartsWith(text, "Error");
 		if (   alertMode < 2											// if the current alert doesn't require acknowledgement
-			&& (currentTab == tabControl || currentTab == tabPrint)
+			&& (currentTab == tabControl || currentTab == tabStatus)
 			&& (isErrorMessage || infoTimeout != 0)
 		   )
 		{
@@ -2153,7 +2154,7 @@ namespace UI
 				break;
 
 			case evTabControl:
-			case evTabPrint:
+			case evTabStatus:
 			case evTabMsg:
 			case evTabSetup:
 				if (ChangePage(f))
@@ -2961,7 +2962,7 @@ namespace UI
 				break;
 
 			case evTabControl:
-			case evTabPrint:
+			case evTabStatus:
 			case evTabMsg:
 			case evTabSetup:
 				StopAdjusting();

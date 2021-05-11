@@ -17,7 +17,7 @@ enum Event : uint8_t
 	evDefaultRoot, evScreensaverRoot,
 
 	// Page selection
-	evTabControl, evTabPrint, evTabMsg, evTabSetup,
+	evTabControl, evTabStatus, evTabMsg, evTabSetup,
 
 	// Heater control
 	evSelectHead, evSelectBed, evSelectChamber,

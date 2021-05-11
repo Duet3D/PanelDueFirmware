@@ -50,6 +50,7 @@
 #undef min
 #undef max
 #include "UTFT.hpp"
+#include "Configuration.hpp"
 #include "memorysaver.h"
 #include <cstring>			// for strchr
 
