@@ -1066,16 +1066,17 @@ void SaveSettings()
 }
 
 // This is called when the status changes
-void SetStatus(const char * sts)
+static void SetStatus(const char * sts)
 {
 	OM::PrinterStatus newStatus = OM::PrinterStatus::connecting;
-	if (!initialized)
+	if (sts == nullptr)
 	{
 		newStatus = OM::PrinterStatus::panelInitializing;
 	}
 	else
 	{
-		const OM::PrinterStatusMapEntry key = (OM::PrinterStatusMapEntry) {sts, OM::PrinterStatus::connecting};
+		dbg("looking for status %s", sts);
+		const OM::PrinterStatusMapEntry key = (OM::PrinterStatusMapEntry) { .key = sts, .val = OM::PrinterStatus::connecting};
 		const OM::PrinterStatusMapEntry * statusFromMap =
 				(OM::PrinterStatusMapEntry *) bsearch(
 						&key,
@@ -1083,12 +1084,17 @@ void SetStatus(const char * sts)
 						ARRAY_SIZE(OM::printerStatusMap),
 						sizeof(OM::PrinterStatusMapEntry),
 						compare<OM::PrinterStatusMapEntry>);
-		if (statusFromMap != nullptr)
+
+		if (statusFromMap == nullptr)
 		{
-			newStatus = statusFromMap->val;
+			dbg("invalid status requested %s", sts);
+			return;
 		}
+
+		newStatus = statusFromMap->val;
 	}
 
+	dbg("printer status %d -> %d", status, newStatus);
 	if (newStatus != status)
 	{
 		if (isDimmed)
