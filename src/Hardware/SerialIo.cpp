@@ -28,6 +28,8 @@ namespace SerialIo
 {
 	static unsigned int lineNumber = 0;
 
+	static struct SerialIoCbs *cbs = nullptr;
+
 	// Translation tables for combining characters.
 	// The first character in each pair is the character that the combining mark is applied to.
 	// The second character is what is translates to if the value is >=0x80, else the value it translates to minus 0x0100.
@@ -51,8 +53,10 @@ namespace SerialIo
 											"c\xE7"																			;
 
 	// Initialize the serial I/O subsystem, or re-initialize it with a new baud rate
-	void Init(uint32_t baudRate)
+	void Init(uint32_t baudRate, struct SerialIoCbs *callbacks)
 	{
+		cbs = callbacks;
+
 		uart_disable_interrupt(UARTn, 0xFFFFFFFF);
 #if SAM4S
 		pio_configure(PIOA, PIO_PERIPH_A, PIO_PA9 | PIO_PA10, 0);	// enable UART 0 pins
@@ -71,6 +75,12 @@ namespace SerialIo
 #endif
 		uart_enable_interrupt(UARTn, UART_IER_RXRDY | UART_IER_OVRE | UART_IER_FRAME);
 	}
+
+	void SetBaudRate(uint32_t baudRate)
+	{
+		Init(baudRate, cbs);
+	}
+
 
 	uint16_t numChars = 0;
 	uint8_t checksum = 0;
@@ -233,7 +243,10 @@ namespace SerialIo
 				fieldVal.Clear();				// so that we can distinguish null from an empty string
 			}
 		}
-		ProcessReceivedValue(fieldId.GetRef(), fieldVal.c_str(), arrayIndices);
+		if (cbs && cbs->ProcessReceivedValue)
+		{
+			cbs->ProcessReceivedValue(fieldId.GetRef(), fieldVal.c_str(), arrayIndices);
+		}
 		fieldVal.Clear();
 	}
 
@@ -242,7 +255,10 @@ namespace SerialIo
 #if DEBUG
 		MessageLog::AppendMessage("EndArray");
 #endif
-		ProcessArrayEnd(fieldId.c_str(), arrayIndices);
+		if (cbs && cbs->ProcessArrayEnd)
+		{
+			cbs->ProcessArrayEnd(fieldId.c_str(), arrayIndices);
+		}
 		if (arrayDepth != 0)			// should always be true
 		{
 			--arrayDepth;
@@ -426,7 +442,10 @@ namespace SerialIo
 				RemoveLastId();
 				if (fieldId.strlen() == 0)
 				{
-					EndReceivedMessage();
+					if (cbs && cbs->EndReceivedMessage)
+					{
+						cbs->EndReceivedMessage();
+					}
 					state = jsBegin;
 				}
 				else
@@ -454,9 +473,12 @@ namespace SerialIo
 				if (state == jsError)
 				{
 #if DEBUG
-						MessageLog::AppendMessage("ParserErrorEncountered");
+					MessageLog::AppendMessage("ParserErrorEncountered");
 #endif
-					ParserErrorEncountered(fieldId.c_str(), fieldVal.c_str(), arrayIndices); // Notify the consumer that we ran into an error
+					if (cbs && cbs->ParserErrorEncountered)
+					{
+						cbs->ParserErrorEncountered(fieldId.c_str(), fieldVal.c_str(), arrayIndices); // Notify the consumer that we ran into an error
+					}
 				}
 				state = jsBegin;		// abandon current parse (if any) and start again
 			}
@@ -467,7 +489,10 @@ namespace SerialIo
 				case jsBegin:			// initial state, expecting '{'
 					if (c == '{')
 					{
-						StartReceivedMessage();
+						if (cbs && cbs->StartReceivedMessage)
+						{
+							cbs->StartReceivedMessage();
+						}
 						state = jsExpectId;
 						fieldVal.Clear();
 						fieldId.Clear();
@@ -487,7 +512,10 @@ namespace SerialIo
 						RemoveLastId();
 						if (fieldId.strlen() == 0)
 						{
-							EndReceivedMessage();
+							if (cbs && cbs->EndReceivedMessage)
+							{
+								cbs->EndReceivedMessage();
+							}
 							state = jsBegin;
 						}
 						else
