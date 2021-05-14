@@ -1199,7 +1199,7 @@ namespace UI
 	static void ClearAlertOrResponse();
 
 	// Return the number of supported languages
-	extern unsigned int GetNumLanguages()
+	unsigned int GetNumLanguages()
 	{
 		return NumLanguages;
 	}
