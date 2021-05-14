@@ -949,7 +949,7 @@ void PortraitDisplay(const bool withTouch)
 void SetBaudRate(uint32_t rate)
 {
 	nvData.baudRate = rate;
-	SerialIo::Init(rate);
+	SerialIo::SetBaudRate(rate);
 }
 
 extern void SetBrightness(int percent)
@@ -1233,7 +1233,21 @@ bool GetBool(const char s[], bool &rslt)
 	return true;
 }
 
-void StartReceivedMessage()
+static void StartReceivedMessage();
+static void EndReceivedMessage();
+static void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[]);
+static void ProcessArrayEnd(const char id[], const size_t indices[]);
+static void ParserErrorEncountered(const char*, const char*, const size_t[]);
+
+static struct SerialIo::SerialIoCbs serial_cbs = {
+	.StartReceivedMessage = StartReceivedMessage,
+	.EndReceivedMessage = EndReceivedMessage,
+	.ProcessReceivedValue = ProcessReceivedValue,
+	.ProcessArrayEnd = ProcessArrayEnd,
+	.ParserErrorEncountered = ParserErrorEncountered
+};
+
+static void StartReceivedMessage()
 {
 	ShowLine;
 	newMessageSeq = messageSeq;
@@ -1300,7 +1314,7 @@ void SeqsRequestDone(const ReceivedDataEvent rde)
 	}
 }
 
-void EndReceivedMessage()
+static void EndReceivedMessage()
 {
 	ShowLine;
 	lastResponseTime = SystemTick::GetTickCount();
@@ -1522,7 +1536,7 @@ void HandleOutOfBufferResponse() {
 }
 
 // Public functions called by the SerialIo module
-void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[])
+static void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[])
 {
 	if (StringStartsWith(id.c_str(), "result"))
 	{
@@ -2431,7 +2445,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 }
 
 // Public function called when the serial I/O module finishes receiving an array of values
-void ProcessArrayEnd(const char id[], const size_t indices[])
+static void ProcessArrayEnd(const char id[], const size_t indices[])
 {
 	if (indices[0] == 0 && strcmp(id, "files^") == 0)
 	{
@@ -2511,7 +2525,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 }
 
-void ParserErrorEncountered(const char*, const char*, const size_t[])	// For now we don't use the parameters
+static void ParserErrorEncountered(const char*, const char*, const size_t[])	// For now we don't use the parameters
 {
 	MessageLog::AppendMessage("Error parsing response");
 	// TODO: Handle parser errors
@@ -2597,7 +2611,7 @@ int main(void)
 	}
 
 	// Set up the baud rate
-	SerialIo::Init(nvData.baudRate);
+	SerialIo::Init(nvData.baudRate, &serial_cbs);
 
 	MessageLog::Init();
 
@@ -2653,7 +2667,7 @@ int main(void)
 		ShowLine;
 
 		// 1. Check for input from the serial port and process it.
-		// This calls back into functions StartReceivedMessage, ProcessReceivedValue, ProcessArrayLength and EndReceivedMessage.
+		// This calls back into functions StartReceivedMessage, ProcessReceivedValue, EndReceivedMessage and ParserErrorEncountered
 		SerialIo::CheckInput();
 		ShowLine;
 
@@ -2754,7 +2768,6 @@ int main(void)
 				auto nextToPoll = GetNextToPoll();
 				if (nextToPoll != nullptr)
 				{
-
 					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", nextToPoll->key, nextToPoll->flags);
 				}
 				else {
