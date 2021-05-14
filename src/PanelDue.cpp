@@ -112,7 +112,7 @@ MainWindow mgr;
 
 static uint32_t lastTouchTime;
 static uint32_t ignoreTouchTime;
-static uint32_t lastPollTime;
+static uint32_t lastPollTime = 0;
 static uint32_t lastResponseTime = 0;
 static uint32_t lastOutOfBufferResponse = 0;
 static uint8_t oobCounter = 0;
@@ -143,6 +143,8 @@ const ColourScheme *colours = &colourSchemes[0];
 
 Alert currentAlert;
 uint32_t lastAlertSeq = 0;
+
+static OM::PrinterStatus status = OM::PrinterStatus::connecting;
 
 struct FlashData
 {
@@ -270,8 +272,6 @@ void FlashData::Save() const
 }
 
 FlashData nvData, savedNvData;
-
-static OM::PrinterStatus status = OM::PrinterStatus::connecting;
 
 enum ReceivedDataEvent
 {
@@ -428,7 +428,7 @@ enum ReceivedDataEvent
 
 struct FieldTableEntry
 {
-	ReceivedDataEvent val;
+	const ReceivedDataEvent val;
 	const char* key;
 };
 
