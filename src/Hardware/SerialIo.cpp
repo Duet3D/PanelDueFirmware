@@ -12,7 +12,7 @@
 #include <General/SafeVsnprintf.h>
 #define DEBUG (0)
 #if DEBUG
-# include "MessageLog.hpp"
+# include "UI/MessageLog.hpp"
 #endif
 
 const size_t MaxArrayNesting = 4;
@@ -189,6 +189,7 @@ namespace SerialIo
 	};
 
 	JsonState state = jsBegin;
+	JsonState lastState = jsBegin;
 
 	// fieldId is the name of the field being received. A '^' character indicates the position of an _ecv_array index, and a ':' character indicates a field separator.
 	String<100> fieldId;
@@ -199,7 +200,7 @@ namespace SerialIo
 	static void RemoveLastId()
 	{
 #if DEBUG
-		MessageLog::AppendMessage(150, "RemoveLastId: %s, len: %d", fieldId.c_str(), fieldId.strlen());
+		MessageLog::AppendMessageF("RemoveLastId: %s, len: %d", fieldId.c_str(), fieldId.strlen());
 #endif
 		size_t index = fieldId.strlen();
 		while (index != 0 && fieldId[index - 1] != '^' && fieldId[index - 1] != ':')
@@ -208,7 +209,7 @@ namespace SerialIo
 		}
 		fieldId.Truncate(index);
 #if DEBUG
-		MessageLog::AppendMessage(150, "RemoveLastId: %s, len: %d", fieldId.c_str(), fieldId.strlen());
+		MessageLog::AppendMessageF("RemoveLastId: %s, len: %d", fieldId.c_str(), fieldId.strlen());
 #endif
 	}
 
@@ -477,13 +478,14 @@ namespace SerialIo
 #endif
 					if (cbs && cbs->ParserErrorEncountered)
 					{
-						cbs->ParserErrorEncountered(fieldId.c_str(), fieldVal.c_str(), arrayIndices); // Notify the consumer that we ran into an error
+						cbs->ParserErrorEncountered(lastState, fieldId.c_str(), fieldVal.c_str(), arrayIndices); // Notify the consumer that we ran into an error
 					}
 				}
 				state = jsBegin;		// abandon current parse (if any) and start again
 			}
 			else
 			{
+				lastState = state;
 				switch(state)
 				{
 				case jsBegin:			// initial state, expecting '{'
