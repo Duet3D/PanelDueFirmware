@@ -571,179 +571,115 @@ static FieldTableEntry fieldTable[] =
 	{ rcvControlCommand,				"controlCommand" },
 };
 
-// This table must be kept in case-insensitive alphabetical order of the search string.
-const FieldTableEntry keyResponseTypeTable[] =
-{
-	{ rcvOMKeyNoKey, 			"" },
-	{ rcvOMKeyBoards,			"boards" },
-	{ rcvOMKeyDirectories,		"directories" },
-	{ rcvOMKeyFans,				"fans" },
-	{ rcvOMKeyHeat,				"heat" },
-	{ rcvOMKeyInputs,			"inputs" },
-	{ rcvOMKeyJob,				"job" },
-	{ rcvOMKeyLimits,			"limits" },
-	{ rcvOMKeyMove,				"move" },
-	{ rcvOMKeyNetwork,			"network" },
-	{ rcvOMKeyReply,			"reply" },
-	{ rcvOMKeyScanner,			"scanner" },
-	{ rcvOMKeySensors,			"sensors" },
-	{ rcvOMKeySeqs,				"seqs" },
-	{ rcvOMKeySpindles,			"spindles" },
-	{ rcvOMKeyState,			"state" },
-	{ rcvOMKeyTools,			"tools" },
-	{ rcvOMKeyVolumes,			"volumes" },
+enum SeqState {
+	SeqStateInit,
+	SeqStateOk,
+	SeqStateUpdate,
+	SeqStateError,
+	SeqStateDisabled
 };
 
+static struct Seq {
+	const ReceivedDataEvent event;
+	const ReceivedDataEvent seqid;
 
-static ReceivedDataEvent currentResponseType = rcvUnknown;
+	uint16_t lastSeq;
+	enum SeqState state;
 
-struct Seqs
-{
-	uint16_t boards;
-	uint16_t directories;
-	uint16_t fans;
-	uint16_t heat;
-	uint16_t inputs;
-	uint16_t job;
-	uint16_t move;
-	uint16_t network;
-	uint16_t scanner;
-	uint16_t sensors;
-	uint16_t spindles;
-	uint16_t state;
-	uint16_t tools;
-	uint16_t volumes;
-
-	uint16_t updateBoards	: 1,
-		 updateDirectories	: 1,
-		 updateFans			: 1,
-		 updateHeat			: 1,
-		 updateInputs		: 1,
-		 updateJob			: 1,
-		 updateMove			: 1,
-		 updateNetwork		: 1,
-		 updateScanner		: 1,
-		 updateSensors		: 1,
-		 updateSpindles		: 1,
-		 updateState		: 1,
-		 updateTools		: 1,
-		 updateVolumes		: 1;
-
-	void Reset() noexcept
-	{
-		boards 				=
-		directories			=
-		fans 				=
-		heat 				=
-		inputs 				=
-		job 				=
-		move 				=
-		network 			=
-		scanner 			=
-		sensors 			=
-		spindles 			=
-		state 				=
-		tools 				=
-		volumes 			= (uint16_t)(0xFFFF);
-
-		updateBoards		=
-		updateDirectories	=
-		updateFans 			=
-		updateHeat 			=
-		updateInputs 		=
-		updateJob 			=
-		updateMove 			=
-		updateNetwork 		=
-		updateScanner 		=
-		updateSensors 		=
-		updateSpindles 		=
-		updateState 		=
-		updateTools 		=
-		updateVolumes 		= false;
-	}
-} seqs;
-
-struct OMRequestParams {
 	const char * _ecv_array const key;
-	const char * _ecv_array const flags = "v";
+	const char * _ecv_array const flags;
+} seqs[] = {
+	//{ .event = rcvOMKeyNoKey, .seqid = rcvUnknown, .lastSeq = 0, .state = SeqStateInit, .key = "", .flags = "v" },
+#if FETCH_BOARDS
+	{ .event = rcvOMKeyBoards, .seqid = rcvSeqsBoards, .lastSeq = 0, .state = SeqStateInit, .key = "boards", .flags = "v" },
+#endif
+#if FETCH_DIRECTORIES
+	{ .event = rcvOMKeyDirectories, .seqid = rcvSeqsDirectories, .lastSeq = 0, .state = SeqStateInit, .key = "directories", .flags = "v" },
+#endif
+#if FETCH_FANS
+	{ .event = rcvOMKeyFans, .seqid = rcvSeqsFans, .lastSeq = 0, .state = SeqStateInit, .key = "fans", .flags = "v" },
+#endif
+#if FETCH_HEAT
+	{ .event = rcvOMKeyHeat, .seqid = rcvSeqsHeat, .lastSeq = 0, .state = SeqStateInit, .key = "heat", .flags = "v" },
+#endif
+#if FETCH_INPUTS
+	{ .event = rcvOMKeyInputs, .seqid = rcvSeqsInputs, .lastSeq = 0, .state = SeqStateInit, .key = "inputs", .flags = "v" },
+#endif
+#if FETCH_JOB
+	{ .event = rcvOMKeyJob, .seqid = rcvSeqsJob, .lastSeq = 0, .state = SeqStateInit, .key = "job", .flags = "v" },
+#endif
+#if FETCH_MOVE
+	{ .event = rcvOMKeyMove, .seqid = rcvSeqsMove, .lastSeq = 0, .state = SeqStateInit, .key = "move", .flags = "v" },
+#endif
+#if FETCH_NETWORK
+	{ .event = rcvOMKeyNetwork, .seqid = rcvSeqsNetwork, .lastSeq = 0, .state = SeqStateInit, .key = "network", .flags = "v" },
+#endif
+#if FETCH_SCANNER
+	{ .event = rcvOMKeyScanner, .seqid = rcvSeqsScanner, .lastSeq = 0, .state = SeqStateInit, .key = "scanner", .flags = "v" },
+#endif
+#if FETCH_SENSORS
+	{ .event = rcvOMKeySensors, .seqid = rcvSeqsSensors, .lastSeq = 0, .state = SeqStateInit, .key = "sensors", .flags = "v" },
+#endif
+#if FETCH_SPINDLES
+	{ .event = rcvOMKeySpindles, .seqid = rcvSeqsSpindles, .lastSeq = 0, .state = SeqStateInit, .key = "spindles", .flags = "v" },
+#endif
+#if FETCH_STATE
+	{ .event = rcvOMKeyState, .seqid = rcvSeqsState, .lastSeq = 0, .state = SeqStateInit, .key = "state", .flags = "vn" },
+#endif
+#if FETCH_TOOLS
+	{ .event = rcvOMKeyTools, .seqid = rcvSeqsTools, .lastSeq = 0, .state = SeqStateInit, .key = "tools", .flags = "v" },
+#endif
+#if FETCH_VOLUMES
+	{ .event = rcvOMKeyVolumes, .seqid = rcvSeqsVolumes, .lastSeq = 0, .state = SeqStateInit, .key = "volumes", .flags = "v" },
+#endif
 };
 
-static const OMRequestParams noKeyParams =			{""};
-static const OMRequestParams boardsParams =			{"boards"};
-static const OMRequestParams directoriesParams =	{"directories"};
-static const OMRequestParams fansParams =			{"fans"};
-static const OMRequestParams heatParams =			{"heat"};
-static const OMRequestParams inputsParams =			{"inputs"};
-static const OMRequestParams jobParams =			{"job"};
-static const OMRequestParams moveParams =			{"move"};
-static const OMRequestParams networkParams =		{"network"};
-static const OMRequestParams scannerParams =		{"scanner"};
-static const OMRequestParams sensorsParams =		{"sensors"};
-static const OMRequestParams spindlesParams =		{"spindles"};
-static const OMRequestParams stateParams =			{"state", "vn"};
-static const OMRequestParams toolsParams =			{"tools"};
-static const OMRequestParams volumesParams =		{"volumes"};
+static struct Seq *currentSeq = nullptr;
 
-const OMRequestParams* GetNextToPoll()
+static struct Seq* GetNextSeq(struct Seq *current)
 {
-	if (seqs.updateNetwork)
+	size_t i;
+	if (current == nullptr)
 	{
-		return &networkParams;
+		current = seqs;
 	}
-	if (seqs.updateBoards)
+	for (i = current - seqs; i < ARRAY_SIZE(seqs); i++)
 	{
-		return &boardsParams;
-	}
-	if (seqs.updateMove)
-	{
-		return &moveParams;
-	}
-	if (seqs.updateHeat)
-	{
-		return &heatParams;
-	}
-	if (seqs.updateTools)
-	{
-		return &toolsParams;
-	}
-	if (seqs.updateSpindles)
-	{
-		return &spindlesParams;
-	}
-	if (seqs.updateDirectories)
-	{
-		return &directoriesParams;
-	}
-	if (seqs.updateFans)
-	{
-		return &fansParams;
-	}
-	if (seqs.updateInputs)
-	{
-		return &inputsParams;
-	}
-	if (seqs.updateJob)
-	{
-		return &jobParams;
-	}
-	if (seqs.updateScanner)
-	{
-		return &scannerParams;
-	}
-	if (seqs.updateSensors)
-	{
-		return &sensorsParams;
-	}
-	if (seqs.updateState)
-	{
-		return &stateParams;
-	}
-	if (seqs.updateVolumes)
-	{
-		return &volumesParams;
+		current = &seqs[i];
+		//dbg("%d %d", i, current - seqs);
+		if (current->state == SeqStateInit || current->state == SeqStateUpdate)
+		{
+			dbg("%d %d", index, current - seqs);
+			return current;
+		}
 	}
 
 	return nullptr;
+}
+
+static void UpdateSeq(const ReceivedDataEvent seqid, int32_t val)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(seqs); i++)
+	{
+		if (seqs[i].seqid == seqid)
+		{
+			dbg("%s %d %d", seqs[i].key, seqs[i].lastSeq, val);
+			if (seqs[i].lastSeq != val)
+			{
+				seqs[i].lastSeq = val;
+				seqs[i].state = SeqStateUpdate;
+			}
+		}
+	}
+}
+
+static void ResetSeqs()
+{
+	for (size_t i = 0; i < ARRAY_SIZE(seqs); i++)
+	{
+		seqs[i].lastSeq = 0;
+		seqs[i].state = SeqStateInit;
+	}
 }
 
 // Return the host firmware features
@@ -1177,7 +1113,8 @@ void Reconnect()
 	initialized = false;
 	SetStatus(nullptr);
 
-	seqs.Reset();
+	ResetSeqs();
+
 	UI::LastJobFileNameAvailable(false);
 	UI::SetSimulatedTime(0);
 	UI::UpdateDuration(0);
@@ -1257,69 +1194,16 @@ static void StartReceivedMessage()
 	currentAlert.flags.Clear();
 }
 
-void SeqsRequestDone(const ReceivedDataEvent rde)
-{
-	// If we ran out of buffers we have to redo the previous request
-	if (outOfBuffers)
-	{
-		return;
-	}
-	switch (rde)
-	{
-	case rcvOMKeyBoards:
-		seqs.updateBoards = false;
-		break;
-	case rcvOMKeyDirectories:
-		seqs.updateDirectories = false;
-		break;
-	case rcvOMKeyFans:
-		seqs.updateFans = false;
-		break;
-	case rcvOMKeyHeat:
-		seqs.updateHeat = false;
-		break;
-	case rcvOMKeyInputs:
-		seqs.updateInputs = false;
-		break;
-	case rcvOMKeyJob:
-		seqs.updateJob = false;
-		break;
-	case rcvOMKeyMove:
-		seqs.updateMove = false;
-		break;
-	case rcvOMKeyNetwork:
-		seqs.updateNetwork = false;
-		break;
-	case rcvOMKeyScanner:
-		seqs.updateScanner = false;
-		break;
-	case rcvOMKeySensors:
-		seqs.updateSensors = false;
-		break;
-	case rcvOMKeySpindles:
-		seqs.updateSpindles = false;
-		break;
-	case rcvOMKeyState:
-		seqs.updateState = false;
-		break;
-	case rcvOMKeyTools:
-		seqs.updateTools = false;
-		break;
-	case rcvOMKeyVolumes:
-		seqs.updateVolumes = false;
-		break;
-	default:
-		break;
-
-	}
-}
-
 static void EndReceivedMessage()
 {
 	lastResponseTime = SystemTick::GetTickCount();
-	SeqsRequestDone(currentResponseType);
+
+	if (currentSeq != nullptr)
+	{
+		currentSeq->state = outOfBuffers ? SeqStateError : SeqStateOk;
+		dbg("seq %s %d DONE", currentSeq->key, currentSeq->state);
+	}
 	outOfBuffers = false;							// Reset the out-of-buffers flag
-	currentResponseType = rcvUnknown;
 
 	if (newMessageSeq != messageSeq)
 	{
@@ -1335,178 +1219,6 @@ static void EndReceivedMessage()
 	{
 		UI::ProcessAlert(currentAlert);
 		lastAlertSeq = currentAlert.seq;
-	}
-}
-
-void UpdateSeqs(const ReceivedDataEvent rde, const int32_t ival)
-{
-	switch (rde)
-	{
-#if FETCH_BOARDS
-	case rcvSeqsBoards:
-		if (seqs.boards != ival)
-		{
-			seqs.boards = ival;
-			seqs.updateBoards = true;
-		}
-		break;
-#endif
-#if FETCH_DIRECTORIES
-	case rcvSeqsDirectories:
-		if (seqs.directories != ival)
-		{
-			seqs.directories = ival;
-			seqs.updateDirectories = true;
-		}
-		break;
-#endif
-#if FETCH_FANS
-	case rcvSeqsFans:
-		if (seqs.fans != ival)
-		{
-			seqs.fans = ival;
-			seqs.updateFans = true;
-		}
-		break;
-#endif
-#if FETCH_HEAT
-	case rcvSeqsHeat:
-		if (seqs.heat != ival)
-		{
-			seqs.heat = ival;
-			seqs.updateHeat = true;
-		}
-		break;
-#endif
-#if FETCH_INPUTS
-	case rcvSeqsInputs:
-		if (seqs.inputs != ival)
-		{
-			seqs.inputs = ival;
-			seqs.updateInputs = true;
-		}
-		break;
-#endif
-#if FETCH_JOB
-	case rcvSeqsJob:
-		if (seqs.job != ival)
-		{
-			seqs.job = ival;
-			seqs.updateJob = true;
-		}
-		break;
-#endif
-#if FETCH_MOVE
-	case rcvSeqsMove:
-		if (seqs.move != ival)
-		{
-			seqs.move = ival;
-			seqs.updateMove = true;
-		}
-		break;
-#endif
-#if FETCH_NETWORK
-	case rcvSeqsNetwork:
-		if (seqs.network != ival)
-		{
-			seqs.network = ival;
-			seqs.updateNetwork = true;
-		}
-		break;
-#endif
-#if FETCH_SCANNER
-	case rcvSeqsScanner:
-		if (seqs.scanner != ival)
-		{
-			seqs.scanner = ival;
-			seqs.updateScanner = true;
-		}
-		break;
-#endif
-#if FETCH_SENSORS
-	case rcvSeqsSensors:
-		if (seqs.sensors != ival)
-		{
-			seqs.sensors = ival;
-			seqs.updateSensors = true;
-		}
-		break;
-#endif
-#if FETCH_SPINDLES
-	case rcvSeqsSpindles:
-		if (seqs.spindles != ival)
-		{
-			seqs.spindles = ival;
-			seqs.updateSpindles = true;
-		}
-		break;
-#endif
-#if FETCH_STATE
-	case rcvSeqsState:
-		if (seqs.state != ival)
-		{
-			seqs.state = ival;
-			seqs.updateState = true;
-		}
-		break;
-#endif
-#if FETCH_TOOLS
-	case rcvSeqsTools:
-		if (seqs.tools != ival)
-		{
-			seqs.tools = ival;
-			seqs.updateTools = true;
-		}
-		break;
-#endif
-#if FETCH_VOLUMES
-	case rcvSeqsVolumes:
-		if (seqs.volumes != ival)
-		{
-			seqs.volumes = ival;
-			seqs.updateVolumes = true;
-		}
-		break;
-#endif
-	default:
-		break;
-	}
-}
-
-const OMRequestParams* GetOMRequestParams()
-{
-	switch (currentResponseType)
-	{
-	case rcvOMKeyNoKey:
-		return &noKeyParams;
-	case rcvOMKeyBoards:
-		return &boardsParams;
-	case rcvOMKeyFans:
-		return &fansParams;
-	case rcvOMKeyHeat:
-		return &heatParams;
-	case rcvOMKeyInputs:
-		return &inputsParams;
-	case rcvOMKeyJob:
-		return &jobParams;
-	case rcvOMKeyMove:
-		return &moveParams;
-	case rcvOMKeyNetwork:
-		return &networkParams;
-	case rcvOMKeyScanner:
-		return &scannerParams;
-	case rcvOMKeySensors:
-		return &sensorsParams;
-	case rcvOMKeySpindles:
-		return &spindlesParams;
-	case rcvOMKeyState:
-		return &stateParams;
-	case rcvOMKeyTools:
-		return &toolsParams;
-	case rcvOMKeyVolumes:
-		return &volumesParams;
-	default:
-		return nullptr;
 	}
 }
 
@@ -1538,8 +1250,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 {
 	if (StringStartsWith(id.c_str(), "result"))
 	{
-		auto requestParams = GetOMRequestParams();
-		if (requestParams != nullptr)
+		if (currentSeq != nullptr)
 		{
 			// We might either get something like:
 			// * "result[optional modified]:[key]:[field]" for a live response or
@@ -1548,38 +1259,39 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 			// else replace "result" by "key" (do NOT replace anything beyond "result" as there might be an _ecv_array modifier)
 
 			id.Erase(0, 6);		// Erase the string "result"
-			if (currentResponseType == rcvOMKeyNoKey)
+			if (currentSeq->event == rcvOMKeyNoKey)
 			{
 				id.Erase(0);	// Also erase the colon
 			}
 			else
 			{
-				id.Prepend(requestParams->key);		// Prepend the key of the current response
+				id.Prepend(currentSeq->key);		// Prepend the key of the current response
 			}
 		}
 	}
 
-	const FieldTableEntry key = {ReceivedDataEvent::rcvUnknown, id.c_str()};
+	const FieldTableEntry key = { ReceivedDataEvent::rcvUnknown, id.c_str()};
 	const FieldTableEntry* searchResult = (FieldTableEntry*) bsearch(
 			&key,
 			fieldTable,
 			ARRAY_SIZE(fieldTable),
 			sizeof(FieldTableEntry),
 			compare<FieldTableEntry>);
+
+	// no matching key found
+	if (!searchResult)
+	{
+		return;
+	}
 	const ReceivedDataEvent rde = searchResult->val;
+	const ReceivedDataEvent currentResponseType = currentSeq != nullptr ? currentSeq->event : ReceivedDataEvent::rcvUnknown;
+
+	dbg("event: %s(%d) rtype %d data %s", searchResult->key, searchResult->val, currentResponseType, data);
 	switch (rde)
 	{
 	// M409 section
 	case rcvKey:
 		{
-			const FieldTableEntry key = {ReceivedDataEvent::rcvUnknown, data};
-			const FieldTableEntry* searchResult = (FieldTableEntry*) bsearch(
-					&key,
-					keyResponseTypeTable,
-					ARRAY_SIZE(keyResponseTypeTable),
-					sizeof(FieldTableEntry),
-					compare<FieldTableEntry>);
-			currentResponseType = searchResult->val;
 			switch (currentResponseType) {
 			case rcvOMKeyHeat:
 				lastBed = -1;
@@ -1930,9 +1642,10 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	case rcvSeqsVolumes:
 		{
 			int32_t ival;
+
 			if (GetInteger(data, ival))
 			{
-				UpdateSeqs(rde, ival);
+				UpdateSeq(rde, ival);
 			}
 
 		}
@@ -2373,6 +2086,8 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 // Public function called when the serial I/O module finishes receiving an array of values
 static void ProcessArrayEnd(const char id[], const size_t indices[])
 {
+	//dbg("%s", id);
+	ReceivedDataEvent currentResponseType = currentSeq != nullptr ? currentSeq->event : ReceivedDataEvent::rcvUnknown;
 	if (indices[0] == 0 && strcmp(id, "files^") == 0)
 	{
 		FileManager::BeginReceivingFiles();				// received an empty file list - need to tell the file manager about it
@@ -2442,9 +2157,9 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 }
 
-static void ParserErrorEncountered(int, const char*, const char*, const size_t[])	// For now we don't use the parameters
+static void ParserErrorEncountered(int currentState, const char *id, const char*data, const size_t arraysize[])
 {
-	MessageLog::AppendMessage("Error parsing response");
+	MessageLog::AppendMessageF("Error parsing response in state %d", currentState);
 	// TODO: Handle parser errors
 }
 
@@ -2552,9 +2267,6 @@ int main(void)
 	mgr.Refresh(true);								// draw the screen for the first time
 	UI::UpdatePrintingFields();
 
-	SerialIo::Sendf("M409 F\"d99f\"\n");		// Get initial status
-	lastPollTime = SystemTick::GetTickCount();
-
 	// Hide all tools and heater related columns initially
 	UI::AllToolsSeen();
 
@@ -2568,17 +2280,13 @@ int main(void)
 			fieldTable,
 			ARRAY_SIZE(fieldTable),
 			sizeof(FieldTableEntry),
-			[](const void* a, const void* b)
-			{
-				return strcasecmp(((FieldTableEntry*) a)->key, ((FieldTableEntry*) b)->key);
-			});
-
-	seqs.Reset();
-
-//	lastResponseTime = SystemTick::GetTickCount();	// pretend we just received a response
+			compare<FieldTableEntry>);
 
 	lastActionTime = SystemTick::GetTickCount();
 
+	SetStatus(nullptr);
+
+	dbg("init DONE");
 	for (;;)
 	{
 		// 1. Check for input from the serial port and process it.
@@ -2667,18 +2375,20 @@ int main(void)
 		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
 		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
 		const uint32_t now = SystemTick::GetTickCount();
-		if (   (UI::DoPolling()										// don't poll while we are in the Setup page
-			&& now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
-			&& now - lastResponseTime >= printerResponseInterval)	// and we haven't had a response too recently
-			|| (!initialized && (now - lastPollTime > now - lastResponseTime))	// but if we are initializing do it as fast as possible where
-			)
+		if ((UI::DoPolling()										// don't poll while we are in the Setup page
+		     && now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
+		     && now - lastResponseTime >= printerResponseInterval)	// and we haven't had a response too recently
+		     || (!initialized && (now - lastPollTime > now - lastResponseTime))	// but if we are initializing do it as fast as possible where
+		   )
 		{
 			if (now - lastPollTime > now - lastResponseTime)		// if we've had a response since the last poll
 			{
-				auto nextToPoll = GetNextToPoll();
-				if (nextToPoll != nullptr)
+				dbg("seq polling");
+				currentSeq = GetNextSeq(currentSeq);
+				if (currentSeq != nullptr)
 				{
-					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", nextToPoll->key, nextToPoll->flags);
+					dbg("M409 K\"%s\" F\"%s\"\n", currentSeq->key, currentSeq->flags);
+					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", currentSeq->key, currentSeq->flags);
 				}
 				else
 				{
