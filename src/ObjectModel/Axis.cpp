@@ -28,7 +28,7 @@ namespace OM
 		homed = false;
 		visible = false;
 		slot = MaxSlots;
-		slotP = MaxPendantTools;
+		slotP = MaxDisplayableAxesP;
 	}
 
 	Axis* GetAxis(const size_t index)
