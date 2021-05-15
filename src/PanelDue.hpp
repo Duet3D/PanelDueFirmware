@@ -110,7 +110,13 @@ struct Alert
 	static constexpr uint8_t GotTitle = 3;
 	static constexpr uint8_t GotText = 4;
 	static constexpr uint8_t GotControls = 5;
-	static constexpr uint8_t GotAll = GotMode | GotSeq | GotTimeout | GotTitle | GotText | GotControls;
+	static constexpr uint8_t GotAll =
+			(1 << GotMode)
+			| (1 << GotSeq)
+			| (1 << GotTimeout)
+			| (1 << GotTitle)
+			| (1 << GotText)
+			| (1 << GotControls);
 
 	Alert() : mode(0), seq(0), controls(0), timeout(0.0) { flags.Clear(); }
 

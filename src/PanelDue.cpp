@@ -2041,7 +2041,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	case rcvStateMessageBox:
 		ShowLine;
-		// Nessage box has been dealt with somewhere else
+		// Message box has been dealt with somewhere else
 		if (data[0] == 0)
 		{
 			UI::ClearAlert();
