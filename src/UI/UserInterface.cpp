@@ -2348,7 +2348,7 @@ namespace UI
 							if (GetHeaterCombineType() == HeaterCombineType::combined)
 							{
 								tool->UpdateTemp(0, val, false);
-								SerialIo::Sendf("%s P%d S%d\n", (useM568 ? "M568" : "G10"), toolNumber, tool->heaters[0]->standbyTemp);
+								SerialIo::Sendf("%s P%d R%d\n", (useM568 ? "M568" : "G10"), toolNumber, tool->heaters[0]->standbyTemp);
 							}
 							else
 							{
