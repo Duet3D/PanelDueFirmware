@@ -33,6 +33,7 @@ namespace UI
 	extern void DeactivateScreensaver();
 	extern void AnimateScreensaver();
 	extern void ShowAxis(size_t axis, bool b, const char* axisLetter = nullptr);
+	extern void ShowAxisP(size_t axis, bool b, const char* axisLetter = nullptr);
 	extern void UpdateAxisPosition(size_t axis, float fval);
 	extern void UpdateCurrentTemperature(size_t heater, float fval);
 	extern void UpdateHeaterStatus(const size_t heater, const OM::HeaterStatus status);
@@ -56,6 +57,7 @@ namespace UI
 	extern void UpdateHomedStatus(size_t axis, bool isHomed);
 	extern void UpdateZProbe(const char data[]);
 	extern void UpdateMachineName(const char data[]);
+	extern void UpdateIP(const char data[]);
 	extern void ProcessAlert(const Alert& alert);
 	extern void ClearAlert();
 	extern void ProcessSimpleAlert(const char* _ecv_array text);
@@ -93,6 +95,7 @@ namespace UI
 	extern void SetAxisLetter(size_t index, char l);
 	extern void SetAxisVisible(size_t index, bool v);
 	extern void SetAxisWorkplaceOffset(size_t axisIndex, size_t workplaceIndex, float offset);
+	extern void SetCurrentWorkplaceNumber(uint8_t workplaceNumber);
 
 	extern void SetCurrentTool(int32_t tool);
 	extern void UpdateToolStatus(size_t index, OM::ToolStatus status);

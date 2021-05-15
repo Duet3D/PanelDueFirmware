@@ -34,6 +34,7 @@ struct StringTable
 	CSTRING status;
 	CSTRING console;
 	CSTRING setup;
+	CSTRING pendant;
 	CSTRING current;
 	CSTRING active;
 	CSTRING standby;
@@ -42,7 +43,7 @@ struct StringTable
 	CSTRING macro;
 	CSTRING stop;
 
-	// Status page
+	// Print page
 	CSTRING extruderPercent;
 	CSTRING speed;
 	CSTRING fan;
@@ -75,6 +76,39 @@ struct StringTable
 	CSTRING screensaverAfter;
 	CSTRING babystepAmount;
 	CSTRING feedrate;
+
+	// Pendant root
+	CSTRING backToNormal;
+	CSTRING jog;
+	CSTRING offset;
+	CSTRING job;
+
+	// Pendant Jog page
+	CSTRING axis;
+	CSTRING movement;
+	CSTRING currentLocation;
+	CSTRING homing;
+	CSTRING measureZ;
+	CSTRING confirmMeasureZ;
+	CSTRING tools;
+	CSTRING probe;
+
+	// Pendant Offset page
+	CSTRING probeWorkpiece;
+	CSTRING findCenterOfCavity;
+	CSTRING touchOff;
+	CSTRING toolOffset;
+	CSTRING wcsOffsets;
+	CSTRING edit;
+	CSTRING axesOffsets;
+	CSTRING selectWCS;
+	CSTRING setToCurrent;
+
+	// Pendant Job page
+	CSTRING noJob;
+	CSTRING extruderShort;
+	CSTRING spindleRPM;
+	CSTRING heatControl;
 
 	// Misc
 	CSTRING confirmFactoryReset;
@@ -135,6 +169,7 @@ const StringTable LanguageTables[] =
 		"Status",
 		"Console",
 		"Setup",
+		"Pendant",
 		"Current" THIN_SPACE DEGREE_SYMBOL "C",
 		"Active" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
@@ -176,6 +211,39 @@ const StringTable LanguageTables[] =
 		"Screensaver ",						// note space at end
 		"Babystep ",						// note space at end
 		"Feedrate ",						// note space at end
+
+		// Pendant root
+		"Panel",
+		"Jog",
+		"Offset",
+		"Job",
+
+		// Pendant Jog tab
+		"Axis",
+		"Movement",
+		"Current",
+		"Homing",
+		"Measure Z",
+		"Confirm Measure Z",
+		"Tools",
+		"Probe",
+
+		// Pendant Offset tab
+		"Probe Workpiece",
+		"Find Center of Cavity",
+		"Touch-off Plate",
+		"Set Tool Offset",
+		"WCS Offsets",
+		"Edit",
+		"Axes Offsets",
+		"Select WCS",
+		"Set to current",
+
+		// Pendant Job tab
+		"No job running",
+		"Extrd. ",
+		"Spindle RPM ",
+		"Heat Control",
 
 		// Misc
 		"Confirm factory reset",
@@ -260,6 +328,7 @@ const StringTable LanguageTables[] =
 		"Status",
 		"Konsole",
 		"Setup",
+		"Handsteuerung",
 		"Istwert" THIN_SPACE DEGREE_SYMBOL "C",
 		"Aktiv" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
@@ -301,6 +370,39 @@ const StringTable LanguageTables[] =
 		"Screensaver ",						// note space at end
 		"Babystep ",						// note space at end
 		"Feedrate ",						// note space at end
+
+		// Pendant root
+		"Panel",
+		"Jog",
+		"Offset",
+		"Job",
+
+		// Pendant Jog tab
+		"Achse",
+		"Bewegung",
+		"Aktuell",
+		"Homing",
+		"Z messen",
+		"Confirm Measure Z",
+		"Tools",
+		"Probe",
+
+		// Pendant Offset tab
+		"Werkstück finden",
+		"Hohlraummitte finden",
+		"Tastplatte",
+		"Werkzeug Offset",
+		"WCS Offsets",
+		"Edit",
+		"Axes Offsets",
+		"Select WCS",
+		"Set to current",
+
+		// Pendant Job tab
+		"Kein laufender Job",
+		"Extrd. ",
+		"Spindel Umin ",
+		"Heizungskontrolle",
 
 		// Misc
 		"Alle Einstellungen zurücksetzen",
@@ -385,6 +487,7 @@ const StringTable LanguageTables[] =
 		"Statut",
 		"Console",
 		"Installation",
+		"Pendant",
 		"Actuel" THIN_SPACE DEGREE_SYMBOL "C",
 		"Actif" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
@@ -426,6 +529,39 @@ const StringTable LanguageTables[] =
 		"Screensaver ",							// note space at end
 		"Babystep ",							// note space at end
 		"Feedrate ",							// note space at end
+
+		// Pendant root
+		"Panel",
+		"Jog",
+		"Offset",
+		"Job",
+
+		// Pendant Jog tab
+		"Axis",
+		"Movement",
+		"Current",
+		"Homing",
+		"Measure Z",
+		"Confirm Measure Z",
+		"Tools",
+		"Probe",
+
+		// Pendant Offset tab
+		"Probe Workpiece",
+		"Find Center of Cavity",
+		"Touch-off Plate",
+		"Set Tool Offset",
+		"WCS Offsets",
+		"Edit",
+		"Axes Offsets",
+		"Select WCS",
+		"Set to current",
+
+		// Pendant Job tab
+		"No job running",
+		"Extrd. ",
+		"Spindle RPM ",
+		"Heat Control",
 
 		// Misc
 		"Confirmer le réinitialisation de l'imprimante",
@@ -510,6 +646,7 @@ const StringTable LanguageTables[] =
 		"Estatus",
 		"Consola",
 		"Configuración",
+		"Pendant",
 		"Actual" THIN_SPACE DEGREE_SYMBOL "C",
 		"Activo" THIN_SPACE DEGREE_SYMBOL "C",
 		"Esperando" THIN_SPACE DEGREE_SYMBOL "C",
@@ -551,6 +688,39 @@ const StringTable LanguageTables[] =
 		"Screensaver ",						// note space at end
 		"Babystep ",						// note space at end
 		"Feedrate ",						// note space at end
+
+		// Pendant root
+		"Panel",
+		"Jog",
+		"Offset",
+		"Job",
+
+		// Pendant Jog tab
+		"Axis",
+		"Movement",
+		"Current",
+		"Homing",
+		"Measure Z",
+		"Confirm Measure Z",
+		"Tools",
+		"Probe",
+
+		// Pendant Offset tab
+		"Probe Workpiece",
+		"Find Center of Cavity",
+		"Touch-off Plate",
+		"Set Tool Offset",
+		"WCS Offsets",
+		"Edit",
+		"Axes Offsets",
+		"Select WCS",
+		"Set to current",
+
+		// Pendant Job tab
+		"No job running",
+		"Extrd. ",
+		"Spindle RPM ",
+		"Heat Control",
 
 		// Misc
 		"Confirma restablecimiento de fábrica",
@@ -634,6 +804,7 @@ const StringTable LanguageTables[] =
 		"Status",
 		"Konzole",
 		"Nastavení",
+		"Pendant",
 		"Aktuální" THIN_SPACE DEGREE_SYMBOL "C",
 		"Aktivní" THIN_SPACE DEGREE_SYMBOL "C",
 		"Nečinná" THIN_SPACE DEGREE_SYMBOL "C",
@@ -675,6 +846,39 @@ const StringTable LanguageTables[] =
 		"Screensaver ",						// note space at end
 		"Babystep ",						// note space at end
 		"Feedrate ",						// note space at end
+
+		// Pendant root
+		"Panel",
+		"Jog",
+		"Offset",
+		"Job",
+
+		// Pendant Jog tab
+		"Axis",
+		"Movement",
+		"Current",
+		"Homing",
+		"Measure Z",
+		"Confirm Measure Z",
+		"Tools",
+		"Probe",
+
+		// Pendant Offset tab
+		"Probe Workpiece",
+		"Find Center of Cavity",
+		"Touch-off Plate",
+		"Tool Offset",
+		"WCS Offsets",
+		"Edit",
+		"Axes Offsets",
+		"Select WCS",
+		"Set to current",
+
+		// Pendant Job tab
+		"No job running",
+		"Extrd. ",
+		"Spindle RPM ",
+		"Heat Control",
 
 		// Misc
 		"Skutečně obnovit tovární nastavení?",
@@ -757,6 +961,7 @@ const StringTable LanguageTables[] =
 		"Stampa",
 		"Status",
 		"Console",
+		"Pendant",
 		"Configura",
 		"Corrente" THIN_SPACE DEGREE_SYMBOL "C",
 		"Attiva" THIN_SPACE DEGREE_SYMBOL "C",
@@ -799,6 +1004,39 @@ const StringTable LanguageTables[] =
 		"Salvaschermo ",					// note space at end
 		"Babystep ",						// note space at end
 		"Feedrate ",						// note space at end
+
+		// Pendant root
+		"Panel",
+		"Jog",
+		"Offset",
+		"Job",
+
+		// Pendant Jog tab
+		"Axis",
+		"Movement",
+		"Current",
+		"Homing",
+		"Measure Z",
+		"Confirm Measure Z",
+		"Tools",
+		"Probe",
+
+		// Pendant Offset tab
+		"Probe Workpiece",
+		"Find Center of Cavity",
+		"Touch-off Plate",
+		"Set Tool Offset",
+		"WCS Offsets",
+		"Edit",
+		"Axes Offsets",
+		"Select WCS",
+		"Set to current",
+
+		// Pendant Job tab
+		"No job running",
+		"Extrd. ",
+		"Spindle RPM ",
+		"Heat Control",
 
 		// Misc
 		"Conferma reset impostazioni",

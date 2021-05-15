@@ -69,6 +69,7 @@ public:
 
 	event_t GetEvent() const;
 	int GetIParam() const;
+	float GetFParam() const;
 	const char* _ecv_array GetSParam() const;
 	bool operator==(const ButtonPress& other) const;
 
@@ -381,6 +382,7 @@ public:
 	event_t GetEvent() const override { return evt; }
 	virtual const char* null GetSParam(unsigned int index) const { UNUSED(index); return nullptr; }
 	virtual int GetIParam(unsigned int index) const { UNUSED(index); return 0; }
+	virtual float GetFParam(unsigned int index) const { UNUSED(index); return 0.0f; }
 	virtual void Press(bool p, int index) { UNUSED(p); UNUSED(index); }
 };
 
@@ -390,7 +392,7 @@ class SingleButton : public ButtonBase
 	{
 		const char* null sParam;
 		int iParam;
-		//float fParam;
+		float fParam;
 	};
 	EventParameter param;
 
@@ -405,12 +407,12 @@ public:
 	void SetEvent(event_t e, EventParameter p) { evt = e; param = p; }
 	void SetEvent(event_t e, const char* null sp) { evt = e; param.sParam = sp; }
 	void SetEvent(event_t e, int ip) { evt = e; param.iParam = ip; }
-	//void SetEvent(event_t e, float fp) { evt = e; param.fParam = fp; }
+	void SetEvent(event_t e, float fp) { evt = e; param.fParam = fp; }
 
 	EventParameter GetUParam() const { return param; }
 	const char* null GetSParam(unsigned int index) const override { UNUSED(index); return param.sParam; }
 	int GetIParam(unsigned int index) const override { UNUSED(index); return param.iParam; }
-	//float GetFParam() const { return param.fParam; }
+	float GetFParam(unsigned int index) const { UNUSED(index); return param.fParam; }
 
 	void Press(bool p, int index) override;
 

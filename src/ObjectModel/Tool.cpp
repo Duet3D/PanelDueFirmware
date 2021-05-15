@@ -132,6 +132,8 @@ namespace OM
 		}
 		status = ToolStatus::off;
 		slot = MaxSlots;
+		slotPJog = MaxPendantTools;
+		slotPJob = MaxPendantTools;
 	}
 
 	Tool* GetTool(const size_t index)

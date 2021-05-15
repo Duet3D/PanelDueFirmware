@@ -153,6 +153,11 @@ event_t ButtonPress::GetEvent() const
 	return button->GetEvent();
 }
 
+float ButtonPress::GetFParam() const
+{
+	return button->GetFParam(index);
+}
+
 int ButtonPress::GetIParam() const
 {
 	return button->GetIParam(index);

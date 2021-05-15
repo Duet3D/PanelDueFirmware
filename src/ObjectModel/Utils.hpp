@@ -15,9 +15,16 @@
 namespace OM {
 	typedef Vector<uint8_t, MaxSlots> Slots;
 
+	enum SlotType
+	{
+		panel,
+		pJob
+	};
+
 	void GetHeaterSlots(
 			const size_t heaterIndex,
 			Slots& slots,
+			const SlotType slotType = SlotType::panel,
 			const bool addTools = true,
 			const bool addBeds = true,
 			const bool addChambers = true);

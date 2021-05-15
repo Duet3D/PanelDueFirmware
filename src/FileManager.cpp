@@ -44,7 +44,7 @@ namespace FileManager
 	static int errorCode;
 	static Path fileDirectoryName;
 	static FileSet gcodeFilesList(filesRoot, NumDisplayedFiles, true);
-	static FileSet macroFilesList(macrosRoot, NumDisplayedMacros, false);
+	static FileSet macroFilesList(macrosRoot, NumDisplayedMacrosP, false);
 	static FileSet * null displayedFileSet = nullptr;
 	static uint8_t numVolumes = 1;								// how many SD card sockets we have (normally 1 or 2)
 

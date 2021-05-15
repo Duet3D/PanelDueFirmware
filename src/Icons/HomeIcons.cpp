@@ -23,6 +23,11 @@ extern const uint16_t IconPaletteDark[] =
 
 #if LARGE_FONT
 
+extern const uint8_t IconDummy[] =
+{
+	0, 30
+};
+
 extern const uint8_t IconHomeAll[] =
 {	35, 30,		// width, height
     0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
@@ -128,6 +133,11 @@ extern const uint8_t IconBedComp[] =
 };
 
 #else
+
+extern const uint8_t IconDummy[] =
+{
+	0, 21;
+};
 
 extern const uint8_t IconHomeAll[] =
 {	25, 21,		// width, height

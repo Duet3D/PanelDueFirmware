@@ -70,6 +70,8 @@ namespace OM
 		float offsets[MaxTotalAxes];
 		ToolStatus status;
 		uint8_t slot;
+		uint8_t slotPJog;
+		uint8_t slotPJob;
 
 		ToolHeater* GetOrCreateHeater(const uint8_t toolHeaterIndex);
 		bool GetHeaterTemps(const StringRef& ref, const bool active);

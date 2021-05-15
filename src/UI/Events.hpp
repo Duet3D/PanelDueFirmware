@@ -15,9 +15,26 @@ enum Event : uint8_t
 	evNull = 0,						// value must match nullEvent declared in Display.hpp
 
 	evDefaultRoot, evScreensaverRoot,
+	
+	evPendantRoot,
 
 	// Page selection
 	evTabControl, evTabStatus, evTabMsg, evTabSetup,
+
+	// Pendant-mode page selection
+	evTabJog, evTabOffset, evTabJob,
+
+	// Pendant jog buttons
+	evPJogAxis, evPJogAmount,
+
+	// Pendant tool selection
+	evToolSelect,
+
+	evMeasureZ,
+
+	// Pendant offset related
+	evProbeWorkpiece, evTouchoff, evSetToolOffset, evFindCenterOfCavity, evZeroAxisInWCS, evWCSOffsetsPopup, evSetAxesOffsetToCurrent,
+	evSelectAxisForWCSFineControl, evSelectAmountForWCSFineControl,
 
 	// Heater control
 	evSelectHead, evSelectBed, evSelectChamber,
@@ -33,6 +50,10 @@ enum Event : uint8_t
 	evMoveAxis,
 	evExtrudeAmount, evExtrudeRate, evExtrude, evRetract,
 	evHomeAxis,
+	
+	evMoveAxisP,
+	evExtrudeAmountP, evExtrudeRateP,
+	evWCSDisplaySelect, evActivateWCS,
 
 	// Print functions
 	evExtrusionFactor,
@@ -46,6 +67,7 @@ enum Event : uint8_t
 	evSendCommand,
 	evFactoryReset,
 	evAdjustSpeed,
+	evPAdjustExtrusionPercent, // TODO: remove as soon as we have extruder number
 
 	evScrollFiles, evScrollMacros, evFilesUp, evMacrosUp, evChangeCard,
 

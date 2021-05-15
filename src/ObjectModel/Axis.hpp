@@ -37,9 +37,10 @@ namespace OM
 		float babystep;
 		char letter[2];
 		float workplaceOffsets[9];
-		uint8_t homed : 1,
+		uint16_t homed : 1,
 			visible : 1,
-			slot : 6;
+			slot : 6,
+			slotP : 6;
 
 		void Reset();
 	};

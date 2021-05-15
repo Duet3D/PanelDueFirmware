@@ -151,6 +151,12 @@ namespace SerialIo
 				quote);
 	}
 
+	// SendFloat will convert a float into a rounded fixed 3 decimal representation.
+	void SendFloat(float f)
+	{
+		Sendf("%.3f", f);
+	}
+
 	// Receive data processing
 	const size_t rxBufsize = 8192;
 	static volatile char rxBuffer[rxBufsize];
@@ -180,7 +186,7 @@ namespace SerialIo
 
 	JsonState state = jsBegin;
 
-	// fieldId is the name of the field being received. A '^' character indicates the position of an _ecv_array index, and a ':' character indicates a field separator.
+	// fieldId is the name of the field being received. A '^' character indicates the position of an array index, and a ':' character indicates a field separator.
 	String<100> fieldId;
 	String<300> fieldVal;	// long enough for about 6 lines of message
 	size_t arrayIndices[MaxArrayNesting];

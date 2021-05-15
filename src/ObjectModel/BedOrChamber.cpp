@@ -24,6 +24,8 @@ namespace OM
 		heater = -1;
 		heaterStatus = HeaterStatus::off;
 		slot = MaxSlots;
+		slotPJog = MaxPendantTools;
+		slotPJob = MaxPendantTools;
 	}
 
 	Bed* GetBed(const size_t index)

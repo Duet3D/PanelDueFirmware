@@ -55,6 +55,8 @@ namespace OM
 		HeaterStatus heaterStatus;
 		// Slot for display on panel
 		uint8_t slot;
+		uint8_t slotPJog;
+		uint8_t slotPJob;
 
 		void Reset();
 	};

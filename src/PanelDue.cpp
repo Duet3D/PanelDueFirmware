@@ -366,9 +366,11 @@ enum ReceivedDataEvent
 	rcvMoveExtrudersFactor,
 	rcvMoveKinematicsName,
 	rcvMoveSpeedFactor,
+	rcvMoveWorkplaceNumber,
 
 	// Keys for network response
 	rcvNetworkName,
+	rcvNetworkInterfacesActualIP,
 
 	// Keys for sensors response
 	rcvSensorsProbeValue,
@@ -476,9 +478,11 @@ static FieldTableEntry fieldTable[] =
 	{ rcvMoveExtrudersFactor, 			"move:extruders^:factor" },
 	{ rcvMoveKinematicsName, 			"move:kinematics:name" },
 	{ rcvMoveSpeedFactor, 				"move:speedFactor" },
+	{ rcvMoveWorkplaceNumber, 			"move:workplaceNumber" },
 
 	// M409 K"network" response
 	{ rcvNetworkName, 					"network:name" },
+	{ rcvNetworkInterfacesActualIP,		"network:interfaces^:actualIP" },
 
 	// M409 K"sensors" response
 	{ rcvSensorsProbeValue,				"sensors:probes^:value^" },
@@ -1920,12 +1924,33 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		}
 		break;
 
+	case rcvMoveWorkplaceNumber:
+		{
+			uint32_t workplaceNumber;
+			if (GetUnsignedInteger(data, workplaceNumber))
+			{
+				UI::SetCurrentWorkplaceNumber(workplaceNumber);
+			}
+		}
+		break;
+
 	// Network section
 	case rcvNetworkName:
 		ShowLine;
 		if (status != OM::PrinterStatus::configuring && status != OM::PrinterStatus::connecting)
 		{
 			UI::UpdateMachineName(data);
+		}
+		break;
+
+	case rcvNetworkInterfacesActualIP:
+		{
+			// Only look at the first valid IP
+			if (indices[0] > 0)
+			{
+				return;
+			}
+			UI::UpdateIP(data);
 		}
 		break;
 
