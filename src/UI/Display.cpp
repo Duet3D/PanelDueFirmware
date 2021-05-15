@@ -866,7 +866,8 @@ void IconButtonWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOf
 	if (full || changed)
 	{
 		DrawOutline(xOffset, yOffset);
-		const uint16_t sx = GetIconWidth(icon), sy = GetIconHeight(icon);
+		const uint16_t	sx = GetIconWidth(icon),
+						sy = drawIcon ? GetIconHeight(icon) : 0;
 
 		lcd.setFont(font);
 		lcd.setTextPos(0, 9999, width - 6);
