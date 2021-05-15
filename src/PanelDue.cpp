@@ -913,13 +913,37 @@ bool IsSaveNeeded()
 void MirrorDisplay()
 {
 	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ ReverseX);
-	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);
+	lcd.setOrientation(nvData.lcdOrientation, IS_ER, true);
 }
 
 void InvertDisplay()
 {
 	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | ReverseY));
-	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);
+	lcd.setOrientation(nvData.lcdOrientation, IS_ER, true);
+}
+
+void LandscapeDisplay(const bool withTouch)
+{
+	lcd.fillScr(black);
+	lcd.setOrientation(nvData.lcdOrientation, IS_ER, true);
+	if (withTouch)
+	{
+		touch.init(DisplayX, DisplayY, nvData.touchOrientation);
+		touch.calibrate(nvData.xmin, nvData.xmax, nvData.ymin, nvData.ymax, touchCalibMargin);
+	}
+}
+
+void PortraitDisplay(const bool withTouch)
+{
+	DisplayOrientation portrait = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (SwapXY | ReverseX));
+	lcd.fillScr(black);
+	lcd.setOrientation(portrait, IS_ER, true);
+	if (withTouch)
+	{
+		DisplayOrientation portraitTouch = static_cast<DisplayOrientation>(nvData.touchOrientation ^ (SwapXY | ReverseX));
+		touch.init(DisplayXP, DisplayYP, portraitTouch);
+		touch.calibrate(nvData.ymin, nvData.ymax, nvData.xmin, nvData.xmax, touchCalibMargin);
+	}
 }
 
 void SetBaudRate(uint32_t rate)

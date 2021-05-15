@@ -61,4 +61,7 @@ const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientati
 const PixelNumber DisplayX = DISPLAY_X;
 const PixelNumber DisplayY = DISPLAY_Y;
 
+const PixelNumber DisplayXP = DISPLAY_Y;
+const PixelNumber DisplayYP = DISPLAY_X;
+
 #endif /* SRC_UI_DISPLAYSIZE_HPP_ */

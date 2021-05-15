@@ -114,6 +114,7 @@ public:
 
 	UTFT(DisplayType model, unsigned int RS, unsigned int WR, unsigned int CS, unsigned int RST, unsigned int SER_LATCH = 0);
 	void InitLCD(DisplayOrientation po, bool is24bit, bool isER);
+	void setOrientation(DisplayOrientation o, bool isER, bool getCS = false);
 	void fillScr(Colour c, uint16_t leftMargin = 0);
 	void drawPixel(int x, int y);
 	void drawLine(int x1, int y1, int x2, int y2);			// Draw a straight line from points (x1,y1) to (x2,y2) inclusive
