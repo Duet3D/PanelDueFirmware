@@ -3561,7 +3561,7 @@ namespace UI
 							if (GetHeaterCombineType() == HeaterCombineType::combined)
 							{
 								tool->UpdateTemp(0, val, false);
-								SerialIo::Sendf("%s P%d S%d\n", (useM568 ? "M568" : "G10"), toolNumber, tool->heaters[0]->standbyTemp);
+								SerialIo::Sendf("%s P%d R%d\n", (useM568 ? "M568" : "G10"), toolNumber, tool->heaters[0]->standbyTemp);
 							}
 							else
 							{
@@ -4698,60 +4698,71 @@ namespace UI
 					++slot;
 				}
 			}
-			tool->slotPJog = MaxPendantTools;
-			tool->slotPJob = MaxPendantTools;
+
 			if (tool->index != ProbeToolIndex)
 			{
-				if (slotPJog < MaxPendantTools)
+				tool->slotPJog = MaxPendantTools;
+				tool->slotPJob = MaxPendantTools;
+				if (tool->index != ProbeToolIndex)
 				{
-					tool->slotPJog = slotPJog;
-					toolSelectButtonsPJog[slotPJog]->SetEvent(evSelectHead, tool->index);
-					toolSelectButtonsPJog[slotPJog]->SetIntVal(tool->index);
-					toolSelectButtonsPJog[slotPJog]->SetPrintText(true); // This enables printing the IntVal
-					toolSelectButtonsPJog[slotPJog]->SetIcon(hasSpindle ? IconSpindle : IconNozzle);
-					toolSelectButtonsPJog[slotPJog]->SetChanged();	// FIXME: Is this still required?
-
-					mgr.Show(toolSelectButtonsPJog[slotPJog], true);
-
-					if (tool->index == currentTool)
+					if (slotPJog < MaxPendantTools)
 					{
-						mgr.Show(activeTempPJog, hasHeater);
-						mgr.Show(standbyTempPJog, hasHeater);
-						if (hasHeater)
+						tool->slotPJog = slotPJog;
+						toolSelectButtonsPJog[slotPJog]->SetEvent(evSelectHead, tool->index);
+						toolSelectButtonsPJog[slotPJog]->SetIntVal(tool->index);
+						toolSelectButtonsPJog[slotPJog]->SetPrintText(true); // This enables printing the IntVal
+						toolSelectButtonsPJog[slotPJog]->SetIcon(hasSpindle ? IconSpindle : IconNozzle);
+						toolSelectButtonsPJog[slotPJog]->SetChanged();	// FIXME: Is this still required?
+
+						mgr.Show(toolSelectButtonsPJog[slotPJog], true);
+
+						if (tool->index == currentTool)
 						{
-							activeTempPJog->SetValue(tool->heaters[0]->activeTemp);
-							standbyTempPJog->SetValue(tool->heaters[0]->standbyTemp);
+							mgr.Show(activeTempPJog, hasHeater || hasSpindle);
+							mgr.Show(standbyTempPJog, hasHeater);
+							if (hasSpindle)
+							{
+								activeTempPJog->SetEvent(evAdjustActiveRPM, tool->spindle->index);
+								activeTempPJog->SetValue(tool->spindle->active);
+							}
+							else if (hasHeater)
+							{
+								activeTempPJog->SetValue(tool->heaters[0]->activeTemp);
+								activeTempPJog->SetEvent(evAdjustToolActiveTemp, tool->index);
+								standbyTempPJog->SetValue(tool->heaters[0]->standbyTemp);
+								standbyTempPJog->SetEvent(evAdjustToolStandbyTemp, tool->index);
+							}
 						}
+						++slotPJog;
 					}
-					++slotPJog;
-				}
 
-				if (slotPJob < MaxPendantTools && hasHeater)
-				{
-					tool->slotPJob = slotPJob;
-					toolButtonsPJob[slotPJob]->SetEvent(evSelectHead, tool->index);
-					toolButtonsPJob[slotPJob]->SetIntVal(tool->index);
-					toolButtonsPJob[slotPJob]->SetPrintText(true); // This enables printing the IntVal
-					toolButtonsPJob[slotPJob]->SetIcon(IconNozzle);
-					toolButtonsPJob[slotPJob]->SetChanged();	// FIXME: Is this still required?
-
-					mgr.Show(toolButtonsPJob[slotPJob], true);
-					mgr.Show(currentTempsPJob[slotPJob], true);
-					mgr.Show(activeTempsPJob[slotPJob], true);
-					mgr.Show(standbyTempsPJob[slotPJob], true);
-
-					// Set tool/spindle number for change event
-					tool->IterateHeaters([&slotPJob, &tool](OM::ToolHeater*, size_t)
+					if (slotPJob < MaxPendantTools && hasHeater)
 					{
-						if (slotPJob < MaxPendantTools)
+						tool->slotPJob = slotPJob;
+						toolButtonsPJob[slotPJob]->SetEvent(evSelectHead, tool->index);
+						toolButtonsPJob[slotPJob]->SetIntVal(tool->index);
+						toolButtonsPJob[slotPJob]->SetPrintText(true); // This enables printing the IntVal
+						toolButtonsPJob[slotPJob]->SetIcon(IconNozzle);
+						toolButtonsPJob[slotPJob]->SetChanged();	// FIXME: Is this still required?
+
+						mgr.Show(toolButtonsPJob[slotPJob], true);
+						mgr.Show(currentTempsPJob[slotPJob], true);
+						mgr.Show(activeTempsPJob[slotPJob], true);
+						mgr.Show(standbyTempsPJob[slotPJob], true);
+
+						// Set tool/spindle number for change event
+						tool->IterateHeaters([&slotPJob, &tool](OM::ToolHeater*, size_t)
 						{
-							activeTempsPJob[slotPJob]->SetEvent(evAdjustToolActiveTemp, tool->index);
-							activeTempsPJob[slotPJob]->SetValue(0);
-							standbyTempsPJob[slotPJob]->SetEvent(evAdjustToolStandbyTemp, tool->index);
-							standbyTempsPJob[slotPJob]->SetValue(0);
-							++slotPJob;
-						}
-					});
+							if (slotPJob < MaxPendantTools)
+							{
+								activeTempsPJob[slotPJob]->SetEvent(evAdjustToolActiveTemp, tool->index);
+								activeTempsPJob[slotPJob]->SetValue(0);
+								standbyTempsPJob[slotPJob]->SetEvent(evAdjustToolStandbyTemp, tool->index);
+								standbyTempsPJob[slotPJob]->SetValue(0);
+								++slotPJob;
+							}
+						});
+					}
 				}
 			}
 			return slot < MaxSlots;
