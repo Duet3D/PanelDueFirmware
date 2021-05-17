@@ -642,7 +642,7 @@ static struct Seq* GetNextSeq(struct Seq *current)
 	{
 		current = seqs;
 	}
-	for (i = current - seqs; i < ARRAY_SIZE(seqs); i++)
+	for (i = current - seqs; i < ARRAY_SIZE(seqs); ++i)
 	{
 		current = &seqs[i];
 		if (current->state == SeqStateError)
@@ -662,7 +662,7 @@ static struct Seq* GetNextSeq(struct Seq *current)
 
 static void UpdateSeq(const ReceivedDataEvent seqid, int32_t val)
 {
-	for (size_t i = 0; i < ARRAY_SIZE(seqs); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(seqs); ++i)
 	{
 		if (seqs[i].seqid == seqid)
 		{
@@ -678,7 +678,7 @@ static void UpdateSeq(const ReceivedDataEvent seqid, int32_t val)
 
 static void ResetSeqs()
 {
-	for (size_t i = 0; i < ARRAY_SIZE(seqs); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(seqs); ++i)
 	{
 		seqs[i].lastSeq = 0;
 		seqs[i].state = SeqStateInit;
