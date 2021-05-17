@@ -1714,7 +1714,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	// State section
 	case rcvStateCurrentTool:
-		if (status == OM::PrinterStatus::connecting || status == OM::PrinterStatus::panelInitializing)
+		if (status == OM::PrinterStatus::connecting)
 		{
 			break;
 		}
