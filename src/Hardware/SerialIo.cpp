@@ -206,7 +206,7 @@ namespace SerialIo
 
 	static void RemoveLastId()
 	{
-		dbg("%s, len: %d", fieldId.c_str(), fieldId.strlen());
+		//dbg("%s, len: %d", fieldId.c_str(), fieldId.strlen());
 		size_t index = fieldId.strlen();
 		while (index != 0 && fieldId[index - 1] != '^' && fieldId[index - 1] != ':')
 		{
@@ -219,7 +219,7 @@ namespace SerialIo
 
 	static void RemoveLastIdChar()
 	{
-		dbg();
+		//dbg();
 
 		if (fieldId.strlen() != 0)
 		{
@@ -229,7 +229,7 @@ namespace SerialIo
 
 	static bool InArray()
 	{
-		dbg();
+		//dbg();
 
 		return fieldId.strlen() > 0 && fieldId[fieldId.strlen() - 1] == '^';
 	}
@@ -254,7 +254,7 @@ namespace SerialIo
 
 	static void EndArray()
 	{
-		dbg();
+		//dbg();
 
 		if (cbs && cbs->ProcessArrayEnd)
 		{
@@ -383,7 +383,7 @@ namespace SerialIo
 	// Check whether the incoming character signals the end of the value. If it does, process it and return true.
 	static bool CheckValueCompleted(char c, bool doProcess)
 	{
-		dbg();
+		//dbg();
 
 		switch(c)
 		{
