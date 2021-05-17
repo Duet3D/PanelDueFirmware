@@ -35,7 +35,6 @@
 #include "Configuration.hpp"
 #include <UI/UserInterfaceConstants.hpp>
 #include "FileManager.hpp"
-#include "RequestTimer.hpp"
 #include <UI/MessageLog.hpp>
 #include <UI/Events.hpp>
 #include <UI/UserInterface.hpp>
@@ -731,7 +730,7 @@ int compare(const void* lp, const void* rp)
 
 // Return true if sending a command or file list request to the printer now is a good idea.
 // We don't want to send these when the printer is busy with a previous command, because they will block normal status requests.
-bool OkToSend()
+static bool OkToSend()
 {
 	return status == OM::PrinterStatus::idle
 			|| status == OM::PrinterStatus::printing
@@ -2404,10 +2403,15 @@ int main(void)
 					}
 
 					// First check for specific info we need to fetch
-					bool done = FileManager::ProcessTimers();
+					bool ok = OkToSend();
+					bool done = true;
+					if (ok)
+					{
+						done = FileManager::ProcessTimers();
+					}
 
 					// Otherwise just send a normal poll command
-					if (!done)
+					if (!ok && !done)
 					{
 						SerialIo::Sendf("M409 F\"d99f\"\n");
 					}
