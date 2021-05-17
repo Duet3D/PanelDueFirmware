@@ -645,6 +645,12 @@ static struct Seq* GetNextSeq(struct Seq *current)
 	for (i = current - seqs; i < ARRAY_SIZE(seqs); i++)
 	{
 		current = &seqs[i];
+		if (current->state == SeqStateError)
+		{
+			// skip and re-init if last request had an error
+			current->state = SeqStateInit;
+			continue;
+		}
 		if (current->state == SeqStateInit || current->state == SeqStateUpdate)
 		{
 			return current;
