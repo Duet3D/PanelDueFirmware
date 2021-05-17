@@ -1248,25 +1248,23 @@ void HandleOutOfBufferResponse() {
 // Public functions called by the SerialIo module
 static void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[])
 {
-	if (StringStartsWith(id.c_str(), "result"))
+	if (StringStartsWith(id.c_str(), "result:"))
 	{
+		// We might either get something like:
+		// * "result[optional modified]:[key]:[field]" for a live response or
+		// * "result[optional modified]:[field]" for a detailed response
+		// If live response remove "result:"
+		// else replace "result" by "key" (do NOT replace anything beyond "result" as there might be an _ecv_array modifier)
+
+		id.Erase(0, 6);
 		if (currentSeq != nullptr)
 		{
-			// We might either get something like:
-			// * "result[optional modified]:[key]:[field]" for a live response or
-			// * "result[optional modified]:[field]" for a detailed response
-			// If live response remove "result:"
-			// else replace "result" by "key" (do NOT replace anything beyond "result" as there might be an _ecv_array modifier)
-
-			id.Erase(0, 6);		// Erase the string "result"
-			if (currentSeq->event == rcvOMKeyNoKey)
-			{
-				id.Erase(0);	// Also erase the colon
-			}
-			else
-			{
-				id.Prepend(currentSeq->key);		// Prepend the key of the current response
-			}
+			id.Prepend(currentSeq->key);
+		}
+		else
+		{
+			// if empty key also erase the colon
+			id.Erase(0);
 		}
 	}
 
