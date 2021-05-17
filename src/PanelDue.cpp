@@ -44,9 +44,9 @@
 
 extern uint16_t _esplash[];							// defined in linker script
 
-#define DEBUG	(0)
+#define DEBUG	(0) // 1: MessageLog only, 2: DebugField only, 3: MessageLog & DebugField
 
-#if DEBUG
+#if (DEBUG & 1)
 #define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
 
 #else
@@ -54,6 +54,16 @@ extern uint16_t _esplash[];							// defined in linker script
 
 #endif
 
+#if (DEBUG & (1 << 1))
+
+#define STRINGIFY(x)	#x
+#define TOSTRING(x)	STRINGIFY(x)
+#define dbg2(fmt, args...)		debugField->SetValue(TOSTRING(__LINE__)); debugField->Refresh(true, 0, 0)
+
+#else
+#define dbg2(fmt, args...)		do {} while(0)
+
+#endif
 
 // Controlling constants
 constexpr uint32_t defaultPrinterPollInterval = 500;	// poll interval in milliseconds
