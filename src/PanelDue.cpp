@@ -645,10 +645,8 @@ static struct Seq* GetNextSeq(struct Seq *current)
 	for (i = current - seqs; i < ARRAY_SIZE(seqs); i++)
 	{
 		current = &seqs[i];
-		//dbg("%d %d", i, current - seqs);
 		if (current->state == SeqStateInit || current->state == SeqStateUpdate)
 		{
-			dbg("%d %d", index, current - seqs);
 			return current;
 		}
 	}
@@ -1174,7 +1172,7 @@ static void EndReceivedMessage()
 	if (currentSeq != nullptr)
 	{
 		currentSeq->state = outOfBuffers ? SeqStateError : SeqStateOk;
-		dbg("seq %s %d DONE", currentSeq->key, currentSeq->state);
+		//dbg("seq %s %d DONE", currentSeq->key, currentSeq->state);
 	}
 	outOfBuffers = false;							// Reset the out-of-buffers flag
 
@@ -1252,12 +1250,13 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	// no matching key found
 	if (!searchResult)
 	{
+		dbg("no matching key found for %s", id.c_str());
 		return;
 	}
 	const ReceivedDataEvent rde = searchResult->val;
 	const ReceivedDataEvent currentResponseType = currentSeq != nullptr ? currentSeq->event : ReceivedDataEvent::rcvUnknown;
 
-	dbg("event: %s(%d) rtype %d data %s", searchResult->key, searchResult->val, currentResponseType, data);
+	//dbg("event: %s(%d) rtype %d data '%s'", searchResult->key, searchResult->val, currentResponseType, data);
 	switch (rde)
 	{
 	// M409 section
@@ -1770,7 +1769,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	case rcvStateStatus:
 		{
-			dbg("receive state %s", data);
 			const OM::PrinterStatusMapEntry key = (OM::PrinterStatusMapEntry) { .key = data, .val = OM::PrinterStatus::connecting};
 			const OM::PrinterStatusMapEntry * statusFromMap =
 					(OM::PrinterStatusMapEntry *) bsearch(
@@ -2071,7 +2069,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 // Public function called when the serial I/O module finishes receiving an array of values
 static void ProcessArrayEnd(const char id[], const size_t indices[])
 {
-	//dbg("%s", id);
 	ReceivedDataEvent currentResponseType = currentSeq != nullptr ? currentSeq->event : ReceivedDataEvent::rcvUnknown;
 	if (indices[0] == 0 && strcmp(id, "files^") == 0)
 	{
@@ -2269,7 +2266,8 @@ int main(void)
 
 	lastActionTime = SystemTick::GetTickCount();
 
-	dbg("init DONE");
+	dbg("basic init DONE");
+
 	for (;;)
 	{
 		// 1. Check for input from the serial port and process it.
@@ -2366,11 +2364,9 @@ int main(void)
 		{
 			if (now - lastPollTime > now - lastResponseTime)		// if we've had a response since the last poll
 			{
-				dbg("seq polling");
 				currentSeq = GetNextSeq(currentSeq);
 				if (currentSeq != nullptr)
 				{
-					dbg("M409 K\"%s\" F\"%s\"\n", currentSeq->key, currentSeq->flags);
 					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", currentSeq->key, currentSeq->flags);
 				}
 				else
@@ -2378,6 +2374,7 @@ int main(void)
 					// Once we get here the first time we will have work all seqs once
 					if (!initialized)
 					{
+						dbg("seqs init DONE");
 						UI::AllToolsSeen();
 						initialized = true;
 					}
@@ -2400,7 +2397,6 @@ int main(void)
 			}
 			else if (now - lastPollTime >= printerPollTimeout)	  // last response was most likely incomplete start over
 			{
-				dbg("normal polling");
 				SerialIo::Sendf("M409 F\"d99f\"\n");
 				lastPollTime = SystemTick::GetTickCount();
 			}
