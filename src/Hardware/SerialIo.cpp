@@ -206,7 +206,7 @@ namespace SerialIo
 
 	static void RemoveLastId()
 	{
-		dbg("RemoveLastId: %s, len: %d", fieldId.c_str(), fieldId.strlen());
+		dbg("%s, len: %d", fieldId.c_str(), fieldId.strlen());
 		size_t index = fieldId.strlen();
 		while (index != 0 && fieldId[index - 1] != '^' && fieldId[index - 1] != ':')
 		{
@@ -214,12 +214,12 @@ namespace SerialIo
 		}
 		fieldId.Truncate(index);
 
-		dbg("RemoveLastId: %s, len: %d", fieldId.c_str(), fieldId.strlen());
+		//dbg("RemoveLastId: %s, len: %d", fieldId.c_str(), fieldId.strlen());
 	}
 
 	static void RemoveLastIdChar()
 	{
-		dbg("RemoveLastIdChar");
+		dbg();
 
 		if (fieldId.strlen() != 0)
 		{
@@ -229,14 +229,13 @@ namespace SerialIo
 
 	static bool InArray()
 	{
-		dbg("InArray");
+		dbg();
 
 		return fieldId.strlen() > 0 && fieldId[fieldId.strlen() - 1] == '^';
 	}
 
 	static void ProcessField()
 	{
-		dbg("ProcessField");
 
 		if (state == jsCharsVal)
 		{
@@ -247,6 +246,7 @@ namespace SerialIo
 		}
 		if (cbs && cbs->ProcessReceivedValue)
 		{
+			dbg("%s: %s", fieldId.c_str(), fieldVal.c_str());
 			cbs->ProcessReceivedValue(fieldId.GetRef(), fieldVal.c_str(), arrayIndices);
 		}
 		fieldVal.Clear();
@@ -254,7 +254,7 @@ namespace SerialIo
 
 	static void EndArray()
 	{
-		dbg("EndArray");
+		dbg();
 
 		if (cbs && cbs->ProcessArrayEnd)
 		{
@@ -383,7 +383,7 @@ namespace SerialIo
 	// Check whether the incoming character signals the end of the value. If it does, process it and return true.
 	static bool CheckValueCompleted(char c, bool doProcess)
 	{
-		dbg("CheckValueCompleted");
+		dbg();
 
 		switch(c)
 		{
@@ -481,7 +481,9 @@ namespace SerialIo
 			}
 			else
 			{
+#if DEBUG
 				lastState = state;
+#endif
 				switch(state)
 				{
 				case jsBegin:			// initial state, expecting '{'
@@ -777,6 +779,11 @@ namespace SerialIo
 					// Ignore all characters. State will be reset to jsBegin at the start of this function when we receive a newline.
 					break;
 				}
+
+#if DEBUG
+				if (lastState != state)
+					dbg("state %d -> %d", lastState, state);
+#endif
 			}
 		}
 	}
