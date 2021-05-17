@@ -481,9 +481,8 @@ namespace SerialIo
 			}
 			else
 			{
-#if DEBUG
 				lastState = state;
-#endif
+
 				switch(state)
 				{
 				case jsBegin:			// initial state, expecting '{'
