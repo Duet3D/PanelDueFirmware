@@ -1065,47 +1065,16 @@ void SaveSettings()
 }
 
 // This is called when the status changes
-static void SetStatus(const char * sts)
+static void SetStatus(OM::PrinterStatus newStatus)
 {
-	OM::PrinterStatus newStatus = OM::PrinterStatus::connecting;
-	if (sts == nullptr)
-	{
-		newStatus = OM::PrinterStatus::panelInitializing;
-	}
-	else
-	{
-		dbg("looking for status %s", sts);
-		const OM::PrinterStatusMapEntry key = (OM::PrinterStatusMapEntry) { .key = sts, .val = OM::PrinterStatus::connecting};
-		const OM::PrinterStatusMapEntry * statusFromMap =
-				(OM::PrinterStatusMapEntry *) bsearch(
-						&key,
-						OM::printerStatusMap,
-						ARRAY_SIZE(OM::printerStatusMap),
-						sizeof(OM::PrinterStatusMapEntry),
-						compare<OM::PrinterStatusMapEntry>);
-
-		if (statusFromMap == nullptr)
-		{
-			dbg("invalid status requested %s", sts);
-			return;
-		}
-
-		newStatus = statusFromMap->val;
-	}
-
-	dbg("printer status %d -> %d", status, newStatus);
 	if (newStatus != status)
 	{
+		dbg("printer status %d -> %d", status, newStatus);
 		if (isDimmed)
 		{
 			RestoreBrightness();
 		}
 		UI::ChangeStatus(status, newStatus);
-
-		if (status == OM::PrinterStatus::configuring || (status == OM::PrinterStatus::connecting && newStatus != OM::PrinterStatus::configuring))
-		{
-			dbg("Connected");
-		}
 
 		status = newStatus;
 		UI::UpdatePrintingFields();
@@ -1113,23 +1082,22 @@ static void SetStatus(const char * sts)
 }
 
 // Set the status back to "Connecting"
-void Reconnect()
+static void Reconnect()
 {
-	initialized = false;
-	SetStatus(nullptr);
+	dbg("Reconnect");
 
+	initialized = false;
+	lastPollTime = 0;
+	lastResponseTime = 0;
+	lastOutOfBufferResponse = 0;
+
+	SetStatus(OM::PrinterStatus::connecting);
 	ResetSeqs();
 
 	UI::LastJobFileNameAvailable(false);
 	UI::SetSimulatedTime(0);
 	UI::UpdateDuration(0);
 	UI::UpdateWarmupDuration(0);
-
-	// Send first round of data fetching again
-	dbg("Reconnect");
-	SerialIo::Sendf("M409 F\"d99f\"\n");
-	// And set the last poll time to now
-	lastPollTime = SystemTick::GetTickCount();
 }
 
 // Try to get an integer value from a string. If it is actually a floating point value, round it.
@@ -1802,7 +1770,21 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	case rcvStateStatus:
 		{
-			SetStatus(data);
+			dbg("receive state %s", data);
+			const OM::PrinterStatusMapEntry key = (OM::PrinterStatusMapEntry) { .key = data, .val = OM::PrinterStatus::connecting};
+			const OM::PrinterStatusMapEntry * statusFromMap =
+					(OM::PrinterStatusMapEntry *) bsearch(
+							&key,
+							OM::printerStatusMap,
+							ARRAY_SIZE(OM::printerStatusMap),
+							sizeof(OM::PrinterStatusMapEntry),
+							compare<OM::PrinterStatusMapEntry>);
+			if (!statusFromMap)
+			{
+				dbg("unknown status %s", data);
+				break;
+			}
+			SetStatus(statusFromMap->val);
 		}
 		break;
 
@@ -2286,8 +2268,6 @@ int main(void)
 			compare<FieldTableEntry>);
 
 	lastActionTime = SystemTick::GetTickCount();
-
-	SetStatus(nullptr);
 
 	dbg("init DONE");
 	for (;;)

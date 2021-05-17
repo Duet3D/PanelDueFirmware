@@ -2183,7 +2183,6 @@ namespace UI
 		Delay(1000);
 		SerialIo::Sendf("M999\n");
 		Delay(1000);
-		Reconnect();
 	}
 
 	// Make this into a template if we need something else than IntegerButton** as list
