@@ -3,7 +3,7 @@
  *
  * Created: 03/11/2014 14:14:17
  *  Author: David
- */ 
+ */
 
 #include "Mem.hpp"
 #include <General/SimpleMath.h>
@@ -35,7 +35,7 @@ void* operator new(size_t objsize)
 	{
 		heap = (unsigned char *)&_end;
 	}
-	
+
 	void *prev_heap = heap;
 	heap += (objsize + 3) & (~3);
 	return prev_heap;

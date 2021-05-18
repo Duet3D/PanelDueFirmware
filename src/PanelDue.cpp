@@ -2556,8 +2556,8 @@ void SelfTest()
  */
 int main(void)
 {
-    SystemInit();						// set up the clock etc.
-    InitMemory();
+	SystemInit();						// set up the clock etc.
+	InitMemory();
 
 	matrix_set_system_io(CCFG_SYSIO_SYSIO4 | CCFG_SYSIO_SYSIO5 | CCFG_SYSIO_SYSIO6 | CCFG_SYSIO_SYSIO7);	// enable PB4-PB7 pins
 	pmc_enable_periph_clk(ID_PIOA);		// enable the PIO clock
@@ -2715,7 +2715,7 @@ int main(void)
 				{
 					ActivateScreensaver();
 				}
- 			}
+			}
 		}
 		ShowLine;
 
@@ -2744,10 +2744,10 @@ int main(void)
 		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
 		const uint32_t now = SystemTick::GetTickCount();
 		if (   (UI::DoPolling()										// don't poll while we are in the Setup page
-		    && now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
+			&& now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
 			&& now - lastResponseTime >= printerResponseInterval)	// and we haven't had a response too recently
 			|| (!initialized && (now - lastPollTime > now - lastResponseTime))	// but if we are initializing do it as fast as possible where
-		   )
+			)
 		{
 			if (now - lastPollTime > now - lastResponseTime)		// if we've had a response since the last poll
 			{
@@ -2776,11 +2776,11 @@ int main(void)
 				}
 				lastPollTime = SystemTick::GetTickCount();
 			}
-            else if (now - lastPollTime >= printerPollTimeout)      // last response was most likely incomplete start over
-            {
-                SerialIo::Sendf("M409 F\"d99f\"\n");
-                lastPollTime = SystemTick::GetTickCount();
-            }
+			else if (now - lastPollTime >= printerPollTimeout)	  // last response was most likely incomplete start over
+			{
+				SerialIo::Sendf("M409 F\"d99f\"\n");
+				lastPollTime = SystemTick::GetTickCount();
+			}
 		}
 		ShowLine;
 	}
