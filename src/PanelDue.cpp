@@ -327,7 +327,6 @@ enum ReceivedDataEvent
 	rcvResult,
 
 	// Available keys
-	rcvOMKeyNoKey,
 	rcvOMKeyBoards,
 	rcvOMKeyDirectories,
 	rcvOMKeyFans,
@@ -642,16 +641,18 @@ static struct Seq {
 #endif
 };
 
-static struct Seq *currentSeq = nullptr;
+static struct Seq *currentReqSeq = nullptr;
+static struct Seq *currentRespSeq = nullptr;
 
 static struct Seq* GetNextSeq(struct Seq *current)
 {
-	size_t i;
 	if (current == nullptr)
 	{
 		current = seqs;
 	}
-	for (i = current - seqs; i < ARRAY_SIZE(seqs); ++i)
+
+
+	for (size_t i = current - seqs; i < ARRAY_SIZE(seqs); ++i)
 	{
 		current = &seqs[i];
 		if (current->state == SeqStateError)
@@ -664,6 +665,23 @@ static struct Seq* GetNextSeq(struct Seq *current)
 		{
 			return current;
 		}
+	}
+
+
+	return nullptr;
+}
+
+static struct Seq *FindSeqByKey(const char *key)
+{
+	dbg("key %s", key);
+
+	for (size_t i = 0; i < ARRAY_SIZE(seqs); ++i)
+	{
+		if (strcasecmp(seqs[i].key, key) == 0)
+		{
+			return &seqs[i];
+		}
+
 	}
 
 	return nullptr;
@@ -1188,10 +1206,11 @@ static void EndReceivedMessage()
 
 	lastResponseTime = SystemTick::GetTickCount();
 
-	if (currentSeq != nullptr)
+	if (currentRespSeq != nullptr)
 	{
-		currentSeq->state = outOfBuffers ? SeqStateError : SeqStateOk;
-		//dbg("seq %s %d DONE", currentSeq->key, currentSeq->state);
+		currentRespSeq->state = outOfBuffers ? SeqStateError : SeqStateOk;
+		dbg("seq %s %d DONE", currentReqSeq->key, currentReqSeq->state);
+		currentRespSeq = nullptr;
 	}
 	outOfBuffers = false;							// Reset the out-of-buffers flag
 
@@ -1239,7 +1258,9 @@ void HandleOutOfBufferResponse() {
 // Public functions called by the SerialIo module
 static void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[])
 {
-	if (StringStartsWith(id.c_str(), "result:"))
+	ReceivedDataEvent currentResponseType = ReceivedDataEvent::rcvUnknown;
+
+	if (StringStartsWith(id.c_str(), "result"))
 	{
 		// We might either get something like:
 		// * "result[optional modified]:[key]:[field]" for a live response or
@@ -1248,9 +1269,10 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		// else replace "result" by "key" (do NOT replace anything beyond "result" as there might be an _ecv_array modifier)
 
 		id.Erase(0, 6);
-		if (currentSeq != nullptr)
+		if (currentRespSeq != nullptr)
 		{
-			id.Prepend(currentSeq->key);
+			currentResponseType = currentRespSeq->seqid;
+			id.Prepend(currentReqSeq->key);
 		}
 		else
 		{
@@ -1274,7 +1296,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		return;
 	}
 	const ReceivedDataEvent rde = searchResult->val;
-	const ReceivedDataEvent currentResponseType = currentSeq != nullptr ? currentSeq->event : ReceivedDataEvent::rcvUnknown;
 	//dbg("event: %s(%d) rtype %d data '%s'", searchResult->key, searchResult->val, currentResponseType, data);
 	switch (rde)
 	{
@@ -1282,7 +1303,13 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	case rcvKey:
 		dbg2();
 		{
-			switch (currentResponseType) {
+			currentRespSeq = FindSeqByKey(data);
+			if (!currentRespSeq)
+			{
+				break;
+			}
+
+			switch (currentRespSeq->event) {
 			case rcvOMKeyHeat:
 				lastBed = -1;
 				lastChamber = -1;
@@ -2160,7 +2187,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 // Public function called when the serial I/O module finishes receiving an array of values
 static void ProcessArrayEnd(const char id[], const size_t indices[])
 {
-	ReceivedDataEvent currentResponseType = currentSeq != nullptr ? currentSeq->event : ReceivedDataEvent::rcvUnknown;
+	ReceivedDataEvent currentResponseType = currentRespSeq != nullptr ? currentRespSeq->event : ReceivedDataEvent::rcvUnknown;
 	if (indices[0] == 0 && strcmp(id, "files^") == 0)
 	{
 		dbg2();
@@ -2471,10 +2498,11 @@ int main(void)
 		{
 			if (now - lastPollTime > now - lastResponseTime)		// if we've had a response since the last poll
 			{
-				currentSeq = GetNextSeq(currentSeq);
-				if (currentSeq != nullptr)
+				currentReqSeq = GetNextSeq(currentReqSeq);
+				if (currentReqSeq != nullptr)
 				{
-					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", currentSeq->key, currentSeq->flags);
+					dbg("sending %s", currentReqSeq->key);
+					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", currentReqSeq->key, currentReqSeq->flags);
 				}
 				else
 				{
