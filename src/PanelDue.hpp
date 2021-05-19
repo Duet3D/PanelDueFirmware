@@ -12,9 +12,6 @@
 #undef array
 #undef result
 #undef value
-#include <Hardware/UTFT.hpp>
-#include <UI/Display.hpp>
-#include "RequestTimer.hpp"
 #include "FirmwareFeatures.hpp"
 #include "FlashData.hpp"
 #include <ObjectModel/PrinterStatus.hpp>
@@ -66,41 +63,6 @@ extern void Delay(uint32_t milliSeconds);
 extern UTFT lcd;
 extern MainWindow mgr;
 
-class ColourScheme;
-extern const ColourScheme *colours;
-
 const size_t MIN_AXES = 2;					// the minimum number of axes we support
-
-const size_t alertTextLength = 165;			// maximum characters in the alert text
-const size_t alertTitleLength = 50;			// maximum characters in the alert title
-
-struct Alert
-{
-	int32_t mode;
-	uint32_t seq;
-	uint32_t controls;
-	float timeout;
-	String<50> title;
-	String<alertTextLength> text;
-	Bitmap<uint8_t> flags;
-
-	static constexpr uint8_t GotMode = 0;
-	static constexpr uint8_t GotSeq = 1;
-	static constexpr uint8_t GotTimeout = 2;
-	static constexpr uint8_t GotTitle = 3;
-	static constexpr uint8_t GotText = 4;
-	static constexpr uint8_t GotControls = 5;
-	static constexpr uint8_t GotAll =
-			(1 << GotMode)
-			| (1 << GotSeq)
-			| (1 << GotTimeout)
-			| (1 << GotTitle)
-			| (1 << GotText)
-			| (1 << GotControls);
-
-	Alert() : mode(0), seq(0), controls(0), timeout(0.0) { flags.Clear(); }
-
-	bool AllFlagsSet() const { return flags.GetRaw() == GotAll; }
-};
 
 #endif /* PANELDUE_H_ */

@@ -26,7 +26,6 @@
 #include <General/StringFunctions.h>
 
 #include "Configuration.hpp"
-#include "FlashData.hpp"
 #include <UI/UserInterfaceConstants.hpp>
 #include "FileManager.hpp"
 #include <UI/MessageLog.hpp>
@@ -151,7 +150,7 @@ static float pollIntervalMultiplier = 1.0;
 static uint32_t printerPollInterval = defaultPrinterPollInterval;
 static uint32_t printerResponseInterval = defaultPrinterResponseInterval;
 
-const ColourScheme *colours = &colourSchemes[0];
+static const ColourScheme *colours = &colourSchemes[0];
 
 Alert currentAlert;
 uint32_t lastAlertSeq = 0;
@@ -649,6 +648,7 @@ void InitLcd()
 {
 	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);				// set up the LCD
 	colours = &colourSchemes[nvData.colourScheme];
+	UI::InitColourScheme(colours);
 	UI::CreateFields(nvData.language, *colours, nvData.infoTimeout);	// create all the fields
 	lcd.fillScr(black);													// make sure the memory is clear
 	Delay(100);															// give the LCD time to update

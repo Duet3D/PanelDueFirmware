@@ -33,6 +33,8 @@ IntegerField *freeMem;
 StaticTextField *touchCalibInstruction, *debugField;
 StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
 
+static const ColourScheme *colours;
+
 // Private fields
 class AlertPopup;
 
@@ -1203,6 +1205,11 @@ namespace UI
 	unsigned int GetNumLanguages()
 	{
 		return NumLanguages;
+	}
+
+	void InitColourScheme(const ColourScheme *scheme)
+	{
+		colours = scheme;
 	}
 
 	// Create all the fields we ever display
