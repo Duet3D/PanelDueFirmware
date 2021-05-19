@@ -16,23 +16,9 @@
 #include <UI/Display.hpp>
 #include "RequestTimer.hpp"
 #include "FirmwareFeatures.hpp"
+#include "FlashData.hpp"
 #include <ObjectModel/PrinterStatus.hpp>
 #include <General/String.h>
-
-enum class DisplayDimmerType : uint8_t
-{
-	never = 0,				// never dim the display
-	onIdle, 				// only display when printer status is idle
-	always,					// default - always dim
-	NumTypes
-};
-
-enum class HeaterCombineType : uint8_t
-{
-	notCombined = 0,
-	combined,
-	NumTypes
-};
 
 // Functions called from module UserInterface
 extern bool IsPrintingStatus(OM::PrinterStatus status);

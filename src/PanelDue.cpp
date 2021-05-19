@@ -7,7 +7,6 @@
 // 3. No pure virtual functions. This is because in release builds, having pure virtual functions causes huge amounts of the C++ library to be linked in
 //    (possibly because it wants to print a message if a pure virtual function is called).
 
-#include <UI/Display.hpp>
 #include "PanelDue.hpp"
 #include "asf.h"
 
@@ -26,13 +25,8 @@
 #include <General/SimpleMath.h>
 #include <General/StringFunctions.h>
 
-#if SAM4S
-#include "flash_efc.h"
-#else
-#include <Hardware/FlashStorage.hpp>
-#endif
-
 #include "Configuration.hpp"
+#include "FlashData.hpp"
 #include <UI/UserInterfaceConstants.hpp>
 #include "FileManager.hpp"
 #include <UI/MessageLog.hpp>
@@ -163,131 +157,6 @@ Alert currentAlert;
 uint32_t lastAlertSeq = 0;
 
 static OM::PrinterStatus status = OM::PrinterStatus::connecting;
-
-struct FlashData
-{
-	// The magic value should be changed whenever the layout of the NVRAM changes
-	// We now use a different magic value for each display size, to force the "touch the spot" screen to be displayed when you change the display size
-	static const uint32_t magicVal = 0x3AB64A40 + DISPLAY_TYPE;
-	static const uint32_t muggleVal = 0xFFFFFFFF;
-
-	alignas(4) uint32_t magic;
-	uint32_t baudRate;
-	uint16_t xmin;
-	uint16_t xmax;
-	uint16_t ymin;
-	uint16_t ymax;
-	DisplayOrientation lcdOrientation;
-	DisplayOrientation touchOrientation;
-	uint8_t touchVolume;
-	uint8_t language;
-	uint8_t colourScheme;
-	uint8_t brightness;
-	DisplayDimmerType displayDimmerType;
-	uint8_t infoTimeout;
-	uint32_t screensaverTimeout;
-	uint8_t babystepAmountIndex;
-	uint16_t feedrate;
-	HeaterCombineType heaterCombineType;
-	alignas(4) char dummy;								// must be at a multiple of 4 bytes from the start because flash is read/written in whole dwords
-
-	FlashData() : magic(muggleVal) { SetDefaults(); }
-	bool operator==(const FlashData& other);
-	bool operator!=(const FlashData& other) { return !operator==(other); }
-	bool IsValid() const;
-	void SetInvalid() { magic = muggleVal; }
-	void SetDefaults();
-	void Load();
-	void Save() const;
-};
-
-#if SAM4S
-// FlashData must fit in user signature flash area
-static_assert(sizeof(FlashData) <= 512, "Flash data too large");
-#else
-// FlashData must fit in the area we have reserved
-static_assert(sizeof(FlashData) <= FLASH_DATA_LENGTH, "Flash data too large");
-#endif
-
-bool FlashData::IsValid() const
-{
-	return magic == magicVal
-		&& touchVolume <= Buzzer::MaxVolume
-		&& brightness >= Buzzer::MinBrightness
-		&& brightness <= Buzzer::MaxBrightness
-		&& language < UI::GetNumLanguages()
-		&& colourScheme < NumColourSchemes
-		&& displayDimmerType < DisplayDimmerType::NumTypes
-		&& babystepAmountIndex < ARRAY_SIZE(babystepAmounts)
-		&& feedrate > 0
-		&& heaterCombineType < HeaterCombineType::NumTypes;
-}
-
-bool FlashData::operator==(const FlashData& other)
-{
-	return magic == other.magic
-		&& baudRate == other.baudRate
-		&& xmin == other.xmin
-		&& xmax == other.xmax
-		&& ymin == other.ymin
-		&& ymax == other.ymax
-		&& lcdOrientation == other.lcdOrientation
-		&& touchOrientation == other.touchOrientation
-		&& touchVolume == other.touchVolume
-		&& language == other.language
-		&& colourScheme == other.colourScheme
-		&& brightness == other.brightness
-		&& displayDimmerType == other.displayDimmerType
-		&& infoTimeout == other.infoTimeout
-		&& screensaverTimeout == other.screensaverTimeout
-		&& babystepAmountIndex == other.babystepAmountIndex
-		&& feedrate == other.feedrate
-		&& heaterCombineType == other.heaterCombineType;
-}
-
-void FlashData::SetDefaults()
-{
-	baudRate = DefaultBaudRate;
-	xmin = 0;
-	xmax = DisplayX - 1;
-	ymin = 0;
-	ymax = DisplayY - 1;
-	lcdOrientation = DefaultDisplayOrientAdjust;
-	touchOrientation = DefaultTouchOrientAdjust;
-	touchVolume = Buzzer::DefaultVolume;
-	brightness = Buzzer::DefaultBrightness;
-	language = 0;
-	colourScheme = 0;
-	displayDimmerType = DisplayDimmerType::always;
-	infoTimeout = DefaultInfoTimeout;
-	screensaverTimeout = DefaultScreensaverTimeout;
-	babystepAmountIndex = DefaultBabystepAmountIndex;
-	feedrate = DefaultFeedrate;
-	heaterCombineType = HeaterCombineType::notCombined;
-	magic = magicVal;
-}
-
-// Load parameters from flash memory
-void FlashData::Load()
-{
-	magic = 0xFFFFFFFF;				// to make sure we know if the read failed
-#if SAM4S
-	flash_read_user_signature(&(this->magic), (&(this->dummy) - reinterpret_cast<const char*>(&(this->magic)))/sizeof(uint32_t));
-#else
-	FlashStorage::read(0, &(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
-#endif
-}
-
-// Save parameters to flash memory
-void FlashData::Save() const
-{
-#if SAM4S
-	flash_erase_user_signature();
-	flash_write_user_signature(&(this->magic), (&(this->dummy) - reinterpret_cast<const char*>(&(this->magic)))/sizeof(uint32_t));
-#else
-	FlashStorage::write(0, &(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
-#endif
-}
 
 FlashData nvData, savedNvData;
 
