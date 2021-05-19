@@ -12,8 +12,8 @@
 #include "PanelDue.hpp"
 #include "FileManager.hpp"
 #include <UI/MessageLog.hpp>
-#include "Library/Misc.hpp"
 #include "Icons/Icons.hpp"
+#include "Library/Misc.hpp"
 #include "Hardware/Buzzer.hpp"
 #include "Hardware/Reset.hpp"
 #include "Hardware/SerialIo.hpp"

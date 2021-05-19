@@ -14,7 +14,7 @@
 #undef array
 #undef result
 #undef value
-#include <UI/UserInterfaceConstants.hpp>
+#include "UI/ColourSchemes.hpp"
 #include "Configuration.hpp"
 
 #define CSTRING const char * const _ecv_array
