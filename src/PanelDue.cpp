@@ -1272,7 +1272,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		if (currentRespSeq != nullptr)
 		{
 			currentResponseType = currentRespSeq->seqid;
-			id.Prepend(currentReqSeq->key);
+			id.Prepend(currentRespSeq->key);
 		}
 		else
 		{
@@ -1303,12 +1303,22 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	case rcvKey:
 		dbg2();
 		{
-			currentRespSeq = FindSeqByKey(data);
-			if (!currentRespSeq)
+			// try a quick check otherwise search for key
+			if (currentReqSeq && (strcasecmp(data, currentReqSeq->key) == 0))
+			{
+				currentRespSeq = currentReqSeq;
+			}
+			else
+			{
+				currentRespSeq = FindSeqByKey(data);
+			}
+
+			if (currentRespSeq == nullptr)
 			{
 				break;
 			}
 
+			// reset processing variables
 			switch (currentRespSeq->event) {
 			case rcvOMKeyHeat:
 				lastBed = -1;
