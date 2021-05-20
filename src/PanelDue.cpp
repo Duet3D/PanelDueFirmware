@@ -2280,6 +2280,12 @@ static void ParserErrorEncountered(int currentState, const char *id, const char*
 {
 	MessageLog::AppendMessageF("Error parsing response %s in state %d", id, currentState);
 	// TODO: Handle parser errors
+	if (currentRespSeq == nullptr)
+	{
+		return;
+	}
+
+	currentRespSeq->state = SeqStateError;
 }
 
 // Update those fields that display debug information
