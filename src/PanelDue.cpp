@@ -2278,7 +2278,7 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 
 static void ParserErrorEncountered(int currentState, const char *id, const char*data, const size_t arraysize[])
 {
-	MessageLog::AppendMessageF("Error parsing response in state %d", currentState);
+	MessageLog::AppendMessageF("Error parsing response %s in state %d", id, currentState);
 	// TODO: Handle parser errors
 }
 
