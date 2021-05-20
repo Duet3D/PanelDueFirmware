@@ -1209,7 +1209,7 @@ static void EndReceivedMessage()
 	if (currentRespSeq != nullptr)
 	{
 		currentRespSeq->state = outOfBuffers ? SeqStateError : SeqStateOk;
-		dbg("seq %s %d DONE", currentReqSeq->key, currentReqSeq->state);
+		dbg("seq %s %d DONE", currentRespSeq->key, currentRespSeq->state);
 		currentRespSeq = nullptr;
 	}
 	outOfBuffers = false;							// Reset the out-of-buffers flag
