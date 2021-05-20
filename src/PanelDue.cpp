@@ -35,7 +35,6 @@
 #include "Configuration.hpp"
 #include <UI/UserInterfaceConstants.hpp>
 #include "FileManager.hpp"
-#include "RequestTimer.hpp"
 #include <UI/MessageLog.hpp>
 #include <UI/Events.hpp>
 #include <UI/UserInterface.hpp>
@@ -45,7 +44,26 @@
 
 extern uint16_t _esplash[];							// defined in linker script
 
-#define DEBUG	(0)
+#define DEBUG	(0) // 1: MessageLog only, 2: DebugField only, 3: MessageLog & DebugField
+
+#if (DEBUG & 1)
+#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
+
+#else
+#define dbg(fmt, args...)		do {} while(0)
+
+#endif
+
+#if (DEBUG & (1 << 1))
+
+#define STRINGIFY(x)	#x
+#define TOSTRING(x)	STRINGIFY(x)
+#define dbg2(fmt, args...)		debugField->SetValue(TOSTRING(__LINE__)); debugField->Refresh(true, 0, 0)
+
+#else
+#define dbg2(fmt, args...)		do {} while(0)
+
+#endif
 
 // Controlling constants
 constexpr uint32_t defaultPrinterPollInterval = 500;	// poll interval in milliseconds
@@ -112,7 +130,7 @@ MainWindow mgr;
 
 static uint32_t lastTouchTime;
 static uint32_t ignoreTouchTime;
-static uint32_t lastPollTime;
+static uint32_t lastPollTime = 0;
 static uint32_t lastResponseTime = 0;
 static uint32_t lastOutOfBufferResponse = 0;
 static uint8_t oobCounter = 0;
@@ -143,6 +161,8 @@ const ColourScheme *colours = &colourSchemes[0];
 
 Alert currentAlert;
 uint32_t lastAlertSeq = 0;
+
+static OM::PrinterStatus status = OM::PrinterStatus::connecting;
 
 struct FlashData
 {
@@ -271,8 +291,6 @@ void FlashData::Save() const
 
 FlashData nvData, savedNvData;
 
-static OM::PrinterStatus status = OM::PrinterStatus::connecting;
-
 enum ReceivedDataEvent
 {
 	rcvUnknown = 0,
@@ -309,7 +327,6 @@ enum ReceivedDataEvent
 	rcvResult,
 
 	// Available keys
-	rcvOMKeyNoKey,
 	rcvOMKeyBoards,
 	rcvOMKeyDirectories,
 	rcvOMKeyFans,
@@ -428,7 +445,7 @@ enum ReceivedDataEvent
 
 struct FieldTableEntry
 {
-	ReceivedDataEvent val;
+	const ReceivedDataEvent val;
 	const char* key;
 };
 
@@ -562,179 +579,137 @@ static FieldTableEntry fieldTable[] =
 	{ rcvControlCommand,				"controlCommand" },
 };
 
-// This table must be kept in case-insensitive alphabetical order of the search string.
-const FieldTableEntry keyResponseTypeTable[] =
-{
-	{ rcvOMKeyNoKey, 			"" },
-	{ rcvOMKeyBoards,			"boards" },
-	{ rcvOMKeyDirectories,		"directories" },
-	{ rcvOMKeyFans,				"fans" },
-	{ rcvOMKeyHeat,				"heat" },
-	{ rcvOMKeyInputs,			"inputs" },
-	{ rcvOMKeyJob,				"job" },
-	{ rcvOMKeyLimits,			"limits" },
-	{ rcvOMKeyMove,				"move" },
-	{ rcvOMKeyNetwork,			"network" },
-	{ rcvOMKeyReply,			"reply" },
-	{ rcvOMKeyScanner,			"scanner" },
-	{ rcvOMKeySensors,			"sensors" },
-	{ rcvOMKeySeqs,				"seqs" },
-	{ rcvOMKeySpindles,			"spindles" },
-	{ rcvOMKeyState,			"state" },
-	{ rcvOMKeyTools,			"tools" },
-	{ rcvOMKeyVolumes,			"volumes" },
+enum SeqState {
+	SeqStateInit,
+	SeqStateOk,
+	SeqStateUpdate,
+	SeqStateError,
+	SeqStateDisabled
 };
 
+static struct Seq {
+	const ReceivedDataEvent event;
+	const ReceivedDataEvent seqid;
 
-static ReceivedDataEvent currentResponseType = rcvUnknown;
+	uint16_t lastSeq;
+	enum SeqState state;
 
-struct Seqs
-{
-	uint16_t boards;
-	uint16_t directories;
-	uint16_t fans;
-	uint16_t heat;
-	uint16_t inputs;
-	uint16_t job;
-	uint16_t move;
-	uint16_t network;
-	uint16_t scanner;
-	uint16_t sensors;
-	uint16_t spindles;
-	uint16_t state;
-	uint16_t tools;
-	uint16_t volumes;
-
-	uint16_t updateBoards	: 1,
-		 updateDirectories	: 1,
-		 updateFans			: 1,
-		 updateHeat			: 1,
-		 updateInputs		: 1,
-		 updateJob			: 1,
-		 updateMove			: 1,
-		 updateNetwork		: 1,
-		 updateScanner		: 1,
-		 updateSensors		: 1,
-		 updateSpindles		: 1,
-		 updateState		: 1,
-		 updateTools		: 1,
-		 updateVolumes		: 1;
-
-	void Reset() noexcept
-	{
-		boards 				=
-		directories			=
-		fans 				=
-		heat 				=
-		inputs 				=
-		job 				=
-		move 				=
-		network 			=
-		scanner 			=
-		sensors 			=
-		spindles 			=
-		state 				=
-		tools 				=
-		volumes 			= (uint16_t)(0xFFFF);
-
-		updateBoards		=
-		updateDirectories	=
-		updateFans 			=
-		updateHeat 			=
-		updateInputs 		=
-		updateJob 			=
-		updateMove 			=
-		updateNetwork 		=
-		updateScanner 		=
-		updateSensors 		=
-		updateSpindles 		=
-		updateState 		=
-		updateTools 		=
-		updateVolumes 		= false;
-	}
-} seqs;
-
-struct OMRequestParams {
 	const char * _ecv_array const key;
-	const char * _ecv_array const flags = "v";
+	const char * _ecv_array const flags;
+} seqs[] = {
+#if FETCH_NETWORK
+	{ .event = rcvOMKeyNetwork, .seqid = rcvSeqsNetwork, .lastSeq = 0, .state = SeqStateInit, .key = "network", .flags = "v" },
+#endif
+#if FETCH_BOARDS
+	{ .event = rcvOMKeyBoards, .seqid = rcvSeqsBoards, .lastSeq = 0, .state = SeqStateInit, .key = "boards", .flags = "v" },
+#endif
+#if FETCH_MOVE
+	{ .event = rcvOMKeyMove, .seqid = rcvSeqsMove, .lastSeq = 0, .state = SeqStateInit, .key = "move", .flags = "v" },
+#endif
+#if FETCH_HEAT
+	{ .event = rcvOMKeyHeat, .seqid = rcvSeqsHeat, .lastSeq = 0, .state = SeqStateInit, .key = "heat", .flags = "v" },
+#endif
+#if FETCH_TOOLS
+	{ .event = rcvOMKeyTools, .seqid = rcvSeqsTools, .lastSeq = 0, .state = SeqStateInit, .key = "tools", .flags = "v" },
+#endif
+#if FETCH_SPINDLES
+	{ .event = rcvOMKeySpindles, .seqid = rcvSeqsSpindles, .lastSeq = 0, .state = SeqStateInit, .key = "spindles", .flags = "v" },
+#endif
+#if FETCH_DIRECTORIES
+	{ .event = rcvOMKeyDirectories, .seqid = rcvSeqsDirectories, .lastSeq = 0, .state = SeqStateInit, .key = "directories", .flags = "v" },
+#endif
+#if FETCH_FANS
+	{ .event = rcvOMKeyFans, .seqid = rcvSeqsFans, .lastSeq = 0, .state = SeqStateInit, .key = "fans", .flags = "v" },
+#endif
+#if FETCH_INPUTS
+	{ .event = rcvOMKeyInputs, .seqid = rcvSeqsInputs, .lastSeq = 0, .state = SeqStateInit, .key = "inputs", .flags = "v" },
+#endif
+#if FETCH_JOB
+	{ .event = rcvOMKeyJob, .seqid = rcvSeqsJob, .lastSeq = 0, .state = SeqStateInit, .key = "job", .flags = "v" },
+#endif
+#if FETCH_SCANNER
+	{ .event = rcvOMKeyScanner, .seqid = rcvSeqsScanner, .lastSeq = 0, .state = SeqStateInit, .key = "scanner", .flags = "v" },
+#endif
+#if FETCH_SENSORS
+	{ .event = rcvOMKeySensors, .seqid = rcvSeqsSensors, .lastSeq = 0, .state = SeqStateInit, .key = "sensors", .flags = "v" },
+#endif
+#if FETCH_STATE
+	{ .event = rcvOMKeyState, .seqid = rcvSeqsState, .lastSeq = 0, .state = SeqStateInit, .key = "state", .flags = "vn" },
+#endif
+#if FETCH_VOLUMES
+	{ .event = rcvOMKeyVolumes, .seqid = rcvSeqsVolumes, .lastSeq = 0, .state = SeqStateInit, .key = "volumes", .flags = "v" },
+#endif
 };
 
-static const OMRequestParams noKeyParams =			{""};
-static const OMRequestParams boardsParams =			{"boards"};
-static const OMRequestParams directoriesParams =	{"directories"};
-static const OMRequestParams fansParams =			{"fans"};
-static const OMRequestParams heatParams =			{"heat"};
-static const OMRequestParams inputsParams =			{"inputs"};
-static const OMRequestParams jobParams =			{"job"};
-static const OMRequestParams moveParams =			{"move"};
-static const OMRequestParams networkParams =		{"network"};
-static const OMRequestParams scannerParams =		{"scanner"};
-static const OMRequestParams sensorsParams =		{"sensors"};
-static const OMRequestParams spindlesParams =		{"spindles"};
-static const OMRequestParams stateParams =			{"state", "vn"};
-static const OMRequestParams toolsParams =			{"tools"};
-static const OMRequestParams volumesParams =		{"volumes"};
+static struct Seq *currentReqSeq = nullptr;
+static struct Seq *currentRespSeq = nullptr;
 
-const OMRequestParams* GetNextToPoll()
+static struct Seq* GetNextSeq(struct Seq *current)
 {
-	if (seqs.updateNetwork)
+	if (current == nullptr)
 	{
-		return &networkParams;
+		current = seqs;
 	}
-	if (seqs.updateBoards)
+
+
+	for (size_t i = current - seqs; i < ARRAY_SIZE(seqs); ++i)
 	{
-		return &boardsParams;
+		current = &seqs[i];
+		if (current->state == SeqStateError)
+		{
+			// skip and re-init if last request had an error
+			current->state = SeqStateInit;
+			continue;
+		}
+		if (current->state == SeqStateInit || current->state == SeqStateUpdate)
+		{
+			return current;
+		}
 	}
-	if (seqs.updateMove)
+
+
+	return nullptr;
+}
+
+static struct Seq *FindSeqByKey(const char *key)
+{
+	dbg("key %s", key);
+
+	for (size_t i = 0; i < ARRAY_SIZE(seqs); ++i)
 	{
-		return &moveParams;
-	}
-	if (seqs.updateHeat)
-	{
-		return &heatParams;
-	}
-	if (seqs.updateTools)
-	{
-		return &toolsParams;
-	}
-	if (seqs.updateSpindles)
-	{
-		return &spindlesParams;
-	}
-	if (seqs.updateDirectories)
-	{
-		return &directoriesParams;
-	}
-	if (seqs.updateFans)
-	{
-		return &fansParams;
-	}
-	if (seqs.updateInputs)
-	{
-		return &inputsParams;
-	}
-	if (seqs.updateJob)
-	{
-		return &jobParams;
-	}
-	if (seqs.updateScanner)
-	{
-		return &scannerParams;
-	}
-	if (seqs.updateSensors)
-	{
-		return &sensorsParams;
-	}
-	if (seqs.updateState)
-	{
-		return &stateParams;
-	}
-	if (seqs.updateVolumes)
-	{
-		return &volumesParams;
+		if (strcasecmp(seqs[i].key, key) == 0)
+		{
+			return &seqs[i];
+		}
+
 	}
 
 	return nullptr;
+}
+
+static void UpdateSeq(const ReceivedDataEvent seqid, int32_t val)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(seqs); ++i)
+	{
+		if (seqs[i].seqid == seqid)
+		{
+			dbg("%s %d %d", seqs[i].key, seqs[i].lastSeq, val);
+			if (seqs[i].lastSeq != val)
+			{
+				seqs[i].lastSeq = val;
+				seqs[i].state = SeqStateUpdate;
+			}
+		}
+	}
+}
+
+static void ResetSeqs()
+{
+	for (size_t i = 0; i < ARRAY_SIZE(seqs); ++i)
+	{
+		seqs[i].lastSeq = 0;
+		seqs[i].state = SeqStateInit;
+	}
 }
 
 // Return the host firmware features
@@ -750,14 +725,6 @@ const char* _ecv_array CondStripDrive(const char* _ecv_array arg)
 			? arg + 2
 			: arg;
 }
-
-#if DEBUG
-# define STRINGIFY(x)	#x
-# define TOSTRING(x)	STRINGIFY(x)
-# define ShowLine		debugField->SetValue(TOSTRING(__LINE__)); debugField->Refresh(true, 0, 0)
-#else
-# define ShowLine		(void)0
-#endif
 
 struct FileList
 {
@@ -794,7 +761,7 @@ int compare(const void* lp, const void* rp)
 
 // Return true if sending a command or file list request to the printer now is a good idea.
 // We don't want to send these when the printer is busy with a previous command, because they will block normal status requests.
-bool OkToSend()
+static bool OkToSend()
 {
 	return status == OM::PrinterStatus::idle
 			|| status == OM::PrinterStatus::printing
@@ -949,7 +916,7 @@ void PortraitDisplay(const bool withTouch)
 void SetBaudRate(uint32_t rate)
 {
 	nvData.baudRate = rate;
-	SerialIo::Init(rate);
+	SerialIo::SetBaudRate(rate);
 }
 
 extern void SetBrightness(int percent)
@@ -1129,41 +1096,16 @@ void SaveSettings()
 }
 
 // This is called when the status changes
-void SetStatus(const char * sts)
+static void SetStatus(OM::PrinterStatus newStatus)
 {
-	OM::PrinterStatus newStatus = OM::PrinterStatus::connecting;
-	if (!initialized)
-	{
-		newStatus = OM::PrinterStatus::panelInitializing;
-	}
-	else
-	{
-		const OM::PrinterStatusMapEntry key = (OM::PrinterStatusMapEntry) {sts, OM::PrinterStatus::connecting};
-		const OM::PrinterStatusMapEntry * statusFromMap =
-				(OM::PrinterStatusMapEntry *) bsearch(
-						&key,
-						OM::printerStatusMap,
-						ARRAY_SIZE(OM::printerStatusMap),
-						sizeof(OM::PrinterStatusMapEntry),
-						compare<OM::PrinterStatusMapEntry>);
-		if (statusFromMap != nullptr)
-		{
-			newStatus = statusFromMap->val;
-		}
-	}
-
 	if (newStatus != status)
 	{
+		dbg("printer status %d -> %d", status, newStatus);
 		if (isDimmed)
 		{
 			RestoreBrightness();
 		}
 		UI::ChangeStatus(status, newStatus);
-
-		if (status == OM::PrinterStatus::configuring || (status == OM::PrinterStatus::connecting && newStatus != OM::PrinterStatus::configuring))
-		{
-			MessageLog::AppendMessage("Connected");
-		}
 
 		status = newStatus;
 		UI::UpdatePrintingFields();
@@ -1171,21 +1113,22 @@ void SetStatus(const char * sts)
 }
 
 // Set the status back to "Connecting"
-void Reconnect()
+static void Reconnect()
 {
-	initialized = false;
-	SetStatus(nullptr);
+	dbg("Reconnect");
 
-	seqs.Reset();
+	initialized = false;
+	lastPollTime = 0;
+	lastResponseTime = 0;
+	lastOutOfBufferResponse = 0;
+
+	SetStatus(OM::PrinterStatus::connecting);
+	ResetSeqs();
+
 	UI::LastJobFileNameAvailable(false);
 	UI::SetSimulatedTime(0);
 	UI::UpdateDuration(0);
 	UI::UpdateWarmupDuration(0);
-
-	// Send first round of data fetching again
-	SerialIo::Sendf("M409 F\"d99f\"\n");
-	// And set the last poll time to now
-	lastPollTime = SystemTick::GetTickCount();
 }
 
 // Try to get an integer value from a string. If it is actually a floating point value, round it.
@@ -1233,80 +1176,43 @@ bool GetBool(const char s[], bool &rslt)
 	return true;
 }
 
-void StartReceivedMessage()
+static void StartReceivedMessage();
+static void EndReceivedMessage();
+static void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[]);
+static void ProcessArrayEnd(const char id[], const size_t indices[]);
+static void ParserErrorEncountered(int currentState, const char*, const char*, const size_t[]);
+
+static struct SerialIo::SerialIoCbs serial_cbs = {
+	.StartReceivedMessage = StartReceivedMessage,
+	.EndReceivedMessage = EndReceivedMessage,
+	.ProcessReceivedValue = ProcessReceivedValue,
+	.ProcessArrayEnd = ProcessArrayEnd,
+	.ParserErrorEncountered = ParserErrorEncountered
+};
+
+static void StartReceivedMessage()
 {
-	ShowLine;
+	dbg2();
 	newMessageSeq = messageSeq;
 	MessageLog::BeginNewMessage();
 	FileManager::BeginNewMessage();
 	currentAlert.flags.Clear();
-	ShowLine;
+	dbg2();
 }
 
-void SeqsRequestDone(const ReceivedDataEvent rde)
+static void EndReceivedMessage()
 {
-	// If we ran out of buffers we have to redo the previous request
-	if (outOfBuffers)
-	{
-		return;
-	}
-	switch (rde)
-	{
-	case rcvOMKeyBoards:
-		seqs.updateBoards = false;
-		break;
-	case rcvOMKeyDirectories:
-		seqs.updateDirectories = false;
-		break;
-	case rcvOMKeyFans:
-		seqs.updateFans = false;
-		break;
-	case rcvOMKeyHeat:
-		seqs.updateHeat = false;
-		break;
-	case rcvOMKeyInputs:
-		seqs.updateInputs = false;
-		break;
-	case rcvOMKeyJob:
-		seqs.updateJob = false;
-		break;
-	case rcvOMKeyMove:
-		seqs.updateMove = false;
-		break;
-	case rcvOMKeyNetwork:
-		seqs.updateNetwork = false;
-		break;
-	case rcvOMKeyScanner:
-		seqs.updateScanner = false;
-		break;
-	case rcvOMKeySensors:
-		seqs.updateSensors = false;
-		break;
-	case rcvOMKeySpindles:
-		seqs.updateSpindles = false;
-		break;
-	case rcvOMKeyState:
-		seqs.updateState = false;
-		break;
-	case rcvOMKeyTools:
-		seqs.updateTools = false;
-		break;
-	case rcvOMKeyVolumes:
-		seqs.updateVolumes = false;
-		break;
-	default:
-		break;
+	dbg2();
 
-	}
-}
-
-void EndReceivedMessage()
-{
-	ShowLine;
 	lastResponseTime = SystemTick::GetTickCount();
-	SeqsRequestDone(currentResponseType);
+
+	if (currentRespSeq != nullptr)
+	{
+		currentRespSeq->state = outOfBuffers ? SeqStateError : SeqStateOk;
+		dbg("seq %s %d DONE", currentRespSeq->key, currentRespSeq->state);
+		currentRespSeq = nullptr;
+	}
 	outOfBuffers = false;							// Reset the out-of-buffers flag
-	currentResponseType = rcvUnknown;
 
 	if (newMessageSeq != messageSeq)
 	{
@@ -1323,179 +1229,7 @@ void EndReceivedMessage()
 		UI::ProcessAlert(currentAlert);
 		lastAlertSeq = currentAlert.seq;
 	}
-	ShowLine;
-}
-
-void UpdateSeqs(const ReceivedDataEvent rde, const int32_t ival)
-{
-	switch (rde)
-	{
-#if FETCH_BOARDS
-	case rcvSeqsBoards:
-		if (seqs.boards != ival)
-		{
-			seqs.boards = ival;
-			seqs.updateBoards = true;
-		}
-		break;
-#endif
-#if FETCH_DIRECTORIES
-	case rcvSeqsDirectories:
-		if (seqs.directories != ival)
-		{
-			seqs.directories = ival;
-			seqs.updateDirectories = true;
-		}
-		break;
-#endif
-#if FETCH_FANS
-	case rcvSeqsFans:
-		if (seqs.fans != ival)
-		{
-			seqs.fans = ival;
-			seqs.updateFans = true;
-		}
-		break;
-#endif
-#if FETCH_HEAT
-	case rcvSeqsHeat:
-		if (seqs.heat != ival)
-		{
-			seqs.heat = ival;
-			seqs.updateHeat = true;
-		}
-		break;
-#endif
-#if FETCH_INPUTS
-	case rcvSeqsInputs:
-		if (seqs.inputs != ival)
-		{
-			seqs.inputs = ival;
-			seqs.updateInputs = true;
-		}
-		break;
-#endif
-#if FETCH_JOB
-	case rcvSeqsJob:
-		if (seqs.job != ival)
-		{
-			seqs.job = ival;
-			seqs.updateJob = true;
-		}
-		break;
-#endif
-#if FETCH_MOVE
-	case rcvSeqsMove:
-		if (seqs.move != ival)
-		{
-			seqs.move = ival;
-			seqs.updateMove = true;
-		}
-		break;
-#endif
-#if FETCH_NETWORK
-	case rcvSeqsNetwork:
-		if (seqs.network != ival)
-		{
-			seqs.network = ival;
-			seqs.updateNetwork = true;
-		}
-		break;
-#endif
-#if FETCH_SCANNER
-	case rcvSeqsScanner:
-		if (seqs.scanner != ival)
-		{
-			seqs.scanner = ival;
-			seqs.updateScanner = true;
-		}
-		break;
-#endif
-#if FETCH_SENSORS
-	case rcvSeqsSensors:
-		if (seqs.sensors != ival)
-		{
-			seqs.sensors = ival;
-			seqs.updateSensors = true;
-		}
-		break;
-#endif
-#if FETCH_SPINDLES
-	case rcvSeqsSpindles:
-		if (seqs.spindles != ival)
-		{
-			seqs.spindles = ival;
-			seqs.updateSpindles = true;
-		}
-		break;
-#endif
-#if FETCH_STATE
-	case rcvSeqsState:
-		if (seqs.state != ival)
-		{
-			seqs.state = ival;
-			seqs.updateState = true;
-		}
-		break;
-#endif
-#if FETCH_TOOLS
-	case rcvSeqsTools:
-		if (seqs.tools != ival)
-		{
-			seqs.tools = ival;
-			seqs.updateTools = true;
-		}
-		break;
-#endif
-#if FETCH_VOLUMES
-	case rcvSeqsVolumes:
-		if (seqs.volumes != ival)
-		{
-			seqs.volumes = ival;
-			seqs.updateVolumes = true;
-		}
-		break;
-#endif
-	default:
-		break;
-	}
-}
-
-const OMRequestParams* GetOMRequestParams()
-{
-	switch (currentResponseType)
-	{
-	case rcvOMKeyNoKey:
-		return &noKeyParams;
-	case rcvOMKeyBoards:
-		return &boardsParams;
-	case rcvOMKeyFans:
-		return &fansParams;
-	case rcvOMKeyHeat:
-		return &heatParams;
-	case rcvOMKeyInputs:
-		return &inputsParams;
-	case rcvOMKeyJob:
-		return &jobParams;
-	case rcvOMKeyMove:
-		return &moveParams;
-	case rcvOMKeyNetwork:
-		return &networkParams;
-	case rcvOMKeyScanner:
-		return &scannerParams;
-	case rcvOMKeySensors:
-		return &sensorsParams;
-	case rcvOMKeySpindles:
-		return &spindlesParams;
-	case rcvOMKeyState:
-		return &stateParams;
-	case rcvOMKeyTools:
-		return &toolsParams;
-	case rcvOMKeyVolumes:
-		return &volumesParams;
-	default:
-		return nullptr;
-	}
+	dbg2();
 }
 
 void HandleOutOfBufferResponse() {
@@ -1522,54 +1256,70 @@ void HandleOutOfBufferResponse() {
 }
 
 // Public functions called by the SerialIo module
-void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[])
+static void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[])
 {
+	ReceivedDataEvent currentResponseType = ReceivedDataEvent::rcvUnknown;
+
 	if (StringStartsWith(id.c_str(), "result"))
 	{
-		auto requestParams = GetOMRequestParams();
-		if (requestParams != nullptr)
-		{
-			// We might either get something like:
-			// * "result[optional modified]:[key]:[field]" for a live response or
-			// * "result[optional modified]:[field]" for a detailed response
-			// If live response remove "result:"
-			// else replace "result" by "key" (do NOT replace anything beyond "result" as there might be an _ecv_array modifier)
+		// We might either get something like:
+		// * "result[optional modified]:[key]:[field]" for a live response or
+		// * "result[optional modified]:[field]" for a detailed response
+		// If live response remove "result:"
+		// else replace "result" by "key" (do NOT replace anything beyond "result" as there might be an _ecv_array modifier)
 
-			id.Erase(0, 6);		// Erase the string "result"
-			if (currentResponseType == rcvOMKeyNoKey)
-			{
-				id.Erase(0);	// Also erase the colon
-			}
-			else
-			{
-				id.Prepend(requestParams->key);		// Prepend the key of the current response
-			}
+		id.Erase(0, 6);
+		if (currentRespSeq != nullptr)
+		{
+			currentResponseType = currentRespSeq->seqid;
+			id.Prepend(currentRespSeq->key);
+		}
+		else
+		{
+			// if empty key also erase the colon
+			id.Erase(0);
 		}
 	}
 
-	const FieldTableEntry key = {ReceivedDataEvent::rcvUnknown, id.c_str()};
+	const FieldTableEntry key = { ReceivedDataEvent::rcvUnknown, id.c_str()};
 	const FieldTableEntry* searchResult = (FieldTableEntry*) bsearch(
 			&key,
 			fieldTable,
 			ARRAY_SIZE(fieldTable),
 			sizeof(FieldTableEntry),
 			compare<FieldTableEntry>);
+
+	// no matching key found
+	if (!searchResult)
+	{
+		dbg("no matching key found for %s", id.c_str());
+		return;
+	}
 	const ReceivedDataEvent rde = searchResult->val;
+	//dbg("event: %s(%d) rtype %d data '%s'", searchResult->key, searchResult->val, currentResponseType, data);
 	switch (rde)
 	{
 	// M409 section
 	case rcvKey:
-		ShowLine;
+		dbg2();
 		{
-			const FieldTableEntry key = {ReceivedDataEvent::rcvUnknown, data};
-			const FieldTableEntry* searchResult = (FieldTableEntry*) bsearch(
-					&key,
-					keyResponseTypeTable,
-					ARRAY_SIZE(keyResponseTypeTable),
-					sizeof(FieldTableEntry),
-					compare<FieldTableEntry>);
-			currentResponseType = searchResult->val;
-			switch (currentResponseType) {
+			// try a quick check otherwise search for key
+			if (currentReqSeq && (strcasecmp(data, currentReqSeq->key) == 0))
+			{
+				currentRespSeq = currentReqSeq;
+			}
+			else
+			{
+				currentRespSeq = FindSeqByKey(data);
+			}
+
+			if (currentRespSeq == nullptr)
+			{
+				break;
+			}
+
+			// reset processing variables
+			switch (currentRespSeq->event) {
 			case rcvOMKeyHeat:
 				lastBed = -1;
 				lastChamber = -1;
@@ -1594,7 +1344,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Boards section
 	case rcvBoardsFirmwareName:
-		ShowLine;
+		dbg2();
 		if (indices[0] == 0)			// currently we only handle the first board
 		{
 			for (size_t i = 0; i < ARRAY_SIZE(firmwareTypes); ++i)
@@ -1616,7 +1366,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Fans section
 	case rcvFansRequestedValue:
-		ShowLine;
+		dbg2();
 		{
 			float f;
 			bool b = GetFloat(data, f);
@@ -1629,7 +1379,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Heat section
 	case rcvHeatBedHeaters:
-		ShowLine;
+		dbg2();
 		{
 			int32_t heaterNumber;
 			if (GetInteger(data, heaterNumber) && heaterNumber > -1)
@@ -1645,7 +1395,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvHeatChamberHeaters:
-		ShowLine;
+		dbg2();
 		{
 			int32_t heaterNumber;
 			if (GetInteger(data, heaterNumber) && heaterNumber > -1)
@@ -1661,7 +1411,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvHeatHeatersActive:
-		ShowLine;
+		dbg2();
 		{
 			int32_t ival;
 			if (GetInteger(data, ival))
@@ -1672,19 +1422,19 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvHeatHeatersCurrent:
-		ShowLine;
+		dbg2();
 		{
 			float fval;
 			if (GetFloat(data, fval))
 			{
-				ShowLine;
+				dbg2();
 				UI::UpdateCurrentTemperature(indices[0], fval);
 			}
 		}
 		break;
 
 	case rcvHeatHeatersStandby:
-		ShowLine;
+		dbg2();
 		{
 			int32_t ival;
 			if (GetInteger(data, ival))
@@ -1695,7 +1445,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvHeatHeatersState:
-		ShowLine;
+		dbg2();
 		{
 			const OM::HeaterStatusMapEntry key = (OM::HeaterStatusMapEntry) {data, OM::HeaterStatus::off};
 			const OM::HeaterStatusMapEntry * statusFromMap =
@@ -1712,7 +1462,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Job section
 	case rcvJobDuration:
-		ShowLine;
+		dbg2();
 		{
 			uint32_t duration;
 			if (GetUnsignedInteger(data, duration))
@@ -1727,12 +1477,12 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvJobFileFilename:
-		ShowLine;
+		dbg2();
 		UI::PrintingFilenameChanged(data);
 		break;
 
 	case rcvJobFileSize:
-		ShowLine;
+		dbg2();
 		{
 			uint32_t ival;
 			if (GetUnsignedInteger(data, ival))
@@ -1747,7 +1497,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvJobFileSimulatedTime:
-		ShowLine;
+		dbg2();
 		{
 			uint32_t simulatedTime;
 			if (GetUnsignedInteger(data, simulatedTime))
@@ -1762,7 +1512,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvJobFilePosition:
-		ShowLine;
+		dbg2();
 		{
 			if (PrintInProgress() && fileSize > 0)
 			{
@@ -1777,12 +1527,12 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvJobLastFileName:
-		ShowLine;
+		dbg2();
 		UI::LastJobFileNameAvailable(true);	// If we get here there is a filename
 		break;
 
 	case rcvJobLastFileSimulated:
-		ShowLine;
+		dbg2();
 		{
 			bool lastFileSimulated;
 			if (GetBool(data, lastFileSimulated))
@@ -1795,7 +1545,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	case rcvJobTimesLeftFile:
 	case rcvJobTimesLeftFilament:
 	case rcvJobTimesLeftSlicer:
-		ShowLine;
+		dbg2();
 		{
 			int32_t timeLeft;
 			bool b = GetInteger(data, timeLeft);
@@ -1807,7 +1557,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvJobWarmUpDuration:
-		ShowLine;
+		dbg2();
 		{
 			uint32_t warmUpDuration;
 			if (GetUnsignedInteger(data, warmUpDuration))
@@ -1823,7 +1573,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Move section
 	case rcvMoveAxesBabystep:
-		ShowLine;
+		dbg2();
 		{
 			float f;
 			if (GetFloat(data, f))
@@ -1834,7 +1584,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvMoveAxesHomed:
-		ShowLine;
+		dbg2();
 		{
 			bool isHomed;
 			if (indices[0] < MaxTotalAxes && GetBool(data, isHomed))
@@ -1845,14 +1595,14 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvMoveAxesLetter:
-		ShowLine;
+		dbg2();
 		{
 			UI::SetAxisLetter(indices[0], data[0]);
 		}
 		break;
 
 	case rcvMoveAxesUserPosition:
-		ShowLine;
+		dbg2();
 		{
 			float fval;
 			if (GetFloat(data, fval))
@@ -1863,7 +1613,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvMoveAxesVisible:
-		ShowLine;
+		dbg2();
 		{
 			bool visible;
 			if (GetBool(data, visible))
@@ -1879,7 +1629,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvMoveAxesWorkplaceOffsets:
-		ShowLine;
+		dbg2();
 		{
 			float offset;
 			if (GetFloat(data, offset))
@@ -1890,7 +1640,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvMoveExtrudersFactor:
-		ShowLine;
+		dbg2();
 		{
 			float fval;
 			if (GetFloat(data, fval))
@@ -1901,7 +1651,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvMoveKinematicsName:
-		ShowLine;
+		dbg2();
 		if (status != OM::PrinterStatus::configuring && status != OM::PrinterStatus::connecting)
 		{
 			isDelta = (strcasecmp(data, "delta") == 0);
@@ -1910,7 +1660,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvMoveSpeedFactor:
-		ShowLine;
+		dbg2();
 		{
 			float fval;
 			if (GetFloat(data, fval))
@@ -1922,7 +1672,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Network section
 	case rcvNetworkName:
-		ShowLine;
+		dbg2();
 		if (status != OM::PrinterStatus::configuring && status != OM::PrinterStatus::connecting)
 		{
 			UI::UpdateMachineName(data);
@@ -1945,12 +1695,13 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	case rcvSeqsState:
 	case rcvSeqsTools:
 	case rcvSeqsVolumes:
-		ShowLine;
+		dbg2();
 		{
 			int32_t ival;
+
 			if (GetInteger(data, ival))
 			{
-				UpdateSeqs(rde, ival);
+				UpdateSeq(rde, ival);
 			}
 
 		}
@@ -1958,7 +1709,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Sensors section
 	case rcvSensorsProbeValue:
-		ShowLine;
+		dbg2();
 		{
 			if (indices[0] == 0 && indices[1] == 0)			// currently we only handle one probe with one value
 			UI::UpdateZProbe(data);
@@ -1967,7 +1718,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Spindles section
 	case rcvSpindlesActive:
-		ShowLine;
+		dbg2();
 		{
 			int32_t active;
 			if (GetInteger(data, active))
@@ -1988,7 +1739,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvSpindlesCurrent:
-		ShowLine;
+		dbg2();
 		{
 			int32_t current;
 			if (GetInteger(data, current))
@@ -2004,7 +1755,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	case rcvSpindlesMax:
 	case rcvSpindlesMin:
-		ShowLine;
+		dbg2();
 		// fans also has a field "result^:max"
 		if (currentResponseType != rcvOMKeySpindles)
 		{
@@ -2020,7 +1771,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvSpindlesState:
-		ShowLine;
+		dbg2();
 		{
 			const OM::SpindleStateMapEntry key = (OM::SpindleStateMapEntry) {data, OM::SpindleState::stopped};
 			const OM::SpindleStateMapEntry * statusFromMap =
@@ -2036,7 +1787,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvSpindlesTool:
-		ShowLine;
+		dbg2();
 		{
 			int32_t toolNumber;
 			if (GetInteger(data, toolNumber))
@@ -2049,8 +1800,8 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// State section
 	case rcvStateCurrentTool:
-		ShowLine;
-		if (status == OM::PrinterStatus::connecting || status == OM::PrinterStatus::panelInitializing)
+		dbg2();
+		if (status == OM::PrinterStatus::connecting)
 		{
 			break;
 		}
@@ -2064,8 +1815,8 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvStateMessageBox:
-		ShowLine;
-		// Message box has been dealt with somewhere else
+		dbg2();
+		// Nessage box has been dealt with somewhere else
 		if (data[0] == 0)
 		{
 			UI::ClearAlert();
@@ -2073,7 +1824,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvStateMessageBoxAxisControls:
-		ShowLine;
+		dbg2();
 		if (GetUnsignedInteger(data, currentAlert.controls))
 		{
 			currentAlert.flags.SetBit(Alert::GotControls);
@@ -2081,13 +1832,13 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvStateMessageBoxMessage:
-		ShowLine;
+		dbg2();
 		currentAlert.text.copy(data);
 		currentAlert.flags.SetBit(Alert::GotText);
 		break;
 
 	case rcvStateMessageBoxMode:
-		ShowLine;
+		dbg2();
 		if (GetInteger(data, currentAlert.mode))
 		{
 			currentAlert.flags.SetBit(Alert::GotMode);
@@ -2095,7 +1846,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvStateMessageBoxSeq:
-		ShowLine;
+		dbg2();
 		if (GetUnsignedInteger(data, currentAlert.seq))
 		{
 			currentAlert.flags.SetBit(Alert::GotSeq);
@@ -2103,7 +1854,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvStateMessageBoxTimeout:
-		ShowLine;
+		dbg2();
 		if (GetFloat(data, currentAlert.timeout))
 		{
 			currentAlert.flags.SetBit(Alert::GotTimeout);
@@ -2111,20 +1862,33 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvStateMessageBoxTitle:
-		ShowLine;
+		dbg2();
 		currentAlert.title.copy(data);
 		currentAlert.flags.SetBit(Alert::GotTitle);
 		break;
 
 	case rcvStateStatus:
-		ShowLine;
+		dbg2();
 		{
-			SetStatus(data);
+			const OM::PrinterStatusMapEntry key = (OM::PrinterStatusMapEntry) { .key = data, .val = OM::PrinterStatus::connecting};
+			const OM::PrinterStatusMapEntry * statusFromMap =
+					(OM::PrinterStatusMapEntry *) bsearch(
+							&key,
+							OM::printerStatusMap,
+							ARRAY_SIZE(OM::printerStatusMap),
+							sizeof(OM::PrinterStatusMapEntry),
+							compare<OM::PrinterStatusMapEntry>);
+			if (!statusFromMap)
+			{
+				dbg("unknown status %s", data);
+				break;
+			}
+			SetStatus(statusFromMap->val);
 		}
 		break;
 
 	case rcvStateUptime:
-		ShowLine;
+		dbg2();
 		{
 			uint32_t uival;
 			if (GetUnsignedInteger(data, uival))
@@ -2142,7 +1906,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	// Tools section
 	case rcvToolsActive:
 	case rcvToolsStandby:
-		ShowLine;
+		dbg2();
 		{
 			if (indices[1] >= MaxHeatersPerTool)
 			{
@@ -2157,7 +1921,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvToolsExtruders:
-		ShowLine;
+		dbg2();
 		{
 			uint32_t extruder;
 			if (GetUnsignedInteger(data, extruder))
@@ -2168,7 +1932,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvToolsFans:
-		ShowLine;
+		dbg2();
 		{
 			uint32_t fan;
 			if (GetUnsignedInteger(data, fan))
@@ -2179,7 +1943,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvToolsHeaters:
-		ShowLine;
+		dbg2();
 		{
 			if (indices[1] >= MaxHeatersPerTool)
 			{
@@ -2194,7 +1958,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvToolsNumber:
-		ShowLine;
+		dbg2();
 		{
 			for (size_t i = lastTool + 1; i < indices[0]; ++i)
 			{
@@ -2205,7 +1969,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvToolsOffsets:
-		ShowLine;
+		dbg2();
 		{
 			float offset;
 			if (GetFloat(data, offset))
@@ -2216,7 +1980,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvToolsSpindle:
-		ShowLine;
+		dbg2();
 		{
 			int32_t spindleNumber;
 			if (GetInteger(data, spindleNumber))
@@ -2228,7 +1992,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvToolsState:
-		ShowLine;
+		dbg2();
 		{
 			const OM::ToolStatusMapEntry key = (OM::ToolStatusMapEntry) {data, OM::ToolStatus::off};
 			const OM::ToolStatusMapEntry * statusFromMap =
@@ -2245,7 +2009,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Volumes section
 	case rcvVolumesMounted:
-		ShowLine;
+		dbg2();
 		{
 			bool mounted;
 			if (GetBool(data, mounted) && mounted)
@@ -2257,12 +2021,12 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// Push messages
 	case rcvPushResponse:
-		ShowLine;
+		dbg2();
 		MessageLog::SaveMessage(data);
 		break;
 
 	case rcvPushMessage:
-		ShowLine;
+		dbg2();
 		if (data[0] == 0)
 		{
 			UI::ClearAlert();
@@ -2274,28 +2038,28 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvPushSeq:
-		ShowLine;
+		dbg2();
 		GetUnsignedInteger(data, newMessageSeq);
 		break;
 
 	case rcvPushBeepDuration:
-		ShowLine;
+		dbg2();
 		GetInteger(data, beepLength);
 		break;
 
 	case rcvPushBeepFrequency:
-		ShowLine;
+		dbg2();
 		GetInteger(data, beepFrequency);
 		break;
 
 	// M20 section
 	case rcvM20Dir:
-		ShowLine;
+		dbg2();
 		FileManager::ReceiveDirectoryName(data);
 		break;
 
 	case rcvM20Err:
-		ShowLine;
+		dbg2();
 		{
 			int32_t i;
 			if (GetInteger(data, i))
@@ -2314,7 +2078,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvM20Files:
-		ShowLine;
+		dbg2();
 		if (indices[0] == 0)
 		{
 			FileManager::BeginReceivingFiles();
@@ -2324,7 +2088,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	// M36 section
 	case rcvM36Filament:
-		ShowLine;
+		dbg2();
 		{
 			static float totalFilament = 0.0;
 			if (indices[0] == 0)
@@ -2343,12 +2107,12 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvM36GeneratedBy:
-		ShowLine;
+		dbg2();
 		UI::UpdateFileGeneratedByText(data);
 		break;
 
 	case rcvM36Height:
-		ShowLine;
+		dbg2();
 		{
 			float f;
 			if (GetFloat(data, f))
@@ -2359,12 +2123,12 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvM36LastModified:
-		ShowLine;
+		dbg2();
 		UI::UpdateFileLastModifiedText(data);
 		break;
 
 	case rcvM36LayerHeight:
-		ShowLine;
+		dbg2();
 		{
 			float f;
 			if (GetFloat(data, f))
@@ -2376,7 +2140,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 
 	case rcvM36PrintTime:
 	case rcvM36SimulatedTime:
-		ShowLine;
+		dbg2();
 		{
 			int32_t sz;
 			if (GetInteger(data, sz) && sz > 0)
@@ -2387,7 +2151,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvM36Size:
-		ShowLine;
+		dbg2();
 		{
 			int32_t sz;
 			if (GetInteger(data, sz))
@@ -2398,7 +2162,7 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 		break;
 
 	case rcvControlCommand:
-		ShowLine;
+		dbg2();
 		{
 			const ControlCommandMapEntry key = (ControlCommandMapEntry) {data, ControlCommand::invalid};
 			const ControlCommandMapEntry * controlCommandFromMap =
@@ -2427,22 +2191,23 @@ void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[
 	default:
 		break;
 	}
-	ShowLine;
+	dbg2();
 }
 
 // Public function called when the serial I/O module finishes receiving an array of values
-void ProcessArrayEnd(const char id[], const size_t indices[])
+static void ProcessArrayEnd(const char id[], const size_t indices[])
 {
+	ReceivedDataEvent currentResponseType = currentRespSeq != nullptr ? currentRespSeq->event : ReceivedDataEvent::rcvUnknown;
 	if (indices[0] == 0 && strcmp(id, "files^") == 0)
 	{
-		ShowLine;
+		dbg2();
 		FileManager::BeginReceivingFiles();				// received an empty file list - need to tell the file manager about it
 	}
 	else if (currentResponseType == rcvOMKeyHeat)
 	{
 		if (strcasecmp(id, "heat:bedHeaters^") == 0)
 		{
-			ShowLine;
+			dbg2();
 			OM::RemoveBed(lastBed + 1, true);
 			if (initialized)
 			{
@@ -2451,7 +2216,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 		}
 		else if (strcasecmp(id, "heat:chamberHeaters^") == 0)
 		{
-			ShowLine;
+			dbg2();
 			OM::RemoveChamber(lastChamber + 1, true);
 			if (initialized)
 			{
@@ -2461,7 +2226,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 	else if (currentResponseType == rcvOMKeyMove && strcasecmp(id, "move:axes^") == 0)
 	{
-		ShowLine;
+		dbg2();
 		OM::RemoveAxis(indices[0], true);
 		numAxes = constrain<unsigned int>(visibleAxesCounted, MIN_AXES, MaxDisplayableAxes);
 		UI::UpdateGeometry(numAxes, isDelta);
@@ -2470,7 +2235,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	{
 		if (strcasecmp(id, "spindles^") == 0)
 		{
-			ShowLine;
+			dbg2();
 			OM::RemoveSpindle(lastSpindle + 1, true);
 			if (initialized)
 			{
@@ -2482,7 +2247,7 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	{
 		if (strcasecmp(id, "tools^") == 0)
 		{
-			ShowLine;
+			dbg2();
 			OM::RemoveTool(lastTool + 1, true);
 			if (initialized)
 			{
@@ -2491,12 +2256,12 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 		}
 		else if (strcasecmp(id, "tools^:extruders^") == 0 && indices[1] == 0)
 		{
-			ShowLine;
+			dbg2();
 			UI::SetToolExtruder(indices[0], -1);			// No extruder defined for this tool
 		}
 		else if (strcasecmp(id, "tools^:heaters^") == 0)
 		{
-			ShowLine;
+			dbg2();
 			// Remove all heaters no longer defined
 			if (UI::RemoveToolHeaters(indices[0], indices[1]) && initialized)
 			{
@@ -2506,14 +2271,14 @@ void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 	else if (currentResponseType == rcvOMKeyVolumes && strcasecmp(id, "volumes^") == 0)
 	{
-		ShowLine;
+		dbg2();
 		FileManager::SetNumVolumes(mountedVolumesCounted);
 	}
 }
 
-void ParserErrorEncountered(const char*, const char*, const size_t[])	// For now we don't use the parameters
+static void ParserErrorEncountered(int currentState, const char *id, const char*data, const size_t arraysize[])
 {
-	MessageLog::AppendMessage("Error parsing response");
+	MessageLog::AppendMessageF("Error parsing response in state %d", currentState);
 	// TODO: Handle parser errors
 }
 
@@ -2597,7 +2362,7 @@ int main(void)
 	}
 
 	// Set up the baud rate
-	SerialIo::Init(nvData.baudRate);
+	SerialIo::Init(nvData.baudRate, &serial_cbs);
 
 	MessageLog::Init();
 
@@ -2621,13 +2386,10 @@ int main(void)
 	mgr.Refresh(true);								// draw the screen for the first time
 	UI::UpdatePrintingFields();
 
-	SerialIo::Sendf("M409 F\"d99f\"\n");		// Get initial status
-	lastPollTime = SystemTick::GetTickCount();
-
 	// Hide all tools and heater related columns initially
 	UI::AllToolsSeen();
 
-	debugField->Show(DEBUG != 0);					// show the debug field only if debugging is enabled
+	debugField->Show(false);					// show the debug field only if debugging is enabled
 
 	// Display the Control tab. This also refreshes the display.
 	UI::ShowDefaultPage();
@@ -2637,29 +2399,24 @@ int main(void)
 			fieldTable,
 			ARRAY_SIZE(fieldTable),
 			sizeof(FieldTableEntry),
-			[](const void* a, const void* b)
-			{
-				return strcasecmp(((FieldTableEntry*) a)->key, ((FieldTableEntry*) b)->key);
-			});
-
-	seqs.Reset();
-
-//	lastResponseTime = SystemTick::GetTickCount();	// pretend we just received a response
+			compare<FieldTableEntry>);
 
 	lastActionTime = SystemTick::GetTickCount();
 
+	dbg("basic init DONE");
+
 	for (;;)
 	{
-		ShowLine;
+		dbg2();
 
 		// 1. Check for input from the serial port and process it.
-		// This calls back into functions StartReceivedMessage, ProcessReceivedValue, ProcessArrayLength and EndReceivedMessage.
+		// This calls back into functions StartReceivedMessage, ProcessReceivedValue, EndReceivedMessage and ParserErrorEncountered
 		SerialIo::CheckInput();
-		ShowLine;
+		dbg2();
 
 		// 2. if displaying the message log, update the times
 		UI::Spin();
-		ShowLine;
+		dbg2();
 
 		// 3. Check for a touch on the touch panel.
 		if (SystemTick::GetTickCount() - lastTouchTime >= ignoreTouchTime)
@@ -2717,12 +2474,12 @@ int main(void)
 				}
 			}
 		}
-		ShowLine;
+		dbg2();
 
 		// 4. Refresh the display
 		UpdateDebugInfo();
 		mgr.Refresh(false);
-		ShowLine;
+		dbg2();
 
 		// 5. Generate a beep if asked to
 		if (beepFrequency != 0 && beepLength != 0)
@@ -2737,39 +2494,46 @@ int main(void)
 			}
 			beepFrequency = beepLength = 0;
 		}
-		ShowLine;
+		dbg2();
 
 		// 6. If it is time, poll the printer status.
 		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
 		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
 		const uint32_t now = SystemTick::GetTickCount();
-		if (   (UI::DoPolling()										// don't poll while we are in the Setup page
-			&& now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
-			&& now - lastResponseTime >= printerResponseInterval)	// and we haven't had a response too recently
-			|| (!initialized && (now - lastPollTime > now - lastResponseTime))	// but if we are initializing do it as fast as possible where
-			)
+		if ((UI::DoPolling()										// don't poll while we are in the Setup page
+		     && now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
+		     && now - lastResponseTime >= printerResponseInterval)	// and we haven't had a response too recently
+		     || (!initialized && (now - lastPollTime > now - lastResponseTime))	// but if we are initializing do it as fast as possible where
+		   )
 		{
 			if (now - lastPollTime > now - lastResponseTime)		// if we've had a response since the last poll
 			{
-				auto nextToPoll = GetNextToPoll();
-				if (nextToPoll != nullptr)
+				currentReqSeq = GetNextSeq(currentReqSeq);
+				if (currentReqSeq != nullptr)
 				{
-
-					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", nextToPoll->key, nextToPoll->flags);
+					dbg("sending %s", currentReqSeq->key);
+					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", currentReqSeq->key, currentReqSeq->flags);
 				}
-				else {
+				else
+				{
 					// Once we get here the first time we will have work all seqs once
 					if (!initialized)
 					{
+						dbg("seqs init DONE");
 						UI::AllToolsSeen();
 						initialized = true;
 					}
 
 					// First check for specific info we need to fetch
-					bool done = FileManager::ProcessTimers();
+					bool ok = OkToSend();
+					bool done = true;
+					if (ok)
+					{
+						done = FileManager::ProcessTimers();
+					}
 
 					// Otherwise just send a normal poll command
-					if (!done)
+					if (!ok && !done)
 					{
 						SerialIo::Sendf("M409 F\"d99f\"\n");
 					}
@@ -2782,7 +2546,7 @@ int main(void)
 				lastPollTime = SystemTick::GetTickCount();
 			}
 		}
-		ShowLine;
+		dbg2();
 	}
 }
 

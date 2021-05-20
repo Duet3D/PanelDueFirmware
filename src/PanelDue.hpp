@@ -19,13 +19,6 @@
 #include <ObjectModel/PrinterStatus.hpp>
 #include <General/String.h>
 
-// Functions called from the serial I/O module
-extern void ProcessReceivedValue(StringRef id, const char val[], const size_t indices[]);
-extern void ProcessArrayEnd(const char id[], const size_t indices[]);
-extern void StartReceivedMessage();
-extern void EndReceivedMessage();
-extern void ParserErrorEncountered(const char* id, const char* data, const size_t indices[]);
-
 enum class DisplayDimmerType : uint8_t
 {
 	never = 0,				// never dim the display
@@ -81,7 +74,6 @@ extern HeaterCombineType GetHeaterCombineType();
 extern void SetHeaterCombineType(HeaterCombineType combine);
 extern FirmwareFeatureMap GetFirmwareFeatures();
 extern const char* _ecv_array CondStripDrive(const char* _ecv_array arg);
-extern void Reconnect();
 extern void Delay(uint32_t milliSeconds);
 
 // Global data in PanelDue.cpp that is used elsewhere
