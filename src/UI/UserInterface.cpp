@@ -28,7 +28,7 @@
 #include <General/StringFunctions.h>
 
 // Public fields
-TextField *fwVersionField, *userCommandField;
+TextField *fwVersionField, *userCommandField, *ipAddressField;
 IntegerField *freeMem;
 StaticTextField *touchCalibInstruction, *debugField;
 StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
@@ -43,6 +43,9 @@ const size_t generatedByTextLength = 50;
 const size_t lastModifiedTextLength = 20;
 const size_t printTimeTextLength = 12;		// e.g. 11h 55m
 const size_t controlPageMacroTextLength = 50;
+const size_t ipAddressLength = 45;	// IPv4 needs max 15 but IPv6 can go up to 45
+
+static String<ipAddressLength> ipAddress;
 
 struct FileListButtons
 {
@@ -131,6 +134,7 @@ bool displayingResponse = false;						// true if displaying a response
 static PixelNumber screensaverTextWidth = 0;
 static uint32_t lastScreensaverMoved = 0;
 
+static uint8_t currentWorkplaceNumber = OM::MaxTotalWorkplaces;
 static int8_t currentTool = -2;							// Initialized to a value never returned by RRF to have the logic for "no tool" applied at startup
 static bool allAxesHomed = false;
 static const bool isLandscape = true; 					// Once portrait mode is enabled, this needs to be de-const-ed
@@ -1128,6 +1132,7 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 
 	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
 
+	mgr.AddField(ipAddressField = new TextField(row9, margin, DisplayX/2 - margin, TextAlignment::Left, "IP: ", ipAddress.c_str()));
 	setupRoot = mgr.GetRoot();
 }
 
@@ -1905,6 +1910,13 @@ namespace UI
 	{
 		machineName.copy(data);
 		nameField->SetChanged();
+	}
+
+	// Update the IP address fiels on Setup tab
+	void UpdateIP(const char data[])
+	{
+		ipAddress.copy(data);
+		ipAddressField->SetChanged();
 	}
 
 	// Update the fan RPM
@@ -3648,6 +3660,16 @@ namespace UI
 				axis->workplaceOffsets[workplaceIndex] = offset;
 			}
 		}
+	}
+
+	void SetCurrentWorkplaceNumber(uint8_t workplaceNumber)
+	{
+		if (currentWorkplaceNumber == workplaceNumber || workplaceNumber >= OM::Workplaces::MaxTotalWorkplaces)
+		{
+			return;
+		}
+		uint8_t oldWorkplaceNumber = currentWorkplaceNumber;
+		currentWorkplaceNumber = workplaceNumber;
 	}
 
 	void SetBedOrChamberHeater(const uint8_t heaterIndex, const int8_t heaterNumber, bool bed)
