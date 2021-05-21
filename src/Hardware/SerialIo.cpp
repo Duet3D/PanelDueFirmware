@@ -10,9 +10,16 @@
 #include "PanelDue.hpp"
 #include <General/String.h>
 #include <General/SafeVsnprintf.h>
+
 #define DEBUG (0)
+
 #if DEBUG
-# include "MessageLog.hpp"
+# include "UI/MessageLog.hpp"
+#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
+
+#else
+# define dbg(fmt, args...)		do {} while(0)
+
 #endif
 
 const size_t MaxArrayNesting = 4;
@@ -27,6 +34,8 @@ const size_t MaxArrayNesting = 4;
 namespace SerialIo
 {
 	static unsigned int lineNumber = 0;
+
+	static struct SerialIoCbs *cbs = nullptr;
 
 	// Translation tables for combining characters.
 	// The first character in each pair is the character that the combining mark is applied to.
@@ -51,8 +60,10 @@ namespace SerialIo
 											"c\xE7"																			;
 
 	// Initialize the serial I/O subsystem, or re-initialize it with a new baud rate
-	void Init(uint32_t baudRate)
+	void Init(uint32_t baudRate, struct SerialIoCbs *callbacks)
 	{
+		cbs = callbacks;
+
 		uart_disable_interrupt(UARTn, 0xFFFFFFFF);
 #if SAM4S
 		pio_configure(PIOA, PIO_PERIPH_A, PIO_PA9 | PIO_PA10, 0);	// enable UART 0 pins
@@ -71,6 +82,12 @@ namespace SerialIo
 #endif
 		uart_enable_interrupt(UARTn, UART_IER_RXRDY | UART_IER_OVRE | UART_IER_FRAME);
 	}
+
+	void SetBaudRate(uint32_t baudRate)
+	{
+		Init(baudRate, cbs);
+	}
+
 
 	uint16_t numChars = 0;
 	uint8_t checksum = 0;
@@ -185,6 +202,7 @@ namespace SerialIo
 	};
 
 	JsonState state = jsBegin;
+	JsonState lastState = jsBegin;
 
 	// fieldId is the name of the field being received. A '^' character indicates the position of an array index, and a ':' character indicates a field separator.
 	String<100> fieldId;
@@ -194,25 +212,21 @@ namespace SerialIo
 
 	static void RemoveLastId()
 	{
-#if DEBUG
-		MessageLog::AppendMessage(150, "RemoveLastId: %s, len: %d", fieldId.c_str(), fieldId.strlen());
-#endif
+		//dbg("%s, len: %d", fieldId.c_str(), fieldId.strlen());
 		size_t index = fieldId.strlen();
 		while (index != 0 && fieldId[index - 1] != '^' && fieldId[index - 1] != ':')
 		{
 			--index;
 		}
 		fieldId.Truncate(index);
-#if DEBUG
-		MessageLog::AppendMessage(150, "RemoveLastId: %s, len: %d", fieldId.c_str(), fieldId.strlen());
-#endif
+
+		//dbg("RemoveLastId: %s, len: %d", fieldId.c_str(), fieldId.strlen());
 	}
 
 	static void RemoveLastIdChar()
 	{
-#if DEBUG
-		MessageLog::AppendMessage("RemoveLastIdChar");
-#endif
+		//dbg();
+
 		if (fieldId.strlen() != 0)
 		{
 			fieldId.Truncate(fieldId.strlen() - 1);
@@ -221,17 +235,14 @@ namespace SerialIo
 
 	static bool InArray()
 	{
-#if DEBUG
-		MessageLog::AppendMessage("InArray");
-#endif
+		//dbg();
+
 		return fieldId.strlen() > 0 && fieldId[fieldId.strlen() - 1] == '^';
 	}
 
 	static void ProcessField()
 	{
-#if DEBUG
-		MessageLog::AppendMessage("ProcessField");
-#endif
+
 		if (state == jsCharsVal)
 		{
 			if (fieldVal.Equals("null"))
@@ -239,16 +250,22 @@ namespace SerialIo
 				fieldVal.Clear();				// so that we can distinguish null from an empty string
 			}
 		}
-		ProcessReceivedValue(fieldId.GetRef(), fieldVal.c_str(), arrayIndices);
+		if (cbs && cbs->ProcessReceivedValue)
+		{
+			dbg("%s: %s", fieldId.c_str(), fieldVal.c_str());
+			cbs->ProcessReceivedValue(fieldId.GetRef(), fieldVal.c_str(), arrayIndices);
+		}
 		fieldVal.Clear();
 	}
 
 	static void EndArray()
 	{
-#if DEBUG
-		MessageLog::AppendMessage("EndArray");
-#endif
-		ProcessArrayEnd(fieldId.c_str(), arrayIndices);
+		//dbg();
+
+		if (cbs && cbs->ProcessArrayEnd)
+		{
+			cbs->ProcessArrayEnd(fieldId.c_str(), arrayIndices);
+		}
 		if (arrayDepth != 0)			// should always be true
 		{
 			--arrayDepth;
@@ -372,9 +389,8 @@ namespace SerialIo
 	// Check whether the incoming character signals the end of the value. If it does, process it and return true.
 	static bool CheckValueCompleted(char c, bool doProcess)
 	{
-#if DEBUG
-		MessageLog::AppendMessage("CheckValueCompleted");
-#endif
+		//dbg();
+
 		switch(c)
 		{
 		case ',':
@@ -409,9 +425,8 @@ namespace SerialIo
 			else
 			{
 				state = jsError;
-#if DEBUG
-				MessageLog::AppendMessage("jsError: CheckValueCompleted: ]");
-#endif
+
+				dbg("jsError: CheckValueCompleted: ]");
 			}
 			return true;
 
@@ -419,9 +434,8 @@ namespace SerialIo
 			if (InArray())
 			{
 				state = jsError;
-#if DEBUG
-				MessageLog::AppendMessage("jsError: CheckValueCompleted: }");
-#endif
+
+				dbg("jsError: CheckValueCompleted: }");
 			}
 			else
 			{
@@ -432,7 +446,10 @@ namespace SerialIo
 				RemoveLastId();
 				if (fieldId.strlen() == 0)
 				{
-					EndReceivedMessage();
+					if (cbs && cbs->EndReceivedMessage)
+					{
+						cbs->EndReceivedMessage();
+					}
 					state = jsBegin;
 				}
 				else
@@ -459,21 +476,28 @@ namespace SerialIo
 			{
 				if (state == jsError)
 				{
-#if DEBUG
-						MessageLog::AppendMessage("ParserErrorEncountered");
-#endif
-					ParserErrorEncountered(fieldId.c_str(), fieldVal.c_str(), arrayIndices); // Notify the consumer that we ran into an error
+					dbg("ParserErrorEncountered");
+
+					if (cbs && cbs->ParserErrorEncountered)
+					{
+						cbs->ParserErrorEncountered(lastState, fieldId.c_str(), fieldVal.c_str(), arrayIndices); // Notify the consumer that we ran into an error
+					}
 				}
 				state = jsBegin;		// abandon current parse (if any) and start again
 			}
 			else
 			{
+				lastState = state;
+
 				switch(state)
 				{
 				case jsBegin:			// initial state, expecting '{'
 					if (c == '{')
 					{
-						StartReceivedMessage();
+						if (cbs && cbs->StartReceivedMessage)
+						{
+							cbs->StartReceivedMessage();
+						}
 						state = jsExpectId;
 						fieldVal.Clear();
 						fieldId.Clear();
@@ -493,7 +517,10 @@ namespace SerialIo
 						RemoveLastId();
 						if (fieldId.strlen() == 0)
 						{
-							EndReceivedMessage();
+							if (cbs && cbs->EndReceivedMessage)
+							{
+								cbs->EndReceivedMessage();
+							}
 							state = jsBegin;
 						}
 						else
@@ -504,9 +531,8 @@ namespace SerialIo
 						break;
 					default:
 						state = jsError;
-#if DEBUG
-						MessageLog::AppendMessage("jsError: jsExpectId");
-#endif
+
+						dbg("jsError: jsExpectId");
 						break;
 					}
 					break;
@@ -521,18 +547,16 @@ namespace SerialIo
 						if (c < ' ')
 						{
 							state = jsError;
-#if DEBUG
-							MessageLog::AppendMessage("jsError: jsId 1");
-#endif
+
+							dbg("jsError: jsId 1");
 						}
 						else if (c != ':' && c != '^')
 						{
 							if (fieldId.cat(c))
 							{
 								state = jsError;
-#if DEBUG
-								MessageLog::AppendMessage("jsError: jsId 2");
-#endif
+
+								dbg("jsError: jsId 2");
 							}
 						}
 						break;
@@ -549,9 +573,8 @@ namespace SerialIo
 						break;
 					default:
 						state = jsError;
-#if DEBUG
-						MessageLog::AppendMessage("jsError: jsHadId");
-#endif
+
+						dbg("jsError: jsHadId");
 						break;
 					}
 					break;
@@ -574,9 +597,8 @@ namespace SerialIo
 						else
 						{
 							state = jsError;
-#if DEBUG
-							MessageLog::AppendMessage("jsError: [");
-#endif
+
+							dbg("jsError: [");
 						}
 						break;
 					case ']':
@@ -588,9 +610,8 @@ namespace SerialIo
 						else
 						{
 							state = jsError;	// ']' received without a matching '[' first
-#if DEBUG
-							MessageLog::AppendMessage("jsError: ]");
-#endif
+
+							dbg("jsError: ]");
 						}
 						break;
 					case '-':
@@ -600,12 +621,11 @@ namespace SerialIo
 						break;
 					case '{':					// start of a nested object
 						state = (!fieldId.cat(':')) ? jsExpectId : jsError;
-#if DEBUG
+
 						if (state == jsError)
 						{
-							MessageLog::AppendMessage("jsError: {");
+							dbg("jsError: {");
 						}
-#endif
 						break;
 					default:
 						if (c >= '0' && c <= '9')
@@ -623,9 +643,8 @@ namespace SerialIo
 						else
 						{
 							state = jsError;
-#if DEBUG
-							MessageLog::AppendMessage("jsError: jsVal default");
-#endif
+
+							dbg("jsError: jsVal default");
 						}
 					}
 					break;
@@ -645,9 +664,8 @@ namespace SerialIo
 						if (c < ' ')
 						{
 							state = jsError;
-#if DEBUG
-							MessageLog::AppendMessage("jsError: jsStringVal");
-#endif
+
+							dbg("jsError: jsStringVal");
 						}
 						else
 						{
@@ -668,9 +686,8 @@ namespace SerialIo
 							if (fieldVal.cat(c))
 							{
 								state = jsError;
-#if DEBUG
-								MessageLog::AppendMessage("jsError: jsStringEscape 1");
-#endif
+
+								dbg("jsError: jsStringEscape 1");
 							}
 							break;
 						case 'n':
@@ -678,9 +695,8 @@ namespace SerialIo
 							if (fieldVal.cat(' '))		// replace newline and tab by space
 							{
 								state = jsError;
-#if DEBUG
-								MessageLog::AppendMessage("jsError: jsStringEscape 2");
-#endif
+
+								dbg("jsError: jsStringEscape 2");
 							}
 							break;
 						case 'b':
@@ -695,12 +711,11 @@ namespace SerialIo
 
 				case jsNegIntVal:		// had '-' so expecting a integer value
 					state = (c >= '0' && c <= '9' && !fieldVal.cat(c)) ? jsIntVal : jsError;
-#if DEBUG
+
 						if (state == jsError)
 						{
-							MessageLog::AppendMessage("jsError: jsNegIntVal");
+							dbg("jsError: jsNegIntVal");
 						}
-#endif
 					break;
 
 				case jsIntVal:			// receiving an integer value
@@ -712,19 +727,17 @@ namespace SerialIo
 					if (c == '.')
 					{
 						state = (!fieldVal.cat(c)) ? jsFracVal : jsError;
-#if DEBUG
+
 						if (state == jsError)
 						{
-							MessageLog::AppendMessage("jsError: jsIntVal");
+							dbg("jsError: jsIntVal");
 						}
-#endif
 					}
 					else if (!(c >= '0' && c <= '9' && !fieldVal.cat(c)))
 					{
 						state = jsError;
-#if DEBUG
-						MessageLog::AppendMessage("jsError: jsIntVal");
-#endif
+
+						dbg("jsError: jsIntVal");
 					}
 					break;
 
@@ -737,9 +750,8 @@ namespace SerialIo
 					if (!(c >= '0' && c <= '9' && !fieldVal.cat(c)))
 					{
 						state = jsError;
-#if DEBUG
-						MessageLog::AppendMessage("jsError: jsFracVal");
-#endif
+
+						dbg("jsError: jsFracVal");
 					}
 					break;
 
@@ -752,9 +764,8 @@ namespace SerialIo
 					if (!(c >= 'a' && c <= 'z' && !fieldVal.cat(c)))
 					{
 						state = jsError;
-#if DEBUG
-						MessageLog::AppendMessage("jsError: jsCharsVal");
-#endif
+
+						dbg("jsError: jsCharsVal");
 					}
 					break;
 
@@ -765,15 +776,19 @@ namespace SerialIo
 					}
 
 					state = jsError;
-#if DEBUG
-					MessageLog::AppendMessage("jsError: jsEndVal");
-#endif
+
+					dbg("jsError: jsEndVal");
 					break;
 
 				case jsError:
 					// Ignore all characters. State will be reset to jsBegin at the start of this function when we receive a newline.
 					break;
 				}
+
+#if DEBUG
+				if (lastState != state)
+					dbg("state %d -> %d", lastState, state);
+#endif
 			}
 		}
 	}

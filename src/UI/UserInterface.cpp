@@ -1216,7 +1216,8 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 			keysEN,	// Czech
 			keysEN,	// Italian
 #if USE_CYRILLIC_CHARACTERS
-			keysEN	// Ukrainian
+			keysEN,	// Ukrainian
+			keysEN,	// Russian
 #endif
 	};
 
@@ -1938,7 +1939,7 @@ namespace UI
 	static void ClearAlertOrResponse();
 
 	// Return the number of supported languages
-	extern unsigned int GetNumLanguages()
+	unsigned int GetNumLanguages()
 	{
 		return NumLanguages;
 	}
@@ -2614,7 +2615,6 @@ namespace UI
 		case OM::PrinterStatus::configuring:
 		case OM::PrinterStatus::connecting:
 		case OM::PrinterStatus::flashing:
-		case OM::PrinterStatus::panelInitializing:
 			return;
 		default:
 			break;
@@ -3288,7 +3288,6 @@ namespace UI
 		Delay(1000);
 		SerialIo::Sendf("M999\n");
 		Delay(1000);
-		Reconnect();
 	}
 
 	void SendExtrusion(const bool retract, const char *amount, const char *rate) {

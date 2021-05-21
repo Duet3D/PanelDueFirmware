@@ -10,8 +10,6 @@
 #include <Hardware/SysTick.hpp>
 #include <Hardware/SerialIo.hpp>
 
-extern bool OkToSend();		// in PanelDue.cpp
-
 RequestTimer::RequestTimer(uint32_t del, const char * _ecv_array cmd, const char * _ecv_array null ex)
 	: startTime(SystemTick::GetTickCount()), delayTime(del), command(cmd), extra(ex), quoteArgument(false)
 {
@@ -29,7 +27,7 @@ bool RequestTimer::Process()
 		}
 	}
 
-	if (timerState == ready && OkToSend())
+	if (timerState == ready)
 	{
 		SerialIo::Sendf(command);
 		if (extra != nullptr)

@@ -17,6 +17,10 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# tag files
+tags
+cscope.out
+
 # =========================
 # Operating System Files
 # =========================
