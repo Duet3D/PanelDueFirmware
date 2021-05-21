@@ -28,7 +28,7 @@
 #include <General/StringFunctions.h>
 
 // Public fields
-TextField *fwVersionField, *userCommandField;
+TextField *fwVersionField, *userCommandField, *ipAddressField;
 IntegerField *freeMem;
 StaticTextField *touchCalibInstruction, *debugField;
 StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
@@ -43,6 +43,9 @@ const size_t generatedByTextLength = 50;
 const size_t lastModifiedTextLength = 20;
 const size_t printTimeTextLength = 12;		// e.g. 11h 55m
 const size_t controlPageMacroTextLength = 50;
+const size_t ipAddressLength = 45;	// IPv4 needs max 15 but IPv6 can go up to 45
+
+static String<ipAddressLength> ipAddress;
 
 struct FileListButtons
 {
@@ -90,12 +93,8 @@ static CharButtonRow *keyboardRows[4];
 static const char* _ecv_array const * _ecv_array currentKeyboard;
 
 // Pendant fields START
-// public fields
-TextField *ipAddressField;
 
 // private fields
-const size_t ipAddressLength = 45;	// IPv4 needs max 15 but IPv6 can go up to 45
-
 class AlertPopupP;
 
 static TextButton *macroButtonsP[NumDisplayedMacrosP];
@@ -129,9 +128,6 @@ static ButtonBase *lastRegularTab = nullptr, *lastPendantTab = nullptr;
 
 static ButtonPress currentExtrudeRatePressP, currentExtrudeAmountPressP;
 static ButtonPress currentWCSPress, currentWCSAxisSelectPress, currentWCSAxisMovementAmountPress;
-
-static String<ipAddressLength> ipAddress;
-static uint8_t currentWorkplaceNumber = OM::MaxTotalWorkplaces;
 
 static ButtonPress currentJogAxis, currentJogAmount;
 
@@ -180,6 +176,7 @@ bool displayingResponse = false;						// true if displaying a response
 static PixelNumber screensaverTextWidth = 0;
 static uint32_t lastScreensaverMoved = 0;
 
+static uint8_t currentWorkplaceNumber = OM::MaxTotalWorkplaces;
 static int8_t currentTool = -2;							// Initialized to a value never returned by RRF to have the logic for "no tool" applied at startup
 static bool allAxesHomed = false;
 static bool isLandscape = true;
