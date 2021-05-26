@@ -1132,6 +1132,7 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 
 	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
 
+	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
 	mgr.AddField(ipAddressField = new TextField(row9, margin, DisplayX/2 - margin, TextAlignment::Left, "IP: ", ipAddress.c_str()));
 	setupRoot = mgr.GetRoot();
 }
@@ -1364,7 +1365,7 @@ namespace UI
 			{
 				currentTemps[heaterSlots[i]]->SetValue(fval);
 			}
-			
+
 			heaterSlots.Clear();
 		}
 	}
