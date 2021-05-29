@@ -20,8 +20,8 @@ namespace MessageLog
 {
 	void Init();
 
-	// Update the messages on the message tab. If 'all' is true we do the times and the text, else we just do the times.
-	void UpdateMessages(bool all);
+	// Update the messages on the message tab.
+	void UpdateMessages();
 
 	// Add a message to the end of the list immediately
 	void AppendMessage(const char* data);

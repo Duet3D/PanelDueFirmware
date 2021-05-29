@@ -43,11 +43,11 @@ namespace MessageLog
 			messages[i].msg[0] = 0;
 		}
 		
-		UpdateMessages(true);
+		UpdateMessages();
 	}
 	
 	// Update the messages on the message tab. If 'all' is true we do the times and the text, else we just do the times.
-	void UpdateMessages(bool all)
+	void UpdateMessages()
 	{
 		size_t index = messageStartRow;
 		for (size_t i = 0; i < numMessageRows; ++i)
@@ -61,7 +61,7 @@ namespace MessageLog
 			}
 			else
 			{
-				uint32_t age = (SystemTick::GetTickCount() - tim)/1000;	// age of message in seconds
+				uint32_t age = tim / 1000;
 				if (age < 10 * 60)
 				{
 					SafeSnprintf(p, Message::rttLen, "%lum%02lu", age/60, age%60);
@@ -96,11 +96,8 @@ namespace MessageLog
 				}
 			}
 			messageTimeFields[i]->SetValue(p, true);
+			messageTextFields[i]->SetValue(m->msg);
 
-			if (all)
-			{
-				messageTextFields[i]->SetValue(m->msg);
-			}
 			index = (index + 1) % numMessageRows;
 		}
 	}
@@ -146,7 +143,7 @@ namespace MessageLog
 		} while (split && data[0] != '\0');
 
 		messageStartRow = (messageStartRow + numLines) % numMessageRows;
-		UpdateMessages(true);
+		UpdateMessages();
 	}
 
 	void AppendMessageF(const char* fmt, ...)

@@ -1723,10 +1723,6 @@ namespace UI
 		}
 #endif
 
-		if (currentTab == tabMsg)
-		{
-			MessageLog::UpdateMessages(false);
-		}
 		if (alertTicks != 0 && SystemTick::GetTickCount() - whenAlertReceived >= alertTicks)
 		{
 			ClearAlertOrResponse();
