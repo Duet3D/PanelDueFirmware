@@ -1766,6 +1766,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 				if (uival < remoteUpTime)
 				{
 					Reconnect();
+					MessageLog::AppendMessageF("Printer reset detected");
 				}
 				remoteUpTime = uival;
 			}
