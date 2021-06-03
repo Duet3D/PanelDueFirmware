@@ -104,6 +104,10 @@ struct FontDescriptor
 
 
 typedef uint16_t Colour;
+
+const Colour black = 0x0000;
+const Colour white = 0xFFFF;
+
 typedef const uint16_t *Palette;
 
 class UTFT

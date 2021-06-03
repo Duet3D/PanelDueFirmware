@@ -5,7 +5,6 @@
  *  Author: David
  */
 
-#include <UI/ColourSchemes.hpp>
 #include <UI/Display.hpp>
 #include "Icons/Icons.hpp"
 
