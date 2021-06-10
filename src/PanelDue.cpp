@@ -798,9 +798,9 @@ extern void SetBrightness(int percent)
 	RestoreBrightness();
 }
 
-void UpdatePollRate()
+void UpdatePollRate(bool idle)
 {
-	if (screensaverActive)
+	if (idle)
 	{
 		printerPollInterval = slowPrinterPollInterval;
 	}
@@ -816,7 +816,7 @@ void DeactivateScreensaver()
 	if (screensaverActive) {
 		UI::DeactivateScreensaver();
 		screensaverActive = false;
-		UpdatePollRate();
+		UpdatePollRate(screensaverActive);
 	}
 }
 
@@ -850,7 +850,7 @@ void ActivateScreensaver()
 		}
 		screensaverActive = true;
 		UI::ActivateScreensaver();
-		UpdatePollRate();
+		UpdatePollRate(screensaverActive);
 	}
 	else
 	{
@@ -1120,7 +1120,7 @@ void HandleOutOfBufferResponse() {
 	// Slow down the poll interval by 10% if we see too many out-of-buffer in short time
 	if (oobCounter >= 3) {
 		pollIntervalMultiplier += 0.1;
-		UpdatePollRate();
+		UpdatePollRate(screensaverActive);
 		oobCounter = 0;
 		MessageLog::AppendMessage("Slowing down poll rate");
 	}
