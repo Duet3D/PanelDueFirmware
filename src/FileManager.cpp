@@ -466,12 +466,12 @@ namespace FileManager
 	// This is called from the main loop to check for timer events
 	bool ProcessTimers()
 	{
-		bool send = macroFilesList.ProcessTimer();
-		if (!send)
+		bool sent = macroFilesList.ProcessTimer();
+		if (!sent)
 		{
-			send = gcodeFilesList.ProcessTimer();
+			sent = gcodeFilesList.ProcessTimer();
 		}
-		return send;
+		return sent;
 	}
 
 	bool NextCard()

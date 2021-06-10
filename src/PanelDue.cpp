@@ -2427,9 +2427,9 @@ int main(void)
 					// First check for specific info we need to fetch
 					if (OkToSend())
 					{
-						bool send = FileManager::ProcessTimers();
+						bool sent = FileManager::ProcessTimers();
 						// Otherwise just send a normal poll command
-						if (!send)
+						if (!sent)
 						{
 							SerialIo::Sendf("M409 F\"d99f\"\n");
 						}
