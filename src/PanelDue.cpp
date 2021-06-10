@@ -2412,6 +2412,7 @@ int main(void)
 				{
 					dbg("sending %s", currentReqSeq->key);
 					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", currentReqSeq->key, currentReqSeq->flags);
+					lastPollTime = SystemTick::GetTickCount();
 				}
 				else
 				{
@@ -2424,20 +2425,18 @@ int main(void)
 					}
 
 					// First check for specific info we need to fetch
-					bool ok = OkToSend();
-					bool done = true;
-					if (ok)
+					if (OkToSend())
 					{
-						done = FileManager::ProcessTimers();
+						bool send = FileManager::ProcessTimers();
+						// Otherwise just send a normal poll command
+						if (!send)
+						{
+							SerialIo::Sendf("M409 F\"d99f\"\n");
+						}
+						lastPollTime = SystemTick::GetTickCount();
 					}
 
-					// Otherwise just send a normal poll command
-					if (!ok && !done)
-					{
-						SerialIo::Sendf("M409 F\"d99f\"\n");
-					}
 				}
-				lastPollTime = SystemTick::GetTickCount();
 			}
 			else if (now - lastPollTime >= printerPollTimeout)	  // last response was most likely incomplete start over
 			{
