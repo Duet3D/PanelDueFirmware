@@ -12,6 +12,7 @@
 #undef result
 #undef value
 #include "asf.h"
+#include "stdint.h"
 #include "Buzzer.hpp"
 #include "SysTick.hpp"
 #include "Configuration.hpp"
@@ -26,7 +27,7 @@ namespace Buzzer
 	static const uint32_t backlightPwmFrequency = 300;		// Working range is about 100Hz to 1KHz. MP3202 dataseet says use 1kHz or below due to soft start. Some frequencies causes flickering on the 4.3" display.
 #endif
 
-	static const uint32_t backlightPeriod = pwmClockFrequency/backlightPwmFrequency; 
+	static const uint32_t backlightPeriod = pwmClockFrequency/backlightPwmFrequency;
 
 	static pwm_channel_t buzzer_pwm_channel_instance =
 	{
@@ -91,7 +92,7 @@ namespace Buzzer
 	}
 
 	static const uint32_t volumeTable[MaxVolume] = { 3, 9, 20, 40, 80 };
-		
+
 	// Generate a beep of the given length and frequency. The volume goes from 0 to MaxVolume.
 	void Beep(uint32_t frequency, uint32_t ms, uint32_t volume)
 	{
@@ -101,7 +102,7 @@ namespace Buzzer
 			{
 				volume = MaxVolume;
 			}
-			
+
 			inBuzzer = true;		// tell the tick interrupt to leave us alone
 			if (beepTicksToGo == 0)
 			{
@@ -139,21 +140,75 @@ namespace Buzzer
 			}
 		}
 	}
-	
+
 	// Return true if the buzzer is (or should be) still sounding
 	bool Noisy()
 	{
 		return beepTicksToGo != 0;
 	}
-	
+
+	struct backlight {
+		uint32_t frequency;
+		uint32_t period;
+		uint32_t channel;
+		uint32_t dimBrightness;
+		uint32_t minBrightness;
+		uint32_t maxBrightness;
+		enum {
+			BacklightStateDimmed = (1 << 0)
+		} state;
+		pwm_channel_t *pwm;
+
+	};
+
+	void BacklightInit(struct backlight *backlight, pwm_channel_t *pwm, uint32_t frequency, uint32_t dimBrightness, uint32_t minBrightness, uint32_t maxBrightness)
+	{
+		//assert(backlight);
+		//assert(channel);
+		//assert(pwmClockFrequency >= frequency);
+
+		//backlight->pwm = pwm;
+		backlight->pwm = &backlight_pwm_channel_instance;
+
+		backlight->frequency = frequency;
+		backlight->period = pwmClockFrequency / frequency - 1;
+
+		backlight->dimBrightness = dimBrightness;
+		backlight->minBrightness = minBrightness;
+		backlight->maxBrightness = maxBrightness;
+
+		backlight->pwm->ul_period = backlight->period;
+		backlight->pwm->ul_duty = 0;
+
+		pwm_channel_init(PWM, backlight->pwm);
+		pwm_channel_disable(PWM, backlight->pwm->channel);
+	}
+
 	// Set the backlight brightness on a scale of 0 to MaxBrightness.
 	// Must call Init before calling this.
-	void SetBacklight(uint32_t brightness)
+	void SetBacklight(struct backlight *backlight, uint32_t brightness)
 	{
-		backlight_pwm_channel_instance.ul_period = backlightPeriod;
-		backlight_pwm_channel_instance.ul_duty = ((backlightPeriod - 1) * (MaxBrightness - brightness))/MaxBrightness;
-		pwm_channel_init(PWM, &backlight_pwm_channel_instance);
-		pwm_channel_enable(PWM, PWM_CHANNEL_1);
+		//assert(backlight);
+		//assert(backlight->pwm);
+		//assert(backlight->maxBrightness >= brightness);
+
+		if (backlight->dimBrightness != brightness)
+		{
+			backlight->state &= ~BacklightStateDimmed;
+		}
+
+		backlight->pwm->ul_period = backlight->period;
+		backlight->pwm->ul_duty =
+			(backlight->period * (backlight->maxBrightness - brightness)) / backlight->maxBrightness;
+
+		pwm_channel_init(PWM, backlight->pwm);
+		pwm_channel_enable(PWM, backlight->pwm->channel);
+	}
+
+	void DimBrightness(struct backlight *backlight)
+	{
+		SetBacklight(backlight, backlight->dimBrightness);
+		backlight->state |= BacklightStateDimmed;
 	}
 }
 
