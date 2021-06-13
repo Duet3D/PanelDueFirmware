@@ -5,17 +5,16 @@
  *  Author: David
  * The piezo sounder is connected to the complementary outputs of PWM channel 0, PWMH0 and PWML0, aka PB0 peripheral A and PB5 peripheral B.
  * The backlight control is included in this module because it also uses PWM. Output PWMH1 (aka PB1 peripheral A) drives the backlight pin.
- */ 
+ */
 
 #include "ecv.h"
 #undef array
 #undef result
 #undef value
 #include "asf.h"
-#include <cstring>
 #include "Buzzer.hpp"
 #include "SysTick.hpp"
-#include <Configuration.hpp>
+#include "Configuration.hpp"
 
 namespace Buzzer
 {
