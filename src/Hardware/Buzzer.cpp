@@ -13,6 +13,7 @@
 #undef value
 #include "asf.h"
 #include "stdint.h"
+#include "General/Bitmap.h"
 #include "Buzzer.hpp"
 #include "SysTick.hpp"
 #include "Configuration.hpp"
@@ -147,25 +148,34 @@ namespace Buzzer
 		return beepTicksToGo != 0;
 	}
 
+	enum BacklightState {
+		BacklightStateDimmed,
+	};
+
 	struct backlight {
 		uint32_t frequency;
 		uint32_t period;
 		uint32_t channel;
 		uint32_t dimBrightness;
+		uint32_t normalBrightness;
 		uint32_t minBrightness;
 		uint32_t maxBrightness;
-		enum {
-			BacklightStateDimmed = (1 << 0)
-		} state;
+
+		Bitmap<uint8_t> state;
+
 		pwm_channel_t *pwm;
 
 	};
 
-	void BacklightInit(struct backlight *backlight, pwm_channel_t *pwm, uint32_t frequency, uint32_t dimBrightness, uint32_t minBrightness, uint32_t maxBrightness)
+	void BacklightInit(struct backlight *backlight, pwm_channel_t *pwm, uint32_t frequency,
+			uint32_t dimBrightness, uint32_t normalBrightness,
+			uint32_t minBrightness, uint32_t maxBrightness)
 	{
 		//assert(backlight);
 		//assert(channel);
 		//assert(pwmClockFrequency >= frequency);
+		pio_configure(PIOB, PIO_INPUT, PIO_PB13, PIO_PULLUP);
+		pio_get(PIOB, PIO_INPUT, PIO_PB13);
 
 		//backlight->pwm = pwm;
 		backlight->pwm = &backlight_pwm_channel_instance;
@@ -174,6 +184,7 @@ namespace Buzzer
 		backlight->period = pwmClockFrequency / frequency - 1;
 
 		backlight->dimBrightness = dimBrightness;
+		backlight->normalBrightness = normalBrightness;
 		backlight->minBrightness = minBrightness;
 		backlight->maxBrightness = maxBrightness;
 
@@ -184,31 +195,49 @@ namespace Buzzer
 		pwm_channel_disable(PWM, backlight->pwm->channel);
 	}
 
-	// Set the backlight brightness on a scale of 0 to MaxBrightness.
-	// Must call Init before calling this.
+	static void UpdateBacklight(struct backlight *backlight)
+	{
+		backlight->pwm->ul_period = backlight->period;
+
+		pwm_channel_init(PWM, backlight->pwm);
+		pwm_channel_enable(PWM, backlight->pwm->channel);
+	}
+
 	void SetBacklight(struct backlight *backlight, uint32_t brightness)
 	{
 		//assert(backlight);
 		//assert(backlight->pwm);
 		//assert(backlight->maxBrightness >= brightness);
 
-		if (backlight->dimBrightness != brightness)
-		{
-			backlight->state &= ~BacklightStateDimmed;
-		}
+		backlight->state.ClearBit(BacklightStateDimmed);
+		backlight->normalBrightness = brightness;
 
-		backlight->pwm->ul_period = backlight->period;
 		backlight->pwm->ul_duty =
 			(backlight->period * (backlight->maxBrightness - brightness)) / backlight->maxBrightness;
 
-		pwm_channel_init(PWM, backlight->pwm);
-		pwm_channel_enable(PWM, backlight->pwm->channel);
+		UpdateBacklight(backlight);
+	}
+
+	void NormalBrightness(struct backlight *backlight)
+	{
+		if (!backlight->state.IsBitSet(BacklightStateDimmed))
+			return;
+
+		SetBacklight(backlight, backlight->normalBrightness);
 	}
 
 	void DimBrightness(struct backlight *backlight)
 	{
-		SetBacklight(backlight, backlight->dimBrightness);
-		backlight->state |= BacklightStateDimmed;
+		if (backlight->state.IsBitSet(BacklightStateDimmed))
+			return;
+
+		backlight->state.SetBit(BacklightStateDimmed);
+
+		backlight->pwm->ul_period = backlight->period;
+		backlight->pwm->ul_duty =
+			(backlight->period * (backlight->maxBrightness - backlight->dimBrightness)) / backlight->maxBrightness;
+
+		UpdateBacklight(backlight);
 	}
 }
 
