@@ -453,7 +453,7 @@ const char * _ecv_array StripPrefix(const char * _ecv_array dir)
 }
 
 // Adjust the brightness
-void ChangeBrightness(bool up)
+static void ChangeBrightness(bool up)
 {
 	int adjust = max<int>(1, GetBrightness()/5);
 	if (!up)
@@ -464,7 +464,7 @@ void ChangeBrightness(bool up)
 }
 
 // Cycle through available display dimmer types
-void ChangeDisplayDimmerType()
+static void ChangeDisplayDimmerType()
 {
 	DisplayDimmerType newType = (DisplayDimmerType) ((uint8_t)GetDisplayDimmerType() + 1);
 	if (newType == DisplayDimmerType::NumTypes)
@@ -475,7 +475,7 @@ void ChangeDisplayDimmerType()
 }
 
 // Cyce through available heater combine types and repaint
-void ChangeHeaterCombineType()
+static void ChangeHeaterCombineType()
 {
 	HeaterCombineType newType = (HeaterCombineType) ((uint8_t)GetHeaterCombineType() + 1);
 	if (newType == HeaterCombineType::NumTypes)
@@ -488,7 +488,7 @@ void ChangeHeaterCombineType()
 
 // Update an integer field, provided it isn't the one being adjusted
 // Don't update it if the value hasn't changed, because that makes the display flicker unnecessarily
-void UpdateField(IntegerButton *f, int val)
+static void UpdateField(IntegerButton *f, int val)
 {
 	if (f != fieldBeingAdjusted.GetButton() && f->GetValue() != val)
 	{
@@ -496,7 +496,7 @@ void UpdateField(IntegerButton *f, int val)
 	}
 }
 
-void PopupAreYouSure(Event ev, const char* text, const char* query = strings->areYouSure)
+static void PopupAreYouSure(Event ev, const char* text, const char* query = strings->areYouSure)
 {
 	eventToConfirm = ev;
 	if (isLandscape)
@@ -507,7 +507,7 @@ void PopupAreYouSure(Event ev, const char* text, const char* query = strings->ar
 	}
 }
 
-void CreateIntegerAdjustPopup(const ColourScheme& colours)
+static void CreateIntegerAdjustPopup(const ColourScheme& colours)
 {
 	// Create the popup window used to adjust temperatures, fan speed, extrusion factor etc.
 	static const char* const tempPopupText[] = {"-5", "-1", strings->set, "+1", "+5"};
@@ -515,7 +515,7 @@ void CreateIntegerAdjustPopup(const ColourScheme& colours)
 	setTempPopup = CreateIntPopupBar(colours, tempPopupBarWidth, 5, tempPopupText, tempPopupParams, evAdjustInt, evSetInt);
 }
 
-void CreateIntegerRPMAdjustPopup(const ColourScheme& colours)
+static void CreateIntegerRPMAdjustPopup(const ColourScheme& colours)
 {
 	// Create the popup window used to adjust temperatures, fan speed, extrusion factor etc.
 	static const char* const rpmPopupText[] = {"-1000", "-100", "-10", strings->set, "+10", "+100", "+1000"};
@@ -524,7 +524,7 @@ void CreateIntegerRPMAdjustPopup(const ColourScheme& colours)
 }
 
 // Create the movement popup window
-void CreateMovePopup(const ColourScheme& colours)
+static void CreateMovePopup(const ColourScheme& colours)
 {
 	static const char * _ecv_array const xyJogValues[] = { "-100", "-10", "-1", "-0.1", "0.1",  "1", "10", "100" };
 	static const char * _ecv_array const zJogValues[] = { "-50", "-5", "-0.5", "-0.05", "0.05",  "0.5", "5", "50" };
@@ -562,7 +562,7 @@ void CreateMovePopup(const ColourScheme& colours)
 }
 
 // Create the extrusion controls popup
-void CreateExtrudePopup(const ColourScheme& colours)
+static void CreateExtrudePopup(const ColourScheme& colours)
 {
 	static const char * _ecv_array extrudeAmountValues[] = { "100", "50", "20", "10", "5",  "1" };
 	static const char * _ecv_array extrudeSpeedValues[] = { "50", "20", "10", "5", "2" };
@@ -646,7 +646,7 @@ pre(fileButtons.lim == numRows * numCols)
 }
 
 // Create the popup window used to display the file dialog
-void CreateFileActionPopup(const ColourScheme& colours)
+static void CreateFileActionPopup(const ColourScheme& colours)
 {
 	fileDetailPopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
@@ -684,7 +684,7 @@ void CreateFileActionPopup(const ColourScheme& colours)
 }
 
 // Create the "Are you sure?" popup
-void CreateAreYouSurePopup(const ColourScheme& colours)
+static void CreateAreYouSurePopup(const ColourScheme& colours)
 {
 	areYouSurePopup = new PopupWindow(areYouSurePopupHeight, areYouSurePopupWidth, colours.popupBackColour, colours.popupBorderColour);
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
@@ -696,7 +696,7 @@ void CreateAreYouSurePopup(const ColourScheme& colours)
 	areYouSurePopup->AddField(new IconButton(popupTopMargin + 2 * rowHeight, areYouSurePopupWidth/2 + 10, areYouSurePopupWidth/2 - 2 * popupSideMargin, IconCancel, evCancel));
 }
 
-void CreateScreensaverPopup()
+static void CreateScreensaverPopup()
 {
 	screensaverPopup = new PopupWindow(max(DisplayX, DisplayY), max(DisplayX, DisplayY), black, black, false);
 	DisplayField::SetDefaultColours(white, black);
@@ -706,7 +706,7 @@ void CreateScreensaverPopup()
 }
 
 // Create the baud rate adjustment popup
-void CreateBaudRatePopup(const ColourScheme& colours)
+static void CreateBaudRatePopup(const ColourScheme& colours)
 {
 	static const char* const baudPopupText[] = { "9600", "19200", "38400", "57600", "115200" };
 	static const int baudPopupParams[] = { 9600, 19200, 38400, 57600, 115200 };
@@ -714,7 +714,7 @@ void CreateBaudRatePopup(const ColourScheme& colours)
 }
 
 // Create the volume adjustment popup
-void CreateVolumePopup(const ColourScheme& colours)
+static void CreateVolumePopup(const ColourScheme& colours)
 {
 	static_assert(Buzzer::MaxVolume == 5, "MaxVolume assumed to be 5 here");
 	static const char* const volumePopupText[Buzzer::MaxVolume + 1] = { "0", "1", "2", "3", "4", "5" };
@@ -722,7 +722,7 @@ void CreateVolumePopup(const ColourScheme& colours)
 }
 
 // Create the volume adjustment popup
-void CreateInfoTimeoutPopup(const ColourScheme& colours)
+static void CreateInfoTimeoutPopup(const ColourScheme& colours)
 {
 	static const char* const infoTimeoutPopupText[Buzzer::MaxVolume + 1] = { "0", "2", "5", "10" };
 	static const int values[] = { 0, 2, 5, 10 };
@@ -730,7 +730,7 @@ void CreateInfoTimeoutPopup(const ColourScheme& colours)
 }
 
 // Create the screensaver timeout adjustment popup
-void CreateScreensaverTimeoutPopup(const ColourScheme& colours)
+static void CreateScreensaverTimeoutPopup(const ColourScheme& colours)
 {
 	static const char* const screensaverTimeoutPopupText[Buzzer::MaxVolume + 1] = { "off", "60", "120", "180", "240", "300" };
 	static const int values[] = { 0, 60, 120, 180, 240, 300 };
@@ -738,14 +738,14 @@ void CreateScreensaverTimeoutPopup(const ColourScheme& colours)
 }
 
 // Create the babystep amount adjustment popup
-void CreateBabystepAmountPopup(const ColourScheme& colours)
+static void CreateBabystepAmountPopup(const ColourScheme& colours)
 {
 	static const int values[] = { 0, 1, 2, 3 };
 	babystepAmountPopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(babystepAmounts), babystepAmounts, values, evAdjustBabystepAmount, evAdjustBabystepAmount);
 }
 
 // Create the feedrate amount adjustment popup
-void CreateFeedrateAmountPopup(const ColourScheme& colours)
+static void CreateFeedrateAmountPopup(const ColourScheme& colours)
 {
 	static const char* const feedrateText[] = {"600", "1200", "2400", "6000", "12000"};
 	static const int values[] = { 600, 1200, 2400, 6000, 12000 };
@@ -753,7 +753,7 @@ void CreateFeedrateAmountPopup(const ColourScheme& colours)
 }
 
 // Create the colour scheme change popup
-void CreateColoursPopup(const ColourScheme& colours)
+static void CreateColoursPopup(const ColourScheme& colours)
 {
 	if (NumColourSchemes >= 2)
 	{
@@ -772,7 +772,7 @@ void CreateColoursPopup(const ColourScheme& colours)
 }
 
 // Create the language popup (currently only affects the keyboard layout)
-void CreateLanguagePopup(const ColourScheme& colours)
+static void CreateLanguagePopup(const ColourScheme& colours)
 {
 	languagePopup = new PopupWindow(popupBarHeight, fullPopupWidth, colours.popupBackColour, colours.popupBorderColour);
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
@@ -784,7 +784,7 @@ void CreateLanguagePopup(const ColourScheme& colours)
 }
 
 // Create the pop-up keyboard
-void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
+static void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 {
 	static const char* _ecv_array const keysEN[8] = { "1234567890-+", "QWERTYUIOP[]", "ASDFGHJKL:@", "ZXCVBNM,./", "!\"#$%^&*()_=", "qwertyuiop{}", "asdfghjkl;'", "zxcvbnm<>?" };
 	static const char* _ecv_array const keysDE[8] = { "1234567890-+", "QWERTZUIOP[]", "ASDFGHJKL:@", "YXCVBNM,./", "!\"#$%^&*()_=", "qwertzuiop{}", "asdfghjkl;'", "yxcvbnm<>?" };
@@ -859,7 +859,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 }
 
 // Create the babystep popup
-void CreateBabystepPopup(const ColourScheme& colours)
+static void CreateBabystepPopup(const ColourScheme& colours)
 {
 	babystepPopup = new StandardPopupWindow(babystepPopupHeight, babystepPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour,
 			strings->babyStepping);
@@ -874,7 +874,7 @@ void CreateBabystepPopup(const ColourScheme& colours)
 }
 
 // Create the grid of heater icons and temperatures
-void CreateTemperatureGrid(const ColourScheme& colours)
+static void CreateTemperatureGrid(const ColourScheme& colours)
 {
 	// Add the emergency stop button
 	DisplayField::SetDefaultColours(colours.stopButtonTextColour, colours.stopButtonBackColour);
@@ -927,7 +927,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 }
 
 // Create the extra fields for the Control tab
-void CreateControlTabFields(const ColourScheme& colours)
+static void CreateControlTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(commonRoot);
 
@@ -985,7 +985,7 @@ void CreateControlTabFields(const ColourScheme& colours)
 }
 
 // Create the fields for the Printing tab
-void CreatePrintingTabFields(const ColourScheme& colours)
+static void CreatePrintingTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(commonRoot);
 
@@ -1076,7 +1076,7 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 }
 
 // Create the fields for the Message tab
-void CreateMessageTabFields(const ColourScheme& colours)
+static void CreateMessageTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(baseRoot);
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
@@ -1098,7 +1098,7 @@ void CreateMessageTabFields(const ColourScheme& colours)
 }
 
 // Create the fields for the Setup tab
-void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
+static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 {
 	mgr.SetRoot(baseRoot);
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
@@ -1140,7 +1140,7 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 }
 
 // Create the fields that are displayed on all pages
-void CreateCommonFields(const ColourScheme& colours)
+static void CreateCommonFields(const ColourScheme& colours)
 {
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour, colours.buttonBorderColour, colours.buttonGradColour,
 									colours.buttonPressedBackColour, colours.buttonPressedGradColour, colours.pal);
@@ -1150,7 +1150,7 @@ void CreateCommonFields(const ColourScheme& colours)
 	tabSetup = AddTextButton(rowTabs, 3, 4, strings->setup, evTabSetup, nullptr);
 }
 
-void CreateMainPages(uint32_t language, const ColourScheme& colours)
+static void CreateMainPages(uint32_t language, const ColourScheme& colours)
 {
 	if (language >= ARRAY_SIZE(LanguageTables))
 	{
