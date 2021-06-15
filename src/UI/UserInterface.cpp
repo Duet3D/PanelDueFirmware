@@ -388,7 +388,7 @@ ButtonPress CreateStringButtonRow(
 	return bp;
 }
 
-#if 0	// currently unused
+#if 0  // currently unused
 // Create a row of icon buttons.
 // Set the colours before calling this
 void CreateIconButtonRow(Window * pf, PixelNumber top, PixelNumber left, PixelNumber totalWidth, PixelNumber spacing, unsigned int numButtons,
@@ -1179,6 +1179,7 @@ static void CreateMainPages(uint32_t language, const ColourScheme& colours)
 
 namespace UI
 {
+
 	static void Adjusting(ButtonPress bp)
 	{
 		fieldBeingAdjusted = bp;
@@ -3675,7 +3676,6 @@ namespace UI
 		{
 			return;
 		}
-		uint8_t oldWorkplaceNumber = currentWorkplaceNumber;
 		currentWorkplaceNumber = workplaceNumber;
 	}
 
