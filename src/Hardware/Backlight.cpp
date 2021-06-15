@@ -38,6 +38,12 @@ Backlight::Backlight(pwm_channel_t *pwm,
 
 void Backlight::SetBrightness(uint32_t brightness)
 {
+	if (brightness == 0)
+	{
+		pwm_channel_disable(PWM, this->pwm->channel);
+		return;
+	}
+
 	this->pwm->ul_period = this->period;
 
 	pwm_channel_init(PWM, this->pwm);
