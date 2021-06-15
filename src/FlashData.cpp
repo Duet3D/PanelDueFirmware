@@ -11,6 +11,8 @@
 
 #define ARRAY_SIZE(arr) (sizeof(arr)/sizeof(arr[0]))
 
+FlashData nvData, savedNvData;
+
 bool FlashData::IsValid() const
 {
 	return magic == magicVal
@@ -89,4 +91,94 @@ void FlashData::Save() const
 #else
 	FlashStorage::write(0, &(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
 #endif
+}
+
+bool FlashData::IsSaveNeeded()
+{
+	return nvData != savedNvData;
+}
+
+void FlashData::SetDisplayDimmerType(DisplayDimmerType newType)
+{
+	nvData.displayDimmerType = newType;
+}
+
+void FlashData::SetVolume(uint8_t newVolume)
+{
+	nvData.touchVolume = newVolume;
+}
+
+void FlashData::SetInfoTimeout(uint8_t newInfoTimeout)
+{
+	nvData.infoTimeout = newInfoTimeout;
+}
+
+void FlashData::SetScreensaverTimeout(uint32_t screensaverTimeout)
+{
+	nvData.screensaverTimeout = screensaverTimeout;
+}
+
+bool FlashData::SetColourScheme(uint8_t newColours)
+{
+	const bool ret = (newColours != nvData.colourScheme);
+	nvData.colourScheme = newColours;
+	return ret;
+}
+
+// Set the language, returning true if it has changed
+bool FlashData::SetLanguage(uint8_t newLanguage)
+{
+	const bool ret = (newLanguage != nvData.language);
+	nvData.language = newLanguage;
+	return ret;
+}
+
+uint32_t FlashData::GetBaudRate()
+{
+	return nvData.baudRate;
+}
+
+uint32_t FlashData::GetVolume()
+{
+	return nvData.touchVolume;
+}
+
+int FlashData::GetBrightness()
+{
+	return (int)nvData.brightness;
+}
+
+uint32_t FlashData::GetScreensaverTimeout()
+{
+	return nvData.screensaverTimeout;
+}
+
+uint8_t FlashData::GetBabystepAmountIndex()
+{
+	return nvData.babystepAmountIndex;
+}
+
+void FlashData::SetBabystepAmountIndex(uint8_t babystepAmountIndex)
+{
+	nvData.babystepAmountIndex = babystepAmountIndex;
+}
+
+uint16_t FlashData::GetFeedrate()
+{
+	return nvData.feedrate;
+}
+
+void FlashData::SetFeedrate(uint16_t feedrate)
+{
+	nvData.feedrate = feedrate;
+}
+
+HeaterCombineType FlashData::GetHeaterCombineType()
+{
+	return nvData.heaterCombineType;
+}
+
+void FlashData::SetHeaterCombineType(HeaterCombineType combine)
+{
+	nvData.heaterCombineType = combine;
 }

@@ -56,6 +56,24 @@ struct FlashData
 	void SetDefaults();
 	void Load();
 	void Save() const;
+
+	bool IsSaveNeeded();
+	void SetDisplayDimmerType(DisplayDimmerType newType);
+	void SetVolume(uint8_t newVolume);
+	void SetInfoTimeout(uint8_t newInfoTimeout);
+	void SetScreensaverTimeout(uint32_t screensaverTimeout);
+	bool SetColourScheme(uint8_t newColours);
+	bool SetLanguage(uint8_t newLanguage);
+	uint32_t GetBaudRate();
+	uint32_t GetVolume();
+	int GetBrightness();
+	uint32_t GetScreensaverTimeout();
+	uint8_t GetBabystepAmountIndex();
+	void SetBabystepAmountIndex(uint8_t babystepAmountIndex);
+	uint16_t GetFeedrate();
+	void SetFeedrate(uint16_t feedrate);
+	HeaterCombineType GetHeaterCombineType();
+	void SetHeaterCombineType(HeaterCombineType combine);
 };
 
 #if SAM4S
@@ -65,5 +83,7 @@ static_assert(sizeof(FlashData) <= 512, "Flash data too large");
 // FlashData must fit in the area we have reserved
 static_assert(sizeof(FlashData) <= FLASH_DATA_LENGTH, "Flash data too large");
 #endif
+
+extern FlashData nvData, savedNvData;
 
 #endif /* ifndef FLASH_DATA */

@@ -157,8 +157,6 @@ uint32_t lastAlertSeq = 0;
 
 static OM::PrinterStatus status = OM::PrinterStatus::connecting;
 
-FlashData nvData, savedNvData;
-
 enum ReceivedDataEvent
 {
 	rcvUnknown = 0,
@@ -745,11 +743,6 @@ void CalibrateTouch()
 	mgr.Refresh(true);
 }
 
-bool IsSaveNeeded()
-{
-	return nvData != savedNvData;
-}
-
 void MirrorDisplay()
 {
 	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ ReverseX);
@@ -861,90 +854,6 @@ void ActivateScreensaver()
 DisplayDimmerType GetDisplayDimmerType()
 {
 	return nvData.displayDimmerType;
-}
-
-void SetDisplayDimmerType(DisplayDimmerType newType)
-{
-	nvData.displayDimmerType = newType;
-}
-
-void SetVolume(uint8_t newVolume)
-{
-	nvData.touchVolume = newVolume;
-}
-
-void SetInfoTimeout(uint8_t newInfoTimeout)
-{
-	nvData.infoTimeout = newInfoTimeout;
-}
-
-void SetScreensaverTimeout(uint32_t screensaverTimeout)
-{
-	nvData.screensaverTimeout = screensaverTimeout;
-}
-
-bool SetColourScheme(uint8_t newColours)
-{
-	const bool ret = (newColours != nvData.colourScheme);
-	nvData.colourScheme = newColours;
-	return ret;
-}
-
-// Set the language, returning true if it has changed
-bool SetLanguage(uint8_t newLanguage)
-{
-	const bool ret = (newLanguage != nvData.language);
-	nvData.language = newLanguage;
-	return ret;
-}
-
-uint32_t GetBaudRate()
-{
-	return nvData.baudRate;
-}
-
-uint32_t GetVolume()
-{
-	return nvData.touchVolume;
-}
-
-int GetBrightness()
-{
-	return (int)nvData.brightness;
-}
-
-uint32_t GetScreensaverTimeout() {
-	return nvData.screensaverTimeout;
-}
-
-uint8_t GetBabystepAmountIndex()
-{
-	return nvData.babystepAmountIndex;
-}
-
-void SetBabystepAmountIndex(uint8_t babystepAmountIndex)
-{
-	nvData.babystepAmountIndex = babystepAmountIndex;
-}
-
-uint16_t GetFeedrate()
-{
-	return nvData.feedrate;
-}
-
-void SetFeedrate(uint16_t feedrate)
-{
-	nvData.feedrate = feedrate;
-}
-
-HeaterCombineType GetHeaterCombineType()
-{
-	return nvData.heaterCombineType;
-}
-
-void SetHeaterCombineType(HeaterCombineType combine)
-{
-	nvData.heaterCombineType = combine;
 }
 
 // Factory reset
