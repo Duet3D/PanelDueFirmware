@@ -10,6 +10,7 @@
 #include <UI/UserInterfaceConstants.hpp>
 #include "Configuration.hpp"
 #include "PanelDue.hpp"
+#include "FlashData.hpp"
 #include "FileManager.hpp"
 #include <UI/MessageLog.hpp>
 #include "Icons/Icons.hpp"
@@ -455,34 +456,34 @@ const char * _ecv_array StripPrefix(const char * _ecv_array dir)
 // Adjust the brightness
 static void ChangeBrightness(bool up)
 {
-	int adjust = max<int>(1, GetBrightness()/5);
+	int adjust = max<int>(1, nvData.GetBrightness() / 5);
 	if (!up)
 	{
 		adjust = -adjust;
 	}
-	SetBrightness(GetBrightness() + adjust);
+	SetBrightness(nvData.GetBrightness() + adjust);
 }
 
 // Cycle through available display dimmer types
 static void ChangeDisplayDimmerType()
 {
-	DisplayDimmerType newType = (DisplayDimmerType) ((uint8_t)GetDisplayDimmerType() + 1);
+	DisplayDimmerType newType = (DisplayDimmerType) ((uint8_t)nvData.GetDisplayDimmerType() + 1);
 	if (newType == DisplayDimmerType::NumTypes)
 	{
 		newType = (DisplayDimmerType)0;
 	}
-	SetDisplayDimmerType(newType);
+	nvData.SetDisplayDimmerType(newType);
 }
 
 // Cyce through available heater combine types and repaint
 static void ChangeHeaterCombineType()
 {
-	HeaterCombineType newType = (HeaterCombineType) ((uint8_t)GetHeaterCombineType() + 1);
+	HeaterCombineType newType = (HeaterCombineType) ((uint8_t)nvData.GetHeaterCombineType() + 1);
 	if (newType == HeaterCombineType::NumTypes)
 	{
 		newType = (HeaterCombineType)0;
 	}
-	SetHeaterCombineType(newType);
+	nvData.SetHeaterCombineType(newType);
 	UI::AllToolsSeen();
 }
 
@@ -869,8 +870,8 @@ static void CreateBabystepPopup(const ColourScheme& colours)
 	ypos += babystepRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.buttonImageBackColour);
 	const PixelNumber width = CalcWidth(2, babystepPopupWidth - 2 * popupSideMargin);
-	babystepPopup->AddField(babystepMinusButton = new TextButtonWithLabel(ypos, CalcXPos(0, width, popupSideMargin), width, babystepAmounts[GetBabystepAmountIndex()], evBabyStepMinus, nullptr, LESS_ARROW " "));
-	babystepPopup->AddField(babystepPlusButton = new TextButtonWithLabel(ypos, CalcXPos(1, width, popupSideMargin), width, babystepAmounts[GetBabystepAmountIndex()], evBabyStepPlus, nullptr, MORE_ARROW " "));
+	babystepPopup->AddField(babystepMinusButton = new TextButtonWithLabel(ypos, CalcXPos(0, width, popupSideMargin), width, babystepAmounts[nvData.GetBabystepAmountIndex()], evBabyStepMinus, nullptr, LESS_ARROW " "));
+	babystepPopup->AddField(babystepPlusButton = new TextButtonWithLabel(ypos, CalcXPos(1, width, popupSideMargin), width, babystepAmounts[nvData.GetBabystepAmountIndex()], evBabyStepPlus, nullptr, MORE_ARROW " "));
 }
 
 // Create the grid of heater icons and temperatures
@@ -1109,9 +1110,9 @@ static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	baudRateButton = AddIntegerButton(row3, 0, 3, nullptr, " baud", evSetBaudRate);
-	baudRateButton->SetValue(GetBaudRate());
+	baudRateButton->SetValue(nvData.GetBaudRate());
 	volumeButton = AddIntegerButton(row3, 1, 3, strings->volume, nullptr, evSetVolume);
-	volumeButton->SetValue(GetVolume());
+	volumeButton->SetValue(nvData.GetVolume());
 	languageButton = AddTextButton(row3, 2, 3, LanguageTables[language].languageName, evSetLanguage, nullptr);
 	AddTextButton(row4, 0, 3, strings->calibrateTouch, evCalTouch, nullptr);
 	AddTextButton(row4, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
@@ -1119,20 +1120,20 @@ static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	coloursButton = AddTextButton(row5, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
 	AddTextButton(row5, 1, 3, strings->brightnessDown, evDimmer, nullptr);
 	AddTextButton(row5, 2, 3, strings->brightnessUp, evBrighter, nullptr);
-	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()], evSetDimmingType, nullptr);
+	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)nvData.GetDisplayDimmerType()], evSetDimmingType, nullptr);
 	infoTimeoutButton = AddIntegerButton(row6, 1, 3, strings->infoTimeout, nullptr, evSetInfoTimeout);
 	infoTimeoutButton->SetValue(infoTimeout);
 	AddTextButton(row6, 2, 3, strings->clearSettings, evFactoryReset, nullptr);
 	screensaverTimeoutButton = AddIntegerButton(row7, 0, 3, strings->screensaverAfter, nullptr, evSetScreensaverTimeout);
-	screensaverTimeoutButton->SetValue(GetScreensaverTimeout() / 1000);
+	screensaverTimeoutButton->SetValue(nvData.GetScreensaverTimeout() / 1000);
 
 	const PixelNumber width = CalcWidth(3);
-	mgr.AddField(babystepAmountButton = new TextButtonWithLabel(row7, CalcXPos(1, width), width, babystepAmounts[GetBabystepAmountIndex()], evSetBabystepAmount, nullptr, strings->babystepAmount));
+	mgr.AddField(babystepAmountButton = new TextButtonWithLabel(row7, CalcXPos(1, width), width, babystepAmounts[nvData.GetBabystepAmountIndex()], evSetBabystepAmount, nullptr, strings->babystepAmount));
 
 	feedrateAmountButton = AddIntegerButton(row7, 2, 3, strings->feedrate, nullptr, evSetFeedrate);
-	feedrateAmountButton->SetValue(GetFeedrate());
+	feedrateAmountButton->SetValue(nvData.GetFeedrate());
 
-	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
+	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)nvData.GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
 
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
 	mgr.AddField(ipAddressField = new TextField(row9, margin, DisplayX/2 - margin, TextAlignment::Left, "IP: ", ipAddress.c_str()));
@@ -1629,7 +1630,7 @@ namespace UI
 			if (currentTab != nullptr)
 			{
 				currentTab->Press(false, 0);			// remove highlighting from the old tab
-				if (currentTab->GetEvent() == evTabSetup && IsSaveNeeded())
+				if (currentTab->GetEvent() == evTabSetup && nvData.IsSaveNeeded())
 				{
 					SaveSettings();						// leaving the Control tab and we have changed settings, so save them
 				}
@@ -1962,7 +1963,7 @@ namespace UI
 		}
 
 		tool->UpdateTemp(toolHeaterIndex, temp, active);
-		if (toolHeaterIndex == 0 || GetHeaterCombineType() == HeaterCombineType::notCombined)
+		if (toolHeaterIndex == 0 || nvData.GetHeaterCombineType() == HeaterCombineType::notCombined)
 		{
 			if (tool->slot + toolHeaterIndex < MaxSlots)
 			{
@@ -2328,7 +2329,7 @@ namespace UI
 							}
 
 							const bool useM568 = GetFirmwareFeatures().IsBitSet(m568TempAndRPM);
-							if (GetHeaterCombineType() == HeaterCombineType::combined)
+							if (nvData.GetHeaterCombineType() == HeaterCombineType::combined)
 							{
 								tool->UpdateTemp(0, val, true);
 								SerialIo::Sendf("%s P%d S%d\n", (useM568 ? "M568" : "G10"), toolNumber, tool->heaters[0]->activeTemp);
@@ -2365,7 +2366,7 @@ namespace UI
 							}
 
 							const bool useM568 = GetFirmwareFeatures().IsBitSet(m568TempAndRPM);
-							if (GetHeaterCombineType() == HeaterCombineType::combined)
+							if (nvData.GetHeaterCombineType() == HeaterCombineType::combined)
 							{
 								tool->UpdateTemp(0, val, false);
 								SerialIo::Sendf("%s P%d R%d\n", (useM568 ? "M568" : "G10"), toolNumber, tool->heaters[0]->standbyTemp);
@@ -2481,7 +2482,7 @@ namespace UI
 			case evMoveAxis:
 				{
 					TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(bp.GetButton());
-					SerialIo::Sendf("G91 G1 %c%s F%d G90\n", textButton->GetAxisLetter(), bp.GetSParam(), GetFeedrate());
+					SerialIo::Sendf("G91 G1 %c%s F%d G90\n", textButton->GetAxisLetter(), bp.GetSParam(), nvData.GetFeedrate());
 				}
 				break;
 
@@ -2524,15 +2525,15 @@ namespace UI
 			case evBabyStepMinus:
 			case evBabyStepPlus:
 				{
-					SerialIo::Sendf("M290 Z%s%s\n", (ev == evBabyStepMinus ? "-" : ""), babystepAmounts[GetBabystepAmountIndex()]);
+					SerialIo::Sendf("M290 Z%s%s\n", (ev == evBabyStepMinus ? "-" : ""), babystepAmounts[nvData.GetBabystepAmountIndex()]);
 					float currentBabystepAmount = babystepOffsetField->GetValue();
 					if (ev == evBabyStepMinus)
 					{
-						currentBabystepAmount -= babystepAmountsF[GetBabystepAmountIndex()];
+						currentBabystepAmount -= babystepAmountsF[nvData.GetBabystepAmountIndex()];
 					}
 					else
 					{
-						currentBabystepAmount += babystepAmountsF[GetBabystepAmountIndex()];
+						currentBabystepAmount += babystepAmountsF[nvData.GetBabystepAmountIndex()];
 					}
 					babystepOffsetField->SetValue(currentBabystepAmount);
 				}
@@ -2806,7 +2807,7 @@ namespace UI
 			case evAdjustVolume:
 				{
 					const int newVolume = bp.GetIParam();
-					SetVolume(newVolume);
+					nvData.SetVolume(newVolume);
 					volumeButton->SetValue(newVolume);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
@@ -2815,7 +2816,7 @@ namespace UI
 			case evAdjustInfoTimeout:
 				{
 					infoTimeout = bp.GetIParam();
-					SetInfoTimeout(infoTimeout);
+					nvData.SetInfoTimeout(infoTimeout);
 					infoTimeoutButton->SetValue(infoTimeout);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
@@ -2824,7 +2825,7 @@ namespace UI
 			case evAdjustScreensaverTimeout:
 				{
 					uint32_t screensaverTimeout = bp.GetIParam();
-					SetScreensaverTimeout(screensaverTimeout * 1000);
+					nvData.SetScreensaverTimeout(screensaverTimeout * 1000);
 					screensaverTimeoutButton->SetValue(screensaverTimeout);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
@@ -2833,7 +2834,7 @@ namespace UI
 			case evAdjustBabystepAmount:
 				{
 					uint32_t babystepAmountIndex = bp.GetIParam();
-					SetBabystepAmountIndex(babystepAmountIndex);
+					nvData.SetBabystepAmountIndex(babystepAmountIndex);
 					babystepAmountButton->SetText(babystepAmounts[babystepAmountIndex]);
 					babystepMinusButton->SetText(babystepAmounts[babystepAmountIndex]);
 					babystepPlusButton->SetText(babystepAmounts[babystepAmountIndex]);
@@ -2844,7 +2845,7 @@ namespace UI
 			case evAdjustFeedrate:
 				{
 					uint32_t feedrate = bp.GetIParam();
-					SetFeedrate(feedrate);
+					nvData.SetFeedrate(feedrate);
 					feedrateAmountButton->SetValue(feedrate);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
@@ -2853,7 +2854,7 @@ namespace UI
 			case evAdjustColours:
 				{
 					const uint8_t newColours = (uint8_t)bp.GetIParam();
-					if (SetColourScheme(newColours))
+					if (nvData.SetColourScheme(newColours))
 					{
 						SaveSettings();
 						Reset();
@@ -2870,7 +2871,7 @@ namespace UI
 			case evAdjustLanguage:
 				{
 					const uint8_t newLanguage = (uint8_t)bp.GetIParam();
-					if (SetLanguage(newLanguage))
+					if (nvData.SetLanguage(newLanguage))
 					{
 						SaveSettings();
 						Reset();
@@ -2881,12 +2882,12 @@ namespace UI
 
 			case evSetDimmingType:
 				ChangeDisplayDimmerType();
-				dimmingTypeButton->SetText(strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()]);
+				dimmingTypeButton->SetText(strings->displayDimmingNames[(unsigned int)nvData.GetDisplayDimmerType()]);
 				break;
 
 			case evSetHeaterCombineType:
 				ChangeHeaterCombineType();
-				heaterCombiningButton->SetText(strings->heaterCombineTypeNames[(unsigned int)GetHeaterCombineType()]);
+				heaterCombiningButton->SetText(strings->heaterCombineTypeNames[(unsigned int)nvData.GetHeaterCombineType()]);
 				break;
 
 			case evYes:
@@ -3312,7 +3313,7 @@ namespace UI
 				}
 				else if (hasHeater)
 				{
-					if (GetHeaterCombineType() == HeaterCombineType::notCombined)
+					if (nvData.GetHeaterCombineType() == HeaterCombineType::notCombined)
 					{
 						tool->IterateHeaters([&slot, &tool](OM::ToolHeater*, size_t index)
 						{

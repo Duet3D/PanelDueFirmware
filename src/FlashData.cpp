@@ -182,3 +182,8 @@ void FlashData::SetHeaterCombineType(HeaterCombineType combine)
 {
 	nvData.heaterCombineType = combine;
 }
+
+DisplayDimmerType FlashData::GetDisplayDimmerType()
+{
+	return nvData.displayDimmerType;
+}

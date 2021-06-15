@@ -61,13 +61,16 @@ extern uint16_t _esplash[];							// defined in linker script
 // Controlling constants
 constexpr uint32_t defaultPrinterPollInterval = 500;	// poll interval in milliseconds
 constexpr uint32_t defaultPrinterResponseInterval = defaultPrinterPollInterval * 0.7;		// shortest time after a response that we send another poll (gives printer time to catch up)
+
 constexpr uint32_t slowPrinterPollInterval = 4000;		// poll interval in milliseconds when screensaver active
 const uint32_t printerPollTimeout = 2000;			// poll timeout in milliseconds
 const uint32_t FileInfoRequestTimeout = 8000;		// file info request timeout in milliseconds
 const uint32_t touchBeepLength = 20;				// beep length in ms
 const uint32_t touchBeepFrequency = 4500;			// beep frequency in Hz. Resonant frequency of the piezo sounder is 4.5kHz.
+
 const uint32_t errorBeepLength = 100;
 const uint32_t errorBeepFrequency = 2250;
+
 const uint32_t longTouchDelay = 250;				// how long we ignore new touches for after pressing Set
 const uint32_t shortTouchDelay = 100;				// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
 
@@ -849,11 +852,6 @@ void ActivateScreensaver()
 	{
 		UI::AnimateScreensaver();
 	}
-}
-
-DisplayDimmerType GetDisplayDimmerType()
-{
-	return nvData.displayDimmerType;
 }
 
 // Factory reset
@@ -2275,7 +2273,7 @@ int main(void)
 				if (!isDimmed && UI::CanDimDisplay()){
 					DimBrightness();				// it might not actually dim the display, depending on various flags
 				}
-				uint32_t screensaverTimeout = GetScreensaverTimeout();
+				uint32_t screensaverTimeout = nvData.GetScreensaverTimeout();
 				if (screensaverTimeout > 0 && SystemTick::GetTickCount() - lastActionTime >= screensaverTimeout)
 				{
 					ActivateScreensaver();

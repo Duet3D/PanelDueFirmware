@@ -74,6 +74,8 @@ struct FlashData
 	void SetFeedrate(uint16_t feedrate);
 	HeaterCombineType GetHeaterCombineType();
 	void SetHeaterCombineType(HeaterCombineType combine);
+	DisplayDimmerType GetDisplayDimmerType();
+
 };
 
 #if SAM4S
