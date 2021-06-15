@@ -2424,18 +2424,19 @@ int main(void)
 						initialized = true;
 					}
 
-					// First check for specific info we need to fetch
+					// check if specific info is needed
+					bool sent = false;
 					if (OkToSend())
 					{
-						bool sent = FileManager::ProcessTimers();
-						// Otherwise just send a normal poll command
-						if (!sent)
-						{
-							SerialIo::Sendf("M409 F\"d99f\"\n");
-						}
-						lastPollTime = SystemTick::GetTickCount();
+						sent = FileManager::ProcessTimers();
 					}
 
+					// if nothing was fetched do a status update
+					if (!sent)
+					{
+						SerialIo::Sendf("M409 F\"d99f\"\n");
+					}
+					lastPollTime = SystemTick::GetTickCount();
 				}
 			}
 			else if (now - lastPollTime >= printerPollTimeout)	  // last response was most likely incomplete start over
