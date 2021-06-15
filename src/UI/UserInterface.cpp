@@ -2021,7 +2021,6 @@ namespace UI
 	// Process a new message box alert, clearing any existing one
 	void ProcessAlert(const Alert& alert)
 	{
-		RestoreBrightness();
 		if (isLandscape)
 		{
 			alertPopup->Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
@@ -2063,7 +2062,6 @@ namespace UI
 
 	void ProcessSimpleAlert(const char* _ecv_array text)
 	{
-		RestoreBrightness();
 		if (alertMode < 2)												// if the current alert doesn't require acknowledgement
 		{
 			if (isLandscape)
