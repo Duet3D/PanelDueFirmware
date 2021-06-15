@@ -64,7 +64,7 @@ constexpr uint32_t defaultPrinterResponseInterval = defaultPrinterPollInterval *
 
 constexpr uint32_t slowPrinterPollInterval = 4000;		// poll interval in milliseconds when screensaver active
 const uint32_t printerPollTimeout = 2000;			// poll timeout in milliseconds
-const uint32_t FileInfoRequestTimeout = 8000;		// file info request timeout in milliseconds
+
 const uint32_t touchBeepLength = 20;				// beep length in ms
 const uint32_t touchBeepFrequency = 4500;			// beep frequency in Hz. Resonant frequency of the piezo sounder is 4.5kHz.
 
