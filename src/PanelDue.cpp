@@ -2356,11 +2356,6 @@ int main(void)
 	}
 }
 
-void PrintDebugText(const char *x)
-{
-	fwVersionField->SetValue(x);
-}
-
 // Pure virtual function call handler, to avoid pulling in large chunks of the standard library
 extern "C" void __cxa_pure_virtual() { while (1); }
 

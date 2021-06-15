@@ -5,10 +5,17 @@
 
 extern int __flash_start__,	__flash_end__;
 
-extern void PrintDebugText(const char*);
+//#define DEBUG 1
+#if (DEBUG)
+#include "UI/MessageLog.hpp"
+#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
 
-//  FLASH_DEBUG can be enabled to get debugging information displayed.
-#define FLASH_DEBUG(x) PrintDebugText(x)
+#else
+#define dbg(fmt, args...)		do {} while(0)
+
+#endif
+
+#define FLASH_DEBUG(x) dbg(x)
 
 static const uint32_t NVPSizes[] =
 {
