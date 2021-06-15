@@ -20,15 +20,7 @@
 
 namespace Buzzer
 {
-	static const uint32_t pwmClockFrequency = 2000000;		// 2MHz clock (OK down to 30Hz PWM frequency)
-
-#if IS_ER
-	static const uint32_t backlightPwmFrequency = 20000;	// 20kHz is recommend by East Rising
-#else
-	static const uint32_t backlightPwmFrequency = 300;		// Working range is about 100Hz to 1KHz. MP3202 dataseet says use 1kHz or below due to soft start. Some frequencies causes flickering on the 4.3" display.
-#endif
-
-	static const uint32_t backlightPeriod = pwmClockFrequency/backlightPwmFrequency;
+	static uint32_t pwmClockFrequency = 2000000;		// 2MHz clock (OK down to 30Hz PWM frequency)
 
 	static pwm_channel_t buzzer_pwm_channel_instance =
 	{
@@ -50,47 +42,8 @@ namespace Buzzer
 //		.us_deadtime_pwml = 0,
 //		.us_deadtime_pwmh = 0
 	};
-	static pwm_channel_t backlight_pwm_channel_instance =
-	{
-		.channel = 1,
-		.ul_prescaler = PWM_CMR_CPRE_CLKA,
-		.alignment = PWM_ALIGN_LEFT
-//		.b_deadtime_generator = false,
-//		.b_pwmh_output_inverted = false,
-//		.b_pwml_output_inverted = false,
-//		.b_sync_ch = false,
-//		.counter_event = 0,
-//		.fault_id = (pwm_fault_id_t)0,
-//		.output_selection = 0,
-//		.polarity = 0,
-//		.ul_duty = 0,
-//		.ul_fault_output_pwmh = 0,
-//		.ul_fault_output_pwml = 0,
-//		.ul_period = 0,
-//		.us_deadtime_pwml = 0,
-//		.us_deadtime_pwmh = 0
-	};
 	static uint32_t beepTicksToGo = 0;
 	static bool inBuzzer = true;
-
-	// Initialize the buzzer and the PWM system. Must be called before using the buzzer or backlight.
-	void Init()
-	{
-		pwm_channel_disable(PWM, PWM_CHANNEL_0);					// make sure buzzer PWM is off
-		pwm_channel_disable(PWM, PWM_CHANNEL_1);					// make sure backlight PWM is off
-		pwm_clock_t clock_setting =
-		{
-			.ul_clka = pwmClockFrequency,
-			.ul_clkb = 0,
-			.ul_mck = SystemCoreClock
-		};
-		pwm_init(PWM, &clock_setting);								// set up the PWM clock
-		pio_configure(PIOB, PIO_PERIPH_A, PIO_PB1, 0);				// enable HI output to backlight, but not to piezo yet
-		pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB0 | PIO_PB5, 0);	// set both piezo pins low
-
-		beepTicksToGo = 0;
-		inBuzzer = false;
-	}
 
 	static const uint32_t volumeTable[MaxVolume] = { 3, 9, 20, 40, 80 };
 
@@ -148,97 +101,17 @@ namespace Buzzer
 		return beepTicksToGo != 0;
 	}
 
-	enum BacklightState {
-		BacklightStateDimmed,
-	};
-
-	struct backlight {
-		uint32_t frequency;
-		uint32_t period;
-		uint32_t channel;
-		uint32_t dimBrightness;
-		uint32_t normalBrightness;
-		uint32_t minBrightness;
-		uint32_t maxBrightness;
-
-		Bitmap<uint8_t> state;
-
-		pwm_channel_t *pwm;
-
-	};
-
-	void BacklightInit(struct backlight *backlight, pwm_channel_t *pwm, uint32_t frequency,
-			uint32_t dimBrightness, uint32_t normalBrightness,
-			uint32_t minBrightness, uint32_t maxBrightness)
+	// Initialize the buzzer and the PWM system. Must be called before using the buzzer or backlight.
+	void Init(uint32_t pwmFrequency)
 	{
-		//assert(backlight);
-		//assert(channel);
-		//assert(pwmClockFrequency >= frequency);
-		pio_configure(PIOB, PIO_INPUT, PIO_PB13, PIO_PULLUP);
-		pio_get(PIOB, PIO_INPUT, PIO_PB13);
+		pwmClockFrequency = pwmFrequency;
 
-		//backlight->pwm = pwm;
-		backlight->pwm = &backlight_pwm_channel_instance;
+		pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB0 | PIO_PB5, 0);	// set both piezo pins low
 
-		backlight->frequency = frequency;
-		backlight->period = pwmClockFrequency / frequency - 1;
-
-		backlight->dimBrightness = dimBrightness;
-		backlight->normalBrightness = normalBrightness;
-		backlight->minBrightness = minBrightness;
-		backlight->maxBrightness = maxBrightness;
-
-		backlight->pwm->ul_period = backlight->period;
-		backlight->pwm->ul_duty = 0;
-
-		pwm_channel_init(PWM, backlight->pwm);
-		pwm_channel_disable(PWM, backlight->pwm->channel);
+		beepTicksToGo = 0;
+		inBuzzer = false;
 	}
 
-	static void UpdateBacklight(struct backlight *backlight)
-	{
-		backlight->pwm->ul_period = backlight->period;
-
-		pwm_channel_init(PWM, backlight->pwm);
-		pwm_channel_enable(PWM, backlight->pwm->channel);
-	}
-
-	void SetBacklight(struct backlight *backlight, uint32_t brightness)
-	{
-		//assert(backlight);
-		//assert(backlight->pwm);
-		//assert(backlight->maxBrightness >= brightness);
-
-		backlight->state.ClearBit(BacklightStateDimmed);
-		backlight->normalBrightness = brightness;
-
-		backlight->pwm->ul_duty =
-			(backlight->period * (backlight->maxBrightness - brightness)) / backlight->maxBrightness;
-
-		UpdateBacklight(backlight);
-	}
-
-	void NormalBrightness(struct backlight *backlight)
-	{
-		if (!backlight->state.IsBitSet(BacklightStateDimmed))
-			return;
-
-		SetBacklight(backlight, backlight->normalBrightness);
-	}
-
-	void DimBrightness(struct backlight *backlight)
-	{
-		if (backlight->state.IsBitSet(BacklightStateDimmed))
-			return;
-
-		backlight->state.SetBit(BacklightStateDimmed);
-
-		backlight->pwm->ul_period = backlight->period;
-		backlight->pwm->ul_duty =
-			(backlight->period * (backlight->maxBrightness - backlight->dimBrightness)) / backlight->maxBrightness;
-
-		UpdateBacklight(backlight);
-	}
 }
 
 // End

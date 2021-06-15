@@ -11,7 +11,7 @@
 
 namespace Buzzer
 {
-	void Init();
+	void Init(uint32_t pwmFrequency);
 
 	void Beep(uint32_t frequency, uint32_t ms, uint32_t volume);
 
