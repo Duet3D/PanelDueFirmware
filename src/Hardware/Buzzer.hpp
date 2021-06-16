@@ -9,6 +9,8 @@
 #ifndef BUZZER_H_
 #define BUZZER_H_
 
+#include <stdint.h>
+
 namespace Buzzer
 {
 	void Init(uint32_t pwmFrequency);
