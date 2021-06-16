@@ -135,7 +135,7 @@ static uint32_t lastOutOfBufferResponse = 0;
 
 static uint8_t oobCounter = 0;
 static bool outOfBuffers = false;
-static uint32_t lastActionTime = 0;							// the last time anything significant happened
+
 static FirmwareFeatureMap firmwareFeatures;
 
 static bool screensaverActive = false;						// true if screensaver is active
@@ -2260,7 +2260,7 @@ int main(void)
 			sizeof(FieldTableEntry),
 			compare<FieldTableEntry>);
 
-	lastActionTime = SystemTick::GetTickCount();
+	uint32_t lastActionTime = SystemTick::GetTickCount();
 
 	dbg("basic init DONE");
 
