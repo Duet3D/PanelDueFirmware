@@ -124,6 +124,7 @@ UTouch touch(23, 24, 22, 21, 20);
 #define FETCH_VOLUMES		(1)
 
 MainWindow mgr;
+Backlight *backlight = nullptr;
 
 static uint32_t lastTouchTime;
 static uint32_t ignoreTouchTime;
@@ -134,7 +135,7 @@ static uint8_t oobCounter = 0;
 static bool outOfBuffers = false;
 static uint32_t lastActionTime = 0;							// the last time anything significant happened
 static FirmwareFeatureMap firmwareFeatures;
-static bool isDimmed = false;								// true if we have dimmed the display
+
 static bool screensaverActive = false;						// true if screensaver is active
 static bool isDelta = false;
 static size_t numAxes = MIN_AXES;
@@ -649,6 +650,28 @@ OM::PrinterStatus GetStatus()
 	return status;
 }
 
+static void UpdatePollRate(bool idle)
+{
+	if (idle)
+	{
+		printerPollInterval = slowPrinterPollInterval;
+	}
+	else
+	{
+		printerPollInterval = defaultPrinterPollInterval * pollIntervalMultiplier;
+		printerResponseInterval = defaultPrinterResponseInterval * pollIntervalMultiplier;
+	}
+}
+
+static void DeactivateScreensaver()
+{
+	if (screensaverActive) {
+		UI::DeactivateScreensaver();
+		screensaverActive = false;
+		UpdatePollRate(screensaverActive);
+	}
+}
+
 // Initialise the LCD and user interface. The non-volatile data must be set up before calling this.
 void InitLcd()
 {
@@ -658,7 +681,13 @@ void InitLcd()
 	UI::CreateFields(nvData.language, *colours, nvData.infoTimeout);	// create all the fields
 	lcd.fillScr(black);													// make sure the memory is clear
 	Delay(100);															// give the LCD time to update
-	RestoreBrightness();												// turn the display on
+	backlight->SetState(BacklightStateNormal);
+	DeactivateScreensaver();
+}
+
+void RestoreBrightness()
+{
+	backlight->SetState(BacklightStateNormal);
 }
 
 // Ignore touches for a long time
@@ -789,48 +818,24 @@ void SetBaudRate(uint32_t rate)
 	SerialIo::SetBaudRate(rate);
 }
 
-extern void SetBrightness(int percent)
+void SetBrightness(int percent)
 {
 	nvData.brightness = constrain<int>(percent, Backlight::MinBrightness, Backlight::MaxBrightness);
+	backlight->SetDimBrightness(nvData.GetBrightness() / 8);
+	backlight->SetNormalBrightness(nvData.GetBrightness());
+	backlight->SetState(BacklightStateNormal);
 
-void UpdatePollRate(bool idle)
-{
-	if (idle)
-	{
-		printerPollInterval = slowPrinterPollInterval;
-	}
-	else
-	{
-		printerPollInterval = defaultPrinterPollInterval * pollIntervalMultiplier;
-		printerResponseInterval = defaultPrinterResponseInterval * pollIntervalMultiplier;
-	}
-}
-
-void DeactivateScreensaver()
-{
-	if (screensaverActive) {
-		UI::DeactivateScreensaver();
-		screensaverActive = false;
-		UpdatePollRate(screensaverActive);
-	}
-}
-
-extern void RestoreBrightness()
-{
-	Buzzer::SetBacklight(nvData.brightness);
-	lastActionTime = SystemTick::GetTickCount();
-	isDimmed = false;
 	DeactivateScreensaver();
 }
 
-extern void DimBrightness()
+static void DimBrightness()
 {
 	if (   (nvData.displayDimmerType == DisplayDimmerType::always)
-		|| (nvData.displayDimmerType == DisplayDimmerType::onIdle && (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off))
+		|| (nvData.displayDimmerType == DisplayDimmerType::onIdle &&
+		    (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off))
 	   )
 	{
-		Buzzer::SetBacklight(nvData.brightness/8);
-		isDimmed = true;
+		backlight->SetState(BacklightStateDimmed);
 	}
 }
 
@@ -838,11 +843,7 @@ void ActivateScreensaver()
 {
 	if (!screensaverActive)
 	{
-		if (!isDimmed)
-		{
-			Buzzer::SetBacklight(nvData.brightness/4);	// If the user disabled dimming we do it still here
-			isDimmed = true;
-		}
+		DimBrightness();
 		screensaverActive = true;
 		UI::ActivateScreensaver();
 		UpdatePollRate(screensaverActive);
@@ -880,10 +881,7 @@ static void SetStatus(OM::PrinterStatus newStatus)
 	if (newStatus != status)
 	{
 		dbg("printer status %d -> %d", status, newStatus);
-		if (isDimmed)
-		{
-			RestoreBrightness();
-		}
+		backlight->SetState(BacklightStateNormal);
 		UI::ChangeStatus(status, newStatus);
 
 		status = newStatus;
@@ -1005,6 +1003,7 @@ static void EndReceivedMessage()
 	}
 	else if (currentAlert.AllFlagsSet() && currentAlert.seq != lastAlertSeq)
 	{
+		backlight->SetState(BacklightStateNormal);
 		UI::ProcessAlert(currentAlert);
 		lastAlertSeq = currentAlert.seq;
 	}
@@ -1833,6 +1832,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		}
 		else
 		{
+			backlight->SetState(BacklightStateNormal);
 			UI::ProcessSimpleAlert(data);
 		}
 		break;
@@ -2118,6 +2118,15 @@ void SelfTest()
 	extrusionFactors[1]->SetValue(169);
 }
 #endif
+const uint32_t pwmClockFrequency = 2000000;		// 2MHz clock (OK down to 30Hz PWM frequency)
+static pwm_channel_t backlightPwm =
+{
+	.channel = PWM_CHANNEL_1,
+	.ul_prescaler = PWM_CMR_CPRE_CLKA,
+	.alignment = PWM_ALIGN_LEFT,
+	.polarity = PWM_HIGH,
+};
+
 
 /**
  * \brief Application entry point.
@@ -2139,14 +2148,48 @@ int main(void)
 	pmc_enable_periph_clk(ID_UART1);	// enable UART1 clock
 #endif
 
-	Buzzer::Init();						// init the buzzer, must also call this before the backlight can be used
-
 	wdt_init (WDT, WDT_MR_WDRSTEN, 1000, 1000);
 	SysTick_Config(SystemCoreClock / 1000);
 	lastTouchTime = SystemTick::GetTickCount();
 
 	firmwareFeatures = firmwareTypes[0].features;		// assume RepRapFirmware until we hear otherwise
 
+	// configure hardware for buzzer and backlight
+	pwm_clock_t clock_setting =
+	{
+		.ul_clka = pwmClockFrequency,
+		.ul_clkb = 0,
+		.ul_mck = SystemCoreClock
+	};
+
+	pwm_channel_disable(PWM, PWM_CHANNEL_0);	// make sure buzzer PWM is off
+	pwm_channel_disable(PWM, backlightPwm.channel);	// make sure backlight PWM is off
+
+	pwm_init(PWM, &clock_setting);	// set up the PWM clock needed for buzzer and backlight
+
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB0 | PIO_PB5, 0);	// set both piezo pins low
+	Buzzer::Init(pwmClockFrequency);
+
+	// backlight pwm pin
+	pio_configure(PIOB, PIO_PERIPH_A, PIO_PB1, 0);
+#if IS_ER
+	// pb13 indicates which frequency to use, LOW indicates new backlight chip, HIGH indicates old chip
+	pio_configure(PIOB, PIO_INPUT, PIO_PB13, PIO_PULLUP);
+	if (pio_get(PIOB, PIO_INPUT, PIO_PB13))
+	{
+		backlight = new Backlight(&backlightPwm,
+			pwmClockFrequency, 20000,
+			15, 100, 5, 100);
+	}
+	else
+	{
+		backlight = new Backlight(&backlightPwm,
+			pwmClockFrequency, 300,
+			15, 100, 20, 40);
+	}
+#else
+	backlight = new Backlight(&backlightPwm, pwmClockFrequency, 300, 15, 100, 5, 100); // init the backlight
+#endif
 	// Read parameters from flash memory
 	nvData.Load();
 	if (nvData.IsValid())
@@ -2165,6 +2208,10 @@ int main(void)
 		CalibrateTouch();							// this includes the touch driver initialisation
 		SaveSettings();
 	}
+
+	backlight->SetDimBrightness(nvData.GetBrightness() / 8);
+	backlight->SetNormalBrightness(nvData.GetBrightness());
+	backlight->SetState(BacklightStateNormal);
 
 	// Set up the baud rate
 	SerialIo::Init(nvData.baudRate, &serial_cbs);
@@ -2235,14 +2282,15 @@ int main(void)
 				touchX->SetValue((int)x);	//debug
 				touchY->SetValue((int)y);	//debug
 #endif
-				if (isDimmed || screensaverActive)
+				lastActionTime = SystemTick::GetTickCount();
+				if (backlight->GetState() == BacklightStateDimmed || screensaverActive)
 				{
-					RestoreBrightness();
+					backlight->SetState(BacklightStateNormal);
+					DeactivateScreensaver();
 					DelayTouchLong();			// ignore further touches for a while
 				}
 				else
 				{
-					lastActionTime = SystemTick::GetTickCount();
 					ButtonPress bp = mgr.FindEvent(x, y);
 					if (bp.IsValid())
 					{
@@ -2251,6 +2299,8 @@ int main(void)
 						{
 							TouchBeep();		// give audible feedback of the touch, unless adjusting the volume
 						}
+
+						backlight->SetState(BacklightStateNormal);
 						UI::ProcessTouch(bp);
 						if (!initialized)		// Last button press was E-Stop
 						{
@@ -2269,7 +2319,8 @@ int main(void)
 			}
 			else if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
 			{
-				if (!isDimmed && UI::CanDimDisplay()){
+				if (backlight->GetState() == BacklightStateNormal && UI::CanDimDisplay())
+				{
 					DimBrightness();				// it might not actually dim the display, depending on various flags
 				}
 				uint32_t screensaverTimeout = nvData.GetScreensaverTimeout();
