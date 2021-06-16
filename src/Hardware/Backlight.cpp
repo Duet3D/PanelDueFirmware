@@ -3,7 +3,7 @@
 Backlight::Backlight(pwm_channel_t *pwm,
 		uint32_t pwmFrequency, uint32_t frequency,
 		uint32_t dimBrightness, uint32_t normalBrightness,
-		uint32_t minBrightness, uint32_t maxBrightness)
+		uint32_t minDuty, uint32_t maxDuty)
 {
 	//assert(backlight);
 	//assert(channel);
@@ -12,19 +12,18 @@ Backlight::Backlight(pwm_channel_t *pwm,
 	this->pwm = pwm;
 
 	this->frequency = frequency;
-	this->period = pwmFrequency / frequency - 1;
+	this->period = pwmFrequency / frequency;
 
 	this->dimBrightness = dimBrightness;
 	this->normalBrightness = normalBrightness;
 
-	this->minBrightness = minBrightness;
-	this->maxBrightness = maxBrightness;
+	this->minDuty = minDuty;
+	this->maxDuty = maxDuty;
 
 	this->state = BacklightStateOff;
 
 	this->pwm->ul_period = this->period;
 	this->pwm->ul_duty = 0;
-
 
 	// backlight pwm pin
 	pio_configure(PIOB, PIO_PERIPH_A, PIO_PB1, 0);				// enable HI output to backlight, but not to piezo yet
@@ -35,6 +34,8 @@ Backlight::Backlight(pwm_channel_t *pwm,
 
 void Backlight::SetBrightness(uint32_t brightness)
 {
+#define BACKLIGHT_BRIGHTNESS_MAX 100
+
 	if (brightness == 0)
 	{
 		pwm_channel_disable(PWM, this->pwm->channel);
@@ -42,6 +43,11 @@ void Backlight::SetBrightness(uint32_t brightness)
 	}
 
 	this->pwm->ul_period = this->period;
+	this->pwm->ul_duty = this->minDuty + brightness * this->maxDuty / BACKLIGHT_BRIGHTNESS_MAX;
+	if (this->pwm->ul_duty > this->maxDuty)
+	{
+		this->pwm->ul_duty = this->maxDuty;
+	}
 
 	pwm_channel_init(PWM, this->pwm);
 	pwm_channel_enable(PWM, this->pwm->channel);
@@ -53,10 +59,10 @@ void Backlight::SetState(enum BacklightState state)
 	//assert(backlight->pwm);
 	//assert(backlight->maxBrightness >= brightness);
 
-	if (this->state == state)
-		return;
+	//if (this->state == state)
+		//return;
 
-	uint32_t brightness;
+	uint32_t brightness = 100;
 
 	switch (state)
 	{

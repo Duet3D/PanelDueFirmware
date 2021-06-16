@@ -35,8 +35,8 @@ private:
 	uint32_t dimBrightness;
 	uint32_t normalBrightness;
 
-	uint32_t minBrightness;
-	uint32_t maxBrightness;
+	uint32_t minDuty;
+	uint32_t maxDuty;
 
 	enum BacklightState state;
 
