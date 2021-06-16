@@ -26,7 +26,7 @@ Backlight::Backlight(pwm_channel_t *pwm,
 	this->pwm->ul_duty = this->maxDuty;
 
 	pwm_channel_init(PWM, this->pwm);
-	pwm_channel_disable(PWM, this->pwm->channel);
+	pwm_channel_enable(PWM, this->pwm->channel);
 }
 
 void Backlight::SetBrightness(uint32_t brightness)
