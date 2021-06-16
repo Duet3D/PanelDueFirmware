@@ -5,7 +5,6 @@
 #include <stdint.h>
 
 enum BacklightState {
-	BacklightStateOff,
 	BacklightStateNormal,
 	BacklightStateDimmed
 };

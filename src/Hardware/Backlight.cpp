@@ -20,10 +20,10 @@ Backlight::Backlight(pwm_channel_t *pwm,
 	this->minDuty = minDuty;
 	this->maxDuty = maxDuty;
 
-	this->state = BacklightStateOff;
+	this->state = BacklightStateNormal;
 
 	this->pwm->ul_period = this->period;
-	this->pwm->ul_duty = 0;
+	this->pwm->ul_duty = this->maxDuty;
 
 	pwm_channel_init(PWM, this->pwm);
 	pwm_channel_disable(PWM, this->pwm->channel);
@@ -32,12 +32,6 @@ Backlight::Backlight(pwm_channel_t *pwm,
 void Backlight::SetBrightness(uint32_t brightness)
 {
 #define BACKLIGHT_BRIGHTNESS_MAX 100
-
-	if (brightness == 0)
-	{
-		pwm_channel_disable(PWM, this->pwm->channel);
-		return;
-	}
 
 	this->pwm->ul_period = this->period;
 	this->pwm->ul_duty = this->minDuty + brightness * this->maxDuty / BACKLIGHT_BRIGHTNESS_MAX;
@@ -63,9 +57,6 @@ void Backlight::SetState(enum BacklightState state)
 
 	switch (state)
 	{
-	case BacklightStateOff:
-		brightness = 0;
-		break;
 	case BacklightStateDimmed:
 		brightness = this->dimBrightness;
 		break;
