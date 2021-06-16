@@ -31,10 +31,8 @@ Backlight::Backlight(pwm_channel_t *pwm,
 
 void Backlight::SetBrightness(uint32_t brightness)
 {
-#define BACKLIGHT_BRIGHTNESS_MAX 100
-
 	this->pwm->ul_period = this->period;
-	this->pwm->ul_duty = this->minDuty + brightness * this->maxDuty / BACKLIGHT_BRIGHTNESS_MAX;
+	this->pwm->ul_duty = this->minDuty + brightness * this->maxDuty / Backlight::MaxBrightness;
 	if (this->pwm->ul_duty > this->maxDuty)
 	{
 		this->pwm->ul_duty = this->maxDuty;
