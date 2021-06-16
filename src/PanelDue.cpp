@@ -128,9 +128,11 @@ Backlight *backlight = nullptr;
 
 static uint32_t lastTouchTime;
 static uint32_t ignoreTouchTime;
+
 static uint32_t lastPollTime = 0;
 static uint32_t lastResponseTime = 0;
 static uint32_t lastOutOfBufferResponse = 0;
+
 static uint8_t oobCounter = 0;
 static bool outOfBuffers = false;
 static uint32_t lastActionTime = 0;							// the last time anything significant happened
@@ -138,12 +140,17 @@ static FirmwareFeatureMap firmwareFeatures;
 
 static bool screensaverActive = false;						// true if screensaver is active
 static bool isDelta = false;
+
 static size_t numAxes = MIN_AXES;
-static int32_t beepFrequency = 0, beepLength = 0;
+static int32_t beepFrequency = 0;
+static int32_t beepLength = 0;
+
 static uint32_t messageSeq = 0;
 static uint32_t newMessageSeq = 0;
+
 static uint32_t fileSize = 0;
 static uint8_t visibleAxesCounted = 0;
+
 static int8_t lastBed = -1;
 static int8_t lastChamber = -1;
 static int8_t lastSpindle = -1;
