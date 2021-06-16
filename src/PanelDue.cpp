@@ -19,6 +19,7 @@
 #include <Hardware/UTouch.hpp>
 #include <Hardware/SerialIo.hpp>
 #include <Hardware/Buzzer.hpp>
+#include <Hardware/Backlight.hpp>
 #include <Hardware/SysTick.hpp>
 #include <Hardware/Reset.hpp>
 #include <General/SafeStrtod.h>
@@ -790,9 +791,7 @@ void SetBaudRate(uint32_t rate)
 
 extern void SetBrightness(int percent)
 {
-	nvData.brightness = constrain<int>(percent, Buzzer::MinBrightness, Buzzer::MaxBrightness);
-	RestoreBrightness();
-}
+	nvData.brightness = constrain<int>(percent, Backlight::MinBrightness, Backlight::MaxBrightness);
 
 void UpdatePollRate(bool idle)
 {

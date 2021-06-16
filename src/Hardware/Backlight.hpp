@@ -13,6 +13,9 @@ enum BacklightState {
 class Backlight
 {
 public:
+	static const uint32_t MinBrightness = 0;
+	static const uint32_t MaxBrightness = 100;
+
 	Backlight(pwm_channel_t *pwm,
 		uint32_t pwmFrequency, uint32_t frequency,
 		uint32_t dimBrightness, uint32_t normalBrightness,

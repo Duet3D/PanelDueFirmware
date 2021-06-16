@@ -1,6 +1,7 @@
 #include "FlashData.hpp"
 
 #include "Hardware/Buzzer.hpp"
+#include "Hardware/Backlight.hpp"
 #include "UI/UserInterface.hpp"
 
 #if SAM4S
@@ -17,8 +18,8 @@ bool FlashData::IsValid() const
 {
 	return magic == magicVal
 		&& touchVolume <= Buzzer::MaxVolume
-		&& brightness >= Buzzer::MinBrightness
-		&& brightness <= Buzzer::MaxBrightness
+		&& brightness >= Backlight::MinBrightness
+		&& brightness <= Backlight::MaxBrightness
 		&& language < UI::GetNumLanguages()
 		&& colourScheme < NumColourSchemes
 		&& displayDimmerType < DisplayDimmerType::NumTypes
@@ -59,7 +60,7 @@ void FlashData::SetDefaults()
 	lcdOrientation = DefaultDisplayOrientAdjust;
 	touchOrientation = DefaultTouchOrientAdjust;
 	touchVolume = Buzzer::DefaultVolume;
-	brightness = Buzzer::DefaultBrightness;
+	brightness = Backlight::MaxBrightness;
 	language = 0;
 	colourScheme = 0;
 	displayDimmerType = DisplayDimmerType::always;
