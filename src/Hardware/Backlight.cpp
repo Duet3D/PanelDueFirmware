@@ -25,9 +25,6 @@ Backlight::Backlight(pwm_channel_t *pwm,
 	this->pwm->ul_period = this->period;
 	this->pwm->ul_duty = 0;
 
-	// backlight pwm pin
-	pio_configure(PIOB, PIO_PERIPH_A, PIO_PB1, 0);				// enable HI output to backlight, but not to piezo yet
-
 	pwm_channel_init(PWM, this->pwm);
 	pwm_channel_disable(PWM, this->pwm->channel);
 }
