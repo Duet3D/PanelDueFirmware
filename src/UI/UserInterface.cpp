@@ -1179,7 +1179,6 @@ static void CreateMainPages(uint32_t language, const ColourScheme& colours)
 
 namespace UI
 {
-
 	static void Adjusting(ButtonPress bp)
 	{
 		fieldBeingAdjusted = bp;
@@ -2294,7 +2293,8 @@ namespace UI
 						{
 							int bedOrChamberIndex = bp.GetIParam();
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedActiveTemp;
-							const auto bedOrChamber = isBed ? OM::GetBed(bedOrChamberIndex) : OM::GetChamber(bedOrChamberIndex);							if (bedOrChamber == nullptr)
+							const auto bedOrChamber = isBed ? OM::GetBed(bedOrChamberIndex) : OM::GetChamber(bedOrChamberIndex);
+							if (bedOrChamber == nullptr)
 							{
 								break;
 							}
@@ -2954,7 +2954,7 @@ namespace UI
 				}
 				break;
 
-			case evUp:
+			case evUp: // TODO new events for moving editor one left or right
 				currentHistoryBuffer = (currentHistoryBuffer + numUserCommandBuffers - 1) % numUserCommandBuffers;
 				if (currentHistoryBuffer == currentUserCommandBuffer)
 				{
@@ -3465,7 +3465,8 @@ namespace UI
 
 	void SetSpindleLimit(size_t spindleIndex, uint32_t value, bool max)
 	{
-		OM::Spindle *spindle = OM::GetOrCreateSpindle(spindleIndex);		if (spindle != nullptr)
+		OM::Spindle *spindle = OM::GetOrCreateSpindle(spindleIndex);
+		if (spindle != nullptr)
 		{
 			if (max)
 			{
@@ -3540,7 +3541,8 @@ namespace UI
 
 	void SetToolExtruder(size_t toolIndex, uint8_t extruder)
 	{
-		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);		if (tool != nullptr)
+		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+		if (tool != nullptr)
 		{
 			tool->extruders.SetBit(extruder);
 		}
@@ -3639,7 +3641,8 @@ namespace UI
 	{
 		if (index < MaxTotalAxes)
 		{
-			OM::Axis *axis = OM::GetOrCreateAxis(index);			if (axis != nullptr)
+			OM::Axis *axis = OM::GetOrCreateAxis(index);
+			if (axis != nullptr)
 			{
 				axis->letter[0] = l;
 			}
