@@ -25,9 +25,6 @@ Backlight::Backlight(pwm_channel_t *pwm,
 	this->pwm->ul_period = this->period;
 	this->pwm->ul_duty = 0;
 
-	// configure pb13, pb13 tells us which frequency to use. should move to paneldue
-	pio_configure(PIOB, PIO_INPUT, PIO_PB13, PIO_PULLUP);
-	pio_get(PIOB, PIO_INPUT, PIO_PB13);
 
 	// backlight pwm pin
 	pio_configure(PIOB, PIO_PERIPH_A, PIO_PB1, 0);				// enable HI output to backlight, but not to piezo yet
