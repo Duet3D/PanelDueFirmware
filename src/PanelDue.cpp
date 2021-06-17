@@ -798,9 +798,9 @@ extern void SetBrightness(int percent)
 	RestoreBrightness();
 }
 
-void UpdatePollRate()
+void UpdatePollRate(bool idle)
 {
-	if (screensaverActive)
+	if (idle)
 	{
 		printerPollInterval = slowPrinterPollInterval;
 	}
@@ -816,7 +816,7 @@ void DeactivateScreensaver()
 	if (screensaverActive) {
 		UI::DeactivateScreensaver();
 		screensaverActive = false;
-		UpdatePollRate();
+		UpdatePollRate(screensaverActive);
 	}
 }
 
@@ -850,7 +850,7 @@ void ActivateScreensaver()
 		}
 		screensaverActive = true;
 		UI::ActivateScreensaver();
-		UpdatePollRate();
+		UpdatePollRate(screensaverActive);
 	}
 	else
 	{
@@ -1120,7 +1120,7 @@ void HandleOutOfBufferResponse() {
 	// Slow down the poll interval by 10% if we see too many out-of-buffer in short time
 	if (oobCounter >= 3) {
 		pollIntervalMultiplier += 0.1;
-		UpdatePollRate();
+		UpdatePollRate(screensaverActive);
 		oobCounter = 0;
 		MessageLog::AppendMessage("Slowing down poll rate");
 	}
@@ -2412,6 +2412,7 @@ int main(void)
 				{
 					dbg("sending %s", currentReqSeq->key);
 					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", currentReqSeq->key, currentReqSeq->flags);
+					lastPollTime = SystemTick::GetTickCount();
 				}
 				else
 				{
@@ -2423,21 +2424,20 @@ int main(void)
 						initialized = true;
 					}
 
-					// First check for specific info we need to fetch
-					bool ok = OkToSend();
-					bool done = true;
-					if (ok)
+					// check if specific info is needed
+					bool sent = false;
+					if (OkToSend())
 					{
-						done = FileManager::ProcessTimers();
+						sent = FileManager::ProcessTimers();
 					}
 
-					// Otherwise just send a normal poll command
-					if (!ok && !done)
+					// if nothing was fetched do a status update
+					if (!sent)
 					{
 						SerialIo::Sendf("M409 F\"d99f\"\n");
 					}
+					lastPollTime = SystemTick::GetTickCount();
 				}
-				lastPollTime = SystemTick::GetTickCount();
 			}
 			else if (now - lastPollTime >= printerPollTimeout)	  // last response was most likely incomplete start over
 			{
