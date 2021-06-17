@@ -9,7 +9,7 @@
 #define SRC_OBJECTMODEL_LISTHELPERS_HPP_
 
 #include <cstdint>
-#include <General/inplace_function.h>
+#include <General/function_ref.h>
 
 template<typename L, typename T>
 T* GetOrCreate(L& list, const size_t index, const bool create)
@@ -37,7 +37,7 @@ T* GetOrCreate(L& list, const size_t index, const bool create)
 }
 
 template<typename L, typename T>
-T* Find(L& list, stdext::inplace_function<bool(T*)> filter)
+T* Find(L& list, function_ref<bool(T*)> filter)
 {
 	const size_t count = list.Size();
 	for (size_t i = 0; i < count; ++i)
