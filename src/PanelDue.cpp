@@ -1122,7 +1122,7 @@ void HandleOutOfBufferResponse() {
 		pollIntervalMultiplier += 0.1;
 		UpdatePollRate(screensaverActive);
 		oobCounter = 0;
-		MessageLog::AppendMessage("Slowing down poll rate");
+		MessageLog::AppendMessage("Info: slowing down poll rate");
 	}
 	lastOutOfBufferResponse = now;
 	outOfBuffers = true;
