@@ -18,8 +18,7 @@ public:
 	Backlight(pwm_channel_t *pwm,
 		uint32_t pwmFrequency, uint32_t frequency,
 		uint32_t dimBrightness, uint32_t normalBrightness,
-		uint32_t minBrightness, uint32_t maxBrightness);
-	virtual ~Backlight() {};
+		uint32_t minDuty, uint32_t maxDuty);
 
 	void SetDimBrightness(uint32_t dimBrightness);
 	void SetNormalBrightness(uint32_t normalBrightness);

@@ -1,88 +1,74 @@
 #include "Hardware/Backlight.hpp"
 
-Backlight::Backlight(pwm_channel_t *pwm,
-		uint32_t pwmFrequency, uint32_t frequency,
-		uint32_t dimBrightness, uint32_t normalBrightness,
-		uint32_t minDuty, uint32_t maxDuty)
+Backlight::Backlight(pwm_channel_t *p_pwm,
+		uint32_t p_pwmFrequency, uint32_t p_frequency,
+		uint32_t p_dimBrightness, uint32_t p_normalBrightness,
+		uint32_t p_minDuty, uint32_t p_maxDuty)
 {
-	//assert(backlight);
-	//assert(channel);
-	//assert(pwmClockFrequency >= frequency);
+	pwm = p_pwm;
 
-	this->pwm = pwm;
+	frequency = p_frequency;
+	period = p_pwmFrequency / p_frequency;
 
-	this->frequency = frequency;
-	this->period = pwmFrequency / frequency;
+	dimBrightness = p_dimBrightness;
+	normalBrightness = p_normalBrightness;
 
-	this->dimBrightness = dimBrightness;
-	this->normalBrightness = normalBrightness;
+	minDuty = p_minDuty;
+	maxDuty = p_maxDuty;
 
-	this->minDuty = minDuty;
-	this->maxDuty = maxDuty;
+	state = BacklightStateNormal;
 
-	this->state = BacklightStateNormal;
+	pwm->ul_period = period;
+	pwm->ul_duty = maxDuty;
 
-	this->pwm->ul_period = this->period;
-	this->pwm->ul_duty = this->maxDuty;
-
-	pwm_channel_init(PWM, this->pwm);
-	pwm_channel_enable(PWM, this->pwm->channel);
+	pwm_channel_init(PWM, pwm);
+	pwm_channel_enable(PWM, pwm->channel);
 }
 
 void Backlight::SetBrightness(uint32_t brightness)
 {
-	this->pwm->ul_period = this->period;
-	this->pwm->ul_duty = this->minDuty + brightness * this->maxDuty / Backlight::MaxBrightness;
-	if (this->pwm->ul_duty > this->maxDuty)
+	pwm->ul_period = period;
+	pwm->ul_duty = minDuty + brightness * (maxDuty - minDuty) / Backlight::MaxBrightness;
+	if (pwm->ul_duty > maxDuty)
 	{
-		this->pwm->ul_duty = this->maxDuty;
+		pwm->ul_duty = maxDuty;
 	}
 
-	pwm_channel_init(PWM, this->pwm);
-	pwm_channel_enable(PWM, this->pwm->channel);
+	pwm_channel_init(PWM, pwm);
+	pwm_channel_enable(PWM, pwm->channel);
 }
 
-void Backlight::SetState(enum BacklightState state)
+void Backlight::SetState(enum BacklightState newState)
 {
-	//assert(backlight);
-	//assert(backlight->pwm);
-	//assert(backlight->maxBrightness >= brightness);
-
-	//if (this->state == state)
-		//return;
-
 	uint32_t brightness = 100;
 
-	switch (state)
+	switch (newState)
 	{
 	case BacklightStateDimmed:
-		brightness = this->dimBrightness;
+		brightness = dimBrightness;
 		break;
 	case BacklightStateNormal:
-		brightness = this->normalBrightness;
+		brightness = normalBrightness;
 		break;
 	default:
-		// TODO throw exception
 		break;
 	}
 
-	this->state = state;
-	this->SetBrightness(brightness);
+	state = newState;
+	SetBrightness(brightness);
 }
 
 enum BacklightState Backlight::GetState()
 {
-	return this->state;
+	return state;
 }
 
-void Backlight::SetNormalBrightness(uint32_t normalBrightness)
+void Backlight::SetNormalBrightness(uint32_t p_normalBrightness)
 {
-	// TODO add checks?
-	this->normalBrightness = normalBrightness;
+	normalBrightness = p_normalBrightness;
 }
 
-void Backlight::SetDimBrightness(uint32_t dimBrightness)
+void Backlight::SetDimBrightness(uint32_t p_dimBrightness)
 {
-	// TODO add checks?
-	this->dimBrightness = dimBrightness;
+	dimBrightness = p_dimBrightness;
 }
