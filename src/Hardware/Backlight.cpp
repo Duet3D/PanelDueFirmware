@@ -21,6 +21,9 @@ Backlight::Backlight(pwm_channel_t *p_pwm,
 	pwm->ul_period = period;
 	pwm->ul_duty = maxDuty * (period - 1) / Backlight::MaxBrightness;
 
+	// backlight pwm pin
+	pio_configure(PIOB, PIO_PERIPH_A, PIO_PB1, 0);
+
 	pwm_channel_init(PWM, pwm);
 	pwm_channel_enable(PWM, pwm->channel);
 }

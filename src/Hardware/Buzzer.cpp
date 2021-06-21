@@ -34,6 +34,8 @@ namespace Buzzer
 	// Initialize the buzzer and the PWM system. Must be called before using the buzzer or backlight.
 	void Init(uint32_t pwmFrequency)
 	{
+		pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB0 | PIO_PB5, 0);	// set both piezo pins low
+
 		pwmClockFrequency = pwmFrequency;
 
 		beepTicksToGo = 0;
