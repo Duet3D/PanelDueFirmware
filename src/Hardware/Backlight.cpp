@@ -53,18 +53,3 @@ void Backlight::SetState(enum BacklightState newState)
 	state = newState;
 	SetBrightness(brightness);
 }
-
-enum BacklightState Backlight::GetState()
-{
-	return state;
-}
-
-void Backlight::SetNormalBrightness(uint32_t p_normalBrightness)
-{
-	normalBrightness = p_normalBrightness;
-}
-
-void Backlight::SetDimBrightness(uint32_t p_dimBrightness)
-{
-	dimBrightness = p_dimBrightness;
-}
