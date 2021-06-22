@@ -2173,7 +2173,7 @@ int main(void)
 
 	pwm_init(PWM, &clock_setting);	// set up the PWM clock needed for buzzer and backlight
 
-	Buzzer::Init(pwmClockFrequency);
+	Buzzer::Init();
 
 #if IS_ER
 	// pb13 indicates which frequency to use, LOW indicates new backlight chip, HIGH indicates old chip

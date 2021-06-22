@@ -18,7 +18,7 @@
 
 namespace Buzzer
 {
-	static uint32_t pwmClockFrequency = 2000000;		// 2MHz clock (OK down to 30Hz PWM frequency)
+	extern const uint32_t pwmClockFrequency = 2000000;		// 2MHz clock (OK down to 30Hz PWM frequency)
 	static uint32_t beepTicksToGo = 0;
 	static bool inBuzzer = true;
 
@@ -32,12 +32,9 @@ namespace Buzzer
 	};
 
 	// Initialize the buzzer and the PWM system. Must be called before using the buzzer or backlight.
-	void Init(uint32_t pwmFrequency)
+	void Init()
 	{
 		pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB0 | PIO_PB5, 0);	// set both piezo pins low
-
-		pwmClockFrequency = pwmFrequency;
-
 		beepTicksToGo = 0;
 		inBuzzer = false;
 	}
