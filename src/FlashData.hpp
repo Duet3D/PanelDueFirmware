@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "Hardware/Backlight.hpp"
+#include "General/SimpleMath.h"
 #include "UI/Display.hpp"
 
 enum class DisplayDimmerType : uint8_t
@@ -19,6 +21,10 @@ enum class HeaterCombineType : uint8_t
 	combined,
 	NumTypes
 };
+
+struct FlashData;
+
+extern FlashData nvData, savedNvData;
 
 
 struct FlashData
@@ -58,23 +64,36 @@ struct FlashData
 	void Save() const;
 
 	bool IsSaveNeeded();
-	void SetDisplayDimmerType(DisplayDimmerType newType);
-	void SetVolume(uint8_t newVolume);
-	void SetInfoTimeout(uint8_t newInfoTimeout);
-	void SetScreensaverTimeout(uint32_t screensaverTimeout);
+
 	bool SetColourScheme(uint8_t newColours);
+	void SetInfoTimeout(uint8_t newInfoTimeout) { nvData.infoTimeout = newInfoTimeout; }
 	bool SetLanguage(uint8_t newLanguage);
-	uint32_t GetBaudRate();
-	uint32_t GetVolume();
-	int GetBrightness();
-	uint32_t GetScreensaverTimeout();
-	uint8_t GetBabystepAmountIndex();
-	void SetBabystepAmountIndex(uint8_t babystepAmountIndex);
-	uint16_t GetFeedrate();
-	void SetFeedrate(uint16_t feedrate);
-	HeaterCombineType GetHeaterCombineType();
-	void SetHeaterCombineType(HeaterCombineType combine);
-	DisplayDimmerType GetDisplayDimmerType();
+
+	void SetDisplayDimmerType(DisplayDimmerType newType) { nvData.displayDimmerType = newType; }
+	DisplayDimmerType GetDisplayDimmerType() { return nvData.displayDimmerType; }
+
+	void SetVolume(uint8_t newVolume) { nvData.touchVolume = newVolume; }
+	uint32_t GetVolume() { return nvData.touchVolume; }
+
+	void SetScreensaverTimeout(uint32_t screensaverTimeout) { nvData.screensaverTimeout = screensaverTimeout; }
+	uint32_t GetScreensaverTimeout() { return nvData.screensaverTimeout; }
+
+	void SetBabystepAmountIndex(uint8_t babystepAmountIndex) { nvData.babystepAmountIndex = babystepAmountIndex; }
+	uint8_t GetBabystepAmountIndex() { return nvData.babystepAmountIndex; }
+
+	void SetFeedrate(uint16_t feedrate) { nvData.feedrate = feedrate; }
+	uint16_t GetFeedrate() { return nvData.feedrate; }
+
+	void SetHeaterCombineType(HeaterCombineType combine) { nvData.heaterCombineType = combine; }
+	HeaterCombineType GetHeaterCombineType() { return nvData.heaterCombineType; }
+
+	void SetBaudRate(uint32_t rate) { nvData.baudRate = rate; }
+	uint32_t GetBaudRate() { return nvData.baudRate; }
+
+	void SetBrightness(uint32_t percent) { nvData.brightness =
+		constrain<int>(percent, Backlight::MinBrightness, Backlight::MaxBrightness); }
+	int GetBrightness() { return (int)nvData.brightness; }
+
 
 };
 
@@ -85,7 +104,5 @@ static_assert(sizeof(FlashData) <= 512, "Flash data too large");
 // FlashData must fit in the area we have reserved
 static_assert(sizeof(FlashData) <= FLASH_DATA_LENGTH, "Flash data too large");
 #endif
-
-extern FlashData nvData, savedNvData;
 
 #endif /* ifndef FLASH_DATA */

@@ -821,13 +821,13 @@ void PortraitDisplay(const bool withTouch)
 
 void SetBaudRate(uint32_t rate)
 {
-	nvData.baudRate = rate;
+	nvData.SetBaudRate(rate);
 	SerialIo::SetBaudRate(rate);
 }
 
 void SetBrightness(int percent)
 {
-	nvData.brightness = constrain<int>(percent, Backlight::MinBrightness, Backlight::MaxBrightness);
+	nvData.SetBrightness(percent);
 	backlight->SetDimBrightness(nvData.GetBrightness() / 8);
 	backlight->SetNormalBrightness(nvData.GetBrightness());
 	backlight->SetState(BacklightStateNormal);
@@ -2134,7 +2134,6 @@ static pwm_channel_t backlightPwm =
 	.polarity = PWM_HIGH,
 };
 
-
 /**
  * \brief Application entry point.
  *
@@ -2218,7 +2217,7 @@ int main(void)
 	backlight->SetState(BacklightStateNormal);
 
 	// Set up the baud rate
-	SerialIo::Init(nvData.baudRate, &serial_cbs);
+	SerialIo::Init(nvData.GetBaudRate(), &serial_cbs);
 
 	MessageLog::Init();
 
