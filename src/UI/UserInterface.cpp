@@ -71,7 +71,9 @@ static DisplayField *emptyRoot, *baseRoot, *commonRoot, *controlRoot, *printRoot
 static SingleButton *homeAllButton, *bedCompButton;
 static IconButtonWithText *homeButtons[MaxDisplayableAxes], *toolButtons[MaxSlots];
 static FloatField *controlTabAxisPos[MaxDisplayableAxes];
+#if DISPLAY_X == 800
 static FloatField *printTabAxisPos[MaxDisplayableAxes];
+#endif
 static FloatField *movePopupAxisPos[MaxDisplayableAxes];
 static FloatField *currentTemps[MaxSlots];
 static FloatField *fpHeightField, *fpLayerHeightField, *babystepOffsetField;
@@ -1332,7 +1334,9 @@ namespace UI
 			f = f->next;
 		}
 		mgr.Show(controlTabAxisPos[slot], b);
+#if DISPLAY_X == 800
 		mgr.Show(printTabAxisPos[slot], b);
+#endif
 		if (numDisplayedAxes < MaxDisplayableAxes)
 		{
 			mgr.Show(movePopupAxisPos[slot], b);		// the move popup axis positions occupy the last axis row of the move popup
@@ -1356,7 +1360,9 @@ namespace UI
 			{
 				size_t slot = axis->slot;
 				controlTabAxisPos[slot]->SetValue(fval);
+#if DISPLAY_X == 800
 				printTabAxisPos[slot]->SetValue(fval);
+#endif
 				movePopupAxisPos[slot]->SetValue(fval);
 			}
 		}
@@ -1843,7 +1849,9 @@ namespace UI
 					const uint8_t slot = axis->slot;
 					controlTabAxisPos	[slot]->SetLabel(letter);
 					moveAxisRows		[slot]->SetValue(letter);
+#if DISPLAY_X == 800
 					printTabAxisPos		[slot]->SetLabel(letter);
+#endif
 					movePopupAxisPos	[slot]->SetLabel(letter);
 					homeButtons			[slot]->SetText(letter);
 
