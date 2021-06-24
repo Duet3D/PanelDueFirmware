@@ -110,3 +110,11 @@ bool FlashData::SetLanguage(uint8_t newLanguage)
 	nvData.language = newLanguage;
 	return ret;
 }
+
+#if SAM4S
+// FlashData must fit in user signature flash area
+static_assert(sizeof(FlashData) <= 512, "Flash data too large");
+#else
+// FlashData must fit in the area we have reserved
+static_assert(sizeof(FlashData) <= FLASH_DATA_LENGTH, "Flash data too large");
+#endif
