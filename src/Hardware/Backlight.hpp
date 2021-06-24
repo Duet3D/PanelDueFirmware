@@ -15,6 +15,8 @@ public:
 	static const uint32_t MinBrightness = 0;
 	static const uint32_t MaxBrightness = 100;
 
+	static const uint32_t MaxDutyRange = 100;
+
 	Backlight(pwm_channel_t *pwm,
 		uint32_t pwmFrequency, uint32_t frequency,
 		uint32_t dimBrightness, uint32_t normalBrightness,
@@ -36,8 +38,8 @@ private:
 	uint32_t dimBrightness;
 	uint32_t normalBrightness;
 
-	uint32_t minDuty;
-	uint32_t maxDuty;
+	uint32_t minDuty;	// in per cent
+	uint32_t maxDuty;	// in per cent
 
 	enum BacklightState state;
 
