@@ -1,7 +1,7 @@
 #ifndef FLASH_DATA
 #define FLASH_DATA 1
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "Hardware/Backlight.hpp"
 #include "General/SimpleMath.h"

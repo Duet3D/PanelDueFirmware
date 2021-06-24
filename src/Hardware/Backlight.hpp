@@ -2,7 +2,7 @@
 #define HARDWARE_BACKLIGHT_HPP 1
 
 #include "asf.h"
-#include <stdint.h>
+#include <cstdint>
 
 enum BacklightState {
 	BacklightStateNormal,
