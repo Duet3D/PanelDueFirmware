@@ -14,15 +14,7 @@
 typedef uint16_t PixelNumber;
 
 // From the display type, we determine the display controller type and touch screen orientation adjustment
-#if DISPLAY_TYPE == DISPLAY_TYPE_ITDB02_32WD
-
-# define DISPLAY_CONTROLLER		HX8352A
-const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseY | InvertBitmap);
-const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation>(ReverseY);
-# define DISPLAY_X				(400)
-# define DISPLAY_Y				(240)
-
-#elif DISPLAY_TYPE == DISPLAY_TYPE_ITDB02_43
+#if DISPLAY_TYPE == DISPLAY_TYPE_ITDB02_43
 
 # define DISPLAY_CONTROLLER		SSD1963_480
 const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(Default);
