@@ -9,7 +9,7 @@
 #ifndef BUZZER_H_
 #define BUZZER_H_
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace Buzzer
 {
