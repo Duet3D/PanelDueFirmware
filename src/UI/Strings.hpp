@@ -21,6 +21,17 @@
 #define Newline			"\n"
 #define DegreeSymbol	"\u00B0"
 
+// Unicode strings for special characters in our font
+#define DECIMAL_POINT	"\xC2\xB7"		// Unicode middle-dot, code point B7
+#define DEGREE_SYMBOL	"\xC2\xB0"		// Unicode degree-symbol, code point B0
+#define THIN_SPACE		"\xC2\x80"		// Unicode control character, code point 0x80, we use it as thin space
+#define LEFT_ARROW		"\xC2\x81"		// Unicode control character, code point 0x81, we use it as up arrow
+#define UP_ARROW		"\xC2\x82"		// Unicode control character, code point 0x82, we use it as up arrow
+#define RIGHT_ARROW		"\xC2\x83"		// Unicode control character, code point 0x83, we use it as down arrow
+#define DOWN_ARROW		"\xC2\x84"		// Unicode control character, code point 0x84, we use it as down arrow
+#define MORE_ARROW		"\xC2\x85"
+#define LESS_ARROW		"\xC2\x86"
+
 constexpr unsigned int NumStatusStrings = 14;
 
 struct StringTable

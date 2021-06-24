@@ -3,8 +3,6 @@
 #include <iostream>
 #include <string>
 
-const size_t NumColourSchemes = 3;
-
 enum class DisplayDimmerType : uint8_t
 {
 	never = 0,				// never dim the display
@@ -29,8 +27,6 @@ static int print_index(size_t index);
 
 static int print_all(void)
 {
-	const StringTable *orig = &LanguageTables[0];
-
 	for (size_t i = 1; i < ARRAY_SIZE(LanguageTables); i++) {
 		print_index(i);
 	}
@@ -199,7 +195,7 @@ int main(int argc, char *argv[])
 			  << "help - print this help" << std::endl
 			  << "LANGUAGES_NAMES - pass a list of languages names to print languages' translations" << std::endl;
 	} else {
-		for (size_t i = 1; i < argc; i++) {
+		for (ssize_t i = 1; i < argc; i++) {
 			print_lang(argv[i]);
 		}
 
