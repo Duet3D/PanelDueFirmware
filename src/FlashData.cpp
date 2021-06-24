@@ -9,14 +9,14 @@
 #include <Hardware/FlashStorage.hpp>
 #endif
 
-#define ARRAY_SIZE(arr) (sizeof(arr)/sizeof(arr[0]))
+FlashData nvData, savedNvData;
 
 bool FlashData::IsValid() const
 {
 	return magic == magicVal
 		&& touchVolume <= Buzzer::MaxVolume
-		&& brightness >= Buzzer::MinBrightness
-		&& brightness <= Buzzer::MaxBrightness
+		&& brightness >= Backlight::MinBrightness
+		&& brightness <= Backlight::MaxBrightness
 		&& language < UI::GetNumLanguages()
 		&& colourScheme < NumColourSchemes
 		&& displayDimmerType < DisplayDimmerType::NumTypes
@@ -57,7 +57,7 @@ void FlashData::SetDefaults()
 	lcdOrientation = DefaultDisplayOrientAdjust;
 	touchOrientation = DefaultTouchOrientAdjust;
 	touchVolume = Buzzer::DefaultVolume;
-	brightness = Buzzer::DefaultBrightness;
+	brightness = Backlight::MaxBrightness;
 	language = 0;
 	colourScheme = 0;
 	displayDimmerType = DisplayDimmerType::always;
@@ -89,4 +89,24 @@ void FlashData::Save() const
 #else
 	FlashStorage::write(0, &(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
 #endif
+}
+
+bool FlashData::IsSaveNeeded()
+{
+	return nvData != savedNvData;
+}
+
+bool FlashData::SetColourScheme(uint8_t newColours)
+{
+	const bool ret = (newColours != nvData.colourScheme);
+	nvData.colourScheme = newColours;
+	return ret;
+}
+
+// Set the language, returning true if it has changed
+bool FlashData::SetLanguage(uint8_t newLanguage)
+{
+	const bool ret = (newLanguage != nvData.language);
+	nvData.language = newLanguage;
+	return ret;
 }

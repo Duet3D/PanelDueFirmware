@@ -10,6 +10,7 @@
 #include <UI/UserInterfaceConstants.hpp>
 #include "Configuration.hpp"
 #include "PanelDue.hpp"
+#include "FlashData.hpp"
 #include "FileManager.hpp"
 #include <UI/MessageLog.hpp>
 #include "Icons/Icons.hpp"
@@ -387,7 +388,7 @@ ButtonPress CreateStringButtonRow(
 	return bp;
 }
 
-#if 0	// currently unused
+#if 0  // currently unused
 // Create a row of icon buttons.
 // Set the colours before calling this
 void CreateIconButtonRow(Window * pf, PixelNumber top, PixelNumber left, PixelNumber totalWidth, PixelNumber spacing, unsigned int numButtons,
@@ -453,42 +454,42 @@ const char * _ecv_array StripPrefix(const char * _ecv_array dir)
 }
 
 // Adjust the brightness
-void ChangeBrightness(bool up)
+static void ChangeBrightness(bool up)
 {
-	int adjust = max<int>(1, GetBrightness()/5);
+	int adjust = max<int>(1, nvData.GetBrightness() / 5);
 	if (!up)
 	{
 		adjust = -adjust;
 	}
-	SetBrightness(GetBrightness() + adjust);
+	SetBrightness(nvData.GetBrightness() + adjust);
 }
 
 // Cycle through available display dimmer types
-void ChangeDisplayDimmerType()
+static void ChangeDisplayDimmerType()
 {
-	DisplayDimmerType newType = (DisplayDimmerType) ((uint8_t)GetDisplayDimmerType() + 1);
+	DisplayDimmerType newType = (DisplayDimmerType) ((uint8_t)nvData.GetDisplayDimmerType() + 1);
 	if (newType == DisplayDimmerType::NumTypes)
 	{
 		newType = (DisplayDimmerType)0;
 	}
-	SetDisplayDimmerType(newType);
+	nvData.SetDisplayDimmerType(newType);
 }
 
 // Cyce through available heater combine types and repaint
-void ChangeHeaterCombineType()
+static void ChangeHeaterCombineType()
 {
-	HeaterCombineType newType = (HeaterCombineType) ((uint8_t)GetHeaterCombineType() + 1);
+	HeaterCombineType newType = (HeaterCombineType) ((uint8_t)nvData.GetHeaterCombineType() + 1);
 	if (newType == HeaterCombineType::NumTypes)
 	{
 		newType = (HeaterCombineType)0;
 	}
-	SetHeaterCombineType(newType);
+	nvData.SetHeaterCombineType(newType);
 	UI::AllToolsSeen();
 }
 
 // Update an integer field, provided it isn't the one being adjusted
 // Don't update it if the value hasn't changed, because that makes the display flicker unnecessarily
-void UpdateField(IntegerButton *f, int val)
+static void UpdateField(IntegerButton *f, int val)
 {
 	if (f != fieldBeingAdjusted.GetButton() && f->GetValue() != val)
 	{
@@ -496,7 +497,7 @@ void UpdateField(IntegerButton *f, int val)
 	}
 }
 
-void PopupAreYouSure(Event ev, const char* text, const char* query = strings->areYouSure)
+static void PopupAreYouSure(Event ev, const char* text, const char* query = strings->areYouSure)
 {
 	eventToConfirm = ev;
 	if (isLandscape)
@@ -507,7 +508,7 @@ void PopupAreYouSure(Event ev, const char* text, const char* query = strings->ar
 	}
 }
 
-void CreateIntegerAdjustPopup(const ColourScheme& colours)
+static void CreateIntegerAdjustPopup(const ColourScheme& colours)
 {
 	// Create the popup window used to adjust temperatures, fan speed, extrusion factor etc.
 	static const char* const tempPopupText[] = {"-5", "-1", strings->set, "+1", "+5"};
@@ -515,7 +516,7 @@ void CreateIntegerAdjustPopup(const ColourScheme& colours)
 	setTempPopup = CreateIntPopupBar(colours, tempPopupBarWidth, 5, tempPopupText, tempPopupParams, evAdjustInt, evSetInt);
 }
 
-void CreateIntegerRPMAdjustPopup(const ColourScheme& colours)
+static void CreateIntegerRPMAdjustPopup(const ColourScheme& colours)
 {
 	// Create the popup window used to adjust temperatures, fan speed, extrusion factor etc.
 	static const char* const rpmPopupText[] = {"-1000", "-100", "-10", strings->set, "+10", "+100", "+1000"};
@@ -524,7 +525,7 @@ void CreateIntegerRPMAdjustPopup(const ColourScheme& colours)
 }
 
 // Create the movement popup window
-void CreateMovePopup(const ColourScheme& colours)
+static void CreateMovePopup(const ColourScheme& colours)
 {
 	static const char * _ecv_array const xyJogValues[] = { "-100", "-10", "-1", "-0.1", "0.1",  "1", "10", "100" };
 	static const char * _ecv_array const zJogValues[] = { "-50", "-5", "-0.5", "-0.05", "0.05",  "0.5", "5", "50" };
@@ -562,7 +563,7 @@ void CreateMovePopup(const ColourScheme& colours)
 }
 
 // Create the extrusion controls popup
-void CreateExtrudePopup(const ColourScheme& colours)
+static void CreateExtrudePopup(const ColourScheme& colours)
 {
 	static const char * _ecv_array extrudeAmountValues[] = { "100", "50", "20", "10", "5",  "1" };
 	static const char * _ecv_array extrudeSpeedValues[] = { "50", "20", "10", "5", "2" };
@@ -646,7 +647,7 @@ pre(fileButtons.lim == numRows * numCols)
 }
 
 // Create the popup window used to display the file dialog
-void CreateFileActionPopup(const ColourScheme& colours)
+static void CreateFileActionPopup(const ColourScheme& colours)
 {
 	fileDetailPopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
@@ -684,7 +685,7 @@ void CreateFileActionPopup(const ColourScheme& colours)
 }
 
 // Create the "Are you sure?" popup
-void CreateAreYouSurePopup(const ColourScheme& colours)
+static void CreateAreYouSurePopup(const ColourScheme& colours)
 {
 	areYouSurePopup = new PopupWindow(areYouSurePopupHeight, areYouSurePopupWidth, colours.popupBackColour, colours.popupBorderColour);
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
@@ -696,7 +697,7 @@ void CreateAreYouSurePopup(const ColourScheme& colours)
 	areYouSurePopup->AddField(new IconButton(popupTopMargin + 2 * rowHeight, areYouSurePopupWidth/2 + 10, areYouSurePopupWidth/2 - 2 * popupSideMargin, IconCancel, evCancel));
 }
 
-void CreateScreensaverPopup()
+static void CreateScreensaverPopup()
 {
 	screensaverPopup = new PopupWindow(max(DisplayX, DisplayY), max(DisplayX, DisplayY), black, black, false);
 	DisplayField::SetDefaultColours(white, black);
@@ -706,7 +707,7 @@ void CreateScreensaverPopup()
 }
 
 // Create the baud rate adjustment popup
-void CreateBaudRatePopup(const ColourScheme& colours)
+static void CreateBaudRatePopup(const ColourScheme& colours)
 {
 	static const char* const baudPopupText[] = { "9600", "19200", "38400", "57600", "115200" };
 	static const int baudPopupParams[] = { 9600, 19200, 38400, 57600, 115200 };
@@ -714,7 +715,7 @@ void CreateBaudRatePopup(const ColourScheme& colours)
 }
 
 // Create the volume adjustment popup
-void CreateVolumePopup(const ColourScheme& colours)
+static void CreateVolumePopup(const ColourScheme& colours)
 {
 	static_assert(Buzzer::MaxVolume == 5, "MaxVolume assumed to be 5 here");
 	static const char* const volumePopupText[Buzzer::MaxVolume + 1] = { "0", "1", "2", "3", "4", "5" };
@@ -722,7 +723,7 @@ void CreateVolumePopup(const ColourScheme& colours)
 }
 
 // Create the volume adjustment popup
-void CreateInfoTimeoutPopup(const ColourScheme& colours)
+static void CreateInfoTimeoutPopup(const ColourScheme& colours)
 {
 	static const char* const infoTimeoutPopupText[Buzzer::MaxVolume + 1] = { "0", "2", "5", "10" };
 	static const int values[] = { 0, 2, 5, 10 };
@@ -730,7 +731,7 @@ void CreateInfoTimeoutPopup(const ColourScheme& colours)
 }
 
 // Create the screensaver timeout adjustment popup
-void CreateScreensaverTimeoutPopup(const ColourScheme& colours)
+static void CreateScreensaverTimeoutPopup(const ColourScheme& colours)
 {
 	static const char* const screensaverTimeoutPopupText[Buzzer::MaxVolume + 1] = { "off", "60", "120", "180", "240", "300" };
 	static const int values[] = { 0, 60, 120, 180, 240, 300 };
@@ -738,14 +739,14 @@ void CreateScreensaverTimeoutPopup(const ColourScheme& colours)
 }
 
 // Create the babystep amount adjustment popup
-void CreateBabystepAmountPopup(const ColourScheme& colours)
+static void CreateBabystepAmountPopup(const ColourScheme& colours)
 {
 	static const int values[] = { 0, 1, 2, 3 };
 	babystepAmountPopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(babystepAmounts), babystepAmounts, values, evAdjustBabystepAmount, evAdjustBabystepAmount);
 }
 
 // Create the feedrate amount adjustment popup
-void CreateFeedrateAmountPopup(const ColourScheme& colours)
+static void CreateFeedrateAmountPopup(const ColourScheme& colours)
 {
 	static const char* const feedrateText[] = {"600", "1200", "2400", "6000", "12000"};
 	static const int values[] = { 600, 1200, 2400, 6000, 12000 };
@@ -753,7 +754,7 @@ void CreateFeedrateAmountPopup(const ColourScheme& colours)
 }
 
 // Create the colour scheme change popup
-void CreateColoursPopup(const ColourScheme& colours)
+static void CreateColoursPopup(const ColourScheme& colours)
 {
 	if (NumColourSchemes >= 2)
 	{
@@ -772,7 +773,7 @@ void CreateColoursPopup(const ColourScheme& colours)
 }
 
 // Create the language popup (currently only affects the keyboard layout)
-void CreateLanguagePopup(const ColourScheme& colours)
+static void CreateLanguagePopup(const ColourScheme& colours)
 {
 	languagePopup = new PopupWindow(popupBarHeight, fullPopupWidth, colours.popupBackColour, colours.popupBorderColour);
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
@@ -784,7 +785,7 @@ void CreateLanguagePopup(const ColourScheme& colours)
 }
 
 // Create the pop-up keyboard
-void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
+static void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 {
 	static const char* _ecv_array const keysEN[8] = { "1234567890-+", "QWERTYUIOP[]", "ASDFGHJKL:@", "ZXCVBNM,./", "!\"#$%^&*()_=", "qwertyuiop{}", "asdfghjkl;'", "zxcvbnm<>?" };
 	static const char* _ecv_array const keysDE[8] = { "1234567890-+", "QWERTZUIOP[]", "ASDFGHJKL:@", "YXCVBNM,./", "!\"#$%^&*()_=", "qwertzuiop{}", "asdfghjkl;'", "yxcvbnm<>?" };
@@ -859,7 +860,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 }
 
 // Create the babystep popup
-void CreateBabystepPopup(const ColourScheme& colours)
+static void CreateBabystepPopup(const ColourScheme& colours)
 {
 	babystepPopup = new StandardPopupWindow(babystepPopupHeight, babystepPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour,
 			strings->babyStepping);
@@ -869,12 +870,12 @@ void CreateBabystepPopup(const ColourScheme& colours)
 	ypos += babystepRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.buttonImageBackColour);
 	const PixelNumber width = CalcWidth(2, babystepPopupWidth - 2 * popupSideMargin);
-	babystepPopup->AddField(babystepMinusButton = new TextButtonWithLabel(ypos, CalcXPos(0, width, popupSideMargin), width, babystepAmounts[GetBabystepAmountIndex()], evBabyStepMinus, nullptr, LESS_ARROW " "));
-	babystepPopup->AddField(babystepPlusButton = new TextButtonWithLabel(ypos, CalcXPos(1, width, popupSideMargin), width, babystepAmounts[GetBabystepAmountIndex()], evBabyStepPlus, nullptr, MORE_ARROW " "));
+	babystepPopup->AddField(babystepMinusButton = new TextButtonWithLabel(ypos, CalcXPos(0, width, popupSideMargin), width, babystepAmounts[nvData.GetBabystepAmountIndex()], evBabyStepMinus, nullptr, LESS_ARROW " "));
+	babystepPopup->AddField(babystepPlusButton = new TextButtonWithLabel(ypos, CalcXPos(1, width, popupSideMargin), width, babystepAmounts[nvData.GetBabystepAmountIndex()], evBabyStepPlus, nullptr, MORE_ARROW " "));
 }
 
 // Create the grid of heater icons and temperatures
-void CreateTemperatureGrid(const ColourScheme& colours)
+static void CreateTemperatureGrid(const ColourScheme& colours)
 {
 	// Add the emergency stop button
 	DisplayField::SetDefaultColours(colours.stopButtonTextColour, colours.stopButtonBackColour);
@@ -927,7 +928,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 }
 
 // Create the extra fields for the Control tab
-void CreateControlTabFields(const ColourScheme& colours)
+static void CreateControlTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(commonRoot);
 
@@ -985,7 +986,7 @@ void CreateControlTabFields(const ColourScheme& colours)
 }
 
 // Create the fields for the Printing tab
-void CreatePrintingTabFields(const ColourScheme& colours)
+static void CreatePrintingTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(commonRoot);
 
@@ -1076,7 +1077,7 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 }
 
 // Create the fields for the Message tab
-void CreateMessageTabFields(const ColourScheme& colours)
+static void CreateMessageTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(baseRoot);
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
@@ -1098,7 +1099,7 @@ void CreateMessageTabFields(const ColourScheme& colours)
 }
 
 // Create the fields for the Setup tab
-void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
+static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 {
 	mgr.SetRoot(baseRoot);
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
@@ -1109,9 +1110,9 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	baudRateButton = AddIntegerButton(row3, 0, 3, nullptr, " baud", evSetBaudRate);
-	baudRateButton->SetValue(GetBaudRate());
+	baudRateButton->SetValue(nvData.GetBaudRate());
 	volumeButton = AddIntegerButton(row3, 1, 3, strings->volume, nullptr, evSetVolume);
-	volumeButton->SetValue(GetVolume());
+	volumeButton->SetValue(nvData.GetVolume());
 	languageButton = AddTextButton(row3, 2, 3, LanguageTables[language].languageName, evSetLanguage, nullptr);
 	AddTextButton(row4, 0, 3, strings->calibrateTouch, evCalTouch, nullptr);
 	AddTextButton(row4, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
@@ -1119,20 +1120,20 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	coloursButton = AddTextButton(row5, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
 	AddTextButton(row5, 1, 3, strings->brightnessDown, evDimmer, nullptr);
 	AddTextButton(row5, 2, 3, strings->brightnessUp, evBrighter, nullptr);
-	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()], evSetDimmingType, nullptr);
+	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)nvData.GetDisplayDimmerType()], evSetDimmingType, nullptr);
 	infoTimeoutButton = AddIntegerButton(row6, 1, 3, strings->infoTimeout, nullptr, evSetInfoTimeout);
 	infoTimeoutButton->SetValue(infoTimeout);
 	AddTextButton(row6, 2, 3, strings->clearSettings, evFactoryReset, nullptr);
 	screensaverTimeoutButton = AddIntegerButton(row7, 0, 3, strings->screensaverAfter, nullptr, evSetScreensaverTimeout);
-	screensaverTimeoutButton->SetValue(GetScreensaverTimeout() / 1000);
+	screensaverTimeoutButton->SetValue(nvData.GetScreensaverTimeout() / 1000);
 
 	const PixelNumber width = CalcWidth(3);
-	mgr.AddField(babystepAmountButton = new TextButtonWithLabel(row7, CalcXPos(1, width), width, babystepAmounts[GetBabystepAmountIndex()], evSetBabystepAmount, nullptr, strings->babystepAmount));
+	mgr.AddField(babystepAmountButton = new TextButtonWithLabel(row7, CalcXPos(1, width), width, babystepAmounts[nvData.GetBabystepAmountIndex()], evSetBabystepAmount, nullptr, strings->babystepAmount));
 
 	feedrateAmountButton = AddIntegerButton(row7, 2, 3, strings->feedrate, nullptr, evSetFeedrate);
-	feedrateAmountButton->SetValue(GetFeedrate());
+	feedrateAmountButton->SetValue(nvData.GetFeedrate());
 
-	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
+	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)nvData.GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
 
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
 	mgr.AddField(ipAddressField = new TextField(row9, margin, DisplayX/2 - margin, TextAlignment::Left, "IP: ", ipAddress.c_str()));
@@ -1140,7 +1141,7 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 }
 
 // Create the fields that are displayed on all pages
-void CreateCommonFields(const ColourScheme& colours)
+static void CreateCommonFields(const ColourScheme& colours)
 {
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour, colours.buttonBorderColour, colours.buttonGradColour,
 									colours.buttonPressedBackColour, colours.buttonPressedGradColour, colours.pal);
@@ -1150,7 +1151,7 @@ void CreateCommonFields(const ColourScheme& colours)
 	tabSetup = AddTextButton(rowTabs, 3, 4, strings->setup, evTabSetup, nullptr);
 }
 
-void CreateMainPages(uint32_t language, const ColourScheme& colours)
+static void CreateMainPages(uint32_t language, const ColourScheme& colours)
 {
 	if (language >= ARRAY_SIZE(LanguageTables))
 	{
@@ -1629,7 +1630,7 @@ namespace UI
 			if (currentTab != nullptr)
 			{
 				currentTab->Press(false, 0);			// remove highlighting from the old tab
-				if (currentTab->GetEvent() == evTabSetup && IsSaveNeeded())
+				if (currentTab->GetEvent() == evTabSetup && nvData.IsSaveNeeded())
 				{
 					SaveSettings();						// leaving the Control tab and we have changed settings, so save them
 				}
@@ -1962,7 +1963,7 @@ namespace UI
 		}
 
 		tool->UpdateTemp(toolHeaterIndex, temp, active);
-		if (toolHeaterIndex == 0 || GetHeaterCombineType() == HeaterCombineType::notCombined)
+		if (toolHeaterIndex == 0 || nvData.GetHeaterCombineType() == HeaterCombineType::notCombined)
 		{
 			if (tool->slot + toolHeaterIndex < MaxSlots)
 			{
@@ -2020,7 +2021,6 @@ namespace UI
 	// Process a new message box alert, clearing any existing one
 	void ProcessAlert(const Alert& alert)
 	{
-		RestoreBrightness();
 		if (isLandscape)
 		{
 			alertPopup->Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
@@ -2062,7 +2062,6 @@ namespace UI
 
 	void ProcessSimpleAlert(const char* _ecv_array text)
 	{
-		RestoreBrightness();
 		if (alertMode < 2)												// if the current alert doesn't require acknowledgement
 		{
 			if (isLandscape)
@@ -2294,7 +2293,8 @@ namespace UI
 						{
 							int bedOrChamberIndex = bp.GetIParam();
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedActiveTemp;
-							const auto bedOrChamber = isBed ? OM::GetBed(bedOrChamberIndex) : OM::GetChamber(bedOrChamberIndex);							if (bedOrChamber == nullptr)
+							const auto bedOrChamber = isBed ? OM::GetBed(bedOrChamberIndex) : OM::GetChamber(bedOrChamberIndex);
+							if (bedOrChamber == nullptr)
 							{
 								break;
 							}
@@ -2328,7 +2328,7 @@ namespace UI
 							}
 
 							const bool useM568 = GetFirmwareFeatures().IsBitSet(m568TempAndRPM);
-							if (GetHeaterCombineType() == HeaterCombineType::combined)
+							if (nvData.GetHeaterCombineType() == HeaterCombineType::combined)
 							{
 								tool->UpdateTemp(0, val, true);
 								SerialIo::Sendf("%s P%d S%d\n", (useM568 ? "M568" : "G10"), toolNumber, tool->heaters[0]->activeTemp);
@@ -2365,7 +2365,7 @@ namespace UI
 							}
 
 							const bool useM568 = GetFirmwareFeatures().IsBitSet(m568TempAndRPM);
-							if (GetHeaterCombineType() == HeaterCombineType::combined)
+							if (nvData.GetHeaterCombineType() == HeaterCombineType::combined)
 							{
 								tool->UpdateTemp(0, val, false);
 								SerialIo::Sendf("%s P%d R%d\n", (useM568 ? "M568" : "G10"), toolNumber, tool->heaters[0]->standbyTemp);
@@ -2481,7 +2481,7 @@ namespace UI
 			case evMoveAxis:
 				{
 					TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(bp.GetButton());
-					SerialIo::Sendf("G91 G1 %c%s F%d G90\n", textButton->GetAxisLetter(), bp.GetSParam(), GetFeedrate());
+					SerialIo::Sendf("G91 G1 %c%s F%d G90\n", textButton->GetAxisLetter(), bp.GetSParam(), nvData.GetFeedrate());
 				}
 				break;
 
@@ -2524,15 +2524,15 @@ namespace UI
 			case evBabyStepMinus:
 			case evBabyStepPlus:
 				{
-					SerialIo::Sendf("M290 Z%s%s\n", (ev == evBabyStepMinus ? "-" : ""), babystepAmounts[GetBabystepAmountIndex()]);
+					SerialIo::Sendf("M290 Z%s%s\n", (ev == evBabyStepMinus ? "-" : ""), babystepAmounts[nvData.GetBabystepAmountIndex()]);
 					float currentBabystepAmount = babystepOffsetField->GetValue();
 					if (ev == evBabyStepMinus)
 					{
-						currentBabystepAmount -= babystepAmountsF[GetBabystepAmountIndex()];
+						currentBabystepAmount -= babystepAmountsF[nvData.GetBabystepAmountIndex()];
 					}
 					else
 					{
-						currentBabystepAmount += babystepAmountsF[GetBabystepAmountIndex()];
+						currentBabystepAmount += babystepAmountsF[nvData.GetBabystepAmountIndex()];
 					}
 					babystepOffsetField->SetValue(currentBabystepAmount);
 				}
@@ -2806,7 +2806,7 @@ namespace UI
 			case evAdjustVolume:
 				{
 					const int newVolume = bp.GetIParam();
-					SetVolume(newVolume);
+					nvData.SetVolume(newVolume);
 					volumeButton->SetValue(newVolume);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
@@ -2815,7 +2815,7 @@ namespace UI
 			case evAdjustInfoTimeout:
 				{
 					infoTimeout = bp.GetIParam();
-					SetInfoTimeout(infoTimeout);
+					nvData.SetInfoTimeout(infoTimeout);
 					infoTimeoutButton->SetValue(infoTimeout);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
@@ -2824,7 +2824,7 @@ namespace UI
 			case evAdjustScreensaverTimeout:
 				{
 					uint32_t screensaverTimeout = bp.GetIParam();
-					SetScreensaverTimeout(screensaverTimeout * 1000);
+					nvData.SetScreensaverTimeout(screensaverTimeout * 1000);
 					screensaverTimeoutButton->SetValue(screensaverTimeout);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
@@ -2833,7 +2833,7 @@ namespace UI
 			case evAdjustBabystepAmount:
 				{
 					uint32_t babystepAmountIndex = bp.GetIParam();
-					SetBabystepAmountIndex(babystepAmountIndex);
+					nvData.SetBabystepAmountIndex(babystepAmountIndex);
 					babystepAmountButton->SetText(babystepAmounts[babystepAmountIndex]);
 					babystepMinusButton->SetText(babystepAmounts[babystepAmountIndex]);
 					babystepPlusButton->SetText(babystepAmounts[babystepAmountIndex]);
@@ -2844,7 +2844,7 @@ namespace UI
 			case evAdjustFeedrate:
 				{
 					uint32_t feedrate = bp.GetIParam();
-					SetFeedrate(feedrate);
+					nvData.SetFeedrate(feedrate);
 					feedrateAmountButton->SetValue(feedrate);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
@@ -2853,7 +2853,7 @@ namespace UI
 			case evAdjustColours:
 				{
 					const uint8_t newColours = (uint8_t)bp.GetIParam();
-					if (SetColourScheme(newColours))
+					if (nvData.SetColourScheme(newColours))
 					{
 						SaveSettings();
 						Reset();
@@ -2870,7 +2870,7 @@ namespace UI
 			case evAdjustLanguage:
 				{
 					const uint8_t newLanguage = (uint8_t)bp.GetIParam();
-					if (SetLanguage(newLanguage))
+					if (nvData.SetLanguage(newLanguage))
 					{
 						SaveSettings();
 						Reset();
@@ -2881,12 +2881,12 @@ namespace UI
 
 			case evSetDimmingType:
 				ChangeDisplayDimmerType();
-				dimmingTypeButton->SetText(strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()]);
+				dimmingTypeButton->SetText(strings->displayDimmingNames[(unsigned int)nvData.GetDisplayDimmerType()]);
 				break;
 
 			case evSetHeaterCombineType:
 				ChangeHeaterCombineType();
-				heaterCombiningButton->SetText(strings->heaterCombineTypeNames[(unsigned int)GetHeaterCombineType()]);
+				heaterCombiningButton->SetText(strings->heaterCombineTypeNames[(unsigned int)nvData.GetHeaterCombineType()]);
 				break;
 
 			case evYes:
@@ -2954,7 +2954,7 @@ namespace UI
 				}
 				break;
 
-			case evUp:
+			case evUp: // TODO new events for moving editor one left or right
 				currentHistoryBuffer = (currentHistoryBuffer + numUserCommandBuffers - 1) % numUserCommandBuffers;
 				if (currentHistoryBuffer == currentUserCommandBuffer)
 				{
@@ -3312,7 +3312,7 @@ namespace UI
 				}
 				else if (hasHeater)
 				{
-					if (GetHeaterCombineType() == HeaterCombineType::notCombined)
+					if (nvData.GetHeaterCombineType() == HeaterCombineType::notCombined)
 					{
 						tool->IterateHeaters([&slot, &tool](OM::ToolHeater*, size_t index)
 						{
@@ -3465,7 +3465,8 @@ namespace UI
 
 	void SetSpindleLimit(size_t spindleIndex, uint32_t value, bool max)
 	{
-		OM::Spindle *spindle = OM::GetOrCreateSpindle(spindleIndex);		if (spindle != nullptr)
+		OM::Spindle *spindle = OM::GetOrCreateSpindle(spindleIndex);
+		if (spindle != nullptr)
 		{
 			if (max)
 			{
@@ -3540,7 +3541,8 @@ namespace UI
 
 	void SetToolExtruder(size_t toolIndex, uint8_t extruder)
 	{
-		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);		if (tool != nullptr)
+		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+		if (tool != nullptr)
 		{
 			tool->extruders.SetBit(extruder);
 		}
@@ -3639,7 +3641,8 @@ namespace UI
 	{
 		if (index < MaxTotalAxes)
 		{
-			OM::Axis *axis = OM::GetOrCreateAxis(index);			if (axis != nullptr)
+			OM::Axis *axis = OM::GetOrCreateAxis(index);
+			if (axis != nullptr)
 			{
 				axis->letter[0] = l;
 			}
@@ -3676,7 +3679,6 @@ namespace UI
 		{
 			return;
 		}
-		uint8_t oldWorkplaceNumber = currentWorkplaceNumber;
 		currentWorkplaceNumber = workplaceNumber;
 	}
 
