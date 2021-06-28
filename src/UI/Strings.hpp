@@ -484,6 +484,8 @@ const StringTable LanguageTables[] =
 			"Flasher firmware",
 			"Changer outil",
 			"Simuler",
+			"Off",
+			"Cancelling"
 		},
 
 		// Theme names
@@ -732,6 +734,8 @@ const StringTable LanguageTables[] =
 			"Nahrává firmware",
 			"Výměna nástroje",
 			"Simulace",
+			"Off",
+			"Cancelling"
 		},
 
 		// Theme names
@@ -855,6 +859,8 @@ const StringTable LanguageTables[] =
 			"Caricamento firmware",
 			"Cambiando tool",
 			"Simulando",
+			"Off",
+			"Cancelling"
 		},
 
 		// Theme names
