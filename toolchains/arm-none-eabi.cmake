@@ -69,9 +69,8 @@ set( CMAKE_OBJDUMP      ${ARM_NONE_EABI_TOOLCHAIN_BIN_PATH}/${CROSS_COMPILE}objd
 
 # Set the common build flags
 
-# Set the CMAKE C flags (which should also be used by the assembler!
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O2" )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mcpu=${CMAKE_SYSTEM_PROCESSOR} -mthumb --param max-inline-insns-single=500 -mlong-calls -ffunction-sections -fdata-sections -fno-exceptions -fsingle-precision-constant -Wall -Wextra -Wundef -Wdouble-promotion -Wno-expansion-to-defined")
+# Set the CMAKE C flags ( which should also be used by the assembler!
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --param max-inline-insns-single=500 -mlong-calls -ffunction-sections -fdata-sections -fno-exceptions -fsingle-precision-constant -Wall -Wextra -Wundef -Wdouble-promotion -Wno-expansion-to-defined")
 
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 set( CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-threadsafe-statics -fno-rtti" CACHE STRING "" )

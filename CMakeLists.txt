@@ -6,10 +6,60 @@ cmake_minimum_required( VERSION 3.10 )
 set ( CMAKE_C_COMPILER_FORCED True )
 set ( CMAKE_CXX_COMPILER_FORCED True )
 
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__SAM4S4B__ -DBOARD=USER_BOARD -DARM_MATH_CM4=true -DSCREEN_70E" )
+# all v2 linker script
+# src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld"
+# all v2 compiler flags
+# -std=gnu++17 -DNDEBUG -DBOARD=USER_BOARD -DARM_MATH_CM3=true -D__SAM3S4B__
+# v2 differences compiler flags
+# -DSCREEN_43 -DSCREEN_50 -DSCREEN_70 -DSCREEN_70CPLD
+
+# all v3 linker script
+# src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld
+# all v3 compiler flags
+# -std=gnu++17 -DNDEBUG -D__SAM4S4B__ -DBOARD=USER_BOARD -DARM_MATH_CM4=true
+# v3 differences compiler flags
+# -DSCREEN_43 -DSCREEN_50 -DSCREEN_70 -DSCREEN_70CPLD
+
+# 5.0i and 7.0i linker script
+# src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld
+# 5.0i and 7.0i compiler flags
+# std=gnu++17 -DNDEBUG -D__SAM4S4B__ -DBOARD=USER_BOARD -DARM_MATH_CM4=true
+# 5.0i and 7.0i differences
+# -DSCREEN_50E -DSCREEN_70E
+
+set( CMAKE_C_FLAGS "-O2 -g -DNDEBUG -DBOARD=USER_BOARD" )
+set( C_FLAGS_SAM3S4 "-DARM_MATH_CM3=true -D__SAM3S4B__ -mcpu=cortex-m3 -mthumb" )
+set( C_FLAGS_SAM4S4 "-DARM_MATH_CM4=true -D__SAM4S4B__ -mcpu=cortex-m4 -mthumb" )
+
+if (NOT DEFINED DEVICE)
+	message(FATAL_ERROR "Please configure a device cmake -DDEVICE=v2-4.3|v2-5.0|v2-7.0|v2-7.0c|v3-4.3|v3-5.0|v3-7.0|v3-7.0c|5.0i|7.0i")
+elseif (${DEVICE} STREQUAL "v2-4.3")
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM3S4} -DSCREEN_43=1" )
+elseif (${DEVICE} STREQUAL "v2-5.0")
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM3S4} -DSCREEN_50=1" )
+elseif (${DEVICE} STREQUAL "v2-7.0")
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM3S4} -DSCREEN_70=1" )
+elseif (${DEVICE} STREQUAL "v2-7.0c")
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM3S4} -DSCREEN_70CPLD=1" )
+elseif (${DEVICE} STREQUAL "v3-4.3")
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM4S4} -DSCREEN_43=1" )
+elseif (${DEVICE} STREQUAL "v3-5.0")
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM4S4} -DSCREEN_50=1" )
+elseif (${DEVICE} STREQUAL "v3-7.0")
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM4S4} -DSCREEN_70=1" )
+elseif (${DEVICE} STREQUAL "v3-7.0c")
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM4S4} -DSCREEN_70CPLD=1" )
+elseif (${DEVICE} STREQUAL "5.0i")
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM4S4} -DSCREEN_50E=1" )
+elseif (${DEVICE} STREQUAL "7.0i")
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM4S4} -DSCREEN_70E=1" )
+else()
+	message(FATAL_ERROR "Invalid device: ${DEVICE}")
+endif()
+
+message("Device: " ${DEVICE})
 
 set( CMAKE_TOOLCHAIN_FILE toolchains/arm-none-eabi.cmake )
-
 
 project( paneldue VERSION 3.3 )
 set( CMAKE_PROJECT_DESCRIPTION "This is PanelDue Firmware" )
