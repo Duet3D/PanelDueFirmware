@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required( VERSION 3.10 )
 
 #configure_file(src/config.h.in src/config.h)
 
@@ -6,12 +6,12 @@ cmake_minimum_required(VERSION 3.10)
 set ( CMAKE_C_COMPILER_FORCED True )
 set ( CMAKE_CXX_COMPILER_FORCED True )
 
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__SAM4S4B__ -DBOARD=USER_BOARD -DARM_MATH_CM4=true -DSCREEN_70E")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__SAM4S4B__ -DBOARD=USER_BOARD -DARM_MATH_CM4=true -DSCREEN_70E" )
 
 set( CMAKE_TOOLCHAIN_FILE toolchains/arm-none-eabi.cmake )
 
 
-project(paneldue VERSION 3.3)
+project( paneldue VERSION 3.3 )
 set( CMAKE_PROJECT_DESCRIPTION "This is PanelDue Firmware" )
 set( CMAKE_PROJECT_HOMEPAGE_URL "https://github.com/Duet3D/PanelDueFirmware" )
 
@@ -98,12 +98,14 @@ target_include_directories( paneldue.elf PUBLIC
 	src/config
 )
 
-target_link_libraries(paneldue.elf rrf)
+target_link_libraries( paneldue.elf rrf )
 
-add_custom_target(paneldue.bin ALL DEPENDS paneldue.elf
-  COMMAND arm-none-eabi-objcopy -O binary paneldue.elf paneldue.bin
+add_custom_target( paneldue.bin ALL
+	DEPENDS paneldue.elf
+	COMMAND arm-none-eabi-objcopy -O binary paneldue.elf paneldue.bin
 )
-add_custom_target(paneldue-logo.bin ALL DEPENDS paneldue.bin ${PROJECT_SOURCE_DIR}/SplashScreens/SplashScreen-Duet3D-800x480.bin
-  COMMAND cat paneldue.bin ${PROJECT_SOURCE_DIR}/SplashScreens/SplashScreen-Duet3D-800x480.bin > paneldue-logo.bin
+add_custom_target( paneldue-logo.bin ALL
+	DEPENDS paneldue.bin ${PROJECT_SOURCE_DIR}/SplashScreens/SplashScreen-Duet3D-800x480.bin
+	COMMAND cat paneldue.bin ${PROJECT_SOURCE_DIR}/SplashScreens/SplashScreen-Duet3D-800x480.bin > paneldue-logo.bin
 )
 
