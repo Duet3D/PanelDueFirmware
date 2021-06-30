@@ -80,10 +80,5 @@ message( "C_FLAGS: " ${CMAKE_C_FLAGS} )
 message( "CXX_FLAGS: " ${CMAKE_CXX_FLAGS} )
 message( "ASM_FLAGS: " ${CMAKE_ASM_FLAGS} )
 
-set ( PANELDUE_MAP_FILE "paneldue.map" )
-set ( PANELDUE_LINKER_FILE "${PROJECT_SOURCE_DIR}/toolchains/sam4s4-flash.ld" )
-
-set( CMAKE_EXE_LINKER_FLAGS "-static --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings" )
-set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--defsym,__stack_size__=0x1000 -T${PANELDUE_LINKER_FILE} -Wl,-Map,${PANELDUE_MAP_FILE}")
-
-message( "LD_FLAGS:" ${CMAKE_EXE_LINKER_FLAGS} )
+set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
+message( "LD_FLAGS: " ${CMAKE_EXE_LINKER_FLAGS} )
