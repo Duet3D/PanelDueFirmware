@@ -12,8 +12,37 @@ Instructions for flashing the firmware binary via USB are at:
 
 https://duet3d.dozuki.com/Wiki/PanelDue_Firmware_update
 
+# Development
+
+## Build requirements
+
+- arm-none-eabi-gcc
+- cat
+- cmake
+- make
+- bossa
+
+## Setup repository
+
+```
+$ git clone git@github.com:Duet3D/PanelDueFirmware.git
+$ cd PanelDueFirmware
+$ git submodule init
+$ git submodule update --recursive
+```
+
+## Setup build for specific device
+
+```
+$ cmake -B 5.0i -DDEVICE=5.0i .
+$ make -C 5.0i all -j12
+$ bossac -e -w -v -b 5.0i/paneldue.bin -R -p /dev/ttyACM1
+```
+
 # Customization
+
 ## Splash Screen
+
 Customising the splash screen (versions 1.20RC4 and later)
 
 If you wish to display a custom splash screen when PanelDue is powered up, you need to append a compressed version of the splash screen image to the -nologo version of the PanelDue firmware appropriate to your model of PanelDue and screen size.
