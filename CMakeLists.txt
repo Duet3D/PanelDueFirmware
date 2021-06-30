@@ -32,46 +32,73 @@ set( CMAKE_C_FLAGS "-O2 -g -DNDEBUG -DBOARD=USER_BOARD" )
 file( REAL_PATH "src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld" LINKER_FILE_SAM3S4 )
 file( REAL_PATH "src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld" LINKER_FILE_SAM4S4 )
 
+set( SYSTEM_FILE_SAM3S4 "src/ASF/sam/utils/cmsis/sam3s/source/templates/system_sam3s.c" )
+set( STARTUP_FILE_SAM3S4 "src/ASF/sam/utils/cmsis/sam3s/source/templates/gcc/startup_sam3s.c" )
+set( EXCEPTION_FILE_SAM3S4 "src/ASF/sam/utils/cmsis/sam3s/source/templates/exceptions.c" )
 set( C_FLAGS_SAM3S4 "-DARM_MATH_CM3=true -D__SAM3S4B__ -mcpu=cortex-m3 -mthumb" )
 set( LD_FLAGS_SAM3S4 "-Wl,--defsym,__stack_size__=0x1000 -T${LINKER_FILE_SAM3S4} -Wl,-Map,paneldue.map" )
 
+set( SYSTEM_FILE_SAM4S4 "src/ASF/sam/utils/cmsis/sam4s/source/templates/system_sam4s.c" )
+set( STARTUP_FILE_SAM4S4 "src/ASF/sam/utils/cmsis/sam4s/source/templates/gcc/startup_sam4s.c" )
 set( C_FLAGS_SAM4S4 "-DARM_MATH_CM4=true -D__SAM4S4B__ -mcpu=cortex-m4 -mthumb" )
 set( LD_FLAGS_SAM4S4 "-Wl,--defsym,__stack_size__=0x1000 -T${LINKER_FILE_SAM4S4} -Wl,-Map,paneldue.map" )
 
-if (NOT DEFINED DEVICE)
-	message(FATAL_ERROR "Please configure a device cmake -DDEVICE=v2-4.3|v2-5.0|v2-7.0|v2-7.0c|v3-4.3|v3-5.0|v3-7.0|v3-7.0c|5.0i|7.0i")
-elseif (${DEVICE} STREQUAL "v2-4.3")
+if ("${DEVICE}" STREQUAL "v2-4.3")
+	set( SYSTEM_FILE ${SYSTEM_FILE_SAM3S4} )
+	set( STARTUP_FILE ${STARTUP_FILE_SAM3S4} )
+	set( EXCEPTION_FILE ${EXCEPTION_FILE_SAM3S4} )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM3S4} -DSCREEN_43=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM3S4}" )
-elseif (${DEVICE} STREQUAL "v2-5.0")
+elseif ("${DEVICE}" STREQUAL "v2-5.0")
+	set( SYSTEM_FILE ${SYSTEM_FILE_SAM3S4} )
+	set( STARTUP_FILE ${STARTUP_FILE_SAM3S4} )
+	set( EXCEPTION_FILE ${EXCEPTION_FILE_SAM3S4} )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM3S4} -DSCREEN_50=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM3S4}" )
-elseif (${DEVICE} STREQUAL "v2-7.0")
+elseif ("${DEVICE}" STREQUAL "v2-7.0")
+	set( SYSTEM_FILE ${SYSTEM_FILE_SAM3S4} )
+	set( STARTUP_FILE ${STARTUP_FILE_SAM3S4} )
+	set( EXCEPTION_FILE ${EXCEPTION_FILE_SAM3S4} )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM3S4} -DSCREEN_70=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM3S4}" )
-elseif (${DEVICE} STREQUAL "v2-7.0c")
+elseif ("${DEVICE}" STREQUAL "v2-7.0c")
+	set( SYSTEM_FILE ${SYSTEM_FILE_SAM3S4} )
+	set( STARTUP_FILE ${STARTUP_FILE_SAM3S4} )
+	set( EXCEPTION_FILE ${EXCEPTION_FILE_SAM3S4} )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM3S4} -DSCREEN_70CPLD=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM3S4}" )
-elseif (${DEVICE} STREQUAL "v3-4.3")
+elseif ("${DEVICE}" STREQUAL "v3-4.3")
+	set( SYSTEM_FILE ${SYSTEM_FILE_SAM4S4} )
+	set( STARTUP_FILE ${STARTUP_FILE_SAM4S4} )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM4S4} -DSCREEN_43=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
-elseif (${DEVICE} STREQUAL "v3-5.0")
+elseif ("${DEVICE}" STREQUAL "v3-5.0")
+	set( SYSTEM_FILE ${SYSTEM_FILE_SAM4S4} )
+	set( STARTUP_FILE ${STARTUP_FILE_SAM4S4} )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM4S4} -DSCREEN_50=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
-elseif (${DEVICE} STREQUAL "v3-7.0")
+elseif ("${DEVICE}" STREQUAL "v3-7.0")
+	set( SYSTEM_FILE ${SYSTEM_FILE_SAM4S4} )
+	set( STARTUP_FILE ${STARTUP_FILE_SAM4S4} )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM4S4} -DSCREEN_70=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
-elseif (${DEVICE} STREQUAL "v3-7.0c")
+elseif ("${DEVICE}" STREQUAL "v3-7.0c")
+	set( SYSTEM_FILE ${SYSTEM_FILE_SAM4S4} )
+	set( STARTUP_FILE ${STARTUP_FILE_SAM4S4} )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM4S4} -DSCREEN_70CPLD=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
-elseif (${DEVICE} STREQUAL "5.0i")
+elseif ("${DEVICE}" STREQUAL "5.0i")
+	set( SYSTEM_FILE ${SYSTEM_FILE_SAM4S4} )
+	set( STARTUP_FILE ${STARTUP_FILE_SAM4S4} )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM4S4} -DSCREEN_50E=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
-elseif (${DEVICE} STREQUAL "7.0i")
+elseif ("${DEVICE}" STREQUAL "7.0i")
+	set( SYSTEM_FILE ${SYSTEM_FILE_SAM4S4} )
+	set( STARTUP_FILE ${STARTUP_FILE_SAM4S4} )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS_SAM4S4} -DSCREEN_70E=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
 else()
-	message(FATAL_ERROR "Invalid device: ${DEVICE}")
+	message(FATAL_ERROR "Please configure a device cmake -DDEVICE=v2-4.3|v2-5.0|v2-7.0|v2-7.0c|v3-4.3|v3-5.0|v3-7.0|v3-7.0c|5.0i|7.0i")
 endif()
 
 message("Device: " ${DEVICE})
@@ -85,6 +112,9 @@ set( CMAKE_PROJECT_HOMEPAGE_URL "https://github.com/Duet3D/PanelDueFirmware" )
 
 add_subdirectory( lib/librrf )
 add_executable( paneldue.elf
+	${SYSTEM_FILE}
+	${STARTUP_FILE}
+	${EXCEPTION_FILE}
 	src/ASF/common/boards/user_board/init.c
 	src/ASF/common/services/clock/sam4s/sysclk.c
 	src/ASF/common/services/delay/sam/cycle_counter.c
@@ -100,8 +130,6 @@ add_executable( paneldue.elf
 	src/ASF/sam/drivers/uart/uart.c
 	src/ASF/sam/drivers/wdt/wdt.c
 	src/ASF/sam/services/flash_efc/flash_efc.c
-	src/ASF/sam/utils/cmsis/sam4s/source/templates/gcc/startup_sam4s.c
-	src/ASF/sam/utils/cmsis/sam4s/source/templates/system_sam4s.c
 	src/ASF/sam/utils/syscalls/gcc/syscalls.c
 	src/FileManager.cpp
 	src/FlashData.cpp
@@ -157,8 +185,10 @@ target_include_directories( paneldue.elf PUBLIC
 	src/ASF/sam/drivers/wdt
 	src/ASF/sam/services/flash_efc
 	src/ASF/sam/utils
+	src/ASF/sam/utils/cmsis/sam3s/include
 	src/ASF/sam/utils/cmsis/sam3s/source/templates
 	src/ASF/sam/utils/cmsis/sam4s/include
+	src/ASF/sam/utils/cmsis/sam4s/source/templates
 	src/ASF/sam/utils/header_files
 	src/ASF/sam/utils/preprocessor
 	src/ASF/thirdparty/CMSIS/Include
