@@ -1,9 +1,8 @@
 name: Feature Request
 description: Suggest an idea for this project
-title: "[FeatureRequest]: "
-labels: [FeatureRequest]
+title: ""
+labels: [feature]
 assignees:
-- mfs12
 body:
 - type: markdown
   attributes:
@@ -12,7 +11,7 @@ body:
       https://forum.duet3d.com/category/9/hardware-wishlist
       https://forum.duet3d.com/category/8/firmware-wishlist
       https://forum.duet3d.com/category/11/duet-web-control-wishlist
-     
+
       ## Thank you for taking the time to submit a feature request.
 - type: textarea
   id: ProblemDescription
@@ -27,11 +26,11 @@ body:
   id: SolutionDescription
   attributes:
     label: Describe the solution you propose.
-    description: A clear and concise description of your prefered solution.
+    description: A clear and concise description of your preferred solution.
     value: |
       Ex. It would be great if...
   validations:
-    required: true    
+    required: true
 - type: textarea
   id: AlternativesDescription
   attributes:
@@ -40,7 +39,7 @@ body:
     value: |
       Ex. A workaround exists but it is tedius, for example...
   validations:
-    required: false  
+    required: false
 - type: textarea
   id: AdditionalDetails
   attributes:

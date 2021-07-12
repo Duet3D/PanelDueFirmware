@@ -1,9 +1,8 @@
 name: Bug Report
 description: File a bug report
-title: "[Bug]: "
+title: ""
 labels: [bug]
 assignees:
-- mfs12
 body:
 - type: markdown
   attributes:
@@ -31,9 +30,9 @@ body:
       https://forum.duet3d.com/category/30/beta-firmware
 
       #### Have you searched the existing issues on GitHub?
-      
-      ### Please complete the following form to the best of your ability. Provide as much detail as possible. 
-      
+
+      ### Please complete the following form to the best of your ability. Provide as much detail as possible.
+
       ## Thank you for taking the time to file a bug report.
 - type: input
   id: ForumLink
@@ -151,10 +150,10 @@ body:
     description: Describe the problem in as much detail as possible.
     value: |
       Expected result
-      
+
       Observed result
-      
+
       Steps to reproduce
-      
+
   validations:
     required: true
