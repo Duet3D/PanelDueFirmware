@@ -1,6 +1,6 @@
 name: Feature Request
 description: Suggest an idea for this project
-title: ""
+title: "ADD MEANINGFUL TITLE FOR YOUR FEATURE REQUEST"
 labels: [feature]
 body:
 - type: markdown
