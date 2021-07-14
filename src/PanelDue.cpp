@@ -2279,10 +2279,6 @@ int main(void)
 			uint16_t x, y;
 			if (touch.read(x, y))
 			{
-#if 0
-				touchX->SetValue((int)x);	//debug
-				touchY->SetValue((int)y);	//debug
-#endif
 				lastActionTime = SystemTick::GetTickCount();
 				if (backlight->GetState() == BacklightStateDimmed || screensaverActive)
 				{
