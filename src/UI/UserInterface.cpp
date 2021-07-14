@@ -40,14 +40,14 @@ static const ColourScheme *colours;
 // Private fields
 class AlertPopup;
 
-const size_t machineNameLength = 30;
-const size_t printingFileLength = 40;
-const size_t zprobeBufLength = 12;
-const size_t generatedByTextLength = 50;
-const size_t lastModifiedTextLength = 20;
-const size_t printTimeTextLength = 12;		// e.g. 11h 55m
-const size_t controlPageMacroTextLength = 50;
-const size_t ipAddressLength = 45;	// IPv4 needs max 15 but IPv6 can go up to 45
+static const size_t machineNameLength = 30;
+static const size_t printingFileLength = 40;
+static const size_t zprobeBufLength = 12;
+static const size_t generatedByTextLength = 50;
+static const size_t lastModifiedTextLength = 20;
+static const size_t printTimeTextLength = 12;		// e.g. 11h 55m
+static const size_t controlPageMacroTextLength = 50;
+static const size_t ipAddressLength = 45;	// IPv4 needs max 15 but IPv6 can go up to 45
 
 static String<ipAddressLength> ipAddress;
 
