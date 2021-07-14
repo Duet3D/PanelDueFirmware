@@ -66,7 +66,7 @@ namespace UI
 	extern void CreateFields(uint32_t language, const ColourScheme& colours, uint32_t p_infoTimeout);
 	extern void InitColourScheme(const ColourScheme *scheme);
 	extern void ActivateScreensaver();
-	extern void DeactivateScreensaver();
+	extern bool DeactivateScreensaver();
 	extern void AnimateScreensaver();
 	extern void ShowAxis(size_t axis, bool b, const char* axisLetter = nullptr);
 	extern void UpdateAxisPosition(size_t axis, float fval);

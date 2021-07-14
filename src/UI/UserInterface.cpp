@@ -1548,9 +1548,14 @@ namespace UI
 		lastScreensaverMoved = SystemTick::GetTickCount();
 	}
 
-	void DeactivateScreensaver()
+	bool DeactivateScreensaver()
 	{
+		if (!screensaverPopup->IsPopupActive())
+			return false;
+
 		mgr.ClearPopup(true, screensaverPopup);
+
+		return true;
 	}
 
 	void AnimateScreensaver()

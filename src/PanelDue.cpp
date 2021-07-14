@@ -849,14 +849,19 @@ static void ActivateScreensaver()
 	}
 }
 
-static void DeactivateScreensaver()
+static bool DeactivateScreensaver()
 {
 	if (screensaverActive)
 	{
+		if (!UI::DeactivateScreensaver())
+			return false;
+
 		screensaverActive = false;
-		UI::DeactivateScreensaver();
+		backlight->SetState(BacklightStateNormal);
 		UpdatePollRate(screensaverActive);
 	}
+
+	return true;
 }
 
 // Factory reset
@@ -2280,10 +2285,10 @@ int main(void)
 			if (touch.read(x, y))
 			{
 				lastActionTime = SystemTick::GetTickCount();
-				if (backlight->GetState() == BacklightStateDimmed || screensaverActive)
+				if (screensaverActive && DeactivateScreensaver())
 				{
-					backlight->SetState(BacklightStateNormal);
-					DeactivateScreensaver();
+					dbg("deactivated screensaver");
+					//DeactivateScreensaver();
 					DelayTouchLong();			// ignore further touches for a while
 				}
 				else
@@ -2309,12 +2314,16 @@ int main(void)
 					}
 				}
 			}
-			else if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
+			else
 			{
-				if (backlight->GetState() == BacklightStateNormal && UI::CanDimDisplay())
+				if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
 				{
-					DimBrightness();				// it might not actually dim the display, depending on various flags
+					if (backlight->GetState() == BacklightStateNormal && UI::CanDimDisplay())
+					{
+						DimBrightness();				// it might not actually dim the display, depending on various flags
+					}
 				}
+
 				uint32_t screensaverTimeout = nvData.GetScreensaverTimeout();
 				if (screensaverTimeout > 0 && SystemTick::GetTickCount() - lastActionTime >= screensaverTimeout)
 				{
