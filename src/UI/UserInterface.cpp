@@ -2129,6 +2129,13 @@ namespace UI
 			currentButton = bp;
 			mgr.Press(bp, true);
 			Event ev = (Event)(f->GetEvent());
+
+
+			if (bp.GetEvent() != evAdjustVolume)
+			{
+				TouchBeep();		// give audible feedback of the touch, unless adjusting the volume
+			}
+
 			switch(ev)
 			{
 			case evEmergencyStop:
@@ -2990,7 +2997,6 @@ namespace UI
 				// On the Setup tab, we allow any other button to be pressed to exit the current popup
 				StopAdjusting();
 				DelayTouchLong();	// by default, ignore further touches for a long time
-				TouchBeep();
 				mgr.ClearPopup();
 				ProcessTouch(bp);
 				break;

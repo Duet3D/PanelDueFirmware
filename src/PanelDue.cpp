@@ -2292,11 +2292,6 @@ int main(void)
 					if (bp.IsValid())
 					{
 						DelayTouchLong();		// by default, ignore further touches for a long time
-						if (bp.GetEvent() != evAdjustVolume)
-						{
-							TouchBeep();		// give audible feedback of the touch, unless adjusting the volume
-						}
-
 						backlight->SetState(BacklightStateNormal);
 						UI::ProcessTouch(bp);
 						if (!initialized)		// Last button press was E-Stop
