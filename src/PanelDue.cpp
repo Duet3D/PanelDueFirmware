@@ -916,7 +916,7 @@ static void Reconnect()
 }
 
 // Try to get an integer value from a string. If it is actually a floating point value, round it.
-bool GetInteger(const char s[], int32_t &rslt)
+static bool GetInteger(const char s[], int32_t &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 
@@ -934,7 +934,7 @@ bool GetInteger(const char s[], int32_t &rslt)
 }
 
 // Try to get an unsigned integer value from a string
-bool GetUnsignedInteger(const char s[], uint32_t &rslt)
+static bool GetUnsignedInteger(const char s[], uint32_t &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 	const char* endptr;
@@ -943,7 +943,7 @@ bool GetUnsignedInteger(const char s[], uint32_t &rslt)
 }
 
 // Try to get a floating point value from a string. if it is actually a floating point value, round it.
-bool GetFloat(const char s[], float &rslt)
+static bool GetFloat(const char s[], float &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 	const char* endptr;
@@ -952,7 +952,7 @@ bool GetFloat(const char s[], float &rslt)
 }
 
 // Try to get a bool value from a string.
-bool GetBool(const char s[], bool &rslt)
+static bool GetBool(const char s[], bool &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 
@@ -1622,7 +1622,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	case rcvStateMessageBox:
 		dbg2();
-		// Nessage box has been dealt with somewhere else
 		if (data[0] == 0)
 		{
 			UI::ClearAlert();
