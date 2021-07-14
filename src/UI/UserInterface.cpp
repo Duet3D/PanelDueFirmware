@@ -38,8 +38,6 @@ StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessag
 static const ColourScheme *colours;
 
 // Private fields
-class AlertPopup;
-
 static const size_t machineNameLength = 30;
 static const size_t printingFileLength = 40;
 static const size_t zprobeBufLength = 12;
