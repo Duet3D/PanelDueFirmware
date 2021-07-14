@@ -670,15 +670,6 @@ static void UpdatePollRate(bool idle)
 	}
 }
 
-static void DeactivateScreensaver()
-{
-	if (screensaverActive) {
-		UI::DeactivateScreensaver();
-		screensaverActive = false;
-		UpdatePollRate(screensaverActive);
-	}
-}
-
 // Initialise the LCD and user interface. The non-volatile data must be set up before calling this.
 void InitLcd()
 {
@@ -858,6 +849,15 @@ static void ActivateScreensaver()
 	else
 	{
 		UI::AnimateScreensaver();
+	}
+}
+
+static void DeactivateScreensaver()
+{
+	if (screensaverActive) {
+		UI::DeactivateScreensaver();
+		screensaverActive = false;
+		UpdatePollRate(screensaverActive);
 	}
 }
 
