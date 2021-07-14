@@ -671,7 +671,7 @@ static void UpdatePollRate(bool idle)
 }
 
 // Initialise the LCD and user interface. The non-volatile data must be set up before calling this.
-void InitLcd()
+static void InitLcd()
 {
 	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);				// set up the LCD
 	colours = &colourSchemes[nvData.colourScheme];
