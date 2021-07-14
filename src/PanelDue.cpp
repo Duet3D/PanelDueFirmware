@@ -164,7 +164,7 @@ static uint32_t printerResponseInterval = defaultPrinterResponseInterval;
 
 static const ColourScheme *colours = &colourSchemes[0];
 
-Alert currentAlert;
+static Alert currentAlert;
 uint32_t lastAlertSeq = 0;
 
 static OM::PrinterStatus status = OM::PrinterStatus::connecting;
