@@ -680,7 +680,6 @@ static void InitLcd()
 	lcd.fillScr(black);													// make sure the memory is clear
 	Delay(100);															// give the LCD time to update
 	backlight->SetState(BacklightStateNormal);
-	DeactivateScreensaver();
 }
 
 void RestoreBrightness()
@@ -822,8 +821,6 @@ void SetBrightness(int percent)
 	backlight->SetDimBrightness(nvData.GetBrightness() / 8);
 	backlight->SetNormalBrightness(nvData.GetBrightness());
 	backlight->SetState(BacklightStateNormal);
-
-	DeactivateScreensaver();
 }
 
 static void DimBrightness()
@@ -854,9 +851,10 @@ static void ActivateScreensaver()
 
 static void DeactivateScreensaver()
 {
-	if (screensaverActive) {
-		UI::DeactivateScreensaver();
+	if (screensaverActive)
+	{
 		screensaverActive = false;
+		UI::DeactivateScreensaver();
 		UpdatePollRate(screensaverActive);
 	}
 }
@@ -2217,6 +2215,7 @@ int main(void)
 
 	// Set up the baud rate
 	SerialIo::Init(nvData.GetBaudRate(), &serial_cbs);
+	UpdatePollRate(false);
 
 	MessageLog::Init();
 
