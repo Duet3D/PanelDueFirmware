@@ -846,7 +846,7 @@ static void DimBrightness()
 	}
 }
 
-void ActivateScreensaver()
+static void ActivateScreensaver()
 {
 	if (!screensaverActive)
 	{
