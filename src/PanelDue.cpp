@@ -38,17 +38,21 @@
 
 extern uint16_t _esplash[];							// defined in linker script
 
-#define DEBUG	(0) // 1: MessageLog only, 2: DebugField only, 3: MessageLog & DebugField
+#define DEBUG	(0) // 0: off, 1: MessageLog, 2: Uart
+#define DEBUG2	(0) // 0: off, 1: DebugField
 
-#if (DEBUG & 1)
+#if (DEBUG == 1)
 #define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
+
+#elif (DEBUG == 2)
+#define dbg(fmt, args...)		do { SerialIo::Dbg("%s(%d): " fmt, __FUNCTION__, __LINE__, ##args); } while(0)
 
 #else
 #define dbg(fmt, args...)		do {} while(0)
 
 #endif
 
-#if (DEBUG & (1 << 1))
+#if (DEBUG2)
 
 #define STRINGIFY(x)	#x
 #define TOSTRING(x)	STRINGIFY(x)
