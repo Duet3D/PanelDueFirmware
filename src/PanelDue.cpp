@@ -38,17 +38,21 @@
 
 extern uint16_t _esplash[];							// defined in linker script
 
-#define DEBUG	(0) // 1: MessageLog only, 2: DebugField only, 3: MessageLog & DebugField
+#define DEBUG	(0) // 0: off, 1: MessageLog, 2: Uart
+#define DEBUG2	(0) // 0: off, 1: DebugField
 
-#if (DEBUG & 1)
+#if (DEBUG == 1)
 #define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
+
+#elif (DEBUG == 2)
+#define dbg(fmt, args...)		do { SerialIo::Dbg("%s(%d): " fmt, __FUNCTION__, __LINE__, ##args); } while(0)
 
 #else
 #define dbg(fmt, args...)		do {} while(0)
 
 #endif
 
-#if (DEBUG & (1 << 1))
+#if (DEBUG2)
 
 #define STRINGIFY(x)	#x
 #define TOSTRING(x)	STRINGIFY(x)
@@ -555,7 +559,7 @@ static struct Seq* GetNextSeq(struct Seq *current)
 
 static struct Seq *FindSeqByKey(const char *key)
 {
-	dbg("key %s", key);
+	dbg("key %s\n", key);
 
 	for (size_t i = 0; i < ARRAY_SIZE(seqs); ++i)
 	{
@@ -575,9 +579,9 @@ static void UpdateSeq(const ReceivedDataEvent seqid, int32_t val)
 	{
 		if (seqs[i].seqid == seqid)
 		{
-			dbg("%s %d %d", seqs[i].key, seqs[i].lastSeq, val);
 			if (seqs[i].lastSeq != val)
 			{
+				dbg("%s %d -> %d\n", seqs[i].key, seqs[i].lastSeq, val);
 				seqs[i].lastSeq = val;
 				seqs[i].state = SeqStateUpdate;
 			}
@@ -887,7 +891,7 @@ static void SetStatus(OM::PrinterStatus newStatus)
 {
 	if (newStatus != status)
 	{
-		dbg("printer status %d -> %d", status, newStatus);
+		dbg("printer status %d -> %d\n", status, newStatus);
 		backlight->SetState(BacklightStateNormal);
 		UI::ChangeStatus(status, newStatus);
 
@@ -899,7 +903,7 @@ static void SetStatus(OM::PrinterStatus newStatus)
 // Set the status back to "Connecting"
 static void Reconnect()
 {
-	dbg("Reconnect");
+	dbg("Reconnect\n");
 
 	initialized = false;
 	lastPollTime = 0;
@@ -993,7 +997,7 @@ static void EndReceivedMessage()
 	if (currentRespSeq != nullptr)
 	{
 		currentRespSeq->state = outOfBuffers ? SeqStateError : SeqStateOk;
-		dbg("seq %s %d DONE", currentRespSeq->key, currentRespSeq->state);
+		dbg("seq %s %d DONE\n", currentRespSeq->key, currentRespSeq->state);
 		currentRespSeq = nullptr;
 	}
 	outOfBuffers = false;							// Reset the out-of-buffers flag
@@ -1077,11 +1081,11 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	// no matching key found
 	if (!searchResult)
 	{
-		dbg("no matching key found for %s", id.c_str());
+		dbg("no matching key found for %s\n", id.c_str());
 		return;
 	}
 	const ReceivedDataEvent rde = searchResult->val;
-	//dbg("event: %s(%d) rtype %d data '%s'", searchResult->key, searchResult->val, currentResponseType, data);
+	dbg("event: %s(%d) rtype %d data '%s'\n", searchResult->key, searchResult->val, currentResponseType, data);
 	switch (rde)
 	{
 	// M409 section
@@ -2258,7 +2262,7 @@ int main(void)
 
 	uint32_t lastActionTime = SystemTick::GetTickCount();
 
-	dbg("basic init DONE");
+	dbg("basic init DONE\n");
 
 	for (;;)
 	{
@@ -2370,7 +2374,7 @@ int main(void)
 				currentReqSeq = GetNextSeq(currentReqSeq);
 				if (currentReqSeq != nullptr)
 				{
-					dbg("sending %s", currentReqSeq->key);
+					dbg("requesting %s\n", currentReqSeq->key);
 					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", currentReqSeq->key, currentReqSeq->flags);
 					lastPollTime = SystemTick::GetTickCount();
 				}
@@ -2379,7 +2383,7 @@ int main(void)
 					// Once we get here the first time we will have work all seqs once
 					if (!initialized)
 					{
-						dbg("seqs init DONE");
+						dbg("seqs init DONE\n");
 						UI::AllToolsSeen();
 						initialized = true;
 					}

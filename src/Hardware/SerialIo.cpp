@@ -6,6 +6,7 @@
  */
 
 #include "SerialIo.hpp"
+#include "Hardware/SysTick.hpp"
 #include "asf.h"
 #include "PanelDue.hpp"
 #include <General/String.h>
@@ -148,13 +149,42 @@ namespace SerialIo
 	{
 		va_list vargs;
 		va_start(vargs, fmt);
-		return vuprintf([](char c) noexcept -> bool {
+		int ret = vuprintf([](char c) noexcept -> bool {
 			if (c != 0)
 			{
 				SendChar(c);
 			}
 			return true;
 		}, fmt, vargs);
+		va_end(vargs);
+
+		return ret;
+	}
+
+	size_t Dbg(const char *fmt, ...)
+	{
+		char buffer[128];
+		size_t ret;
+		size_t ret2;
+		va_list vargs;
+
+		ret = SafeSnprintf(buffer, sizeof(buffer), ";dbg %4lu ", SystemTick::GetTickCount() / 1000);
+		if (ret < 0)
+			return 0;
+
+		va_start(vargs, fmt);
+		ret2 = SafeVsnprintf(&buffer[ret], sizeof(buffer) - ret, fmt, vargs);
+		va_end(vargs);
+		if (ret2 < 0)
+			return 0;
+
+		ret += ret2;
+		for (size_t i = 0; i < ret; i++) {
+			while(uart_write(UARTn, buffer[i]))
+				;;
+		}
+
+		return ret;
 	}
 
 	void SendFilename(const char * _ecv_array dir, const char * _ecv_array name)
