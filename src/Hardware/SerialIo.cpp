@@ -6,6 +6,7 @@
  */
 
 #include "SerialIo.hpp"
+#include "Hardware/SysTick.hpp"
 #include "asf.h"
 #include "PanelDue.hpp"
 #include <General/String.h>
@@ -164,17 +165,20 @@ namespace SerialIo
 	{
 		char buffer[128];
 		size_t ret;
+		size_t ret2;
 		va_list vargs;
 
+		ret = SafeSnprintf(buffer, sizeof(buffer), ";dbg %4lu ", SystemTick::GetTickCount() / 1000);
+		if (ret < 0)
+			return 0;
+
 		va_start(vargs, fmt);
-		ret = SafeVsnprintf(buffer, sizeof(buffer), fmt, vargs);
+		ret2 = SafeVsnprintf(&buffer[ret], sizeof(buffer) - ret, fmt, vargs);
 		va_end(vargs);
+		if (ret2 < 0)
+			return 0;
 
-		for (const char *prefix = ";dbg "; *prefix; prefix++) {
-			while(uart_write(UARTn, *prefix))
-				;;
-		}
-
+		ret += ret2;
 		for (size_t i = 0; i < ret; i++) {
 			while(uart_write(UARTn, buffer[i]))
 				;;
