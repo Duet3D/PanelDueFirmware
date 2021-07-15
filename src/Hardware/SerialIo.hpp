@@ -32,6 +32,7 @@ namespace SerialIo
 	void SetBaudRate(uint32_t baudRate);
 	void SendChar(char c);
 	size_t Sendf(const char *fmt, ...) __attribute__((format (printf, 1, 0)));
+	size_t Dbg(const char *fmt, ...) __attribute__((format (printf, 1, 0)));
 	void SendFilename(const char * _ecv_array dir, const char * _ecv_array name);
 	void CheckInput();
 }
