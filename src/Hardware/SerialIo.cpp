@@ -148,13 +148,39 @@ namespace SerialIo
 	{
 		va_list vargs;
 		va_start(vargs, fmt);
-		return vuprintf([](char c) noexcept -> bool {
+		int ret = vuprintf([](char c) noexcept -> bool {
 			if (c != 0)
 			{
 				SendChar(c);
 			}
 			return true;
 		}, fmt, vargs);
+		va_end(vargs);
+
+		return ret;
+	}
+
+	size_t Dbg(const char *fmt, ...)
+	{
+		char buffer[128];
+		size_t ret;
+		va_list vargs;
+
+		va_start(vargs, fmt);
+		ret = SafeVsnprintf(buffer, sizeof(buffer), fmt, vargs);
+		va_end(vargs);
+
+		for (const char *prefix = ";dbg "; *prefix; prefix++) {
+			while(uart_write(UARTn, *prefix))
+				;;
+		}
+
+		for (size_t i = 0; i < ret; i++) {
+			while(uart_write(UARTn, buffer[i]))
+				;;
+		}
+
+		return ret;
 	}
 
 	void SendFilename(const char * _ecv_array dir, const char * _ecv_array name)
