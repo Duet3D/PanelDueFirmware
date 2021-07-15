@@ -168,7 +168,7 @@ static uint32_t printerResponseInterval = defaultPrinterResponseInterval;
 
 static const ColourScheme *colours = &colourSchemes[0];
 
-Alert currentAlert;
+static Alert currentAlert;
 uint32_t lastAlertSeq = 0;
 
 static OM::PrinterStatus status = OM::PrinterStatus::connecting;
@@ -674,17 +674,8 @@ static void UpdatePollRate(bool idle)
 	}
 }
 
-static void DeactivateScreensaver()
-{
-	if (screensaverActive) {
-		UI::DeactivateScreensaver();
-		screensaverActive = false;
-		UpdatePollRate(screensaverActive);
-	}
-}
-
 // Initialise the LCD and user interface. The non-volatile data must be set up before calling this.
-void InitLcd()
+static void InitLcd()
 {
 	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);				// set up the LCD
 	colours = &colourSchemes[nvData.colourScheme];
@@ -693,7 +684,6 @@ void InitLcd()
 	lcd.fillScr(black);													// make sure the memory is clear
 	Delay(100);															// give the LCD time to update
 	backlight->SetState(BacklightStateNormal);
-	DeactivateScreensaver();
 }
 
 void RestoreBrightness()
@@ -835,8 +825,6 @@ void SetBrightness(int percent)
 	backlight->SetDimBrightness(nvData.GetBrightness() / 8);
 	backlight->SetNormalBrightness(nvData.GetBrightness());
 	backlight->SetState(BacklightStateNormal);
-
-	DeactivateScreensaver();
 }
 
 static void DimBrightness()
@@ -850,7 +838,7 @@ static void DimBrightness()
 	}
 }
 
-void ActivateScreensaver()
+static void ActivateScreensaver()
 {
 	if (!screensaverActive)
 	{
@@ -863,6 +851,21 @@ void ActivateScreensaver()
 	{
 		UI::AnimateScreensaver();
 	}
+}
+
+static bool DeactivateScreensaver()
+{
+	if (screensaverActive)
+	{
+		if (!UI::DeactivateScreensaver())
+			return false;
+
+		screensaverActive = false;
+		backlight->SetState(BacklightStateNormal);
+		UpdatePollRate(screensaverActive);
+	}
+
+	return true;
 }
 
 // Factory reset
@@ -920,7 +923,7 @@ static void Reconnect()
 }
 
 // Try to get an integer value from a string. If it is actually a floating point value, round it.
-bool GetInteger(const char s[], int32_t &rslt)
+static bool GetInteger(const char s[], int32_t &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 
@@ -938,7 +941,7 @@ bool GetInteger(const char s[], int32_t &rslt)
 }
 
 // Try to get an unsigned integer value from a string
-bool GetUnsignedInteger(const char s[], uint32_t &rslt)
+static bool GetUnsignedInteger(const char s[], uint32_t &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 	const char* endptr;
@@ -947,7 +950,7 @@ bool GetUnsignedInteger(const char s[], uint32_t &rslt)
 }
 
 // Try to get a floating point value from a string. if it is actually a floating point value, round it.
-bool GetFloat(const char s[], float &rslt)
+static bool GetFloat(const char s[], float &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 	const char* endptr;
@@ -956,7 +959,7 @@ bool GetFloat(const char s[], float &rslt)
 }
 
 // Try to get a bool value from a string.
-bool GetBool(const char s[], bool &rslt)
+static bool GetBool(const char s[], bool &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 
@@ -1626,7 +1629,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	case rcvStateMessageBox:
 		dbg2();
-		// Nessage box has been dealt with somewhere else
 		if (data[0] == 0)
 		{
 			UI::ClearAlert();
@@ -2222,6 +2224,7 @@ int main(void)
 
 	// Set up the baud rate
 	SerialIo::Init(nvData.GetBaudRate(), &serial_cbs);
+	UpdatePollRate(false);
 
 	MessageLog::Init();
 
@@ -2285,15 +2288,11 @@ int main(void)
 			uint16_t x, y;
 			if (touch.read(x, y))
 			{
-#if 0
-				touchX->SetValue((int)x);	//debug
-				touchY->SetValue((int)y);	//debug
-#endif
 				lastActionTime = SystemTick::GetTickCount();
-				if (backlight->GetState() == BacklightStateDimmed || screensaverActive)
+				if (screensaverActive && DeactivateScreensaver())
 				{
-					backlight->SetState(BacklightStateNormal);
-					DeactivateScreensaver();
+					dbg("deactivated screensaver");
+					//DeactivateScreensaver();
 					DelayTouchLong();			// ignore further touches for a while
 				}
 				else
@@ -2302,11 +2301,6 @@ int main(void)
 					if (bp.IsValid())
 					{
 						DelayTouchLong();		// by default, ignore further touches for a long time
-						if (bp.GetEvent() != evAdjustVolume)
-						{
-							TouchBeep();		// give audible feedback of the touch, unless adjusting the volume
-						}
-
 						backlight->SetState(BacklightStateNormal);
 						UI::ProcessTouch(bp);
 						if (!initialized)		// Last button press was E-Stop
@@ -2324,12 +2318,16 @@ int main(void)
 					}
 				}
 			}
-			else if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
+			else
 			{
-				if (backlight->GetState() == BacklightStateNormal && UI::CanDimDisplay())
+				if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
 				{
-					DimBrightness();				// it might not actually dim the display, depending on various flags
+					if (backlight->GetState() == BacklightStateNormal && UI::CanDimDisplay())
+					{
+						DimBrightness();				// it might not actually dim the display, depending on various flags
+					}
 				}
+
 				uint32_t screensaverTimeout = nvData.GetScreensaverTimeout();
 				if (screensaverTimeout > 0 && SystemTick::GetTickCount() - lastActionTime >= screensaverTimeout)
 				{

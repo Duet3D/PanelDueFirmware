@@ -148,7 +148,7 @@ public:
 	void SetPopupP(PopupWindow * p, PixelNumber px = 0, PixelNumber py = 0, bool redraw = true) { SetPopup(p, px, py, redraw, DisplayXP, DisplayYP); }
 	PopupWindow * null GetPopup() const { return next; }
 	void ClearPopup(bool redraw = true, PopupWindow *whichOne = nullptr);
-	inline bool IsPopupActive() const { return GetPopup() != nullptr; }
+	inline bool IsPopupActive() const { return GetPopup() == nullptr; }
 	bool ObscuredByPopup(const DisplayField *p) const;
 	bool Visible(const DisplayField *p) const;
 	virtual bool Contains(PixelNumber xmin, PixelNumber ymin, PixelNumber xmax, PixelNumber ymax) const = 0;

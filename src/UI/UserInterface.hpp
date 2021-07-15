@@ -28,15 +28,17 @@ extern TextField *fwVersionField;
 const size_t alertTextLength = 165;			// maximum characters in the alert text
 const size_t alertTitleLength = 50;			// maximum characters in the alert title
 
-struct Alert
+class Alert
 {
+private:
+public:
 	int32_t mode;
 	uint32_t seq;
 	uint32_t controls;
 	float timeout;
+	Bitmap<uint8_t> flags;
 	String<50> title;
 	String<alertTextLength> text;
-	Bitmap<uint8_t> flags;
 
 	static constexpr uint8_t GotMode = 0;
 	static constexpr uint8_t GotSeq = 1;
@@ -64,7 +66,7 @@ namespace UI
 	extern void CreateFields(uint32_t language, const ColourScheme& colours, uint32_t p_infoTimeout);
 	extern void InitColourScheme(const ColourScheme *scheme);
 	extern void ActivateScreensaver();
-	extern void DeactivateScreensaver();
+	extern bool DeactivateScreensaver();
 	extern void AnimateScreensaver();
 	extern void ShowAxis(size_t axis, bool b, const char* axisLetter = nullptr);
 	extern void UpdateAxisPosition(size_t axis, float fval);
