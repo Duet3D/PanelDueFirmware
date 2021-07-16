@@ -164,8 +164,8 @@ namespace SerialIo
 	size_t Dbg(const char *fmt, ...)
 	{
 		char buffer[128];
-		size_t ret;
-		size_t ret2;
+		int ret;
+		int ret2;
 		va_list vargs;
 
 		ret = SafeSnprintf(buffer, sizeof(buffer), ";dbg %4lu ", SystemTick::GetTickCount() / 1000);
@@ -179,7 +179,7 @@ namespace SerialIo
 			return 0;
 
 		ret += ret2;
-		for (size_t i = 0; i < ret; i++) {
+		for (int i = 0; i < ret; i++) {
 			while(uart_write(UARTn, buffer[i]))
 				;;
 		}
