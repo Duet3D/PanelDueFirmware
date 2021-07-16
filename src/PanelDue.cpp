@@ -360,7 +360,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvJobFileSimulatedTime, 			"job:file:simulatedTime" },
 	{ rcvJobFilePosition,				"job:filePosition" },
 	{ rcvJobLastFileName,				"job:lastFileName" },
-	{ rcvJobLastFileSimulated,			"job:lastFileSimulated" },
+	{ rcvJobDuration,				"job:duration" },
 	{ rcvJobTimesLeftFilament,			"job:timesLeft:filament" },
 	{ rcvJobTimesLeftFile,				"job:timesLeft:file" },
 	{ rcvJobTimesLeftSlicer,			"job:timesLeft:slicer" },
