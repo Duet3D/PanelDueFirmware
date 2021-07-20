@@ -65,7 +65,7 @@ extern uint16_t _esplash[];							// defined in linker script
 
 // Controlling constants
 constexpr uint32_t defaultPrinterPollInterval = 500;	// poll interval in milliseconds
-constexpr uint32_t defaultPrinterResponseTimeout = defaultPrinterPollInterval * 0.7;		// shortest time after a response that we send another poll (gives printer time to catch up)
+constexpr uint32_t printerResponseTimeout = 2000;	// shortest time after a response that we send another poll (gives printer time to catch up)
 
 constexpr uint32_t slowPrinterPollInterval = 4000;		// poll interval in milliseconds when screensaver active
 const uint32_t printerPollTimeout = 2000;			// poll timeout in milliseconds
@@ -164,7 +164,6 @@ static uint32_t remoteUpTime = 0;
 static bool initialized = false;
 static float pollIntervalMultiplier = 1.0;
 static uint32_t printerPollInterval = defaultPrinterPollInterval;
-static uint32_t printerResponseTimeout = defaultPrinterResponseTimeout;
 
 static const ColourScheme *colours = &colourSchemes[0];
 
