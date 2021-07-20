@@ -670,7 +670,6 @@ static void UpdatePollRate(bool idle)
 	else
 	{
 		printerPollInterval = defaultPrinterPollInterval * pollIntervalMultiplier;
-		printerResponseTimeout = defaultPrinterResponseTimeout * pollIntervalMultiplier;
 	}
 }
 
