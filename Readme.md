@@ -34,9 +34,26 @@ $ git submodule update --recursive
 ## Setup build for specific device
 
 ```
-$ cmake -B 5.0i -DDEVICE=5.0i .
-$ make -C 5.0i all -j12
-$ bossac -e -w -v -b 5.0i/paneldue.bin -R -p /dev/ttyACM1
+$ cmake -B build -DDEVICE=5.0i .
+$ make -C build all -j12
+```
+
+The following devices are supported:
+- v2-4.3
+- v2-5.0
+- v2-7.0
+- v2-7.0c
+- v3-4.3
+- v3-5.0
+- v3-7.0
+- v3-7.0c
+- 5.0i
+- 7.0i
+
+## Flash a firmware image to a device
+
+```
+$ bossac -e -w -v -b build/paneldue.bin -R -p /dev/ttyACM1
 ```
 
 # Customization
