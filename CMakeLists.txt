@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.10 )
+cmake_minimum_required( VERSION 3.11 )
 
 #configure_file(src/config.h.in src/config.h)
 
