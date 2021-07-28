@@ -8,9 +8,10 @@ set ( CMAKE_CXX_COMPILER_FORCED True )
 
 set( CMAKE_TOOLCHAIN_FILE toolchains/arm-none-eabi.cmake )
 
-project( paneldue VERSION 3.4 )
-set( CMAKE_PROJECT_DESCRIPTION "This is PanelDue Firmware" )
-set( CMAKE_PROJECT_HOMEPAGE_URL "https://github.com/Duet3D/PanelDueFirmware" )
+project( paneldue
+	DESCRIPTION "PanelDue Firmware"
+	HOMEPAGE_URL "https://github.com/Duet3D/PanelDueFirmware"
+)
 
 add_subdirectory( lib/librrf )
 add_executable( paneldue.elf )
@@ -18,11 +19,8 @@ add_executable( paneldue.elf )
 # basic compiler flags
 set( BASIC_C_FLAGS "-O2 -g -DNDEBUG -DBOARD=USER_BOARD" )
 
-# get absolute paths of linker files
-file( REAL_PATH "src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld" LINKER_FILE_SAM3S4 )
-file( REAL_PATH "src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld" LINKER_FILE_SAM4S4 )
-
 # SAM3S4 configuration
+file( REAL_PATH "src/ASF/sam/utils/linker_scripts/sam3s/sam3s4/gcc/flash.ld" LINKER_FILE_SAM3S4 )
 set( SYSTEM_FILE_SAM3S4 "src/ASF/sam/utils/cmsis/sam3s/source/templates/system_sam3s.c" )
 set( STARTUP_FILE_SAM3S4 "src/ASF/sam/utils/cmsis/sam3s/source/templates/gcc/startup_sam3s.c" )
 set( EXCEPTION_FILE_SAM3S4 "src/ASF/sam/utils/cmsis/sam3s/source/templates/exceptions.c" )
@@ -30,6 +28,7 @@ set( CPU_FLAGS_SAM3S4 "-DARM_MATH_CM3=true -D__SAM3S4B__ -mcpu=cortex-m3 -mthumb
 set( LD_FLAGS_SAM3S4 "-Wl,--defsym,__stack_size__=0x1000 -T${LINKER_FILE_SAM3S4} -Wl,-Map,paneldue.map" )
 
 # SAM4S4 configuration
+file( REAL_PATH "src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld" LINKER_FILE_SAM4S4 )
 set( SYSTEM_FILE_SAM4S4 "src/ASF/sam/utils/cmsis/sam4s/source/templates/system_sam4s.c" )
 set( STARTUP_FILE_SAM4S4 "src/ASF/sam/utils/cmsis/sam4s/source/templates/gcc/startup_sam4s.c" )
 set( CPU_FLAGS_SAM4S4 "-DARM_MATH_CM4=true -D__SAM4S4B__ -mcpu=cortex-m4 -mthumb" )
