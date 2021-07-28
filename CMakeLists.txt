@@ -106,7 +106,7 @@ set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static --specs=nano.spec
 
 set( CMAKE_TOOLCHAIN_FILE toolchains/arm-none-eabi.cmake )
 
-project( paneldue VERSION 3.3 )
+project( paneldue VERSION 3.4 )
 set( CMAKE_PROJECT_DESCRIPTION "This is PanelDue Firmware" )
 set( CMAKE_PROJECT_HOMEPAGE_URL "https://github.com/Duet3D/PanelDueFirmware" )
 
