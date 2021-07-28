@@ -13,7 +13,6 @@ project( paneldue
 	HOMEPAGE_URL "https://github.com/Duet3D/PanelDueFirmware"
 )
 
-add_subdirectory( lib/librrf )
 add_executable( paneldue.elf )
 
 # basic compiler flags
@@ -134,6 +133,7 @@ message( "Project CXX_FLAGS: " ${CMAKE_CXX_FLAGS} )
 message( "Project ASM_FLAGS: " ${CMAKE_ASM_FLAGS} )
 message( "Project LD_FLAGS: " ${CMAKE_EXE_LINKER_FLAGS} )
 
+add_subdirectory( lib/librrf )
 
 target_sources( paneldue.elf PRIVATE
 	src/ASF/common/boards/user_board/init.c
