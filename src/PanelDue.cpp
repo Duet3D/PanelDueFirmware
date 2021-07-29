@@ -1147,7 +1147,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 					if (newFeatures != firmwareFeatures)
 					{
 						firmwareFeatures = newFeatures;
-						UI::FirmwareFeaturesChanged(firmwareFeatures);
 						FileManager::FirmwareFeaturesChanged();
 					}
 					break;

@@ -111,7 +111,6 @@ namespace UI
 	extern void UpdateExtrusionFactor(size_t index, int ival);
 	extern void UpdatePrintTimeText(uint32_t seconds, bool isSimulated);
 	extern void UpdateSpeedPercent(int ival);
-	extern void FirmwareFeaturesChanged(FirmwareFeatureMap newFeatures);
 	extern void ProcessTouch(ButtonPress bp);
 	extern void ProcessTouchOutsidePopup(ButtonPress bp)
 	pre(bp.IsValid());

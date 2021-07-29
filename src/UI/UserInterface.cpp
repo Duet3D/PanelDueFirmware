@@ -2090,16 +2090,6 @@ namespace UI
 		return currentFile != nullptr;
 	}
 
-	// This is called when the host firmware changes
-	void FirmwareFeaturesChanged(FirmwareFeatureMap newFeatures)
-	{
-		// Some firmwares don't support tool standby temperatures
-		for (size_t i = 0; i < MaxSlots; ++i)
-		{
-			mgr.Show(standbyTemps[i], !newFeatures.IsBitSet(noStandbyTemps));
-		}
-	}
-
 	static void DoEmergencyStop()
 	{
 		// We send M112 for the benefit of old firmware, and F0 0F (an invalid UTF8 sequence) for new firmware
