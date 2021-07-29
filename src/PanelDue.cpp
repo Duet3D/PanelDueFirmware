@@ -65,7 +65,7 @@ extern uint16_t _esplash[];							// defined in linker script
 
 // Controlling constants
 constexpr uint32_t defaultPrinterPollInterval = 500;	// poll interval in milliseconds
-constexpr uint32_t defaultPrinterResponseInterval = defaultPrinterPollInterval * 0.7;		// shortest time after a response that we send another poll (gives printer time to catch up)
+constexpr uint32_t printerResponseTimeout = 2000;	// shortest time after a response that we send another poll (gives printer time to catch up)
 
 constexpr uint32_t slowPrinterPollInterval = 4000;		// poll interval in milliseconds when screensaver active
 const uint32_t printerPollTimeout = 2000;			// poll timeout in milliseconds
@@ -164,7 +164,6 @@ static uint32_t remoteUpTime = 0;
 static bool initialized = false;
 static float pollIntervalMultiplier = 1.0;
 static uint32_t printerPollInterval = defaultPrinterPollInterval;
-static uint32_t printerResponseInterval = defaultPrinterResponseInterval;
 
 static const ColourScheme *colours = &colourSchemes[0];
 
@@ -670,7 +669,6 @@ static void UpdatePollRate(bool idle)
 	else
 	{
 		printerPollInterval = defaultPrinterPollInterval * pollIntervalMultiplier;
-		printerResponseInterval = defaultPrinterResponseInterval * pollIntervalMultiplier;
 	}
 }
 
@@ -1024,8 +1022,8 @@ static void EndReceivedMessage()
 	dbg2();
 }
 
-void HandleOutOfBufferResponse() {
-
+void HandleOutOfBufferResponse()
+{
 	const uint32_t now = SystemTick::GetTickCount();
 
 	// We received the previous out-of-buffer within 10s
@@ -2362,7 +2360,7 @@ int main(void)
 		const uint32_t now = SystemTick::GetTickCount();
 		if ((UI::DoPolling()										// don't poll while we are in the Setup page
 		     && now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
-		     && now - lastResponseTime >= printerResponseInterval)	// and we haven't had a response too recently
+		     && now - lastResponseTime >= printerResponseTimeout)	// and we haven't had a response too recently
 		     || (!initialized && (now - lastPollTime > now - lastResponseTime))	// but if we are initializing do it as fast as possible where
 		   )
 		{

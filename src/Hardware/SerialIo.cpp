@@ -505,6 +505,7 @@ namespace SerialIo
 					if (cbs && cbs->ParserErrorEncountered)
 					{
 						cbs->ParserErrorEncountered(lastState, fieldId.c_str(), fieldVal.c_str(), arrayIndices); // Notify the consumer that we ran into an error
+						lastState = jsBegin;
 					}
 				}
 				state = jsBegin;		// abandon current parse (if any) and start again
