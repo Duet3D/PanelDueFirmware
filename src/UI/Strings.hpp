@@ -7,20 +7,31 @@
  * The encoding used for this file must be UTF-8 to ensure that accented characters are displayed correctly.
  */
 
-#ifndef SRC_STRINGS_HPP_
-#define SRC_STRINGS_HPP_
+#ifndef SRC_UI_STRINGS_HPP_
+#define SRC_UI_STRINGS_HPP_
 
 #include "ecv.h"
 #undef array
 #undef result
 #undef value
-#include "UserInterfaceConstants.hpp"
+#include "UI/ColourSchemes.hpp"
+#include "Configuration.hpp"
 
 #define CSTRING const char * const _ecv_array
 #define Newline			"\n"
 #define DegreeSymbol	"\u00B0"
 
-constexpr unsigned int NumLanguages = 6 + USE_CYRILLIC_CHARACTERS;
+// Unicode strings for special characters in our font
+#define DECIMAL_POINT	"\xC2\xB7"		// Unicode middle-dot, code point B7
+#define DEGREE_SYMBOL	"\xC2\xB0"		// Unicode degree-symbol, code point B0
+#define THIN_SPACE		"\xC2\x80"		// Unicode control character, code point 0x80, we use it as thin space
+#define LEFT_ARROW		"\xC2\x81"		// Unicode control character, code point 0x81, we use it as up arrow
+#define UP_ARROW		"\xC2\x82"		// Unicode control character, code point 0x82, we use it as up arrow
+#define RIGHT_ARROW		"\xC2\x83"		// Unicode control character, code point 0x83, we use it as down arrow
+#define DOWN_ARROW		"\xC2\x84"		// Unicode control character, code point 0x84, we use it as down arrow
+#define MORE_ARROW		"\xC2\x85"
+#define LESS_ARROW		"\xC2\x86"
+
 constexpr unsigned int NumStatusStrings = 14;
 
 struct StringTable
@@ -31,6 +42,7 @@ struct StringTable
 	// Main page strings
 	CSTRING control;
 	CSTRING print;
+	CSTRING status;
 	CSTRING console;
 	CSTRING setup;
 	CSTRING current;
@@ -41,14 +53,15 @@ struct StringTable
 	CSTRING macro;
 	CSTRING stop;
 
-	// Print page
+	// Status page
 	CSTRING extruderPercent;
 	CSTRING speed;
 	CSTRING fan;
 	CSTRING timeRemaining;
+	CSTRING simulated;
 	CSTRING file;
 	CSTRING filament;
-	CSTRING layer;
+	CSTRING slicer;
 	CSTRING notAvailable;
 	CSTRING pause;
 	CSTRING babystep;
@@ -120,7 +133,7 @@ struct StringTable
 
 };
 
-const StringTable LanguageTables[NumLanguages] =
+const StringTable LanguageTables[] =
 {
 	// English
 	{
@@ -130,6 +143,7 @@ const StringTable LanguageTables[NumLanguages] =
 		// Main page strings
 		"Control",
 		"Print",
+		"Status",
 		"Console",
 		"Setup",
 		"Current" THIN_SPACE DEGREE_SYMBOL "C",
@@ -145,9 +159,10 @@ const StringTable LanguageTables[NumLanguages] =
 		"Speed ",							// note space at end
 		"Fan ",								// note space at end
 		"Time left: ",
+		"sim'd ",							// note space at end
 		"file ",							// note space at end
-		", filament ",						// note space at end
-		", layer ",							// note space at end
+		"filament ",						// note space at end
+		"slicer ",							// note space at end
 		"n/a",
 		"Pause",
 		"Baby step",
@@ -253,6 +268,7 @@ const StringTable LanguageTables[NumLanguages] =
 		// Main page strings
 		"Steuerung",
 		"Druck",
+		"Status",
 		"Konsole",
 		"Setup",
 		"Istwert" THIN_SPACE DEGREE_SYMBOL "C",
@@ -269,8 +285,9 @@ const StringTable LanguageTables[NumLanguages] =
 		"Lüfter ",							// note space at end
 		"Restzeit: ",
 		"Datei ",							// note space at end
-		", Filament ",						// note space at end
-		", Layer ",							// note space at end. "Schicht" is too long.
+		"Simul. ",							// note space at end
+		"Filament ",						// note space at end
+		"Slicer ",							// note space at end
 		"n/v",
 		"Pause",
 		"Einzelschritt",
@@ -343,7 +360,8 @@ const StringTable LanguageTables[NumLanguages] =
 			"Firmware-Upload",
 			"Wechsle Tool",
 			"Simuliert",
-			"Stand-by"
+			"Stand-by",
+			"Initialisieren"
 		},
 
 		// Theme names
@@ -375,6 +393,7 @@ const StringTable LanguageTables[NumLanguages] =
 		// Main page strings
 		"Contrôle",
 		"Imprimer",
+		"Statut",
 		"Console",
 		"Installation",
 		"Actuel" THIN_SPACE DEGREE_SYMBOL "C",
@@ -390,9 +409,10 @@ const StringTable LanguageTables[NumLanguages] =
 		"Vitesse ",								// note space at end
 		"Ventilo ",								// note space at end. "Ventilateur 0%" was too long to fit.
 		"Temps Restant: ",
+		"Simul. ",								// note space at end
 		"Fichier ",								// note space at end
-		", filament ",							// note space at end
-		", couche ",							// note space at end
+		"filament ",							// note space at end
+		"slicer ",								// note space at end
 		"n/a",
 		"Pause",
 		"Baby step",
@@ -459,13 +479,14 @@ const StringTable LanguageTables[NumLanguages] =
 			"Arrêt",
 			"Démarrage",
 			"Pause",
-			"Occupé"
+			"Occupé",
 			"Pause",
 			"Reprise",
 			"Flasher firmware",
 			"Changer outil",
 			"Simuler",
-			"En veille"
+			"En veille",
+			"Initialiser"
 		},
 
 		// Theme names
@@ -497,6 +518,7 @@ const StringTable LanguageTables[NumLanguages] =
 		// Main page strings
 		"Control",
 		"Imprimir",
+		"Estatus",
 		"Consola",
 		"Configuración",
 		"Actual" THIN_SPACE DEGREE_SYMBOL "C",
@@ -512,9 +534,10 @@ const StringTable LanguageTables[NumLanguages] =
 		"Veloc. ",							// note space at end. "Velocidad" is too long.
 		"Ventil. ",							// note space at end. "Ventilador" is too lonh.
 		"Tiempo restante: ",
+		"simul. ",							// note space at end
 		"archivo ",							// note space at end
-		", filamento ",						// note space at end
-		", capa ",							// note space at end
+		"filamento ",						// note space at end
+		"slicer ",							// note space at end
 		"n/d",								// Not available / no disponible
 		"Pausa",
 		"Micro paso",						// Literal translation of baby step it's very odd in spanish...
@@ -619,6 +642,7 @@ const StringTable LanguageTables[NumLanguages] =
 		// Main page strings
 		"Ovládání",
 		"Tisk",
+		"Status",
 		"Konzole",
 		"Nastavení",
 		"Aktuální" THIN_SPACE DEGREE_SYMBOL "C",
@@ -634,9 +658,10 @@ const StringTable LanguageTables[NumLanguages] =
 		"Rychl. ",							// note space at end
 		"Vent. ",							// note space at end
 		"Čas do konce: ",
+		"simul. ",							// note space at end
+		"slicer ",							// note space at end
 		"soubor ",							// note space at end
-		", materiál ",						// note space at end
-		", vrstva ",						// note space at end
+		"materiál ",						// note space at end
 		"n/a",
 		"Pozastavit",
 		"Baby step",
@@ -741,6 +766,7 @@ const StringTable LanguageTables[NumLanguages] =
 		// Main page strings
 		"Controlla",
 		"Stampa",
+		"Status",
 		"Console",
 		"Configura",
 		"Corrente" THIN_SPACE DEGREE_SYMBOL "C",
@@ -756,9 +782,10 @@ const StringTable LanguageTables[NumLanguages] =
 		"Velocità ",							// note space at end
 		"Ventola ",								// note space at end
 		"Tempo rimanente: ",
+		"simul. ",							// note space at end
 		"file ",							// note space at end
-		", filamento ",						// note space at end
-		", layer ",							// note space at end
+		"filamento ",						// note space at end
+		"slicer ",							// note space at end
 		"n/a",
 		"Pausa",
 		"Baby step",
@@ -864,6 +891,7 @@ const StringTable LanguageTables[NumLanguages] =
 		// Main page strings
 		"Контроль",
 		"Друк",
+		"Друк",
 		"Консоль",
 		"Налаштування",
 		"Поточна" THIN_SPACE DEGREE_SYMBOL "C",
@@ -879,9 +907,10 @@ const StringTable LanguageTables[NumLanguages] =
 		"Швидкість ",             // note space at end
 		"Вентилятор ",               // note space at end
 		"Залишилось часу: ",
-		"файл ",              // note space at end
-		", філамент ",            // note space at end
-		", шар ",             // note space at end
+		"simul. ",						// note space at end
+		"файл ",              			// note space at end
+		"філамент ",           			// note space at end
+		"slicer ",						// note space at end
 		"-",
 		"Пауза",
 		"Мікрокрок",
@@ -977,8 +1006,132 @@ const StringTable LanguageTables[NumLanguages] =
 			"Heat's not comb.",
 			"Heaters comb.",
 		}
+	},
+	// Russian
+	{
+		"ru",
+
+		// Main page strings
+		"Контроль",
+		"Печать",
+		"Статус",
+		"Консоль",
+		"Настройка",
+		"Текущий" THIN_SPACE DEGREE_SYMBOL "C",
+		"Активный" THIN_SPACE DEGREE_SYMBOL "C",
+		"Ожидание" THIN_SPACE DEGREE_SYMBOL "C",
+		"Движение",
+		"Экструзия",
+		"Макрос",
+		"СТОП",
+
+		// Print page
+		"Экструдер" THIN_SPACE "%",
+		"Скорость ",             // note space at end
+		"обдув ",               // note space at end
+		"Оставшееся время: ",
+		"Файл ",              // note space at end
+		", филамент ",            // note space at end
+		", слой ",             // note space at end
+		"Слайсер ",
+		"-",
+		"Пауза",
+		"мелкий шаг",
+		"Резюме",
+		"отмена",
+		"печать заново",
+		"снова смоделировать",
+		"установить",
+
+		// Setup page
+		"Громкость ",              // note space at end
+		"Калибровка экрана",
+		"Отзеркаленый дисплей",
+		"Перевёрнутый дисплей",
+		"Тема",
+		"Яркость -",
+		"Яркость +",
+		"Сохранить настройки",
+		"Скинуть настройки",
+		"Сохранить и перезапустить",
+		"Время ожидания информации ",          // note space at end
+		"Заставка ",           // note space at end
+		"Мелкий шаг ",            // note space at end
+		"Скорость подачи ",            // note space at end
+
+		// Misc
+		"Подтвердить сброс настроек",
+		"Подтвердить удаление файла",
+		"Вы уверены?",
+		"Дотронуться до точки",
+		"Двигать кареткой",
+		"Количество выдавливания (мм)",
+		"Скорость (мм / с)",
+		"Экструдировать",
+		"Ретракт",
+		"Мелкий шаг",
+		"Текущее смещение по оси Z: ",
+		"Сообщение",
+		"Сообщение",
+		"Версия прошивки Panel Due ",  // note space at end
+		"Ответ",
+
+		// File popup
+		"Файлы на карте ",       // note the space on the end
+		"Макросы",
+		"Ошибка ",           // note the space at the end
+		"доступ к SD-карте",     // note the space at the start
+		"Имя файла: ",
+		"Размер: ",
+		"Высота слоя: ",
+		"Высота объекта: ",
+		"Нужен филамент: ",
+		"от слайсено: ",
+		"Последнее изменение: ",
+		"Расчетное время печати: ",
+		"Время имитации печати: ",
+		"Симуляция ",
+
+		// Printer status strings
+		{
+			"Подключение",
+			"Бездействие",
+			"Печать",
+			"Остановлен",
+			"Запуск",
+			"Приостановлено",
+			"Занятый",
+			"Пауза",
+			"Возобновление",
+			"Загрузка прошивки",
+			"Смена инструмента",
+			"Симуляция",
+			"Ожидать",
+			"Инициализация",
+		},
+
+		// Theme names
+		{
+			"Светлая тема",
+			"Тёмная тема 1",
+			"Тёмная тема 2"
+		},
+
+		// Display dimming types
+		{
+			"Никогда не тускнеет",
+			"Уменьшить при простое",
+			"Всегда тусклый"
+		},
+
+		// Heater combine types
+		{
+			"Обогреватели не совмещенные",
+			"Обогреватели комбинированные",
+		}
 	}
 #endif
 };
 
-#endif /* SRC_STRINGS_HPP_ */
+constexpr unsigned int NumLanguages = sizeof(LanguageTables) / sizeof(LanguageTables[0]);
+#endif /* SRC_UI_STRINGS_HPP_ */

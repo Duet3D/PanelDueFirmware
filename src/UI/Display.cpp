@@ -5,8 +5,7 @@
  *  Author: David
  */
 
-#include "Display.hpp"
-#include "ColourSchemes.hpp"
+#include <UI/Display.hpp>
 #include "Icons/Icons.hpp"
 
 #undef min
@@ -89,7 +88,7 @@ void DisplayField::SetPosition(PixelNumber x, PixelNumber y)
 {
 	lcd.setFont(DisplayField::defaultFont);
 	lcd.setTextPos(0, 9999, maxWidth);
-	lcd.printf(s);						// dummy print to get text width
+	lcd.printf("%s", s);						// dummy print to get text width
 	return lcd.getTextX();
 }
 
@@ -210,15 +209,15 @@ ButtonPress Window::FindEventOutsidePopup(PixelNumber x, PixelNumber y)
 	return (f.IsValid() && Visible(f.GetButton())) ? f : ButtonPress();
 }
 
-void Window::SetPopup(PopupWindow * p, PixelNumber px, PixelNumber py, bool redraw)
+void Window::SetPopup(PopupWindow * p, PixelNumber px, PixelNumber py, bool redraw, const PixelNumber displayX, const PixelNumber displayY)
 {
 	if (px == AutoPlace)
 	{
-		px = (DisplayX - p->GetWidth())/2;
+		px = (displayX - p->GetWidth())/2;
 	}
 	if (py == AutoPlace)
 	{
-		py = (DisplayY - p->GetHeight())/2;
+		py = (displayY - p->GetHeight())/2;
 	}
 	p->SetPos(px, py);
 	Window *pw = this;
@@ -606,11 +605,11 @@ void TextField::PrintText() const
 {
 	if (label != nullptr)
 	{
-		lcd.printf(label);
+		lcd.printf("%s", label);
 	}
 	if (text != nullptr)
 	{
-		lcd.printf(text);
+		lcd.printf("%s", text);
 	}
 }
 
@@ -618,12 +617,12 @@ void FloatField::PrintText() const
 {
 	if (label != nullptr)
 	{
-		lcd.printf(label);
+		lcd.printf("%s", label);
 	}
 	lcd.printf("%.*f", numDecimals, val);
 	if (units != nullptr)
 	{
-		lcd.printf(units);
+		lcd.printf("%s", units);
 	}
 }
 
@@ -631,12 +630,12 @@ void IntegerField::PrintText() const
 {
 	if (label != nullptr)
 	{
-		lcd.printf(label);
+		lcd.printf("%s", label);
 	}
 	lcd.printf("%d", val);
 	if (units != nullptr)
 	{
-		lcd.printf(units);
+		lcd.printf("%s", units);
 	}
 }
 
@@ -644,7 +643,7 @@ void StaticTextField::PrintText() const
 {
 	if (text != nullptr)
 	{
-		lcd.printf(text);
+		lcd.printf("%s", text);
 	}
 }
 
@@ -773,7 +772,7 @@ size_t TextButton::PrintText(size_t offset) const
 {
 	if (text != nullptr)
 	{
-		return lcd.printf(text + offset);
+		return lcd.printf("%s", text + offset);
 	}
 	return 0;
 }
@@ -793,7 +792,7 @@ size_t TextButtonWithLabel::PrintText(size_t offset) const
 	size_t w = 0;
 	if (label != nullptr)
 	{
-		w += lcd.printf(label);
+		w += lcd.printf("%s", label);
 	}
 	w += TextButton::PrintText(offset);
 	return w;
@@ -825,22 +824,22 @@ void IconButton::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 }
 
 IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, const char * text, int param)
-	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(text), val(0), printText(true)
+	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(text), val(0), printText(true), drawIcon(true)
 {
 }
 
 IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, const char * text, const char * _ecv_array param)
-	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(text), val(0), printText(true)
+	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(text), val(0), printText(true), drawIcon(true)
 {
 }
 
 IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int textVal, int param)
-	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(nullptr), val(textVal), printText(true)
+	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(nullptr), val(textVal), printText(true), drawIcon(true)
 {
 }
 
 IconButtonWithText::IconButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int textVal, const char * _ecv_array param)
-	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(nullptr), val(textVal), printText(true)
+	: IconButton(py, px, pw, ic, e, param), font(DisplayField::defaultFont), text(nullptr), val(textVal), printText(true), drawIcon(true)
 {
 }
 
@@ -853,7 +852,7 @@ size_t IconButtonWithText::PrintText() const
 	}
 	if (text != nullptr)
 	{
-		ret += lcd.printf(text);
+		ret += lcd.printf("%s", text);
 	}
 	else {
 		ret += lcd.printf("%d", val);
@@ -866,7 +865,8 @@ void IconButtonWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOf
 	if (full || changed)
 	{
 		DrawOutline(xOffset, yOffset);
-		const uint16_t sx = GetIconWidth(icon), sy = GetIconHeight(icon);
+		const uint16_t	sx = GetIconWidth(icon),
+						sy = drawIcon ? GetIconHeight(icon) : 0;
 
 		lcd.setFont(font);
 		lcd.setTextPos(0, 9999, width - 6);
@@ -876,7 +876,10 @@ void IconButtonWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOf
 		// Print the icon
 		lcd.setTransparentBackground(true);
 		const PixelNumber iconXOffset = xOffset + x + (width - (sx+textWidth))/2;
-		lcd.drawBitmap4(iconXOffset, yOffset + y + iconMargin + 1, sx, sy, GetIconData(icon), defaultIconPalette);
+		if (drawIcon)
+		{
+			lcd.drawBitmap4(iconXOffset, yOffset + y + iconMargin + 1, sx, sy, GetIconData(icon), defaultIconPalette);
+		}
 
 		// Print the text
 		const PixelNumber textX = iconXOffset + sx + 3;
@@ -896,12 +899,12 @@ size_t IntegerButton::PrintText(size_t offset) const
 	size_t ret = 0;
 	if (label != nullptr)
 	{
-		ret += lcd.printf(label);
+		ret += lcd.printf("%s", label);
 	}
 	ret += lcd.printf("%d", val);
 	if (units != nullptr)
 	{
-		ret += lcd.printf(units);
+		ret += lcd.printf("%s", units);
 	}
 	return ret;
 }
@@ -912,7 +915,7 @@ size_t FloatButton::PrintText(size_t offset) const
 	size_t ret = lcd.printf("%.*f", numDecimals, val);
 	if (units != nullptr)
 	{
-		ret += lcd.printf(units);
+		ret += lcd.printf("%s", units);
 	}
 	return ret;
 }

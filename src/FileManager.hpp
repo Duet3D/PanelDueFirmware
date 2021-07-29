@@ -9,11 +9,9 @@
 #define FILEMANAGER_H_
 
 #include "Configuration.hpp"
-#include "General/String.h"
-#include "DisplaySize.hpp"
 #include "RequestTimer.hpp"
-#include "Events.hpp"
 #include "FirmwareFeatures.hpp"
+#include <General/String.h>
 
 namespace FileManager
 {

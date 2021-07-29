@@ -48,9 +48,9 @@
 #ifndef UTFT_h
 #define UTFT_h
 
-#include <General/SafeVsnprintf.h>
 #include "OneBitPort.hpp"
 #include "DisplayOrientation.hpp"
+#include <General/SafeVsnprintf.h>
 
 enum DisplayType {
 	HX8347A,
@@ -104,6 +104,10 @@ struct FontDescriptor
 
 
 typedef uint16_t Colour;
+
+const Colour black = 0x0000;
+const Colour white = 0xFFFF;
+
 typedef const uint16_t *Palette;
 
 class UTFT
@@ -114,6 +118,7 @@ public:
 
 	UTFT(DisplayType model, unsigned int RS, unsigned int WR, unsigned int CS, unsigned int RST, unsigned int SER_LATCH = 0);
 	void InitLCD(DisplayOrientation po, bool is24bit, bool isER);
+	void setOrientation(DisplayOrientation o, bool isER, bool getCS = false);
 	void fillScr(Colour c, uint16_t leftMargin = 0);
 	void drawPixel(int x, int y);
 	void drawLine(int x1, int y1, int x2, int y2);			// Draw a straight line from points (x1,y1) to (x2,y2) inclusive

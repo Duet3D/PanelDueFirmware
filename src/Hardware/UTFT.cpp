@@ -50,6 +50,7 @@
 #undef min
 #undef max
 #include "UTFT.hpp"
+#include "Configuration.hpp"
 #include "memorysaver.h"
 #include <cstring>			// for strchr
 
@@ -181,6 +182,63 @@ inline void UTFT::LCD_Write_COM_DATA16(uint8_t com1, uint16_t dat1)
 {
 	LCD_Write_COM(com1);
 	LCD_Write_DATA16(dat1);
+}
+
+void UTFT::setOrientation(DisplayOrientation o, bool isER, bool getCS)
+{
+	orient = o;
+	if (getCS)
+	{
+		assertCS();
+	}
+
+	switch(displayModel)
+	{
+#ifndef DISABLE_SSD1963_480
+	case SSD1963_480:
+		LCD_Write_COM(0x36);		//rotation
+		{
+			uint8_t rotation = (isER) ? 0x08 : 0x00;
+			if (orient & ReverseY)
+			{
+				rotation ^= (orient & SwapXY) ? 0x02 : 0x01;		// do the row reversal in hardware
+				orient = (DisplayOrientation)(orient & ~ReverseY);
+			}
+			if (orient & ReverseX)
+			{
+				rotation ^= (orient & SwapXY) ? 0x01 : 0x02;		// do the column reversal in hardware
+				orient = (DisplayOrientation)(orient & ~ReverseX);
+			}
+			LCD_Write_DATA8(rotation);
+		}
+		break;
+#endif
+#ifndef DISABLE_SSD1963_800
+	case SSD1963_800:
+		LCD_Write_COM(0x36);		//rotation
+		{
+			uint8_t rotation = (isER) ? 0x08 : 0x00;
+			if (orient & ReverseY)
+			{
+				rotation ^= (orient & SwapXY) ? 0x02 : 0x01;		// do the row reversal in hardware
+				orient = (DisplayOrientation)(orient & ~ReverseY);
+			}
+			if (orient & ReverseX)
+			{
+				rotation ^= (orient & SwapXY) ? 0x01 : 0x02;		// do the column reversal in hardware
+				orient = (DisplayOrientation)(orient & ~ReverseX);
+			}
+			LCD_Write_DATA8(rotation);
+		}
+		break;
+#endif
+	default:
+		break;
+	}
+	if (getCS)
+	{
+		removeCS();
+	}
 }
 
 void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
@@ -1138,21 +1196,7 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 		LCD_Write_DATA8(0x07);	    //GPIO3=input, GPIO[2:0]=output
 		LCD_Write_DATA8(0x01);		//GPIO0 normal
 
-		LCD_Write_COM(0x36);		//rotation
-		{
-			uint8_t rotation = (isER) ? 0x08 : 0x00;
-			if (orient & ReverseY)
-			{
-				rotation ^= (orient & SwapXY) ? 0x02 : 0x01;		// do the row reversal in hardware
-				orient = (DisplayOrientation)(orient & ~ReverseY);
-			}
-			if (orient & ReverseX)
-			{
-				rotation ^= (orient & SwapXY) ? 0x01 : 0x02;		// do the column reversal in hardware
-				orient = (DisplayOrientation)(orient & ~ReverseX);
-			}
-			LCD_Write_DATA8(rotation);
-		}
+		setOrientation(orient, isER);
 
 		LCD_Write_COM(0xF0);		//pixel data interface
 		LCD_Write_DATA8(0x03);
@@ -1232,24 +1276,10 @@ void UTFT::InitLCD(DisplayOrientation po, bool is24bit, bool isER)
 		LCD_Write_DATA8(0x07);	    //GPIO3=input, GPIO[2:0]=output
 		LCD_Write_DATA8(0x01);		//GPIO0 normal
 
-		LCD_Write_COM(0x36);		//rotation
-		{
-			uint8_t rotation = (isER) ? 0x08 : 0x00;
-			if (orient & ReverseY)
-			{
-				rotation ^= (orient & SwapXY) ? 0x02 : 0x01;		// do the row reversal in hardware
-				orient = (DisplayOrientation)(orient & ~ReverseY);
-			}
-			if (orient & ReverseX)
-			{
-				rotation ^= (orient & SwapXY) ? 0x01 : 0x02;		// do the column reversal in hardware
-				orient = (DisplayOrientation)(orient & ~ReverseX);
-			}
-			LCD_Write_DATA8(rotation);
-		}
+		setOrientation(orient, isER);
 
 		LCD_Write_COM(0xF0);		//pixel data interface
-		LCD_Write_DATA8(0x03);
+		LCD_Write_DATA8(0x03);		//0x03: 16-bit (565 format), 0x02: 16-bit packed
 
 		delay_ms(1);
 

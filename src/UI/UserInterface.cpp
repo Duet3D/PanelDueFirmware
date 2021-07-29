@@ -5,42 +5,49 @@
  *      Author: David
  */
 
-#ifndef OEM_LAYOUT
+#include <UI/UserInterface.hpp>
 
-#include "UserInterface.hpp"
-
-#include "UserInterfaceConstants.hpp"
+#include <UI/Popup.hpp>
+#include <UI/UserInterfaceConstants.hpp>
+#include "Configuration.hpp"
 #include "PanelDue.hpp"
+#include "FlashData.hpp"
 #include "FileManager.hpp"
-#include "MessageLog.hpp"
-#include "Library/Misc.hpp"
-#include "General/String.h"
-#include "General/SafeVsnprintf.h"
+#include <UI/MessageLog.hpp>
 #include "Icons/Icons.hpp"
+#include "Library/Misc.hpp"
 #include "Hardware/Buzzer.hpp"
 #include "Hardware/Reset.hpp"
 #include "Hardware/SerialIo.hpp"
 #include "Hardware/SysTick.hpp"
-#include "Strings.hpp"
+#include <UI/Strings.hpp>
 #include "Version.hpp"
-#include "ObjectModel.hpp"
+#include <ObjectModel/Axis.hpp>
+#include <ObjectModel/Utils.hpp>
+#include <General/SafeVsnprintf.h>
+#include <General/SimpleMath.h>
+#include <General/String.h>
+#include <General/StringFunctions.h>
 
 // Public fields
-TextField *fwVersionField, *userCommandField;
+TextField *fwVersionField, *userCommandField, *ipAddressField;
 IntegerField *freeMem;
 StaticTextField *touchCalibInstruction, *debugField;
 StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
 
-// Private fields
-class AlertPopup;
+static const ColourScheme *colours;
 
-const size_t machineNameLength = 30;
-const size_t printingFileLength = 40;
-const size_t zprobeBufLength = 12;
-const size_t generatedByTextLength = 50;
-const size_t lastModifiedTextLength = 20;
-const size_t printTimeTextLength = 12;		// e.g. 11h 55m
-const size_t controlPageMacroTextLength = 50;
+// Private fields
+static const size_t machineNameLength = 30;
+static const size_t printingFileLength = 40;
+static const size_t zprobeBufLength = 12;
+static const size_t generatedByTextLength = 50;
+static const size_t lastModifiedTextLength = 20;
+static const size_t printTimeTextLength = 12;		// e.g. 11h 55m
+static const size_t controlPageMacroTextLength = 50;
+static const size_t ipAddressLength = 45;	// IPv4 needs max 15 but IPv6 can go up to 45
+
+static String<ipAddressLength> ipAddress;
 
 struct FileListButtons
 {
@@ -63,14 +70,16 @@ static DisplayField *emptyRoot, *baseRoot, *commonRoot, *controlRoot, *printRoot
 static SingleButton *homeAllButton, *bedCompButton;
 static IconButtonWithText *homeButtons[MaxDisplayableAxes], *toolButtons[MaxSlots];
 static FloatField *controlTabAxisPos[MaxDisplayableAxes];
+#if DISPLAY_X == 800
 static FloatField *printTabAxisPos[MaxDisplayableAxes];
+#endif
 static FloatField *movePopupAxisPos[MaxDisplayableAxes];
 static FloatField *currentTemps[MaxSlots];
 static FloatField *fpHeightField, *fpLayerHeightField, *babystepOffsetField;
 static TextButtonWithLabel *babystepMinusButton, *babystepPlusButton;
 static IntegerField *fpSizeField, *fpFilamentField, *filePopupTitleField;
 static ProgressBar *printProgressBar;
-static SingleButton *tabControl, *tabPrint, *tabMsg, *tabSetup;
+static SingleButton *tabControl, *tabStatus, *tabMsg, *tabSetup;
 static ButtonBase *filesButton, *pauseButton, *resumeButton, *cancelButton, *babystepButton, *reprintButton;
 static TextField *timeLeftField, *zProbe;
 static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
@@ -129,8 +138,10 @@ bool displayingResponse = false;						// true if displaying a response
 static PixelNumber screensaverTextWidth = 0;
 static uint32_t lastScreensaverMoved = 0;
 
+static uint8_t currentWorkplaceNumber = OM::MaxTotalWorkplaces;
 static int8_t currentTool = -2;							// Initialized to a value never returned by RRF to have the logic for "no tool" applied at startup
 static bool allAxesHomed = false;
+static const bool isLandscape = true; 					// Once portrait mode is enabled, this needs to be de-const-ed
 
 #ifdef SUPPORT_ENCODER
 
@@ -138,115 +149,7 @@ static bool allAxesHomed = false;
 
 static RotaryEncoder *encoder;
 static uint32_t lastEncoderCommandSentAt = 0;
-
 #endif
-
-class StandardPopupWindow : public PopupWindow
-{
-public:
-	StandardPopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder, Colour textColour, Colour imageBackColour,
-			const char * null title, PixelNumber topMargin = popupTopMargin);
-
-protected:
-	StaticTextField *titleField;
-	IconButton *closeButton;
-};
-
-class AlertPopup : public StandardPopupWindow
-{
-public:
-	AlertPopup(const ColourScheme& colours);
-	void Set(const char *title, const char *text, int32_t mode, uint32_t controls);
-
-private:
-	TextButton *okButton, *cancelButton;
-	TextButtonForAxis *zUpCourseButton, *zUpMedButton, *zUpFineButton, *zDownCourseButton, *zDownMedButton, *zDownFineButton;
-	String<alertTextLength/3> alertText1, alertText2, alertText3;
-	String<alertTitleLength> alertTitle;
-};
-
-// Create a standard popup window with a title and a close button at the top right
-StandardPopupWindow::StandardPopupWindow(PixelNumber ph, PixelNumber pw, Colour pb, Colour pBorder, Colour textColour, Colour imageBackColour, const char * null title, PixelNumber topMargin)
-	: PopupWindow(ph, pw, pb, pBorder), titleField(nullptr)
-{
-	DisplayField::SetDefaultColours(textColour, pb);
-	if (title != nullptr)
-	{
-		AddField(titleField = new StaticTextField(topMargin + labelRowAdjust, popupSideMargin + closeButtonWidth + popupFieldSpacing,
-							pw - 2 * (popupSideMargin + closeButtonWidth + popupFieldSpacing), TextAlignment::Centre, title));
-	}
-	else
-	{
-		titleField = nullptr;
-	}
-	DisplayField::SetDefaultColours(textColour, imageBackColour);
-	AddField(closeButton = new IconButton(popupTopMargin, pw - (closeButtonWidth + popupSideMargin), closeButtonWidth, IconCancel, evCancel));
-}
-
-AlertPopup::AlertPopup(const ColourScheme& colours)
-	: StandardPopupWindow(alertPopupHeight, alertPopupWidth,
-			colours.alertPopupBackColour, colours.popupBorderColour, colours.alertPopupTextColour, colours.buttonImageBackColour, "", popupTopMargin)		// title is present, but empty for now
-{
-	DisplayField::SetDefaultColours(colours.alertPopupTextColour, colours.alertPopupBackColour);
-	titleField->SetValue(alertTitle.c_str(), true);
-	AddField(new StaticTextField(popupTopMargin + 2 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText1.c_str()));
-	AddField(new StaticTextField(popupTopMargin + 3 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText2.c_str()));
-	AddField(new StaticTextField(popupTopMargin + 4 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText3.c_str()));
-
-	// Calculate the button positions
-	constexpr unsigned int numButtons = 6;
-	constexpr PixelNumber buttonWidthUnits = 5;
-	constexpr PixelNumber buttonSpacingUnits = 1;
-	constexpr PixelNumber totalUnits = (numButtons * buttonWidthUnits) + ((numButtons - 1) * buttonSpacingUnits);
-	constexpr PixelNumber unitWidth = (alertPopupWidth - 2 * popupSideMargin)/totalUnits;
-	constexpr PixelNumber buttonWidth = buttonWidthUnits * unitWidth;
-	constexpr PixelNumber buttonStep = (buttonWidthUnits + buttonSpacingUnits) * unitWidth;
-	constexpr PixelNumber hOffset = popupSideMargin + (alertPopupWidth - 2 * popupSideMargin - totalUnits * unitWidth)/2;
-
-	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	AddField(zUpCourseButton =   new TextButtonForAxis(popupTopMargin + 6 * rowTextHeight, hOffset,				  buttonWidth, LESS_ARROW "2.0", evMoveAxis, "-2.0"));
-	AddField(zUpMedButton =      new TextButtonForAxis(popupTopMargin + 6 * rowTextHeight, hOffset + buttonStep,     buttonWidth, LESS_ARROW "0.2", evMoveAxis, "-0.2"));
-	AddField(zUpFineButton =     new TextButtonForAxis(popupTopMargin + 6 * rowTextHeight, hOffset + 2 * buttonStep, buttonWidth, LESS_ARROW "0.02", evMoveAxis, "-0.02"));
-	AddField(zDownFineButton =   new TextButtonForAxis(popupTopMargin + 6 * rowTextHeight, hOffset + 3 * buttonStep, buttonWidth, MORE_ARROW "0.02", evMoveAxis, "0.02"));
-	AddField(zDownMedButton =    new TextButtonForAxis(popupTopMargin + 6 * rowTextHeight, hOffset + 4 * buttonStep, buttonWidth, MORE_ARROW "0.2", evMoveAxis, "0.2"));
-	AddField(zDownCourseButton = new TextButtonForAxis(popupTopMargin + 6 * rowTextHeight, hOffset + 5 * buttonStep, buttonWidth, MORE_ARROW "2.0", evMoveAxis, "2.0"));
-	zUpCourseButton->SetAxisLetter('Z');
-	zUpMedButton->SetAxisLetter('Z');
-	zUpFineButton->SetAxisLetter('Z');
-	zDownFineButton->SetAxisLetter('Z');
-	zDownMedButton->SetAxisLetter('Z');
-	zDownCourseButton->SetAxisLetter('Z');
-
-	AddField(okButton =          new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + buttonStep,     buttonWidth + buttonStep, "OK", evCloseAlert, "M292 P0"));
-	AddField(cancelButton =      new TextButton(popupTopMargin + 6 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOffset + 3 * buttonStep, buttonWidth + buttonStep, "Cancel", evCloseAlert, "M292 P1"));
-}
-
-void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t controls)
-{
-	alertTitle.copy(title);
-
-	// Split the alert text into 3 lines
-	size_t splitPoint = MessageLog::FindSplitPoint(text, alertText1.Capacity(), (PixelNumber)(GetWidth() - 2 * popupSideMargin));
-	alertText1.copy(text);
-	alertText1.Truncate(splitPoint);
-	text += splitPoint;
-	splitPoint = MessageLog::FindSplitPoint(text, alertText2.Capacity(), GetWidth() - 2 * popupSideMargin);
-	alertText2.copy(text);
-	alertText2.Truncate(splitPoint);
-	text += splitPoint;
-	alertText3.copy(text);
-
-	closeButton->Show(mode == 1);
-	okButton->Show(mode >= 2);
-	cancelButton->Show(mode == 3);
-	const bool showZbuttons = (controls & (1u << 2)) != 0;
-	zUpCourseButton->Show(showZbuttons);
-	zUpMedButton->Show(showZbuttons);
-	zUpFineButton->Show(showZbuttons);
-	zDownCourseButton->Show(showZbuttons);
-	zDownMedButton->Show(showZbuttons);
-	zDownFineButton->Show(showZbuttons);
-}
 
 inline PixelNumber CalcWidth(unsigned int numCols, PixelNumber displayWidth = DisplayX)
 {
@@ -299,8 +202,38 @@ IconButton *AddIconButton(PixelNumber row, unsigned int col, unsigned int numCol
 	return f;
 }
 
+// Add an icon button with an int parameter
+IconButton *AddIconButton(PixelNumber row, unsigned int col, unsigned int numCols, Icon icon, Event evt, int param, PixelNumber displayWidth = DisplayX)
+{
+	PixelNumber width = CalcWidth(numCols, displayWidth);
+	PixelNumber xpos = CalcXPos(col, width);
+	IconButton *f = new IconButton(row - 2, xpos, width, icon, evt, param);
+	mgr.AddField(f);
+	return f;
+}
+
 // Add an icon button with a string parameter
 IconButtonWithText *AddIconButtonWithText(PixelNumber row, unsigned int col, unsigned int numCols, Icon icon, Event evt, const char * text, const char* param, PixelNumber displayWidth = DisplayX)
+{
+	PixelNumber width = CalcWidth(numCols, displayWidth);
+	PixelNumber xpos = CalcXPos(col, width);
+	IconButtonWithText *f = new IconButtonWithText(row - 2, xpos, width, icon, evt, text, param);
+	mgr.AddField(f);
+	return f;
+}
+
+// Add an icon button with an int parameter
+IconButtonWithText *AddIconButtonWithText(PixelNumber row, unsigned int col, unsigned int numCols, Icon icon, Event evt, int intVal, const int param, PixelNumber displayWidth = DisplayX)
+{
+	PixelNumber width = CalcWidth(numCols, displayWidth);
+	PixelNumber xpos = CalcXPos(col, width);
+	IconButtonWithText *f = new IconButtonWithText(row - 2, xpos, width, icon, evt, intVal, param);
+	mgr.AddField(f);
+	return f;
+}
+
+// Add an icon button with an int parameter
+IconButtonWithText *AddIconButtonWithText(PixelNumber row, unsigned int col, unsigned int numCols, Icon icon, Event evt, const char * text, const int param, PixelNumber displayWidth = DisplayX)
 {
 	PixelNumber width = CalcWidth(numCols, displayWidth);
 	PixelNumber xpos = CalcXPos(col, width);
@@ -334,7 +267,7 @@ ButtonPress CreateStringButtonRow(
 		TextButton *tp =
 				textButtonForAxis
 				? new TextButtonForAxis(top, left + i * step, step - spacing, text[i], evt, params[i])
-				: new TextButton(top, left + i * step, step - spacing, text[i], evt, params[i]);
+				: new TextButton(		top, left + i * step, step - spacing, text[i], evt, params[i]);
 		parentWindow->AddField(tp);
 		if ((int)i == selected)
 		{
@@ -349,7 +282,7 @@ ButtonPress CreateStringButtonRow(
 	return bp;
 }
 
-#if 0	// currently unused
+#if 0  // currently unused
 // Create a row of icon buttons.
 // Set the colours before calling this
 void CreateIconButtonRow(Window * pf, PixelNumber top, PixelNumber left, PixelNumber totalWidth, PixelNumber spacing, unsigned int numButtons,
@@ -395,7 +328,7 @@ PopupWindow *CreateIntPopupBar(const ColourScheme& colours, PixelNumber width, u
 // The M23 and M30 commands don't work if we send the full path, because "0:/gcodes/" gets prepended regardless.
 const char * _ecv_array StripPrefix(const char * _ecv_array dir)
 {
-	if ((GetFirmwareFeatures() && noGcodesFolder) == 0)			// if running RepRapFirmware
+	if (GetFirmwareFeatures().IsBitSet(noGcodesFolder))			// if running RepRapFirmware
 	{
 		const size_t len = strlen(dir);
 		if (len >= 8 && memcmp(dir, "/gcodes/", 8) == 0)
@@ -415,42 +348,42 @@ const char * _ecv_array StripPrefix(const char * _ecv_array dir)
 }
 
 // Adjust the brightness
-void ChangeBrightness(bool up)
+static void ChangeBrightness(bool up)
 {
-	int adjust = max<int>(1, GetBrightness()/5);
+	int adjust = max<int>(1, nvData.GetBrightness() / 5);
 	if (!up)
 	{
 		adjust = -adjust;
 	}
-	SetBrightness(GetBrightness() + adjust);
+	SetBrightness(nvData.GetBrightness() + adjust);
 }
 
 // Cycle through available display dimmer types
-void ChangeDisplayDimmerType()
+static void ChangeDisplayDimmerType()
 {
-	DisplayDimmerType newType = (DisplayDimmerType) ((uint8_t)GetDisplayDimmerType() + 1);
+	DisplayDimmerType newType = (DisplayDimmerType) ((uint8_t)nvData.GetDisplayDimmerType() + 1);
 	if (newType == DisplayDimmerType::NumTypes)
 	{
 		newType = (DisplayDimmerType)0;
 	}
-	SetDisplayDimmerType(newType);
+	nvData.SetDisplayDimmerType(newType);
 }
 
 // Cyce through available heater combine types and repaint
-void ChangeHeaterCombineType()
+static void ChangeHeaterCombineType()
 {
-	HeaterCombineType newType = (HeaterCombineType) ((uint8_t)GetHeaterCombineType() + 1);
+	HeaterCombineType newType = (HeaterCombineType) ((uint8_t)nvData.GetHeaterCombineType() + 1);
 	if (newType == HeaterCombineType::NumTypes)
 	{
 		newType = (HeaterCombineType)0;
 	}
-	SetHeaterCombineType(newType);
+	nvData.SetHeaterCombineType(newType);
 	UI::AllToolsSeen();
 }
 
 // Update an integer field, provided it isn't the one being adjusted
 // Don't update it if the value hasn't changed, because that makes the display flicker unnecessarily
-void UpdateField(IntegerButton *f, int val)
+static void UpdateField(IntegerButton *f, int val)
 {
 	if (f != fieldBeingAdjusted.GetButton() && f->GetValue() != val)
 	{
@@ -458,15 +391,18 @@ void UpdateField(IntegerButton *f, int val)
 	}
 }
 
-void PopupAreYouSure(Event ev, const char* text, const char* query = strings->areYouSure)
+static void PopupAreYouSure(Event ev, const char* text, const char* query = strings->areYouSure)
 {
 	eventToConfirm = ev;
-	areYouSureTextField->SetValue(text);
-	areYouSureQueryField->SetValue(query);
-	mgr.SetPopup(areYouSurePopup, AutoPlace, AutoPlace);
+	if (isLandscape)
+	{
+		areYouSureTextField->SetValue(text);
+		areYouSureQueryField->SetValue(query);
+		mgr.SetPopup(areYouSurePopup, AutoPlace, AutoPlace);
+	}
 }
 
-void CreateIntegerAdjustPopup(const ColourScheme& colours)
+static void CreateIntegerAdjustPopup(const ColourScheme& colours)
 {
 	// Create the popup window used to adjust temperatures, fan speed, extrusion factor etc.
 	static const char* const tempPopupText[] = {"-5", "-1", strings->set, "+1", "+5"};
@@ -474,7 +410,7 @@ void CreateIntegerAdjustPopup(const ColourScheme& colours)
 	setTempPopup = CreateIntPopupBar(colours, tempPopupBarWidth, 5, tempPopupText, tempPopupParams, evAdjustInt, evSetInt);
 }
 
-void CreateIntegerRPMAdjustPopup(const ColourScheme& colours)
+static void CreateIntegerRPMAdjustPopup(const ColourScheme& colours)
 {
 	// Create the popup window used to adjust temperatures, fan speed, extrusion factor etc.
 	static const char* const rpmPopupText[] = {"-1000", "-100", "-10", strings->set, "+10", "+100", "+1000"};
@@ -483,7 +419,7 @@ void CreateIntegerRPMAdjustPopup(const ColourScheme& colours)
 }
 
 // Create the movement popup window
-void CreateMovePopup(const ColourScheme& colours)
+static void CreateMovePopup(const ColourScheme& colours)
 {
 	static const char * _ecv_array const xyJogValues[] = { "-100", "-10", "-1", "-0.1", "0.1",  "1", "10", "100" };
 	static const char * _ecv_array const zJogValues[] = { "-50", "-5", "-0.5", "-0.05", "0.05",  "0.5", "5", "50" };
@@ -506,7 +442,7 @@ void CreateMovePopup(const ColourScheme& colours)
 		StaticTextField * const tf = new StaticTextField(ypos + labelRowAdjust, popupSideMargin, axisLabelWidth, TextAlignment::Left, axisNames[i]);
 		movePopup->AddField(tf);
 		moveAxisRows[i] = tf;
-		UI::ShowAxis(i, i < MIN_AXES, axisNames[i][0]);
+		UI::ShowAxis(i, i < MIN_AXES, axisNames[i]);
 
 		DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupInfoBackColour);
 		FloatField *f = new FloatField(axisPosYpos, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
@@ -521,7 +457,7 @@ void CreateMovePopup(const ColourScheme& colours)
 }
 
 // Create the extrusion controls popup
-void CreateExtrudePopup(const ColourScheme& colours)
+static void CreateExtrudePopup(const ColourScheme& colours)
 {
 	static const char * _ecv_array extrudeAmountValues[] = { "100", "50", "20", "10", "5",  "1" };
 	static const char * _ecv_array extrudeSpeedValues[] = { "50", "20", "10", "5", "2" };
@@ -543,11 +479,12 @@ void CreateExtrudePopup(const ColourScheme& colours)
 }
 
 // Create a popup used to list files pr macros
-PopupWindow *CreateFileListPopup(FileListButtons& controlButtons, TextButton ** _ecv_array fileButtons, unsigned int numRows, unsigned int numCols, const ColourScheme& colours, bool filesNotMacros)
+PopupWindow *CreateFileListPopup(FileListButtons& controlButtons, TextButton ** _ecv_array fileButtons, unsigned int numRows, unsigned int numCols, const ColourScheme& colours, bool filesNotMacros,
+		PixelNumber popupHeight = fileListPopupHeight, PixelNumber popupWidth = fileListPopupWidth)
 pre(fileButtons.lim == numRows * numCols)
 {
-	PopupWindow * const popup = new StandardPopupWindow(fileListPopupHeight, fileListPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, nullptr);
-	const PixelNumber closeButtonPos = fileListPopupWidth - closeButtonWidth - popupSideMargin;
+	PopupWindow * const popup = new StandardPopupWindow(popupHeight, popupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, nullptr);
+	const PixelNumber closeButtonPos = popupWidth - closeButtonWidth - popupSideMargin;
 	const PixelNumber navButtonWidth = (closeButtonPos - popupSideMargin)/7;
 	const PixelNumber upButtonPos = closeButtonPos - navButtonWidth - fieldSpacing;
 	const PixelNumber rightButtonPos = upButtonPos - navButtonWidth - fieldSpacing;
@@ -581,7 +518,7 @@ pre(fileButtons.lim == numRows * numCols)
 	popup->AddField(controlButtons.folderUpButton = new TextButton(popupTopMargin, upButtonPos, navButtonWidth, UP_ARROW, (filesNotMacros) ? evFilesUp : evMacrosUp));
 	controlButtons.folderUpButton->Show(false);
 
-	const PixelNumber fileFieldWidth = (fileListPopupWidth + fieldSpacing - (2 * popupSideMargin))/numCols;
+	const PixelNumber fileFieldWidth = (popupWidth + fieldSpacing - (2 * popupSideMargin))/numCols;
 	for (unsigned int c = 0; c < numCols; ++c)
 	{
 		PixelNumber row = popupTopMargin;
@@ -596,7 +533,7 @@ pre(fileButtons.lim == numRows * numCols)
 		}
 	}
 
-	controlButtons.errorField = new IntegerField(popupTopMargin + 2 * (buttonHeight + fileButtonRowSpacing), popupSideMargin, fileListPopupWidth - (2 * popupSideMargin),
+	controlButtons.errorField = new IntegerField(popupTopMargin + 2 * (buttonHeight + fileButtonRowSpacing), popupSideMargin, popupWidth - (2 * popupSideMargin),
 							TextAlignment::Centre, strings->error, strings->accessingSdCard);
 	controlButtons.errorField->Show(false);
 	popup->AddField(controlButtons.errorField);
@@ -604,7 +541,7 @@ pre(fileButtons.lim == numRows * numCols)
 }
 
 // Create the popup window used to display the file dialog
-void CreateFileActionPopup(const ColourScheme& colours)
+static void CreateFileActionPopup(const ColourScheme& colours)
 {
 	fileDetailPopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
@@ -642,7 +579,7 @@ void CreateFileActionPopup(const ColourScheme& colours)
 }
 
 // Create the "Are you sure?" popup
-void CreateAreYouSurePopup(const ColourScheme& colours)
+static void CreateAreYouSurePopup(const ColourScheme& colours)
 {
 	areYouSurePopup = new PopupWindow(areYouSurePopupHeight, areYouSurePopupWidth, colours.popupBackColour, colours.popupBorderColour);
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
@@ -654,9 +591,9 @@ void CreateAreYouSurePopup(const ColourScheme& colours)
 	areYouSurePopup->AddField(new IconButton(popupTopMargin + 2 * rowHeight, areYouSurePopupWidth/2 + 10, areYouSurePopupWidth/2 - 2 * popupSideMargin, IconCancel, evCancel));
 }
 
-void CreateScreensaverPopup()
+static void CreateScreensaverPopup()
 {
-	screensaverPopup = new PopupWindow(DisplayY, DisplayX, black, black, false);
+	screensaverPopup = new PopupWindow(max(DisplayX, DisplayY), max(DisplayX, DisplayY), black, black, false);
 	DisplayField::SetDefaultColours(white, black);
 	static const char * text = "Touch to wake up";
 	screensaverTextWidth = DisplayField::GetTextWidth(text, DisplayX);
@@ -664,7 +601,7 @@ void CreateScreensaverPopup()
 }
 
 // Create the baud rate adjustment popup
-void CreateBaudRatePopup(const ColourScheme& colours)
+static void CreateBaudRatePopup(const ColourScheme& colours)
 {
 	static const char* const baudPopupText[] = { "9600", "19200", "38400", "57600", "115200" };
 	static const int baudPopupParams[] = { 9600, 19200, 38400, 57600, 115200 };
@@ -672,7 +609,7 @@ void CreateBaudRatePopup(const ColourScheme& colours)
 }
 
 // Create the volume adjustment popup
-void CreateVolumePopup(const ColourScheme& colours)
+static void CreateVolumePopup(const ColourScheme& colours)
 {
 	static_assert(Buzzer::MaxVolume == 5, "MaxVolume assumed to be 5 here");
 	static const char* const volumePopupText[Buzzer::MaxVolume + 1] = { "0", "1", "2", "3", "4", "5" };
@@ -680,7 +617,7 @@ void CreateVolumePopup(const ColourScheme& colours)
 }
 
 // Create the volume adjustment popup
-void CreateInfoTimeoutPopup(const ColourScheme& colours)
+static void CreateInfoTimeoutPopup(const ColourScheme& colours)
 {
 	static const char* const infoTimeoutPopupText[Buzzer::MaxVolume + 1] = { "0", "2", "5", "10" };
 	static const int values[] = { 0, 2, 5, 10 };
@@ -688,7 +625,7 @@ void CreateInfoTimeoutPopup(const ColourScheme& colours)
 }
 
 // Create the screensaver timeout adjustment popup
-void CreateScreensaverTimeoutPopup(const ColourScheme& colours)
+static void CreateScreensaverTimeoutPopup(const ColourScheme& colours)
 {
 	static const char* const screensaverTimeoutPopupText[Buzzer::MaxVolume + 1] = { "off", "60", "120", "180", "240", "300" };
 	static const int values[] = { 0, 60, 120, 180, 240, 300 };
@@ -696,14 +633,14 @@ void CreateScreensaverTimeoutPopup(const ColourScheme& colours)
 }
 
 // Create the babystep amount adjustment popup
-void CreateBabystepAmountPopup(const ColourScheme& colours)
+static void CreateBabystepAmountPopup(const ColourScheme& colours)
 {
 	static const int values[] = { 0, 1, 2, 3 };
 	babystepAmountPopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(babystepAmounts), babystepAmounts, values, evAdjustBabystepAmount, evAdjustBabystepAmount);
 }
 
 // Create the feedrate amount adjustment popup
-void CreateFeedrateAmountPopup(const ColourScheme& colours)
+static void CreateFeedrateAmountPopup(const ColourScheme& colours)
 {
 	static const char* const feedrateText[] = {"600", "1200", "2400", "6000", "12000"};
 	static const int values[] = { 600, 1200, 2400, 6000, 12000 };
@@ -711,7 +648,7 @@ void CreateFeedrateAmountPopup(const ColourScheme& colours)
 }
 
 // Create the colour scheme change popup
-void CreateColoursPopup(const ColourScheme& colours)
+static void CreateColoursPopup(const ColourScheme& colours)
 {
 	if (NumColourSchemes >= 2)
 	{
@@ -730,7 +667,7 @@ void CreateColoursPopup(const ColourScheme& colours)
 }
 
 // Create the language popup (currently only affects the keyboard layout)
-void CreateLanguagePopup(const ColourScheme& colours)
+static void CreateLanguagePopup(const ColourScheme& colours)
 {
 	languagePopup = new PopupWindow(popupBarHeight, fullPopupWidth, colours.popupBackColour, colours.popupBorderColour);
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
@@ -742,7 +679,7 @@ void CreateLanguagePopup(const ColourScheme& colours)
 }
 
 // Create the pop-up keyboard
-void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
+static void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 {
 	static const char* _ecv_array const keysEN[8] = { "1234567890-+", "QWERTYUIOP[]", "ASDFGHJKL:@", "ZXCVBNM,./", "!\"#$%^&*()_=", "qwertyuiop{}", "asdfghjkl;'", "zxcvbnm<>?" };
 	static const char* _ecv_array const keysDE[8] = { "1234567890-+", "QWERTZUIOP[]", "ASDFGHJKL:@", "YXCVBNM,./", "!\"#$%^&*()_=", "qwertzuiop{}", "asdfghjkl;'", "yxcvbnm<>?" };
@@ -755,7 +692,8 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 			keysEN,	// Czech
 			keysEN,	// Italian
 #if USE_CYRILLIC_CHARACTERS
-			keysEN	// Ukrainian
+			keysEN,	// Ukrainian
+			keysEN,	// Russian
 #endif
 	};
 
@@ -816,7 +754,7 @@ void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 }
 
 // Create the babystep popup
-void CreateBabystepPopup(const ColourScheme& colours)
+static void CreateBabystepPopup(const ColourScheme& colours)
 {
 	babystepPopup = new StandardPopupWindow(babystepPopupHeight, babystepPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour,
 			strings->babyStepping);
@@ -826,12 +764,12 @@ void CreateBabystepPopup(const ColourScheme& colours)
 	ypos += babystepRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.buttonImageBackColour);
 	const PixelNumber width = CalcWidth(2, babystepPopupWidth - 2 * popupSideMargin);
-	babystepPopup->AddField(babystepMinusButton = new TextButtonWithLabel(ypos, CalcXPos(0, width, popupSideMargin), width, babystepAmounts[GetBabystepAmountIndex()], evBabyStepMinus, nullptr, LESS_ARROW " "));
-	babystepPopup->AddField(babystepPlusButton = new TextButtonWithLabel(ypos, CalcXPos(1, width, popupSideMargin), width, babystepAmounts[GetBabystepAmountIndex()], evBabyStepPlus, nullptr, MORE_ARROW " "));
+	babystepPopup->AddField(babystepMinusButton = new TextButtonWithLabel(ypos, CalcXPos(0, width, popupSideMargin), width, babystepAmounts[nvData.GetBabystepAmountIndex()], evBabyStepMinus, nullptr, LESS_ARROW " "));
+	babystepPopup->AddField(babystepPlusButton = new TextButtonWithLabel(ypos, CalcXPos(1, width, popupSideMargin), width, babystepAmounts[nvData.GetBabystepAmountIndex()], evBabyStepPlus, nullptr, MORE_ARROW " "));
 }
 
 // Create the grid of heater icons and temperatures
-void CreateTemperatureGrid(const ColourScheme& colours)
+static void CreateTemperatureGrid(const ColourScheme& colours)
 {
 	// Add the emergency stop button
 	DisplayField::SetDefaultColours(colours.stopButtonTextColour, colours.stopButtonBackColour);
@@ -884,7 +822,7 @@ void CreateTemperatureGrid(const ColourScheme& colours)
 }
 
 // Create the extra fields for the Control tab
-void CreateControlTabFields(const ColourScheme& colours)
+static void CreateControlTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(commonRoot);
 
@@ -942,7 +880,7 @@ void CreateControlTabFields(const ColourScheme& colours)
 }
 
 // Create the fields for the Printing tab
-void CreatePrintingTabFields(const ColourScheme& colours)
+static void CreatePrintingTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(commonRoot);
 
@@ -1033,7 +971,7 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 }
 
 // Create the fields for the Message tab
-void CreateMessageTabFields(const ColourScheme& colours)
+static void CreateMessageTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(baseRoot);
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
@@ -1055,7 +993,7 @@ void CreateMessageTabFields(const ColourScheme& colours)
 }
 
 // Create the fields for the Setup tab
-void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
+static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 {
 	mgr.SetRoot(baseRoot);
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
@@ -1066,9 +1004,9 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	baudRateButton = AddIntegerButton(row3, 0, 3, nullptr, " baud", evSetBaudRate);
-	baudRateButton->SetValue(GetBaudRate());
+	baudRateButton->SetValue(nvData.GetBaudRate());
 	volumeButton = AddIntegerButton(row3, 1, 3, strings->volume, nullptr, evSetVolume);
-	volumeButton->SetValue(GetVolume());
+	volumeButton->SetValue(nvData.GetVolume());
 	languageButton = AddTextButton(row3, 2, 3, LanguageTables[language].languageName, evSetLanguage, nullptr);
 	AddTextButton(row4, 0, 3, strings->calibrateTouch, evCalTouch, nullptr);
 	AddTextButton(row4, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
@@ -1076,36 +1014,38 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	coloursButton = AddTextButton(row5, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
 	AddTextButton(row5, 1, 3, strings->brightnessDown, evDimmer, nullptr);
 	AddTextButton(row5, 2, 3, strings->brightnessUp, evBrighter, nullptr);
-	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()], evSetDimmingType, nullptr);
+	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)nvData.GetDisplayDimmerType()], evSetDimmingType, nullptr);
 	infoTimeoutButton = AddIntegerButton(row6, 1, 3, strings->infoTimeout, nullptr, evSetInfoTimeout);
 	infoTimeoutButton->SetValue(infoTimeout);
 	AddTextButton(row6, 2, 3, strings->clearSettings, evFactoryReset, nullptr);
 	screensaverTimeoutButton = AddIntegerButton(row7, 0, 3, strings->screensaverAfter, nullptr, evSetScreensaverTimeout);
-	screensaverTimeoutButton->SetValue(GetScreensaverTimeout() / 1000);
+	screensaverTimeoutButton->SetValue(nvData.GetScreensaverTimeout() / 1000);
 
 	const PixelNumber width = CalcWidth(3);
-	mgr.AddField(babystepAmountButton = new TextButtonWithLabel(row7, CalcXPos(1, width), width, babystepAmounts[GetBabystepAmountIndex()], evSetBabystepAmount, nullptr, strings->babystepAmount));
+	mgr.AddField(babystepAmountButton = new TextButtonWithLabel(row7, CalcXPos(1, width), width, babystepAmounts[nvData.GetBabystepAmountIndex()], evSetBabystepAmount, nullptr, strings->babystepAmount));
 
 	feedrateAmountButton = AddIntegerButton(row7, 2, 3, strings->feedrate, nullptr, evSetFeedrate);
-	feedrateAmountButton->SetValue(GetFeedrate());
+	feedrateAmountButton->SetValue(nvData.GetFeedrate());
 
-	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
+	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)nvData.GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
 
+	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
+	mgr.AddField(ipAddressField = new TextField(row9, margin, DisplayX/2 - margin, TextAlignment::Left, "IP: ", ipAddress.c_str()));
 	setupRoot = mgr.GetRoot();
 }
 
 // Create the fields that are displayed on all pages
-void CreateCommonFields(const ColourScheme& colours)
+static void CreateCommonFields(const ColourScheme& colours)
 {
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour, colours.buttonBorderColour, colours.buttonGradColour,
 									colours.buttonPressedBackColour, colours.buttonPressedGradColour, colours.pal);
 	tabControl = AddTextButton(rowTabs, 0, 4, strings->control, evTabControl, nullptr);
-	tabPrint = AddTextButton(rowTabs, 1, 4, strings->print, evTabPrint, nullptr);
+	tabStatus = AddTextButton(rowTabs, 1, 4, strings->status, evTabStatus, nullptr);
 	tabMsg = AddTextButton(rowTabs, 2, 4, strings->console, evTabMsg, nullptr);
 	tabSetup = AddTextButton(rowTabs, 3, 4, strings->setup, evTabSetup, nullptr);
 }
 
-void CreateMainPages(uint32_t language, const ColourScheme& colours)
+static void CreateMainPages(uint32_t language, const ColourScheme& colours)
 {
 	if (language >= ARRAY_SIZE(LanguageTables))
 	{
@@ -1163,9 +1103,14 @@ namespace UI
 	static void ClearAlertOrResponse();
 
 	// Return the number of supported languages
-	extern unsigned int GetNumLanguages()
+	unsigned int GetNumLanguages()
 	{
 		return NumLanguages;
+	}
+
+	void InitColourScheme(const ColourScheme *scheme)
+	{
+		colours = scheme;
 	}
 
 	// Create all the fields we ever display
@@ -1212,7 +1157,7 @@ namespace UI
 
 #ifdef SUPPORT_ENCODER
 		encoder = new RotaryEncoder(2, 3, 32+6);			// PA2, PA3 and PB6
-		encoder->Init(2);
+		encoder->Init(4);
 #endif
 	}
 
@@ -1221,13 +1166,14 @@ namespace UI
 	{
 		// First hide everything removed then show everything new
 		// otherwise remnants of the to-be-hidden might remain
-		mgr.Show(resumeButton, false);
-		mgr.Show(cancelButton, false);
-		mgr.Show(pauseButton, false);
-		mgr.Show(babystepButton, false);
-		mgr.Show(printProgressBar, false);
-		mgr.Show(reprintButton, lastJobFileNameAvailable);
-		mgr.Show(filesButton, true);
+		mgr.Show(resumeButton,		false);
+		mgr.Show(cancelButton,		false);
+		mgr.Show(pauseButton,		false);
+		mgr.Show(babystepButton,	false);
+		mgr.Show(printProgressBar,	false);
+
+		mgr.Show(reprintButton,		lastJobFileNameAvailable);
+		mgr.Show(filesButton,		true);
 	}
 
 	// This is called when a job is active
@@ -1235,13 +1181,14 @@ namespace UI
 	{
 		// First hide everything removed then show everything new
 		// otherwise remnants of the to-be-hidden might remain
-		mgr.Show(resumeButton, false);
-		mgr.Show(cancelButton, false);
-		mgr.Show(filesButton, false);
-		mgr.Show(reprintButton, false);
-		mgr.Show(pauseButton, true);
-		mgr.Show(babystepButton, true);
-		mgr.Show(printProgressBar, true);
+		mgr.Show(resumeButton,		false);
+		mgr.Show(cancelButton,		false);
+		mgr.Show(filesButton,		false);
+		mgr.Show(reprintButton,		false);
+
+		mgr.Show(pauseButton,		true);
+		mgr.Show(babystepButton,	true);
+		mgr.Show(printProgressBar,	true);
 	}
 
 	// This is called when a job is paused
@@ -1249,17 +1196,18 @@ namespace UI
 	{
 		// First hide everything removed then show everything new
 		// otherwise remnants of the to-be-hidden might remain
-		mgr.Show(pauseButton, false);
-		mgr.Show(babystepButton, false);
-		mgr.Show(filesButton, false);
-		mgr.Show(reprintButton, false);
-		mgr.Show(printProgressBar, true);
-		mgr.Show(resumeButton, true);
-		mgr.Show(cancelButton, true);
+		mgr.Show(pauseButton,		false);
+		mgr.Show(babystepButton,	false);
+		mgr.Show(filesButton,		false);
+		mgr.Show(reprintButton,		false);
+
+		mgr.Show(resumeButton,		true);
+		mgr.Show(cancelButton,		true);
+		mgr.Show(printProgressBar,	true);
 	}
 
 	// Show or hide an axis on the move button grid and on the axis display
-	void ShowAxis(size_t slot, bool b, char axisLetter)
+	void ShowAxis(size_t slot, bool b, const char* axisLetter)
 	{
 		if (slot >= MaxDisplayableAxes)
 		{
@@ -1273,12 +1221,14 @@ namespace UI
 			if (i > 0) // actual move buttons
 			{
 				TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(f);
-				textButton->SetAxisLetter(axisLetter);
+				textButton->SetAxisLetter(axisLetter[0]);
 			}
 			f = f->next;
 		}
 		mgr.Show(controlTabAxisPos[slot], b);
+#if DISPLAY_X == 800
 		mgr.Show(printTabAxisPos[slot], b);
+#endif
 		if (numDisplayedAxes < MaxDisplayableAxes)
 		{
 			mgr.Show(movePopupAxisPos[slot], b);		// the move popup axis positions occupy the last axis row of the move popup
@@ -1298,15 +1248,13 @@ namespace UI
 		if (axisIndex < MaxTotalAxes)
 		{
 			auto axis = OM::GetAxis(axisIndex);
-			if (axis == nullptr)
+			if (axis != nullptr && axis->slot < MaxDisplayableAxes)
 			{
-				return;
-			}
-			size_t slot = axis->slot;
-			if (slot < MaxDisplayableAxes)
-			{
+				size_t slot = axis->slot;
 				controlTabAxisPos[slot]->SetValue(fval);
+#if DISPLAY_X == 800
 				printTabAxisPos[slot]->SetValue(fval);
+#endif
 				movePopupAxisPos[slot]->SetValue(fval);
 			}
 		}
@@ -1316,53 +1264,63 @@ namespace UI
 	{
 		OM::Slots heaterSlots;
 		OM::GetHeaterSlots(heaterIndex, heaterSlots);
-		if (heaterSlots.IsEmpty())
+		if (!heaterSlots.IsEmpty())
 		{
-			return;
-		}
-		const size_t count = heaterSlots.Size();
-		for (size_t i = 0; i < count; ++i)
-		{
-			currentTemps[heaterSlots[i]]->SetValue(fval);
+			const size_t count = heaterSlots.Size();
+			for (size_t i = 0; i < count; ++i)
+			{
+				currentTemps[heaterSlots[i]]->SetValue(fval);
+			}
+
+			heaterSlots.Clear();
 		}
 	}
 
-	void UpdateHeaterStatus(const size_t heaterIndex, const HeaterStatus status)
+	void UpdateHeaterStatus(const size_t heaterIndex, const OM::HeaterStatus status)
 	{
 		OM::Slots heaterSlots;
 		OM::GetHeaterSlots(heaterIndex, heaterSlots);
-		if (heaterSlots.IsEmpty())
-		{
-			return;
-		}
-		const Colour foregroundColour =	(status == HeaterStatus::fault)
+		const Colour foregroundColour =	(status == OM::HeaterStatus::fault)
 					? colours->errorTextColour
 					: colours->infoTextColour;
 		const Colour backgroundColour =
-					  (status == HeaterStatus::standby) ? colours->standbyBackColour
-					: (status == HeaterStatus::active)  ? colours->activeBackColour
-					: (status == HeaterStatus::fault)   ? colours->errorBackColour
-					: (status == HeaterStatus::tuning)  ? colours->tuningBackColour
+					  (status == OM::HeaterStatus::standby) ? colours->standbyBackColour
+					: (status == OM::HeaterStatus::active)  ? colours->activeBackColour
+					: (status == OM::HeaterStatus::fault)   ? colours->errorBackColour
+					: (status == OM::HeaterStatus::tuning)  ? colours->tuningBackColour
 					: colours->defaultBackColour;
-		const size_t count = heaterSlots.Size();
-		for (size_t i = 0; i < count; ++i)
+		if (!heaterSlots.IsEmpty())
 		{
-			currentTemps[heaterSlots[i]]->SetColours(foregroundColour, backgroundColour);
+			const Colour bedOrChamberBgColor = (backgroundColour == colours->defaultBackColour)
+				? colours->buttonImageBackColour
+				: backgroundColour;
+			const size_t count = heaterSlots.Size();
+			for (size_t i = 0; i < count; ++i)
+			{
+				const size_t slot = heaterSlots[i];
+				currentTemps[slot]->SetColours(foregroundColour, backgroundColour);
 
-			// If it's a bed or a chamber we update colors for the tool button as well
-			OM::BedOrChamber* bedOrChamber = OM::GetBedForHeater(heaterIndex);
-			if (bedOrChamber == nullptr)
-			{
-				bedOrChamber = OM::GetChamberForHeater(heaterIndex);
+				// If it's a bed or a chamber we update colors for the tool button as well
+				OM::IterateBedsWhile([&heaterIndex, &status, &foregroundColour, &bedOrChamberBgColor, &slot](OM::Bed*& bed, size_t) {
+					if (bed->heater == (int)heaterIndex)
+					{
+						bed->heaterStatus = status;
+						toolButtons[slot]->SetColours(foregroundColour, bedOrChamberBgColor);
+						return false;	// This will lead to getting out of the iteration on first hit - is that really what we want?
+					}
+					return true;
+				});
+				OM::IterateChambersWhile([&heaterIndex, &status, &foregroundColour, &bedOrChamberBgColor, &slot](OM::Chamber*& chamber, size_t) {
+					if (chamber->heater == (int)heaterIndex)
+					{
+						chamber->heaterStatus = status;
+						toolButtons[slot]->SetColours(foregroundColour, bedOrChamberBgColor);
+						return false;	// This will lead to getting out of the iteration on first hit - is that really what we want?
+					}
+					return true;
+				});
 			}
-			if (bedOrChamber != nullptr)
-			{
-				bedOrChamber->heaterStatus = status;
-				const Colour bOCBgColor = (backgroundColour == colours->defaultBackColour)
-					? colours->buttonImageBackColour
-					: backgroundColour;
-				toolButtons[heaterSlots[i]]->SetColours(foregroundColour, bOCBgColor);
-			}
+			heaterSlots.Clear();
 		}
 	}
 
@@ -1376,35 +1334,39 @@ namespace UI
 	}
 
 	static int timesLeft[3];
+	enum TimesLeft { file, filament, slicer };
+	static uint32_t simulatedTime;
+	static uint32_t jobDuration;
+	static uint32_t jobWarmUpDuration;
 	static String<50> timesLeftText;
 
-	void ChangeStatus(PrinterStatus oldStatus, PrinterStatus newStatus)
+	void ChangeStatus(OM::PrinterStatus oldStatus, OM::PrinterStatus newStatus)
 	{
 		switch (newStatus)
 		{
-		case PrinterStatus::printing:
-		case PrinterStatus::simulating:
-			if (oldStatus != PrinterStatus::paused && oldStatus != PrinterStatus::resuming)
+		case OM::PrinterStatus::printing:
+		case OM::PrinterStatus::simulating:
+			if (oldStatus != OM::PrinterStatus::paused && oldStatus != OM::PrinterStatus::resuming)
 			{
 				// Starting a new print, so clear the times
 				timesLeft[0] = timesLeft[1] = timesLeft[2] = 0;
 			}
-			SetLastFileSimulated(newStatus == PrinterStatus::simulating);
+			SetLastFileSimulated(newStatus == OM::PrinterStatus::simulating);
 			[[fallthrough]];
-		case PrinterStatus::paused:
-		case PrinterStatus::pausing:
-		case PrinterStatus::resuming:
-			if (oldStatus == PrinterStatus::connecting || oldStatus == PrinterStatus::idle)
+		case OM::PrinterStatus::paused:
+		case OM::PrinterStatus::pausing:
+		case OM::PrinterStatus::resuming:
+			if (oldStatus == OM::PrinterStatus::connecting || oldStatus == OM::PrinterStatus::idle)
 			{
-				ChangePage(tabPrint);
+				PrintStarted();
 			}
-			else if (currentTab == tabPrint)
+			else if (currentTab == tabStatus)
 			{
 				nameField->SetValue(printingFile.c_str());
 			}
 			break;
 
-		case PrinterStatus::idle:
+		case OM::PrinterStatus::idle:
 			printingFile.Clear();
 			nameField->SetValue(machineName.c_str());		// if we are on the print tab then it may still be set to the file that was being printed
 			if (IsPrintingStatus(oldStatus))
@@ -1413,14 +1375,14 @@ namespace UI
 			}
 			__attribute__ ((fallthrough));
 			// no break
-		case PrinterStatus::configuring:
-			if (oldStatus == PrinterStatus::flashing)
+		case OM::PrinterStatus::configuring:
+			if (oldStatus == OM::PrinterStatus::flashing)
 			{
 				mgr.ClearAllPopups();						// clear the firmware update message
 			}
 			break;
 
-		case PrinterStatus::connecting:
+		case OM::PrinterStatus::connecting:
 			printingFile.Clear();
 			// We no longer clear the machine name here
 			mgr.ClearAllPopups();
@@ -1454,23 +1416,77 @@ namespace UI
 		}
 	}
 
+	void UpdateTimesLeftText()
+	{
+		if (!PrintInProgress())
+		{
+			return;
+		}
+		size_t count = 0;
+		timesLeftText.Clear();
+		if (simulatedTime > 0)
+		{
+			timesLeftText.copy(strings->simulated);
+			AppendTimeLeft(simulatedTime + jobWarmUpDuration - jobDuration);
+			++count;
+		}
+		if (timesLeft[TimesLeft::slicer] > 0)
+		{
+			if (count > 0) {
+				timesLeftText.cat(", ");
+			}
+			timesLeftText.cat(strings->slicer);
+			AppendTimeLeft(timesLeft[TimesLeft::slicer]);
+			++count;
+		}
+		if ((count < 2 || (DisplayX >= 800 && count < 3)) && timesLeft[TimesLeft::filament] > 0)
+		{
+			if (count > 0) {
+				timesLeftText.cat(", ");
+			}
+			timesLeftText.cat(strings->filament);
+			AppendTimeLeft(timesLeft[TimesLeft::filament]);
+			++count;
+		}
+		if ((count < 2 || (DisplayX >= 800 && count < 3)) && timesLeft[TimesLeft::file] > 0)
+		{
+			if (count > 0) {
+				timesLeftText.cat(", ");
+			}
+			timesLeftText.cat(strings->file);
+			AppendTimeLeft(timesLeft[TimesLeft::file]);
+			++count;
+		}
+
+		timeLeftField->SetValue(timesLeftText.c_str());
+		mgr.Show(timeLeftField, true);
+	}
+
 	void UpdateTimesLeft(size_t index, unsigned int seconds)
 	{
 		if (index < (int)ARRAY_SIZE(timesLeft))
 		{
 			timesLeft[index] = seconds;
-			timesLeftText.copy(strings->file);
-			AppendTimeLeft(timesLeft[0]);
-			timesLeftText.cat(strings->filament);
-			AppendTimeLeft(timesLeft[1]);
-			if (DisplayX >= 800)
-			{
-				timesLeftText.cat(strings->layer);
-				AppendTimeLeft(timesLeft[2]);
-			}
-			timeLeftField->SetValue(timesLeftText.c_str());
-			mgr.Show(timeLeftField, true);
+			UpdateTimesLeftText();
 		}
+	}
+
+	void UpdateDuration(uint32_t duration)
+	{
+		jobDuration = duration;
+		UpdateTimesLeftText();
+	}
+
+	void UpdateWarmupDuration(uint32_t warmupDuration)
+	{
+		jobWarmUpDuration = warmupDuration;
+		UpdateTimesLeftText();
+	}
+
+	void SetSimulatedTime(uint32_t simdTime)
+	{
+		simulatedTime = simdTime;
+		UpdateTimesLeftText();
 	}
 
 	void SwitchToTab(ButtonBase *newTab) {
@@ -1479,7 +1495,7 @@ namespace UI
 			mgr.SetRoot(controlRoot);
 			nameField->SetValue(machineName.c_str());
 			break;
-		case evTabPrint:
+		case evTabStatus:
 			mgr.SetRoot(printRoot);
 			nameField->SetValue(
 					PrintInProgress() ? printingFile.c_str() : machineName.c_str());
@@ -1512,7 +1528,7 @@ namespace UI
 			if (currentTab != nullptr)
 			{
 				currentTab->Press(false, 0);			// remove highlighting from the old tab
-				if (currentTab->GetEvent() == evTabSetup && IsSaveNeeded())
+				if (currentTab->GetEvent() == evTabSetup && nvData.IsSaveNeeded())
 				{
 					SaveSettings();						// leaving the Control tab and we have changed settings, so save them
 				}
@@ -1527,13 +1543,19 @@ namespace UI
 
 	void ActivateScreensaver()
 	{
+		mgr.Show(screensaverText, isLandscape);
 		mgr.SetPopup(screensaverPopup);
 		lastScreensaverMoved = SystemTick::GetTickCount();
 	}
 
-	void DeactivateScreensaver()
+	bool DeactivateScreensaver()
 	{
+		if (!screensaverPopup->IsPopupActive())
+			return false;
+
 		mgr.ClearPopup(true, screensaverPopup);
+
+		return true;
 	}
 
 	void AnimateScreensaver()
@@ -1541,13 +1563,18 @@ namespace UI
 		if (SystemTick::GetTickCount() - lastScreensaverMoved >= ScreensaverMoveTime)
 		{
 			static unsigned int seed = SystemTick::GetTickCount();
-			const PixelNumber availableWidth = (DisplayX - 2*margin - screensaverTextWidth);
-			const PixelNumber availableHeight = (DisplayY - 2*margin - rowTextHeight);
+			const PixelNumber width = isLandscape ? DisplayX : DisplayXP;
+			const PixelNumber height = isLandscape ? DisplayY : DisplayYP;
+			const PixelNumber availableWidth = (width - 2*margin - screensaverTextWidth);
+			const PixelNumber availableHeight = (height - 2*margin - rowTextHeight);
 			const PixelNumber x = (rand_r(&seed) % availableWidth);
 			const PixelNumber y = (rand_r(&seed) % availableHeight);
-			mgr.Show(screensaverText, false);
-			screensaverText->SetPosition(x + margin, y + margin);
-			mgr.Show(screensaverText, true);
+			if (isLandscape)
+			{
+				mgr.Show(screensaverText, false);
+				screensaverText->SetPosition(x + margin, y + margin);
+				mgr.Show(screensaverText, true);
+			}
 			lastScreensaverMoved = SystemTick::GetTickCount();
 		}
 	}
@@ -1581,6 +1608,16 @@ namespace UI
 #endif
 	}
 
+#ifdef SUPPORT_ENCODER
+	void HandleEncoderChange(const int change)
+	{
+		bool sent = false;
+		if (sent) {
+			lastEncoderCommandSentAt = SystemTick::GetTickCount();
+		}
+	}
+#endif
+
 	// This is called in the main spin loop
 	void Spin()
 	{
@@ -1589,11 +1626,10 @@ namespace UI
 		{
 			// Check encoder and command movement
 			const int ch = encoder->GetChange();
-			if (ch != 0 && currentTab != tabSetup)
+			if (ch != 0)
 			{
-				SerialIo::Sendf("G91 G1 X%d F600 G90\n", ch);
+				HandleEncoderChange(ch);
 			}
-			lastEncoderCommandSentAt = SystemTick::GetTickCount();
 		}
 #endif
 
@@ -1610,7 +1646,10 @@ namespace UI
 	// This is called when we have just started a file print
 	void PrintStarted()
 	{
-		ChangePage(tabPrint);
+		if (isLandscape)
+		{
+			ChangePage(tabStatus);
+		}
 	}
 
 	// This is called when we have just received the name of the file being printed
@@ -1619,7 +1658,7 @@ namespace UI
 		if (!printingFile.Similar(data))
 		{
 			printingFile.copy(data);
-			if (currentTab == tabPrint && PrintInProgress())
+			if (currentTab == tabStatus && PrintInProgress())
 			{
 				nameField->SetChanged();
 			}
@@ -1651,11 +1690,12 @@ namespace UI
 	// Update the fields that are to do with the printing status
 	void UpdatePrintingFields()
 	{
-		if (GetStatus() == PrinterStatus::printing || GetStatus() == PrinterStatus::simulating)
+		OM::PrinterStatus status = GetStatus();
+		if (status == OM::PrinterStatus::printing || status == OM::PrinterStatus::simulating)
 		{
 			ShowPauseButton();
 		}
-		else if (GetStatus() == PrinterStatus::paused)
+		else if (status == OM::PrinterStatus::paused)
 		{
 			ShowResumeAndCancelButtons();
 		}
@@ -1663,8 +1703,6 @@ namespace UI
 		{
 			ShowFilesButton();
 		}
-
-	//	mgr.Show(printingField, PrintInProgress());
 
 		// Don't enable the time left field when we start printing, instead this will get enabled when we receive a suitable message
 		if (!PrintInProgress())
@@ -1691,24 +1729,26 @@ namespace UI
 			isDelta = p_isDelta;
 			FileManager::RefreshMacrosList();
 			numDisplayedAxes = 0;
-			OM::IterateAxes([](OM::Axis* axis)
+			OM::IterateAxesWhile([](OM::Axis*& axis, size_t)
 			{
 				axis->slot = MaxTotalAxes;
 				if (!axis->visible)
 				{
-					return;
+					return true;
 				}
+				const char * letter = axis->letter;
 				if (numDisplayedAxes < MaxDisplayableAxes)
 				{
 					axis->slot = numDisplayedAxes;
 					++numDisplayedAxes;
-					const char * letter = axis->letter;
 
 					// Update axis letter everywhere we display it
 					const uint8_t slot = axis->slot;
 					controlTabAxisPos	[slot]->SetLabel(letter);
 					moveAxisRows		[slot]->SetValue(letter);
+#if DISPLAY_X == 800
 					printTabAxisPos		[slot]->SetLabel(letter);
+#endif
 					movePopupAxisPos	[slot]->SetLabel(letter);
 					homeButtons			[slot]->SetText(letter);
 
@@ -1717,7 +1757,7 @@ namespace UI
 					homeButtons[slot]->SetColours(colours->buttonTextColour, (axis->homed) ? colours->homedButtonBackColour : colours->notHomedButtonBackColour);
 
 					mgr.Show(homeButtons[slot], !isDelta);
-					ShowAxis(slot, true, axis->letter[0]);
+					ShowAxis(slot, true, axis->letter);
 				}
 				// When we get here it's likely to be the initialisation phase
 				// and we won't have the babystep amount set
@@ -1725,6 +1765,7 @@ namespace UI
 				{
 					babystepOffsetField->SetValue(axis->babystep);
 				}
+				return true;
 			});
 			// Hide axes possibly shown before
 			for (size_t i = numDisplayedAxes; i < MaxDisplayableAxes; ++i)
@@ -1738,7 +1779,7 @@ namespace UI
 	void UpdateAllHomed()
 	{
 		bool allHomed = true;
-		OM::IterateAxesWhile([&allHomed](OM::Axis* axis) {
+		OM::IterateAxesWhile([&allHomed](OM::Axis*& axis, size_t) {
 			if (axis->visible && !axis->homed)
 			{
 				allHomed = false;
@@ -1749,7 +1790,7 @@ namespace UI
 		if (allHomed != allAxesHomed)
 		{
 			allAxesHomed = allHomed;
-			homeAllButton->SetColours(colours->buttonTextColour, (allAxesHomed) ? colours->homedButtonBackColour : colours->notHomedButtonBackColour);;
+			homeAllButton->SetColours(colours->buttonTextColour, (allAxesHomed) ? colours->homedButtonBackColour : colours->notHomedButtonBackColour);
 		}
 	}
 
@@ -1785,14 +1826,34 @@ namespace UI
 		nameField->SetChanged();
 	}
 
+	// Update the IP address fiels on Setup tab
+	void UpdateIP(const char data[])
+	{
+		ipAddress.copy(data);
+		ipAddressField->SetChanged();
+	}
+
 	// Update the fan RPM
 	void UpdateFanPercent(size_t fanIndex, int rpm)
 	{
-		auto tool = OM::GetToolForFan(fanIndex);
-		if ((tool != nullptr && tool->index == currentTool)
-				|| (currentTool == NoTool && fanIndex == 0))
+		if (currentTool == NoTool)
 		{
-			UpdateField(fanSpeed, rpm);
+			if (fanIndex == 0)
+			{
+				UpdateField(fanSpeed, rpm);
+			}
+		}
+		else
+		{
+			// There might be multiple tools using the same fan and one of them might
+			// be the active one but not necessarily the first one so we need to iterate
+			OM::IterateToolsWhile([&fanIndex, &rpm](OM::Tool*& tool, size_t) {
+				if (tool->index == currentTool && tool->fans.IsBitSet(fanIndex) && tool->fans.LowestSetBit() == fanIndex)
+				{
+					UpdateField(fanSpeed, rpm);
+				}
+				return true;
+			});
 		}
 	}
 
@@ -1800,16 +1861,19 @@ namespace UI
 	{
 		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
 
-		// If we do not handle this tool or the heater is not displayed anyway back off
-		if (tool == nullptr || tool->slot + toolHeaterIndex >= MaxSlots)
+		// If we do not handle this tool back off
+		if (tool == nullptr)
 		{
 			return;
 		}
 
 		tool->UpdateTemp(toolHeaterIndex, temp, active);
-		if (toolHeaterIndex == 0 || GetHeaterCombineType() == HeaterCombineType::notCombined)
+		if (toolHeaterIndex == 0 || nvData.GetHeaterCombineType() == HeaterCombineType::notCombined)
 		{
-			UpdateField((active ? activeTemps : standbyTemps)[tool->slot + toolHeaterIndex], temp);
+			if (tool->slot + toolHeaterIndex < MaxSlots)
+			{
+				UpdateField((active ? activeTemps : standbyTemps)[tool->slot + toolHeaterIndex], temp);
+			}
 		}
 	}
 
@@ -1817,14 +1881,15 @@ namespace UI
 	{
 		OM::Slots heaterSlots;
 		OM::GetHeaterSlots(heaterIndex, heaterSlots, false);	// Ignore tools
-		if (heaterSlots.IsEmpty())
+		if (!heaterSlots.IsEmpty())
 		{
-			return;
-		}
-		const size_t count = heaterSlots.Size();
-		for (size_t i = 0; i < count; ++i)
-		{
-			UpdateField(fields[heaterSlots[i]], ival);
+			const size_t count = heaterSlots.Size();
+			for (size_t i = 0; i < count; ++i)
+			{
+				UpdateField(fields[heaterSlots[i]], ival);
+			}
+
+			heaterSlots.Clear();
 		}
 	}
 
@@ -1843,14 +1908,13 @@ namespace UI
 	// Update an extrusion factor
 	void UpdateExtrusionFactor(size_t index, int ival)
 	{
-		auto tool = OM::GetToolForExtruder(index);
-		if (tool != nullptr)
-		{
-			if (tool->slot < MaxSlots)
+		OM::IterateToolsWhile([&index, &ival](OM::Tool*& tool, size_t) {
+			if (tool->extruders.IsBitSet(index) && tool->slot < MaxSlots)
 			{
 				UpdateField(extrusionFactors[tool->slot], ival);
 			}
-		}
+			return tool->slot < MaxSlots;
+		});
 	}
 
 	// Update the print speed factor
@@ -1862,9 +1926,11 @@ namespace UI
 	// Process a new message box alert, clearing any existing one
 	void ProcessAlert(const Alert& alert)
 	{
-		RestoreBrightness();
-		alertPopup->Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
-		mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+		if (isLandscape)
+		{
+			alertPopup->Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
+			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+		}
 		alertMode = alert.mode;
 		displayingResponse = false;
 		whenAlertReceived = SystemTick::GetTickCount();
@@ -1901,11 +1967,13 @@ namespace UI
 
 	void ProcessSimpleAlert(const char* _ecv_array text)
 	{
-		RestoreBrightness();
 		if (alertMode < 2)												// if the current alert doesn't require acknowledgement
 		{
-			alertPopup->Set(strings->message, text, 1, 0);
-			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+			if (isLandscape)
+			{
+				alertPopup->Set(strings->message, text, 1, 0);
+				mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+			}
 			alertMode = 1;												// a simple alert is like a mode 1 alert without a title
 			displayingResponse = false;
 			whenAlertReceived = SystemTick::GetTickCount();
@@ -1916,15 +1984,18 @@ namespace UI
 	// Process a new response. This is treated like a simple alert except that it times out and isn't cleared by a "clear alert" command from the host.
 	void NewResponseReceived(const char* _ecv_array text)
 	{
-		const bool isErrorMessage = stringStartsWith(text, "Error");
+		const bool isErrorMessage = StringStartsWith(text, "Error");
 		if (   alertMode < 2											// if the current alert doesn't require acknowledgement
-			&& (currentTab == tabControl || currentTab == tabPrint)
+			&& !(currentTab == tabSetup || currentTab == tabMsg)		// don't show on setup tab or on console tab
 			&& (isErrorMessage || infoTimeout != 0)
 		   )
 		{
 			RestoreBrightness();
-			alertPopup->Set(strings->response, text, 1, 0);
-			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+			if (isLandscape)
+			{
+				alertPopup->Set(strings->response, text, 1, 0);
+				mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
+			}
 			alertMode = -1;												// make sure that a call to ClearAlert doesn't clear us
 			displayingResponse = true;
 			whenAlertReceived = SystemTick::GetTickCount();
@@ -2019,16 +2090,6 @@ namespace UI
 		return currentFile != nullptr;
 	}
 
-	// This is called when the host firmware changes
-	void FirmwareFeaturesChanged(FirmwareFeatures newFeatures)
-	{
-		// Some firmwares don't support tool standby temperatures
-		for (size_t i = 0; i < MaxSlots; ++i)
-		{
-			mgr.Show(standbyTemps[i], (newFeatures & noStandbyTemps) == 0);
-		}
-	}
-
 	static void DoEmergencyStop()
 	{
 		// We send M112 for the benefit of old firmware, and F0 0F (an invalid UTF8 sequence) for new firmware
@@ -2037,7 +2098,6 @@ namespace UI
 		Delay(1000);
 		SerialIo::Sendf("M999\n");
 		Delay(1000);
-		Reconnect();
 	}
 
 	// Make this into a template if we need something else than IntegerButton** as list
@@ -2064,6 +2124,13 @@ namespace UI
 			currentButton = bp;
 			mgr.Press(bp, true);
 			Event ev = (Event)(f->GetEvent());
+
+
+			if (bp.GetEvent() != evAdjustVolume)
+			{
+				TouchBeep();		// give audible feedback of the touch, unless adjusting the volume
+			}
+
 			switch(ev)
 			{
 			case evEmergencyStop:
@@ -2071,7 +2138,7 @@ namespace UI
 				break;
 
 			case evTabControl:
-			case evTabPrint:
+			case evTabStatus:
 			case evTabMsg:
 			case evTabSetup:
 				if (ChangePage(f))
@@ -2091,12 +2158,18 @@ namespace UI
 					static_cast<IntegerButton*>(f)->SetValue(0);
 				}
 				Adjusting(bp);
-				mgr.SetPopup(setTempPopup, AutoPlace, popupY);
+				if (isLandscape)
+				{
+					mgr.SetPopup(setTempPopup, AutoPlace, popupY);
+				}
 				break;
 
 			case evAdjustActiveRPM:
 				Adjusting(bp);
-				mgr.SetPopup(setRPMPopup, AutoPlace, popupY);
+				if (isLandscape)
+				{
+					mgr.SetPopup(setRPMPopup, AutoPlace, popupY);
+				}
 				break;
 
 			case evAdjustSpeed:
@@ -2104,23 +2177,26 @@ namespace UI
 			case evAdjustFan:
 				oldIntValue = static_cast<IntegerButton*>(bp.GetButton())->GetValue();
 				Adjusting(bp);
-				mgr.SetPopup(setTempPopup, AutoPlace, popupY);
+				if (isLandscape)
+				{
+					mgr.SetPopup(setTempPopup, AutoPlace, popupY);
+				}
 				break;
 
 			case evSetInt:
 				if (fieldBeingAdjusted.IsValid())
 				{
 					int val = static_cast<const IntegerButton*>(fieldBeingAdjusted.GetButton())->GetValue();
-				const event_t eventOfFieldBeingAdjusted =
-						fieldBeingAdjusted.GetEvent();
-				switch (eventOfFieldBeingAdjusted)
+					const event_t eventOfFieldBeingAdjusted = fieldBeingAdjusted.GetEvent();
+					switch (eventOfFieldBeingAdjusted)
 					{
 					case evAdjustBedActiveTemp:
 					case evAdjustChamberActiveTemp:
 						{
 							int bedOrChamberIndex = bp.GetIParam();
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedActiveTemp;
-							const auto bedOrChamber = isBed ? OM::GetBed(bedOrChamberIndex) : OM::GetChamber(bedOrChamberIndex);							if (bedOrChamber == nullptr)
+							const auto bedOrChamber = isBed ? OM::GetBed(bedOrChamberIndex) : OM::GetChamber(bedOrChamberIndex);
+							if (bedOrChamber == nullptr)
 							{
 								break;
 							}
@@ -2153,10 +2229,11 @@ namespace UI
 								break;
 							}
 
-							if (GetHeaterCombineType() == HeaterCombineType::combined)
+							const bool useM568 = GetFirmwareFeatures().IsBitSet(m568TempAndRPM);
+							if (nvData.GetHeaterCombineType() == HeaterCombineType::combined)
 							{
 								tool->UpdateTemp(0, val, true);
-								SerialIo::Sendf("G10 P%d S%d\n", toolNumber, tool->heaters[0]->activeTemp);
+								SerialIo::Sendf("%s P%d S%d\n", (useM568 ? "M568" : "G10"), toolNumber, tool->heaters[0]->activeTemp);
 							}
 							else
 							{
@@ -2174,7 +2251,7 @@ namespace UI
 								String<maxUserCommandLength> heaterTemps;
 								if (tool->GetHeaterTemps(heaterTemps.GetRef(), true))
 								{
-									SerialIo::Sendf("G10 P%d S%s\n", toolNumber, heaterTemps.c_str());
+									SerialIo::Sendf("%s P%d S%s\n", (useM568 ? "M568" : "G10"), toolNumber, heaterTemps.c_str());
 								}
 							}
 						}
@@ -2189,10 +2266,11 @@ namespace UI
 								break;
 							}
 
-							if (GetHeaterCombineType() == HeaterCombineType::combined)
+							const bool useM568 = GetFirmwareFeatures().IsBitSet(m568TempAndRPM);
+							if (nvData.GetHeaterCombineType() == HeaterCombineType::combined)
 							{
 								tool->UpdateTemp(0, val, false);
-								SerialIo::Sendf("G10 P%d S%d\n", toolNumber, tool->heaters[0]->standbyTemp);
+								SerialIo::Sendf("%s P%d R%d\n", (useM568 ? "M568" : "G10"), toolNumber, tool->heaters[0]->standbyTemp);
 							}
 							else
 							{
@@ -2210,7 +2288,7 @@ namespace UI
 								String<maxUserCommandLength> heaterTemps;
 								if (tool->GetHeaterTemps(heaterTemps.GetRef(), false))
 								{
-									SerialIo::Sendf("G10 P%d R%s\n", toolNumber, heaterTemps.c_str());
+									SerialIo::Sendf("%s P%d R%s\n", (useM568 ? "M568" : "G10"), toolNumber, heaterTemps.c_str());
 								}
 							}
 						}
@@ -2283,7 +2361,7 @@ namespace UI
 							newValue = constrain<int>(newValue, -spindle->max, spindle->max);
 
 							// If a change will lead us below the min speed for spindle skip to the other side
-							if (newValue > -spindle->min && newValue < spindle->min)
+							if (newValue > (int)-spindle->min && newValue < (int)spindle->min)
 							{
 								newValue = (change < 0) ? -spindle->min : spindle->min;
 							}
@@ -2305,12 +2383,15 @@ namespace UI
 			case evMoveAxis:
 				{
 					TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(bp.GetButton());
-					SerialIo::Sendf("G91 G1 %c%s F%d G90\n", textButton->GetAxisLetter(), bp.GetSParam(), GetFeedrate());
+					SerialIo::Sendf("G91 G1 %c%s F%d G90\n", textButton->GetAxisLetter(), bp.GetSParam(), nvData.GetFeedrate());
 				}
 				break;
 
 			case evExtrudePopup:
-				mgr.SetPopup(extrudePopup, AutoPlace, AutoPlace);
+				if (isLandscape)
+				{
+					mgr.SetPopup(extrudePopup, AutoPlace, AutoPlace);
+				}
 				break;
 
 			case evExtrudeAmount:
@@ -2345,15 +2426,15 @@ namespace UI
 			case evBabyStepMinus:
 			case evBabyStepPlus:
 				{
-					SerialIo::Sendf("M290 Z%s%s\n", (ev == evBabyStepMinus ? "-" : ""), babystepAmounts[GetBabystepAmountIndex()]);
+					SerialIo::Sendf("M290 Z%s%s\n", (ev == evBabyStepMinus ? "-" : ""), babystepAmounts[nvData.GetBabystepAmountIndex()]);
 					float currentBabystepAmount = babystepOffsetField->GetValue();
 					if (ev == evBabyStepMinus)
 					{
-						currentBabystepAmount -= babystepAmountsF[GetBabystepAmountIndex()];
+						currentBabystepAmount -= babystepAmountsF[nvData.GetBabystepAmountIndex()];
 					}
 					else
 					{
-						currentBabystepAmount += babystepAmountsF[GetBabystepAmountIndex()];
+						currentBabystepAmount += babystepAmountsF[nvData.GetBabystepAmountIndex()];
 					}
 					babystepOffsetField->SetValue(currentBabystepAmount);
 				}
@@ -2384,7 +2465,7 @@ namespace UI
 						break;
 					}
 					const auto slot = bed->slot;
-					if (bed->heaterStatus == HeaterStatus::active)			// if bed is active
+					if (bed->heaterStatus == OM::HeaterStatus::active)			// if bed is active
 					{
 						SerialIo::Sendf("M144 P%d\n", bedIndex);
 					}
@@ -2406,7 +2487,7 @@ namespace UI
 					const auto slot = chamber->slot;
 					SerialIo::Sendf("M141 P%d S%d\n",
 							chamberIndex,
-							(chamber->heaterStatus == HeaterStatus::active ? -274 : activeTemps[slot]->GetValue()));
+							(chamber->heaterStatus == OM::HeaterStatus::active ? -274 : activeTemps[slot]->GetValue()));
 				}
 				break;
 
@@ -2414,7 +2495,7 @@ namespace UI
 				{
 					int head = bp.GetIParam();
 					// pressing a evSeelctHead button in the middle of active printing is almost always accidental (and fatal to the print job)
-					if (GetStatus() != PrinterStatus::printing && GetStatus() != PrinterStatus::simulating)
+					if (GetStatus() != OM::PrinterStatus::printing && GetStatus() != OM::PrinterStatus::simulating)
 					{
 						if (head == currentTool)		// if head is active
 						{
@@ -2443,7 +2524,7 @@ namespace UI
 						{
 							// It's a regular file
 							currentFile = fileName;
-							SerialIo::Sendf(((GetFirmwareFeatures() & noM20M36) == 0) ? "M36 " : "M408 S36 P");			// ask for the file info
+							SerialIo::Sendf(GetFirmwareFeatures().IsBitSet(noM20M36) ? "M408 S36 P" : "M36 ");			// ask for the file info
 							SerialIo::SendFilename(CondStripDrive(FileManager::GetFilesDir()), currentFile);
 							SerialIo::SendChar('\n');
 							FileSelected(currentFile);
@@ -2627,7 +2708,7 @@ namespace UI
 			case evAdjustVolume:
 				{
 					const int newVolume = bp.GetIParam();
-					SetVolume(newVolume);
+					nvData.SetVolume(newVolume);
 					volumeButton->SetValue(newVolume);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
@@ -2636,7 +2717,7 @@ namespace UI
 			case evAdjustInfoTimeout:
 				{
 					infoTimeout = bp.GetIParam();
-					SetInfoTimeout(infoTimeout);
+					nvData.SetInfoTimeout(infoTimeout);
 					infoTimeoutButton->SetValue(infoTimeout);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
@@ -2645,7 +2726,7 @@ namespace UI
 			case evAdjustScreensaverTimeout:
 				{
 					uint32_t screensaverTimeout = bp.GetIParam();
-					SetScreensaverTimeout(screensaverTimeout * 1000);
+					nvData.SetScreensaverTimeout(screensaverTimeout * 1000);
 					screensaverTimeoutButton->SetValue(screensaverTimeout);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
@@ -2654,7 +2735,7 @@ namespace UI
 			case evAdjustBabystepAmount:
 				{
 					uint32_t babystepAmountIndex = bp.GetIParam();
-					SetBabystepAmountIndex(babystepAmountIndex);
+					nvData.SetBabystepAmountIndex(babystepAmountIndex);
 					babystepAmountButton->SetText(babystepAmounts[babystepAmountIndex]);
 					babystepMinusButton->SetText(babystepAmounts[babystepAmountIndex]);
 					babystepPlusButton->SetText(babystepAmounts[babystepAmountIndex]);
@@ -2665,7 +2746,7 @@ namespace UI
 			case evAdjustFeedrate:
 				{
 					uint32_t feedrate = bp.GetIParam();
-					SetFeedrate(feedrate);
+					nvData.SetFeedrate(feedrate);
 					feedrateAmountButton->SetValue(feedrate);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
@@ -2674,7 +2755,7 @@ namespace UI
 			case evAdjustColours:
 				{
 					const uint8_t newColours = (uint8_t)bp.GetIParam();
-					if (SetColourScheme(newColours))
+					if (nvData.SetColourScheme(newColours))
 					{
 						SaveSettings();
 						Reset();
@@ -2691,7 +2772,7 @@ namespace UI
 			case evAdjustLanguage:
 				{
 					const uint8_t newLanguage = (uint8_t)bp.GetIParam();
-					if (SetLanguage(newLanguage))
+					if (nvData.SetLanguage(newLanguage))
 					{
 						SaveSettings();
 						Reset();
@@ -2702,12 +2783,12 @@ namespace UI
 
 			case evSetDimmingType:
 				ChangeDisplayDimmerType();
-				dimmingTypeButton->SetText(strings->displayDimmingNames[(unsigned int)GetDisplayDimmerType()]);
+				dimmingTypeButton->SetText(strings->displayDimmingNames[(unsigned int)nvData.GetDisplayDimmerType()]);
 				break;
 
 			case evSetHeaterCombineType:
 				ChangeHeaterCombineType();
-				heaterCombiningButton->SetText(strings->heaterCombineTypeNames[(unsigned int)GetHeaterCombineType()]);
+				heaterCombiningButton->SetText(strings->heaterCombineTypeNames[(unsigned int)nvData.GetHeaterCombineType()]);
 				break;
 
 			case evYes:
@@ -2775,7 +2856,7 @@ namespace UI
 				}
 				break;
 
-			case evUp:
+			case evUp: // TODO new events for moving editor one left or right
 				currentHistoryBuffer = (currentHistoryBuffer + numUserCommandBuffers - 1) % numUserCommandBuffers;
 				if (currentHistoryBuffer == currentUserCommandBuffer)
 				{
@@ -2848,6 +2929,10 @@ namespace UI
 
 			case evAdjustToolActiveTemp:
 			case evAdjustToolStandbyTemp:
+			case evAdjustBedActiveTemp:
+			case evAdjustBedStandbyTemp:
+			case evAdjustChamberActiveTemp:
+			case evAdjustChamberStandbyTemp:
 			case evAdjustActiveRPM:
 			case evSetBaudRate:
 			case evSetVolume:
@@ -2877,7 +2962,7 @@ namespace UI
 				break;
 
 			case evTabControl:
-			case evTabPrint:
+			case evTabStatus:
 			case evTabMsg:
 			case evTabSetup:
 				StopAdjusting();
@@ -2907,7 +2992,6 @@ namespace UI
 				// On the Setup tab, we allow any other button to be pressed to exit the current popup
 				StopAdjusting();
 				DelayTouchLong();	// by default, ignore further touches for a long time
-				TouchBeep();
 				mgr.ClearPopup();
 				ProcessTouch(bp);
 				break;
@@ -2934,7 +3018,10 @@ namespace UI
 			filePopupTitleField->SetValue(cardNumber);
 			mgr.Show(changeCardButton, numVolumes > 1);
 		}
-		mgr.SetPopup((filesNotMacros) ? fileListPopup : macrosPopup, AutoPlace, AutoPlace);
+		if (isLandscape)
+		{
+			mgr.SetPopup((filesNotMacros) ? fileListPopup : macrosPopup, AutoPlace, AutoPlace);
+		}
 	}
 
 	void FileListLoaded(bool filesNotMacros, int errCode)
@@ -2962,10 +3049,13 @@ namespace UI
 	// Update the specified button in the file or macro buttons list. If 'text' is nullptr then hide the button, else display it.
 	void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * _ecv_array null text, const char * _ecv_array null param)
 	{
-		TextButton * const f = ((filesNotMacros) ? filenameButtons : macroButtons)[buttonIndex];
-		f->SetText(text);
-		f->SetEvent((text == nullptr) ? evNull : (filesNotMacros) ? evFile : evMacro, param);
-		mgr.Show(f, text != nullptr);
+		if (buttonIndex < ((filesNotMacros) ? NumDisplayedFiles : NumDisplayedMacros))
+		{
+			TextButton * const f = ((filesNotMacros) ? filenameButtons : macroButtons)[buttonIndex];
+			f->SetText(text);
+			f->SetEvent((text == nullptr) ? evNull : (filesNotMacros) ? evFile : evMacro, param);
+			mgr.Show(f, text != nullptr);
+		}
 	}
 
 	// Update the specified button in the macro short list. If 'fileName' is nullptr then hide the button, else display it.
@@ -3095,14 +3185,14 @@ namespace UI
 		{
 			bedCount = AddBedOrChamber(firstBed, slot);
 		}
-		OM::IterateTools([&slot](OM::Tool* tool)
+		OM::IterateToolsWhile([&slot](OM::Tool*& tool, size_t)
 		{
 			tool->slot = slot;
+			const bool hasHeater = tool->heaters[0] != nullptr;
+			const bool hasSpindle = tool->spindle != nullptr;
+			const bool hasExtruder = tool->extruders.IsNonEmpty();
 			if (slot < MaxSlots)
 			{
-				const bool hasHeater = tool->heaters[0] != nullptr;
-				const bool hasSpindle = tool->spindle != nullptr;
-				const bool hasExtruder = tool->extruder > -1;
 				toolButtons[slot]->SetEvent(evSelectHead, tool->index);
 				toolButtons[slot]->SetIntVal(tool->index);
 				toolButtons[slot]->SetPrintText(true);
@@ -3110,7 +3200,10 @@ namespace UI
 				mgr.Show(toolButtons[slot], true);
 
 				mgr.Show(extrusionFactors[slot], hasExtruder);
-				extrusionFactors[slot]->SetEvent(extrusionFactors[slot]->GetEvent(), tool->extruder);
+				if (hasExtruder)
+				{
+					extrusionFactors[slot]->SetEvent(extrusionFactors[slot]->GetEvent(), (int) tool->extruders.LowestSetBit());
+				}
 
 				// Spindle takes precedence
 				if (hasSpindle)
@@ -3120,7 +3213,7 @@ namespace UI
 				}
 				else if (hasHeater)
 				{
-					if (GetHeaterCombineType() == HeaterCombineType::notCombined)
+					if (nvData.GetHeaterCombineType() == HeaterCombineType::notCombined)
 					{
 						tool->IterateHeaters([&slot, &tool](OM::ToolHeater*, size_t index)
 						{
@@ -3156,6 +3249,7 @@ namespace UI
 					++slot;
 				}
 			}
+			return slot < MaxSlots;
 		});
 		auto firstChamber = OM::GetFirstChamber();
 		if (firstChamber != nullptr)
@@ -3166,13 +3260,19 @@ namespace UI
 		// Fill remaining space with additional beds
 		if (slot < MaxSlots && bedCount > 1)
 		{
-			OM::IterateBeds([&slot](OM::Bed* bed) { AddBedOrChamber(bed, slot); }, 1);
+			OM::IterateBedsWhile([&slot](OM::Bed*& bed, size_t) {
+				AddBedOrChamber(bed, slot);
+				return slot < MaxSlots;
+			}, 1);
 		}
 
 		// Fill remaining space with additional chambers
 		if (slot < MaxSlots && chamberCount > 1)
 		{
-			OM::IterateChambers([&slot](OM::Chamber* chamber) { AddBedOrChamber(chamber, slot, false); }, 1);
+			OM::IterateChambersWhile([&slot](OM::Chamber*& chamber, size_t) {
+				AddBedOrChamber(chamber, slot, false);
+				return slot < MaxSlots;
+			}, 1);
 		}
 
 		numToolColsUsed = slot;
@@ -3188,44 +3288,86 @@ namespace UI
 		AdjustControlPageMacroButtons();
 	}
 
-	void SetSpindleActive(size_t index, uint16_t active)
+	void SetSpindleActive(size_t spindleIndex, int32_t activeRpm)
 	{
-		auto spindle = OM::GetOrCreateSpindle(index);
+		auto spindle = OM::GetOrCreateSpindle(spindleIndex);
 		if (spindle == nullptr)
 		{
 			return;
 		}
-		spindle->active = active;
-		if (spindle->tool > -1)
+		spindle->active = abs(activeRpm);
+		if (!GetFirmwareFeatures().IsBitSet(m568TempAndRPM))
 		{
-			auto tool = OM::GetTool(spindle->tool);
-			if (tool != nullptr && tool->slot < MaxSlots)
+			if (activeRpm == 0)
 			{
-				activeTemps[tool->slot]->SetValue((int)active);
+				spindle->state = OM::SpindleState::stopped;
+			}
+			else if (activeRpm > 0)
+			{
+				spindle->state = OM::SpindleState::forward;
+			}
+			else
+			{
+				spindle->state = OM::SpindleState::reverse;
 			}
 		}
+
+		OM::IterateToolsWhile([spindle](OM::Tool*& tool, size_t) {
+			if (tool->slot < MaxSlots && tool->spindle == spindle)
+			{
+				activeTemps[tool->slot]->SetValue(tool->spindle->active);
+			}
+			return tool->slot < MaxSlots;
+		});
 	}
 
-	void SetSpindleCurrent(size_t index, uint16_t current)
+	void UpdateSpindleCurrent(OM::Spindle* spindle)
 	{
-		auto spindle = OM::GetOrCreateSpindle(index);
+		OM::IterateToolsWhile([spindle](OM::Tool*& tool, size_t) {
+			if (tool->slot < MaxSlots && tool->spindle == spindle)
+			{
+				const OM::SpindleState state = spindle->state;
+				currentTemps[tool->slot]->SetValue(
+						(state == OM::SpindleState::stopped)
+							? 0
+							: (state == OM::SpindleState::forward)
+							  	  ? spindle->current
+							  	  : -spindle->current);
+			}
+			return tool->slot < MaxSlots;
+		});
+	}
+
+	void SetSpindleCurrent(size_t spindleIndex, int32_t current)
+	{
+		auto spindle = OM::GetOrCreateSpindle(spindleIndex);
 		if (spindle == nullptr)
 		{
 			return;
 		}
-		if (spindle->tool > -1)
+		spindle->current = abs(current);
+		if (!GetFirmwareFeatures().IsBitSet(m568TempAndRPM))
 		{
-			auto tool = OM::GetTool(spindle->tool);
-			if (tool != nullptr && tool->slot < MaxSlots)
+			if (current == 0)
 			{
-				currentTemps[tool->slot]->SetValue(current);
+				spindle->state = OM::SpindleState::stopped;
+			}
+			else if (current > 0)
+			{
+				spindle->state = OM::SpindleState::forward;
+			}
+			else
+			{
+				spindle->state = OM::SpindleState::reverse;
 			}
 		}
+		UpdateSpindleCurrent(spindle);
 	}
 
-	void SetSpindleLimit(size_t index, uint16_t value, bool max)
+	void SetSpindleLimit(size_t spindleIndex, uint32_t value, bool max)
 	{
-		OM::Spindle *spindle = OM::GetOrCreateSpindle(index);		if (spindle != nullptr)
+		OM::Spindle *spindle = OM::GetOrCreateSpindle(spindleIndex);
+		if (spindle != nullptr)
 		{
 			if (max)
 			{
@@ -3238,7 +3380,50 @@ namespace UI
 		}
 	}
 
-	void UpdateToolStatus(size_t toolIndex, ToolStatus status)
+	void SetSpindleState(size_t spindleIndex, OM::SpindleState state)
+	{
+		OM::Spindle* spindle = OM::GetOrCreateSpindle(spindleIndex);
+		if (spindle == nullptr)
+		{
+			return;
+		}
+		const bool changed = spindle->state != state;
+		spindle->state = state;
+		if (changed)
+		{
+			UpdateSpindleCurrent(spindle);
+		}
+	}
+
+	// This handles the old path where tools were assigned to spindles
+	void SetSpindleTool(int8_t spindleNumber, int8_t toolIndex)
+	{
+		auto sp = OM::GetOrCreateSpindle(spindleNumber);
+		if (sp == nullptr)
+		{
+			return;
+		}
+		if (toolIndex == -1)
+		{
+			OM::IterateToolsWhile([sp](OM::Tool*& tool, size_t) {
+				if (tool->spindle == sp)
+				{
+					tool->spindle = nullptr;
+				}
+				return true;
+			});
+		}
+		else
+		{
+			OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+			if (tool != nullptr)
+			{
+				tool->spindle = sp;
+			}
+		}
+	}
+
+	void UpdateToolStatus(size_t toolIndex, OM::ToolStatus status)
 	{
 		auto tool = OM::GetTool(toolIndex);
 		if (tool == nullptr)
@@ -3246,29 +3431,30 @@ namespace UI
 			return;
 		}
 		tool->status = status;
+		Colour c = /*(status == OM::ToolStatus::standby) ? colours->standbyBackColour : */
+					(status == OM::ToolStatus::active) ? colours->activeBackColour
+					: colours->buttonImageBackColour;
 		if (tool->slot < MaxSlots)
 		{
-			Colour c = /*(status == ToolStatus::standby) ? colours->standbyBackColour : */
-						(status == ToolStatus::active) ? colours->activeBackColour
-						: colours->buttonImageBackColour;
 			toolButtons[tool->slot]->SetColours(colours->buttonTextColour, c);
 		}
 	}
 
-	void SetToolExtruder(size_t toolIndex, int8_t extruder)
-	{
-		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);		if (tool != nullptr)
-		{
-			tool->extruder = extruder;
-		}
-	}
-
-	void SetToolFan(size_t toolIndex, int8_t fan)
+	void SetToolExtruder(size_t toolIndex, uint8_t extruder)
 	{
 		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
 		if (tool != nullptr)
 		{
-			tool->fan = fan;
+			tool->extruders.SetBit(extruder);
+		}
+	}
+
+	void SetToolFan(size_t toolIndex, uint8_t fan)
+	{
+		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+		if (tool != nullptr)
+		{
+			tool->fans.SetBit(fan);
 		}
 	}
 
@@ -3282,7 +3468,7 @@ namespace UI
 		return tool->RemoveHeatersFrom(firstIndexToDelete) > 0;
 	}
 
-	void SetToolHeater(size_t toolIndex, uint8_t toolHeaterIndex, int8_t heaterIndex)
+	void SetToolHeater(size_t toolIndex, uint8_t toolHeaterIndex, uint8_t heaterIndex)
 	{
 		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
 		if (tool == nullptr)
@@ -3309,30 +3495,27 @@ namespace UI
 		}
 	}
 
-	void SetSpindleTool(int8_t spindle, int8_t toolIndex)
+	// This handles the new path were spindles are assigned to tools
+	void SetToolSpindle(int8_t toolIndex, int8_t spindleNumber)
 	{
-		auto sp = OM::GetOrCreateSpindle(spindle);
-		if (sp == nullptr)
+		// Old spindles[].tool is handled by SetSpindleTool
+		OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
+		if (tool == nullptr)
 		{
 			return;
 		}
-		sp->tool = toolIndex;
-		if (toolIndex == -1)
+		if (spindleNumber == -1)
 		{
-			OM::IterateTools([&sp](OM::Tool* tool) {
-				if (tool->spindle == sp)
-				{
-					tool->spindle = nullptr;
-				}
-			});
+			tool->spindle = nullptr;
 		}
 		else
 		{
-			OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
-			if (tool != nullptr)
+			OM::Spindle* spindle = OM::GetSpindle(spindleNumber);
+			if (spindle == nullptr)
 			{
-				tool->spindle = sp;
+				return;
 			}
+			tool->spindle = spindle;
 		}
 	}
 
@@ -3359,7 +3542,8 @@ namespace UI
 	{
 		if (index < MaxTotalAxes)
 		{
-			OM::Axis *axis = OM::GetOrCreateAxis(index);			if (axis != nullptr)
+			OM::Axis *axis = OM::GetOrCreateAxis(index);
+			if (axis != nullptr)
 			{
 				axis->letter[0] = l;
 			}
@@ -3390,6 +3574,15 @@ namespace UI
 		}
 	}
 
+	void SetCurrentWorkplaceNumber(uint8_t workplaceNumber)
+	{
+		if (currentWorkplaceNumber == workplaceNumber || workplaceNumber >= OM::Workplaces::MaxTotalWorkplaces)
+		{
+			return;
+		}
+		currentWorkplaceNumber = workplaceNumber;
+	}
+
 	void SetBedOrChamberHeater(const uint8_t heaterIndex, const int8_t heaterNumber, bool bed)
 	{
 		if (bed)
@@ -3410,7 +3603,5 @@ namespace UI
 		}
 	}
 }
-
-#endif
 
 // End

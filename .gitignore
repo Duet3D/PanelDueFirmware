@@ -17,6 +17,10 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# tag files
+tags
+cscope.out
+
 # =========================
 # Operating System Files
 # =========================
@@ -55,3 +59,4 @@ Temporary Items
 
 # Misc
 .settings/language.settings.xml
+compile_commands.json

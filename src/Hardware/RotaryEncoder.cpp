@@ -5,10 +5,10 @@
  *      Author: David
  */
 
-#include "Hardware/RotaryEncoder.hpp"
-#include "Hardware/SysTick.hpp"
-#include "Library/Misc.hpp"
+#include "RotaryEncoder.hpp"
 #include <cmath>
+#include "SysTick.hpp"
+#include <General/SimpleMath.h>
 
 RotaryEncoder::RotaryEncoder(unsigned int p0, unsigned int p1, unsigned int pb) noexcept
 	: pin0(p0), pin1(p1), pinButton(pb),

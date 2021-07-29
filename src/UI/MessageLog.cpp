@@ -6,13 +6,14 @@
  */ 
 
 #include "MessageLog.hpp"
-#include "asf.h"
-#include "UserInterfaceConstants.hpp"
 #include "UserInterface.hpp"
-#include "Hardware/SysTick.hpp"
-#include "Library/Misc.hpp"
-#include "General/String.h"
-#include "General/SafeVsnprintf.h"
+#include "UserInterfaceConstants.hpp"
+#include "asf.h"
+#include <Hardware/SysTick.hpp>
+#include <General/SafeVsnprintf.h>
+#include <General/SimpleMath.h>
+#include <General/String.h>
+#include <General/StringFunctions.h>
 
 namespace MessageLog
 {
@@ -129,7 +130,7 @@ namespace MessageLog
 		
 			if (split)
 			{
-				safeStrncpy(messages[msgRow].msg, data, splitPoint + 1);
+				SafeStrncpy(messages[msgRow].msg, data, splitPoint + 1);
 				data += splitPoint;
 				if (data[0] == ' ')
 				{
@@ -138,7 +139,7 @@ namespace MessageLog
 			}
 			else
 			{
-				safeStrncpy(messages[msgRow].msg, data, MaxCharsPerRow + 1);
+				SafeStrncpy(messages[msgRow].msg, data, MaxCharsPerRow + 1);
 			}
 
 			messages[msgRow].receivedTime = (numLines == 1) ? SystemTick::GetTickCount() : 0;
@@ -148,14 +149,14 @@ namespace MessageLog
 		UpdateMessages(true);
 	}
 
-	void AppendMessage(size_t maxLen, const char* format, ...)
+	void AppendMessageF(const char* fmt, ...)
 	{
-		char msg[maxLen];
+		String<256> formatString;
 		va_list vargs;
-		va_start(vargs, format);
-		SafeVsnprintf(msg, maxLen, format, vargs);
+		va_start(vargs, fmt);
+		formatString.vcatf(fmt, vargs);
 		va_end(vargs);
-		AppendMessage(msg);
+		AppendMessage(formatString.c_str());
 	}
 
 	// Save a message for possible display later

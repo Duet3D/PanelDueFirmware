@@ -5,16 +5,19 @@
  *      Author: David
  */
 
-#ifndef SRC_USERINTERFACE_HPP_
-#define SRC_USERINTERFACE_HPP_
+#ifndef SRC_UI_USERINTERFACE_HPP_
+#define SRC_UI_USERINTERFACE_HPP_
 
-#include "ColourSchemes.hpp"
-#include "PrinterStatus.hpp"
-#include "Display.hpp"
 #include "FirmwareFeatures.hpp"
-#include "Events.hpp"
-#include "HeaterStatus.hpp"
-#include "ToolStatus.hpp"
+#include <ObjectModel/BedOrChamber.hpp>
+#include <ObjectModel/PrinterStatus.hpp>
+#include <ObjectModel/Spindle.hpp>
+#include <ObjectModel/Tool.hpp>
+#include <UI/ColourSchemes.hpp>
+#include <UI/Display.hpp>
+#include <UI/Events.hpp>
+#include <General/String.h>
+#include <General/StringFunctions.h>
 
 extern IntegerField *freeMem;
 extern StaticTextField *debugField;
@@ -22,21 +25,58 @@ extern StaticTextField *touchCalibInstruction;
 extern StaticTextField *messageTextFields[], *messageTimeFields[];
 extern TextField *fwVersionField;
 
-class Alert;
+const size_t alertTextLength = 165;			// maximum characters in the alert text
+const size_t alertTitleLength = 50;			// maximum characters in the alert title
+
+class Alert
+{
+private:
+public:
+	int32_t mode;
+	uint32_t seq;
+	uint32_t controls;
+	float timeout;
+	Bitmap<uint8_t> flags;
+	String<50> title;
+	String<alertTextLength> text;
+
+	static constexpr uint8_t GotMode = 0;
+	static constexpr uint8_t GotSeq = 1;
+	static constexpr uint8_t GotTimeout = 2;
+	static constexpr uint8_t GotTitle = 3;
+	static constexpr uint8_t GotText = 4;
+	static constexpr uint8_t GotControls = 5;
+	static constexpr uint8_t GotAll =
+			(1 << GotMode)
+			| (1 << GotSeq)
+			| (1 << GotTimeout)
+			| (1 << GotTitle)
+			| (1 << GotText)
+			| (1 << GotControls);
+
+	Alert() : mode(0), seq(0), controls(0), timeout(0.0) { flags.Clear(); }
+
+	bool AllFlagsSet() const { return flags.GetRaw() == GotAll; }
+};
+
 
 namespace UI
 {
 	extern unsigned int GetNumLanguages();
 	extern void CreateFields(uint32_t language, const ColourScheme& colours, uint32_t p_infoTimeout);
+	extern void InitColourScheme(const ColourScheme *scheme);
 	extern void ActivateScreensaver();
-	extern void DeactivateScreensaver();
+	extern bool DeactivateScreensaver();
 	extern void AnimateScreensaver();
-	extern void ShowAxis(size_t axis, bool b, char axisLetter =  '\0');
+	extern void ShowAxis(size_t axis, bool b, const char* axisLetter = nullptr);
 	extern void UpdateAxisPosition(size_t axis, float fval);
 	extern void UpdateCurrentTemperature(size_t heater, float fval);
-	extern void UpdateHeaterStatus(const size_t heater, const HeaterStatus status);
-	extern void ChangeStatus(PrinterStatus oldStatus, PrinterStatus newStatus);
+	extern void UpdateHeaterStatus(const size_t heater, const OM::HeaterStatus status);
+	extern void ChangeStatus(OM::PrinterStatus oldStatus, OM::PrinterStatus newStatus);
 	extern void UpdateTimesLeft(size_t index, unsigned int seconds);
+	extern void UpdateDuration(uint32_t duration);
+	extern void UpdateWarmupDuration(uint32_t warmupDuration);
+	extern void SetSimulatedTime(uint32_t simulatedTime);
 	extern bool ChangePage(ButtonBase *newTab);
 	extern bool DoPolling();
 	extern void Tick();
@@ -52,6 +92,7 @@ namespace UI
 	extern void UpdateHomedStatus(size_t axis, bool isHomed);
 	extern void UpdateZProbe(const char data[]);
 	extern void UpdateMachineName(const char data[]);
+	extern void UpdateIP(const char data[]);
 	extern void ProcessAlert(const Alert& alert);
 	extern void ClearAlert();
 	extern void ProcessSimpleAlert(const char* _ecv_array text);
@@ -70,7 +111,6 @@ namespace UI
 	extern void UpdateExtrusionFactor(size_t index, int ival);
 	extern void UpdatePrintTimeText(uint32_t seconds, bool isSimulated);
 	extern void UpdateSpeedPercent(int ival);
-	extern void FirmwareFeaturesChanged(FirmwareFeatures newFeatures);
 	extern void ProcessTouch(ButtonPress bp);
 	extern void ProcessTouchOutsidePopup(ButtonPress bp)
 	pre(bp.IsValid());
@@ -89,21 +129,24 @@ namespace UI
 	extern void SetAxisLetter(size_t index, char l);
 	extern void SetAxisVisible(size_t index, bool v);
 	extern void SetAxisWorkplaceOffset(size_t axisIndex, size_t workplaceIndex, float offset);
+	extern void SetCurrentWorkplaceNumber(uint8_t workplaceNumber);
 
 	extern void SetCurrentTool(int32_t tool);
-	extern void UpdateToolStatus(size_t index, ToolStatus status);
-	extern void SetToolExtruder(size_t toolIndex, int8_t extruder);
-	extern void SetToolFan(size_t toolIndex, int8_t fan);
-	extern void SetToolHeater(size_t toolIndex, uint8_t toolHeaterIndex, int8_t heaterIndex);
+	extern void UpdateToolStatus(size_t index, OM::ToolStatus status);
+	extern void SetToolExtruder(size_t toolIndex, uint8_t extruder);
+	extern void SetToolFan(size_t toolIndex, uint8_t fan);
+	extern void SetToolHeater(size_t toolIndex, uint8_t toolHeaterIndex, uint8_t heaterIndex);
+	extern void SetToolSpindle(int8_t toolIndex, int8_t spindleNumber);
 	extern bool RemoveToolHeaters(const size_t toolIndex, const uint8_t firstIndexToDelete);
 	extern void SetToolOffset(size_t toolIndex, size_t axisIndex, float offset);
 
 	extern void SetBedOrChamberHeater(const uint8_t heaterIndex, const int8_t heaterNumber, bool bed = true);
 
-	extern void SetSpindleActive(size_t index, uint16_t active);
-	extern void SetSpindleCurrent(size_t index, uint16_t current);
-	extern void SetSpindleLimit(size_t index, uint16_t value, bool max);
-	extern void SetSpindleTool(int8_t spindle, int8_t toolIndex);
+	extern void SetSpindleActive(size_t spindleIndex, int32_t activeRpm);
+	extern void SetSpindleCurrent(size_t spindleIndex, int32_t currentRpm);
+	extern void SetSpindleLimit(size_t spindleIndex, uint32_t value, bool max);
+	extern void SetSpindleState(size_t spindleIndex, OM::SpindleState state);
+	extern void SetSpindleTool(int8_t spindleNumber, int8_t toolIndex);
 }
 
-#endif /* SRC_USERINTERFACE_HPP_ */
+#endif /* SRC_UI_USERINTERFACE_HPP_ */

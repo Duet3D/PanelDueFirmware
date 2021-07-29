@@ -14,9 +14,9 @@
 #undef result
 #undef value
 #include <cstring>
-#include "Hardware/UTFT.hpp"
-#include "DisplaySize.hpp"
-#include <math.h>
+#include <cmath>
+#include <Hardware/UTFT.hpp>
+#include <UI/DisplaySize.hpp>
 
 #ifndef UNUSED
 # define UNUSED(_x)	(void)(_x)
@@ -28,17 +28,6 @@ typedef const uint8_t * _ecv_array LcdFont;
 // An icon is stored an _ecv_array of uint16_t data normally held in flash memory. The first value is the width in pixels, the second is the height in pixels.
 // After that comes the icon data, 16 bits per pixel, one row at a time.
 typedef const uint8_t * _ecv_array Icon;
-
-// Unicode strings for special characters in our font
-#define DECIMAL_POINT	"\xC2\xB7"		// Unicode middle-dot, code point B7
-#define DEGREE_SYMBOL	"\xC2\xB0"		// Unicode degree-symbol, code point B0
-#define THIN_SPACE		"\xC2\x80"		// Unicode control character, code point 0x80, we use it as thin space
-#define LEFT_ARROW		"\xC2\x81"		// Unicode control character, code point 0x81, we use it as up arrow
-#define UP_ARROW		"\xC2\x82"		// Unicode control character, code point 0x82, we use it as up arrow
-#define RIGHT_ARROW		"\xC2\x83"		// Unicode control character, code point 0x83, we use it as down arrow
-#define DOWN_ARROW		"\xC2\x84"		// Unicode control character, code point 0x84, we use it as down arrow
-#define MORE_ARROW		"\xC2\x85"
-#define LESS_ARROW		"\xC2\x86"
 
 const uint8_t buttonGradStep = 12;
 const PixelNumber AutoPlace = 0xFFFF;
@@ -155,9 +144,11 @@ public:
 	void Redraw(DisplayField *f);
 	void Show(DisplayField * null f, bool v);
 	void Press(ButtonPress bp, bool v);
-	void SetPopup(PopupWindow * p, PixelNumber px = 0, PixelNumber py = 0, bool redraw = true);
+	void SetPopup(PopupWindow * p, PixelNumber px = 0, PixelNumber py = 0, bool redraw = true, const PixelNumber displayX = DisplayX, const PixelNumber displayY = DisplayY);
+	void SetPopupP(PopupWindow * p, PixelNumber px = 0, PixelNumber py = 0, bool redraw = true) { SetPopup(p, px, py, redraw, DisplayXP, DisplayYP); }
 	PopupWindow * null GetPopup() const { return next; }
 	void ClearPopup(bool redraw = true, PopupWindow *whichOne = nullptr);
+	inline bool IsPopupActive() const { return GetPopup() == nullptr; }
 	bool ObscuredByPopup(const DisplayField *p) const;
 	bool Visible(const DisplayField *p) const;
 	virtual bool Contains(PixelNumber xmin, PixelNumber ymin, PixelNumber xmax, PixelNumber ymax) const = 0;
@@ -575,6 +566,7 @@ class IconButtonWithText : public IconButton
 	const char * _ecv_array null text;
 	int val;
 	bool printText;
+	bool drawIcon;
 
 protected:
 	size_t PrintText() const;
@@ -619,8 +611,14 @@ public:
 
 	void SetPrintText(const bool pt)
 	{
+		changed = pt != printText;
 		printText = pt;
-		changed = true;
+	}
+
+	void SetDrawIcon(const bool di)
+	{
+		changed = di != drawIcon;
+		drawIcon = di;
 	}
 };
 
