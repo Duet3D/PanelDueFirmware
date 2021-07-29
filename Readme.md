@@ -1,14 +1,20 @@
 # PanelDueFirmware
 
-This firmware runs on PanelDue touchscreens available from Duet3D Ltd. and their resellers. It is used to check the status on and control a machine running primarily RepRapFirmware though since it simply sends GCodes over serial line it can be basically used with every controller that understands the sent commands.
+This firmware runs on PanelDue touchscreens available from Duet3D Ltd. and
+their resellers. It is used to check the status on and control a machine
+running primarily RepRapFirmware though since it simply sends GCodes over
+serial line it can be basically used with every controller that understands the
+sent commands.
 
 ## Download
-To get the latest release binaries go to:
+
+Download the latest firmware images at
 
 https://github.com/Duet3D/PanelDueFirmware/releases
 
-## Flashing instructions
-Instructions for flashing the firmware binary via USB are at:
+## Flashing
+
+Detailed flashing instruction can be found at
 
 https://duet3d.dozuki.com/Wiki/PanelDue_Firmware_update
 
@@ -37,6 +43,22 @@ $ git submodule update --recursive
 $ cmake -B build -DDEVICE=5.0i .
 $ make -C build all -j12
 ```
+
+Create build system for Eclipse CDT which can be easily integrated
+
+```
+$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE=5.0i
+```
+
+To switching the target device re-run cmake with another device setting
+
+```
+$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE=v3-5.0
+```
+
+For further Eclipse CDT integration please visit
+
+https://cmake.org/cmake/help/latest/generator/Eclipse%20CDT4.html
 
 The following devices are supported:
 - v2-4.3
