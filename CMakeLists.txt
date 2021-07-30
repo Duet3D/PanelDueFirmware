@@ -2,11 +2,11 @@ cmake_minimum_required( VERSION 3.11 )
 
 #configure_file(src/config.h.in src/config.h)
 
+set( CMAKE_TOOLCHAIN_FILE toolchains/arm-none-eabi.cmake )
+
 # skip compiler build tests
 set ( CMAKE_C_COMPILER_FORCED True )
 set ( CMAKE_CXX_COMPILER_FORCED True )
-
-set( CMAKE_TOOLCHAIN_FILE toolchains/arm-none-eabi.cmake )
 
 project( paneldue
 	DESCRIPTION "PanelDue Firmware"
@@ -123,13 +123,13 @@ else()
 	message(FATAL_ERROR "Please configure a device cmake -DDEVICE=v2-4.3|v2-5.0|v2-7.0|v2-7.0c|v3-4.3|v3-5.0|v3-7.0|v3-7.0c|5.0i|7.0i")
 endif()
 
-set( CMAKE_ASM_FLAGS "${BASIC_C_FLAGS} ${DEVICE_FLAGS} ${CMAKE_ASM_FLAGS}")
-set( CMAKE_C_FLAGS "${BASIC_C_FLAGS} ${CMAKE_C_FLAGS} ${DEVICE_FLAGS}")
-set( CMAKE_CXX_FLAGS "${BASIC_C_FLAGS} ${CMAKE_CXX_FLAGS} ${DEVICE_FLAGS}")
+set( CMAKE_ASM_FLAGS "${BASIC_C_FLAGS} ${DEVICE_FLAGS} ${CMAKE_ASM_FLAGS}" )
+set( CMAKE_C_FLAGS "${BASIC_C_FLAGS} ${DEVICE_FLAGS} ${CMAKE_C_FLAGS}" )
+set( CMAKE_CXX_FLAGS "${BASIC_C_FLAGS} ${DEVICE_FLAGS} ${CMAKE_CXX_FLAGS}" )
 
 set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings" )
 
-message( "Device: " ${DEVICE} )
+message( "Project Device: " ${DEVICE} )
 message( "Project C_FLAGS: " ${CMAKE_C_FLAGS} )
 message( "Project CXX_FLAGS: " ${CMAKE_CXX_FLAGS} )
 message( "Project ASM_FLAGS: " ${CMAKE_ASM_FLAGS} )
