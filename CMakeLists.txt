@@ -229,3 +229,8 @@ add_custom_target( paneldue-logo.bin ALL
 	COMMAND cat paneldue.bin ${PROJECT_SOURCE_DIR}/SplashScreens/SplashScreen-Duet3D-800x480.bin > paneldue-logo.bin
 )
 
+add_custom_target( print-device ALL
+	DEPENDS paneldue.bin paneldue-logo.bin
+	COMMAND echo "*** Build for PanelDueFirmware ${DEVICE} successfully finished ***"
+)
+
