@@ -32,7 +32,7 @@
 #define MORE_ARROW		"\xC2\x85"
 #define LESS_ARROW		"\xC2\x86"
 
-constexpr unsigned int NumStatusStrings = 14;
+constexpr unsigned int NumStatusStrings = 15;
 
 struct StringTable
 {
@@ -237,6 +237,7 @@ const StringTable LanguageTables[] =
 			"Simulating",
 			"Standby",
 			"Initializing",
+			"Cancelling",
 		},
 
 		// Theme names
