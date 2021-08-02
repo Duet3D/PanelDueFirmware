@@ -27,6 +27,7 @@ namespace OM {
 		toolChange = 10,
 		simulating = 11,
 		off = 12,
+		cancelling = 13
 	};
 
 	struct PrinterStatusMapEntry
@@ -38,18 +39,19 @@ namespace OM {
 	// This table must be kept in case-insensitive alphabetical order of the search string.
 	const PrinterStatusMapEntry printerStatusMap[] =
 	{
-		{"busy",		 	PrinterStatus::busy },
-		{"changingTool", 	PrinterStatus::toolChange },
-		{"halted",		 	PrinterStatus::stopped },
-		{"idle",			PrinterStatus::idle },
-		{"off", 			PrinterStatus::off },
-		{"paused", 			PrinterStatus::paused },
-		{"pausing", 		PrinterStatus::pausing },
-		{"processing", 		PrinterStatus::printing },
-		{"resuming", 		PrinterStatus::resuming },
-		{"simulating", 		PrinterStatus::simulating },
-		{"starting", 		PrinterStatus::configuring },
-		{"updating", 		PrinterStatus::flashing },
+		{"busy",		PrinterStatus::busy },
+		{"changingTool",	PrinterStatus::toolChange },
+		{"cancelling",		PrinterStatus::cancelling },
+		{"halted",		PrinterStatus::stopped },
+		{"idle",		PrinterStatus::idle },
+		{"off",			PrinterStatus::off },
+		{"paused",		PrinterStatus::paused },
+		{"pausing",		PrinterStatus::pausing },
+		{"processing",		PrinterStatus::printing },
+		{"resuming",		PrinterStatus::resuming },
+		{"simulating",		PrinterStatus::simulating },
+		{"starting",		PrinterStatus::configuring },
+		{"updating",		PrinterStatus::flashing },
 	};
 }
 
