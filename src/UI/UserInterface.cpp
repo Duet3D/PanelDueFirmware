@@ -1373,8 +1373,7 @@ namespace UI
 			{
 				mgr.Refresh(true);		// Ending a print creates a popup and that will prevent removing some of the elements hidden so force it here
 			}
-			__attribute__ ((fallthrough));
-			// no break
+			[[fallthrough]];
 		case OM::PrinterStatus::configuring:
 			if (oldStatus == OM::PrinterStatus::flashing)
 			{
@@ -1384,7 +1383,6 @@ namespace UI
 
 		case OM::PrinterStatus::connecting:
 			printingFile.Clear();
-			// We no longer clear the machine name here
 			mgr.ClearAllPopups();
 			break;
 
