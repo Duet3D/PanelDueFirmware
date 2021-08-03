@@ -28,11 +28,10 @@ CPP_STD    =
 
 INCLUDE    = -I./ -I../../src
 OPTIMIZE   =
-WARN       = -W -Wall -Wundef
+WARN       = -W -Wall -Wundef -Wextra
 
 CFLAGS     = -std=$(C_STD) $(OPTIMIZE) $(WARN) -Wstrict-prototypes $(INCLUDE) -g
 CPPFLAGS     = $(OPTIMIZE) $(WARN) $(INCLUDE) -g
-#CFLAGS    += -DRBP_UPDATE_IMAGE_SMALL=1
 LDFLAGS    =
 
 # MAKE SETTINGS =============================================================
