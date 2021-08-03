@@ -43,7 +43,9 @@ static int print_index(size_t index)
 
 	const StringTable *translation = &LanguageTables[index];
 
-#define PRINT_ENTRY(name) do { std::cout << "'" << orig->name << "'" << ", "; \
+#define STRINGIFY2(x) #x
+#define STRINGIFY(x) STRINGIFY2(x)
+#define PRINT_ENTRY(name) do { std::cout << STRINGIFY(orig->name) << ": '" << orig->name << "'" << ", "; \
 			translation->name ? std::cout << "'" << translation->name << "'" << std::endl : std::cout << "MISSING" << std::endl; } while(0)
 
 	std::cout << "*****: " << translation->languageName << std::endl;
