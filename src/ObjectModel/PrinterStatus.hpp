@@ -41,8 +41,8 @@ namespace OM {
 	const PrinterStatusMapEntry printerStatusMap[] =
 	{
 		{"busy",		PrinterStatus::busy },
-		{"changingTool",	PrinterStatus::toolChange },
 		{"cancelling",		PrinterStatus::cancelling },
+		{"changingTool",	PrinterStatus::toolChange },
 		{"halted",		PrinterStatus::stopped },
 		{"idle",		PrinterStatus::idle },
 		{"off",			PrinterStatus::off },
