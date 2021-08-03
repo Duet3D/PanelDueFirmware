@@ -10,6 +10,7 @@
 #include <UI/Popup.hpp>
 #include <UI/UserInterfaceConstants.hpp>
 #include "Configuration.hpp"
+#include "ObjectModel/PrinterStatus.hpp"
 #include "PanelDue.hpp"
 #include "FlashData.hpp"
 #include "FileManager.hpp"
@@ -1708,8 +1709,8 @@ namespace UI
 			mgr.Show(timeLeftField, false);
 		}
 
-		const unsigned int stat = (unsigned int)GetStatus();
-		statusField->SetValue((stat < NumStatusStrings) ? strings->statusValues[stat] : "unknown status");
+		const OM::PrinterStatus stat = GetStatus();
+		statusField->SetValue(((unsigned int)stat < ARRAY_SIZE(strings->statusValues) && strings->statusValues[(unsigned int)stat]) ? strings->statusValues[(unsigned int)stat] : "unknown status");
 	}
 
 	// Set the percentage of print completed
