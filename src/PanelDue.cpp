@@ -79,6 +79,9 @@ const uint32_t errorBeepFrequency = 2250;
 const uint32_t longTouchDelay = 250;				// how long we ignore new touches for after pressing Set
 const uint32_t shortTouchDelay = 100;				// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
 
+
+static uint32_t lastActionTime = 0;
+
 struct HostFirmwareType
 {
 	const char* _ecv_array const name;
@@ -835,8 +838,20 @@ static void DimBrightness()
 	}
 }
 
+
+void CurrentAlertModeClear()
+{
+	currentAlert.mode = 0;
+}
+
 static void ActivateScreensaver()
 {
+	if (currentAlert.mode == 2 ||
+	    currentAlert.mode == 3)
+	{
+		return;
+	}
+
 	if (!screensaverActive)
 	{
 		DimBrightness();
@@ -852,6 +867,7 @@ static void ActivateScreensaver()
 
 static bool DeactivateScreensaver()
 {
+	lastActionTime = SystemTick::GetTickCount();
 	if (screensaverActive)
 	{
 		if (!UI::DeactivateScreensaver())
@@ -1014,6 +1030,8 @@ static void EndReceivedMessage()
 	}
 	else if (currentAlert.AllFlagsSet() && currentAlert.seq != lastAlertSeq)
 	{
+		DeactivateScreensaver();
+		UI::DeactivateScreensaver();
 		backlight->SetState(BacklightStateNormal);
 		UI::ProcessAlert(currentAlert);
 		lastAlertSeq = currentAlert.seq;
@@ -1651,6 +1669,10 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		{
 			currentAlert.flags.SetBit(Alert::GotMode);
 		}
+		else
+		{
+			currentAlert.mode = 0;
+		}
 		break;
 
 	case rcvStateMessageBoxSeq:
@@ -2259,7 +2281,7 @@ int main(void)
 			sizeof(FieldTableEntry),
 			compare<FieldTableEntry>);
 
-	uint32_t lastActionTime = SystemTick::GetTickCount();
+	lastActionTime = SystemTick::GetTickCount();
 
 	dbg("basic init DONE\n");
 

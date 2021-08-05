@@ -1944,6 +1944,7 @@ namespace UI
 		{
 			alertTicks = 0;
 			mgr.ClearPopup(true, alertPopup);
+			CurrentAlertModeClear();
 			alertMode = -1;
 		}
 	}
@@ -1955,6 +1956,7 @@ namespace UI
 		{
 			alertTicks = 0;
 			mgr.ClearPopup(true, alertPopup);
+			CurrentAlertModeClear();
 			alertMode = -1;
 			displayingResponse = false;
 		}

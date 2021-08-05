@@ -39,6 +39,8 @@ extern void SetBaudRate(uint32_t rate);
 extern void SetBrightness(int percent);
 extern void RestoreBrightness();
 
+extern void CurrentAlertModeClear();
+
 extern FirmwareFeatureMap GetFirmwareFeatures();
 extern const char* _ecv_array CondStripDrive(const char* _ecv_array arg);
 extern void Delay(uint32_t milliSeconds);
