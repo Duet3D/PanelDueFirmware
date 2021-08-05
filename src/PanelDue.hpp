@@ -39,13 +39,14 @@ extern void SetBaudRate(uint32_t rate);
 extern void SetBrightness(int percent);
 extern void RestoreBrightness();
 
+extern void CurrentAlertModeClear();
+
 extern FirmwareFeatureMap GetFirmwareFeatures();
 extern const char* _ecv_array CondStripDrive(const char* _ecv_array arg);
 extern void Delay(uint32_t milliSeconds);
 
 // Global data in PanelDue.cpp that is used elsewhere
 extern UTFT lcd;
-extern MainWindow mgr;
 
 const size_t MIN_AXES = 2;					// the minimum number of axes we support
 

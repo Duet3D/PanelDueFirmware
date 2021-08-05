@@ -30,6 +30,7 @@
 #include <General/String.h>
 #include <General/StringFunctions.h>
 
+MainWindow mgr;
 // Public fields
 TextField *fwVersionField, *userCommandField, *ipAddressField;
 IntegerField *freeMem;
@@ -1943,6 +1944,7 @@ namespace UI
 		{
 			alertTicks = 0;
 			mgr.ClearPopup(true, alertPopup);
+			CurrentAlertModeClear();
 			alertMode = -1;
 		}
 	}
@@ -1954,6 +1956,7 @@ namespace UI
 		{
 			alertTicks = 0;
 			mgr.ClearPopup(true, alertPopup);
+			CurrentAlertModeClear();
 			alertMode = -1;
 			displayingResponse = false;
 		}
