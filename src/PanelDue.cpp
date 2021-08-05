@@ -127,7 +127,6 @@ UTouch touch(23, 24, 22, 21, 20);
 #define FETCH_TOOLS			(1)
 #define FETCH_VOLUMES		(1)
 
-MainWindow mgr;
 Backlight *backlight = nullptr;
 
 static uint32_t lastTouchTime;

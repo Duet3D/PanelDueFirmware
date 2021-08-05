@@ -19,6 +19,7 @@
 #include <General/String.h>
 #include <General/StringFunctions.h>
 
+extern MainWindow mgr;
 extern IntegerField *freeMem;
 extern StaticTextField *debugField;
 extern StaticTextField *touchCalibInstruction;

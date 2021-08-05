@@ -30,6 +30,7 @@
 #include <General/String.h>
 #include <General/StringFunctions.h>
 
+MainWindow mgr;
 // Public fields
 TextField *fwVersionField, *userCommandField, *ipAddressField;
 IntegerField *freeMem;
