@@ -10,6 +10,7 @@
 #include <UI/Popup.hpp>
 #include <UI/UserInterfaceConstants.hpp>
 #include "Configuration.hpp"
+#include "ObjectModel/PrinterStatus.hpp"
 #include "PanelDue.hpp"
 #include "FlashData.hpp"
 #include "FileManager.hpp"
@@ -1373,8 +1374,7 @@ namespace UI
 			{
 				mgr.Refresh(true);		// Ending a print creates a popup and that will prevent removing some of the elements hidden so force it here
 			}
-			__attribute__ ((fallthrough));
-			// no break
+			[[fallthrough]];
 		case OM::PrinterStatus::configuring:
 			if (oldStatus == OM::PrinterStatus::flashing)
 			{
@@ -1384,7 +1384,6 @@ namespace UI
 
 		case OM::PrinterStatus::connecting:
 			printingFile.Clear();
-			// We no longer clear the machine name here
 			mgr.ClearAllPopups();
 			break;
 
@@ -1710,8 +1709,8 @@ namespace UI
 			mgr.Show(timeLeftField, false);
 		}
 
-		const unsigned int stat = (unsigned int)GetStatus();
-		statusField->SetValue((stat < NumStatusStrings) ? strings->statusValues[stat] : "unknown status");
+		const OM::PrinterStatus stat = GetStatus();
+		statusField->SetValue(((unsigned int)stat < ARRAY_SIZE(strings->statusValues) && strings->statusValues[(unsigned int)stat]) ? strings->statusValues[(unsigned int)stat] : "unknown status");
 	}
 
 	// Set the percentage of print completed

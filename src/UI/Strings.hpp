@@ -15,6 +15,7 @@
 #undef result
 #undef value
 #include "UI/ColourSchemes.hpp"
+#include "ObjectModel/PrinterStatus.hpp"
 #include "Configuration.hpp"
 
 #define CSTRING const char * const _ecv_array
@@ -31,8 +32,6 @@
 #define DOWN_ARROW		"\xC2\x84"		// Unicode control character, code point 0x84, we use it as down arrow
 #define MORE_ARROW		"\xC2\x85"
 #define LESS_ARROW		"\xC2\x86"
-
-constexpr unsigned int NumStatusStrings = 14;
 
 struct StringTable
 {
@@ -121,7 +120,7 @@ struct StringTable
 	CSTRING simulate;
 
 	// Printer status strings
-	CSTRING statusValues[NumStatusStrings];
+	CSTRING statusValues[(unsigned int)OM::PrinterStatus::NumTypes];
 
 	// Colour theme names
 	CSTRING colourSchemeNames[NumColourSchemes];
@@ -235,8 +234,8 @@ const StringTable LanguageTables[] =
 			"Firmware upload",
 			"Changing tool",
 			"Simulating",
-			"Standby",
-			"Initializing",
+			"Off",
+			"Cancelling",
 		},
 
 		// Theme names
@@ -360,8 +359,7 @@ const StringTable LanguageTables[] =
 			"Firmware-Upload",
 			"Wechsle Tool",
 			"Simuliert",
-			"Stand-by",
-			"Initialisieren"
+			"Aus",
 		},
 
 		// Theme names
@@ -485,8 +483,6 @@ const StringTable LanguageTables[] =
 			"Flasher firmware",
 			"Changer outil",
 			"Simuler",
-			"En veille",
-			"Initialiser"
 		},
 
 		// Theme names
@@ -609,8 +605,6 @@ const StringTable LanguageTables[] =
 			"reanudando",
 			"carga del firmware",
 			"herramienta de cambio",
-			"simulando",
-			"en espera"
 		},
 
 		// Theme names
@@ -734,7 +728,6 @@ const StringTable LanguageTables[] =
 			"Nahrává firmware",
 			"Výměna nástroje",
 			"Simulace",
-			"Pohotovostní"
 		},
 
 		// Theme names
@@ -858,8 +851,6 @@ const StringTable LanguageTables[] =
 			"Caricamento firmware",
 			"Cambiando tool",
 			"Simulando",
-			"Standby",
-			"Inizializzando",
 		},
 
 		// Theme names
