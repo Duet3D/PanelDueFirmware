@@ -2379,13 +2379,11 @@ int main(void)
 		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
 		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
 		const uint32_t now = SystemTick::GetTickCount();
-		if ((UI::DoPolling()										// don't poll while we are in the Setup page
-		     && now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
-		     && now - lastResponseTime >= printerResponseTimeout)	// and we haven't had a response too recently
-		     || (!initialized && (now - lastPollTime > now - lastResponseTime))	// but if we are initializing do it as fast as possible where
-		   )
+		if (UI::DoPolling())
 		{
-			if (now - lastPollTime > now - lastResponseTime)		// if we've had a response since the last poll
+			if (lastResponseTime >= lastPollTime &&
+			    (now > lastPollTime + printerPollInterval ||
+			     !initialized))
 			{
 				currentReqSeq = GetNextSeq(currentReqSeq);
 				if (currentReqSeq != nullptr)
@@ -2419,7 +2417,7 @@ int main(void)
 					lastPollTime = SystemTick::GetTickCount();
 				}
 			}
-			else if (now - lastPollTime >= printerPollTimeout)	  // last response was most likely incomplete start over
+			else if (now > lastPollTime + printerResponseTimeout)	  // request timeout
 			{
 				SerialIo::Sendf("M409 F\"d99f\"\n");
 				lastPollTime = SystemTick::GetTickCount();
