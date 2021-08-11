@@ -3235,9 +3235,10 @@ namespace UI
 						{
 							if (slot < MaxSlots)
 							{
+								// only one heater per slot can be displayed
 								if (index > 0)
 								{
-									mgr.Show(toolButtons[slot], false);
+									return;
 								}
 								ManageCurrentActiveStandbyFields(
 										slot,
