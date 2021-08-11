@@ -882,7 +882,132 @@ const StringTable LanguageTables[] =
 			"Heat's not comb.",
 			"Heaters comb.",
 		}
- 	},
+	},
+
+	// Polish
+	{
+		// ISO-639.3 language code
+		"pl",
+
+		// Main page strings
+		"Str.główna",
+		"Druk",
+		"Status",
+		"Konsola",
+		"Ustawienia",
+		"Odczyt" THIN_SPACE DEGREE_SYMBOL "C",
+		"Active" THIN_SPACE DEGREE_SYMBOL "C",
+		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
+		"Ruch",
+		"Ekstruzja",
+		"Makro",
+		"STOP",
+
+		// Print page
+		"Ekstruder" THIN_SPACE "%",
+		"Prędkość ",							// note space at end
+		"Nawiew ",								// note space at end
+		"Pozostało:: ",
+		"sim'd ",							// note space at end
+		"Plik ",							// note space at end
+		"filament ",						// note space at end
+		"slicer ",							// note space at end
+		"N/A",
+		"Pauza",
+		"Baby step",
+		"Wznów",
+		"Anuluj",
+		"Drukuj ponownie",
+		"Ponowna symulacja",
+		"Ustaw",
+
+		// Setup page
+		"Głośność ",							// note space at end
+		"Kalibracja",
+		"Wyśw.lustrzane",
+		"Wyśw.odbite",
+		"Motyw",
+		"Jasność -",
+		"Jasność +",
+		"Zapisz ust.",
+		"Wyczyść ust.",
+		"zapisz i uruch.ponow.",
+		"Czas powiad. ",					// note space at end
+		"Wygaszacz ",						// note space at end
+		"Babystep ",						// note space at end
+		"Prędkość ",						// note space at end
+
+		// Misc
+		"Potwierdź przywrócenie do ustawień fabrycznych.",
+		"Potwierdź usuń.pliku",
+		"Jesteś pewny?",
+		"Touch the spot",
+		"Ruch głowicy",
+		"Ilość filamentu (mm)",
+		"Prędkość (mm/s)",
+		"Ekstruduj",
+		"Retrakuj",
+		"Baby stepping",
+		"Aktualny offset Z : ",
+		"Wiadomość",
+		"Wiadomości",
+		"Panel Due firmware version ",	// note space at end
+		"Odpowiedź",
+
+		// File popup
+		"Pliki na karcie ",				// note the space on the end
+		"Makra",
+		"Error ",						// note the space at the end
+		"Otwieranie karty SD",			// note the space at the start
+		"Nazwa pliku: ",
+		"Rozmiar: ",
+		"Wysok.warstwy: ",
+		"Wysok.obiektu: ",
+		"Potrzebny filament: ",
+		"Pocięto przez: ",
+		"Ostatnio modyfikowany: ",
+		"Obliczon.czas druku: ",
+		"Przewidyw.czas druku: ",
+		"Symuluj",
+
+		// Printer status strings
+		{
+			"Łączenie",
+			"Idle",
+			"Drukowanie",
+			"Rozpoczynanie",
+			"Pauza",
+			"Zajęty",
+			"Pauzowanie",
+			"Wznawianie",
+			"Ładowanie systemu",
+			"Zmiana narzędzia",
+			"Symulowanie",
+			"Standby",
+			"Inicjowanie",
+		},
+
+		// Theme names
+		{
+			"Jasny motyw",
+			"Ciemny motyw 1",
+			"Ciemny motyw 2"
+		},
+
+		// Display dimming types
+		{
+			"Nie wygaszaj",
+			"Wygaszaj gdy bezczynny",
+			"Zawsze wygaszaj"
+		},
+
+		// Heater combine types
+		{
+			"Heat's not comb.",
+			"Heaters comb.",
+		}
+	},
+
 
 #if USE_CYRILLIC_CHARACTERS
 	// Ukrainian
