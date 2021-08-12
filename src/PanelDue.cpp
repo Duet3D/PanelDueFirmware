@@ -2095,6 +2095,8 @@ int main(void)
 
 	wdt_init (WDT, WDT_MR_WDRSTEN, 1000, 1000);
 	SysTick_Config(SystemCoreClock / 1000);
+	SerialIo::Init(nvData.GetBaudRate(), &serial_cbs);
+
 	lastTouchTime = SystemTick::GetTickCount();
 
 	firmwareFeatures = firmwareTypes[0].features;		// assume RepRapFirmware until we hear otherwise
@@ -2156,7 +2158,6 @@ int main(void)
 	backlight->SetState(BacklightStateNormal);
 
 	// Set up the baud rate
-	SerialIo::Init(nvData.GetBaudRate(), &serial_cbs);
 	UpdatePollRate(false);
 
 	MessageLog::Init();
