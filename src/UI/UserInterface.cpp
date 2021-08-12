@@ -3233,20 +3233,18 @@ namespace UI
 					{
 						tool->IterateHeaters([&slot, &tool](OM::ToolHeater*, size_t index)
 						{
-							if (slot < MaxSlots)
+							// only one heater per slot can be displayed
+							dbg("slot %u index %u\n", slot, index);
+							if (slot >= MaxSlots || index > 0)
 							{
-								// only one heater per slot can be displayed
-								if (index > 0)
-								{
-									return;
-								}
-								ManageCurrentActiveStandbyFields(
-										slot,
-										true,
-										evAdjustToolActiveTemp, tool->index,
-										evAdjustToolStandbyTemp, tool->index);
-								++slot;
+								return;
 							}
+							ManageCurrentActiveStandbyFields(
+									slot,
+									true,
+									evAdjustToolActiveTemp, tool->index,
+									evAdjustToolStandbyTemp, tool->index);
+							++slot;
 						});
 					}
 					else
