@@ -1,3 +1,3 @@
 [submodule "lib/librrf"]
 	path = lib/librrf
-	url = git@github.com:mfs12/RRFLibraries.git
+	url = git@github.com:duet3d/RRFLibraries.git
