@@ -619,7 +619,7 @@ void FloatField::PrintText() const
 	{
 		lcd.printf("%s", label);
 	}
-	lcd.printf("%.*f", numDecimals, val);
+	lcd.printf("%.*f", numDecimals, static_cast<double>(val));
 	if (units != nullptr)
 	{
 		lcd.printf("%s", units);
@@ -912,7 +912,7 @@ size_t IntegerButton::PrintText(size_t offset) const
 size_t FloatButton::PrintText(size_t offset) const
 {
 	UNUSED(offset);
-	size_t ret = lcd.printf("%.*f", numDecimals, val);
+	size_t ret = lcd.printf("%.*f", numDecimals, static_cast<double>(val)Ex);
 	if (units != nullptr)
 	{
 		ret += lcd.printf("%s", units);
