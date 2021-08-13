@@ -1,19 +1,87 @@
 # PanelDueFirmware
 
-This firmware runs on PanelDue touchscreens available from Duet3D Ltd. and their resellers. It is used to check the status on and control a machine running primarily RepRapFirmware though since it simply sends GCodes over serial line it can be basically used with every controller that understands the sent commands.
+This firmware runs on PanelDue touchscreens available from Duet3D Ltd. and
+their resellers. It is used to check the status on and control a machine
+running primarily RepRapFirmware though since it simply sends GCodes over
+serial line it can be basically used with every controller that understands the
+sent commands.
 
 ## Download
-To get the latest release binaries go to:
+
+Download the latest firmware images at
 
 https://github.com/Duet3D/PanelDueFirmware/releases
 
-## Flashing instructions
-Instructions for flashing the firmware binary via USB are at:
+## Flashing
+
+Detailed flashing instruction can be found at
 
 https://duet3d.dozuki.com/Wiki/PanelDue_Firmware_update
 
+# Development
+
+## Build requirements
+
+- arm-none-eabi-gcc
+- cat
+- cmake
+- make
+- bossa
+
+## Setup repository
+
+```
+$ git clone git@github.com:Duet3D/PanelDueFirmware.git
+$ cd PanelDueFirmware
+$ git submodule init
+$ git submodule update --recursive
+```
+
+## Setup build for specific device
+
+```
+$ cmake -B build -DDEVICE=5.0i .
+$ make -C build all -j12
+```
+
+Create build system for Eclipse CDT which can be easily integrated
+
+```
+$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE=5.0i
+```
+
+To switching the target device re-run cmake with another device setting
+
+```
+$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE=v3-5.0
+```
+
+For further Eclipse CDT integration please visit
+
+https://cmake.org/cmake/help/latest/generator/Eclipse%20CDT4.html
+
+The following devices are supported:
+- v2-4.3
+- v2-5.0
+- v2-7.0
+- v2-7.0c
+- v3-4.3
+- v3-5.0
+- v3-7.0
+- v3-7.0c
+- 5.0i
+- 7.0i
+
+## Flash a firmware image to a device
+
+```
+$ bossac -e -w -v -b build/paneldue.bin -R -p /dev/ttyACM1
+```
+
 # Customization
+
 ## Splash Screen
+
 Customising the splash screen (versions 1.20RC4 and later)
 
 If you wish to display a custom splash screen when PanelDue is powered up, you need to append a compressed version of the splash screen image to the -nologo version of the PanelDue firmware appropriate to your model of PanelDue and screen size.
