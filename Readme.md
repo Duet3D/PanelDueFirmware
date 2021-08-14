@@ -44,6 +44,13 @@ $ cmake -B build -DDEVICE=5.0i .
 $ make -C build all -j12
 ```
 
+The default compiler can be easily overwritten by setting the cross compile prefix.
+
+```
+$ cmake -B build -DDEVICE=5.0i -DCROSS_COMPILE="/path/to/cross/compiler/arm-none-eabi-" .
+$ make -C build all -j12
+```
+
 Create build system for Eclipse CDT which can be easily integrated
 
 ```
