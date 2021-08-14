@@ -28,6 +28,25 @@ https://duet3d.dozuki.com/Wiki/PanelDue_Firmware_update
 - make
 - bossa
 
+### Ubuntu
+```
+apt install gcc-arm-none-eabi
+```
+
+### Arch
+```
+pacman -S arm-none-abi-gcc arm-none-eabi-newlib
+```
+
+### Mac OS
+```
+brew install gcc-arm-embedded
+```
+
+### Windows
+
+Download and install latest toolchain from https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+
 ## Setup repository
 
 ```
