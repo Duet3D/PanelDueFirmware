@@ -72,7 +72,10 @@ $ make -C build all -j12
 
 Examples for windows users:
 
-When passing a path name use slashes instead of backslashes and use backslashes to escape whitespaces.
+When passing a path name use
+
+- slashes instead of backslashes to separate directories and
+- use backslashes to escape whitespaces.
 
 ```
 $ cmake -B build -DDEVICE="5.0i" -DCROSS_COMPILE="C:/Program\ Files\ (x86)/GNU\ Tools\ ARM\ Embedded/8\ 2018-q4-major/bin/arm-none-eabi-" .
