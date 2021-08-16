@@ -2,7 +2,9 @@ cmake_minimum_required( VERSION 3.11 )
 
 #configure_file(src/config.h.in src/config.h)
 
-set( CMAKE_TOOLCHAIN_FILE toolchains/arm-none-eabi.cmake )
+include( "env.cmake" OPTIONAL )
+
+set( CMAKE_TOOLCHAIN_FILE "toolchains/arm-none-eabi.cmake" )
 
 # skip compiler build tests
 set ( CMAKE_C_COMPILER_FORCED True )

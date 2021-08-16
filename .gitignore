@@ -53,6 +53,9 @@ Temporary Items
 # Directories created during build
 build
 
+# Local configuration file
+env.cmake
+
 # Customer-specific folders
 src/OEM
 
