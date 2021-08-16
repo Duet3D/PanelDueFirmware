@@ -59,15 +59,23 @@ $ git submodule update --recursive
 ## Setup build for specific device
 
 ```
-$ cmake -B build -DDEVICE=5.0i .
+$ cmake -B build -DDEVICE="5.0i" .
 $ make -C build all -j12
 ```
 
-The default compiler can be easily overwritten by setting the cross compile prefix.
+The default compiler can be easily overwritten by setting the cross compiler prefix.
 
 ```
-$ cmake -B build -DDEVICE=5.0i -DCROSS_COMPILE="/path/to/cross/compiler/arm-none-eabi-" .
+$ cmake -B build -DDEVICE="5.0i" -DCROSS_COMPILE="/path/to/cross/compiler/arm-none-eabi-" .
 $ make -C build all -j12
+```
+
+Examples for windows users:
+
+When passing a path name use slashes instead of backslashes and use backslashes to escape whitespaces.
+
+```
+$ cmake -B build -DDEVICE="5.0i" -DCROSS_COMPILE="C:/Program\ Files\ (x86)/GNU\ Tools\ ARM\ Embedded/8\ 2018-q4-major/bin/arm-none-eabi-" .
 ```
 
 Create build system for Eclipse CDT which can be easily integrated
