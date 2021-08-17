@@ -109,6 +109,14 @@ The following devices are supported:
 - 5.0i
 - 7.0i
 
+## Local Configuration
+
+It is possible to configure the local build system permamently instead of passing DEVICE and CROSS_COMPILE variable.
+
+- copy env.cmake.example to env.cmake
+- uncomment variables and adapt accordingly in env.cmake
+- re-run 'cmake -B build .'
+
 ## Flash a firmware image to a device
 
 ```
