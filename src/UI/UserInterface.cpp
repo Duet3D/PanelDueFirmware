@@ -31,6 +31,20 @@
 #include <General/StringFunctions.h>
 
 MainWindow mgr;
+
+#define DEBUG	(0) // 0: off, 1: MessageLog, 2: Uart
+
+#if (DEBUG == 1)
+#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
+
+#elif (DEBUG == 2)
+#define dbg(fmt, args...)		do { SerialIo::Dbg("%s(%d): " fmt, __FUNCTION__, __LINE__, ##args); } while(0)
+
+#else
+#define dbg(fmt, args...)		do {} while(0)
+
+#endif
+
 // Public fields
 TextField *fwVersionField, *userCommandField, *ipAddressField;
 IntegerField *freeMem;
@@ -3064,7 +3078,12 @@ namespace UI
 	// Return true if this should be called again for the next button.
 	bool UpdateMacroShortList(unsigned int buttonIndex, const char * _ecv_array null fileName)
 	{
-		const bool tooFewSpace = numToolColsUsed >= (MaxSlots - (DISPLAY_X == 480 ? 1 : 2));
+#if (DISPLAY_X == 480)
+		const bool tooFewSpace = numToolColsUsed >= (MaxSlots - 1);
+#else
+		const bool tooFewSpace = numToolColsUsed > (MaxSlots - 2);
+#endif
+
 		if (buttonIndex >= ARRAY_SIZE(controlPageMacroButtons) || numToolColsUsed == 0 || tooFewSpace)
 		{
 			return false;
@@ -3219,19 +3238,18 @@ namespace UI
 					{
 						tool->IterateHeaters([&slot, &tool](OM::ToolHeater*, size_t index)
 						{
-							if (slot < MaxSlots)
+							// only one heater per slot can be displayed
+							dbg("slot %u index %u\n", slot, index);
+							if (slot >= MaxSlots || index > 0)
 							{
-								if (index > 0)
-								{
-									mgr.Show(toolButtons[slot], false);
-								}
-								ManageCurrentActiveStandbyFields(
-										slot,
-										true,
-										evAdjustToolActiveTemp, tool->index,
-										evAdjustToolStandbyTemp, tool->index);
-								++slot;
+								return;
 							}
+							ManageCurrentActiveStandbyFields(
+									slot,
+									true,
+									evAdjustToolActiveTemp, tool->index,
+									evAdjustToolStandbyTemp, tool->index);
+							++slot;
 						});
 					}
 					else
