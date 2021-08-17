@@ -3078,7 +3078,12 @@ namespace UI
 	// Return true if this should be called again for the next button.
 	bool UpdateMacroShortList(unsigned int buttonIndex, const char * _ecv_array null fileName)
 	{
-		const bool tooFewSpace = numToolColsUsed >= (MaxSlots - (DISPLAY_X == 480 ? 1 : 2));
+#if (DISPLAY_X == 480)
+		const bool tooFewSpace = numToolColsUsed >= (MaxSlots - 1);
+#else
+		const bool tooFewSpace = numToolColsUsed > (MaxSlots - 2);
+#endif
+
 		if (buttonIndex >= ARRAY_SIZE(controlPageMacroButtons) || numToolColsUsed == 0 || tooFewSpace)
 		{
 			return false;
