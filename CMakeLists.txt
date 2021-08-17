@@ -2,7 +2,9 @@ cmake_minimum_required( VERSION 3.11 )
 
 #configure_file(src/config.h.in src/config.h)
 
-set( CMAKE_TOOLCHAIN_FILE toolchains/arm-none-eabi.cmake )
+include( "env.cmake" OPTIONAL )
+
+set( CMAKE_TOOLCHAIN_FILE "toolchains/arm-none-eabi.cmake" )
 
 # skip compiler build tests
 set ( CMAKE_C_COMPILER_FORCED True )
@@ -25,7 +27,7 @@ set( STARTUP_FILE_SAM3S4 "src/ASF/sam/utils/cmsis/sam3s/source/templates/gcc/sta
 set( EXCEPTION_FILE_SAM3S4 "src/ASF/sam/utils/cmsis/sam3s/source/templates/exceptions.c" )
 set( SYSCLK_FILE_SAM3S4 "src/ASF/common/services/clock/sam3s/sysclk.c" )
 set( CPU_FLAGS_SAM3S4 "-DARM_MATH_CM3=true -D__SAM3S4B__ -mcpu=cortex-m3 -mthumb" )
-set( LD_FLAGS_SAM3S4 "-Wl,--defsym,__stack_size__=0x1000 -T${LINKER_FILE_SAM3S4} -Wl,-Map,paneldue.map" )
+set( LD_FLAGS_SAM3S4 "-Wl,--defsym,__stack_size__=0x1000 -T\"${LINKER_FILE_SAM3S4}\" -Wl,-Map,paneldue.map" )
 
 # SAM4S4 configuration
 file( REAL_PATH "src/ASF/sam/utils/linker_scripts/sam4s/sam4s4/gcc/flash.ld" LINKER_FILE_SAM4S4 )
@@ -33,7 +35,7 @@ set( SYSTEM_FILE_SAM4S4 "src/ASF/sam/utils/cmsis/sam4s/source/templates/system_s
 set( STARTUP_FILE_SAM4S4 "src/ASF/sam/utils/cmsis/sam4s/source/templates/gcc/startup_sam4s.c" )
 set( SYSCLK_FILE_SAM4S4 "src/ASF/common/services/clock/sam4s/sysclk.c" )
 set( CPU_FLAGS_SAM4S4 "-DARM_MATH_CM4=true -D__SAM4S4B__ -mcpu=cortex-m4 -mthumb" )
-set( LD_FLAGS_SAM4S4 "-Wl,--defsym,__stack_size__=0x1000 -T${LINKER_FILE_SAM4S4} -Wl,-Map,paneldue.map" )
+set( LD_FLAGS_SAM4S4 "-Wl,--defsym,__stack_size__=0x1000 -T\"${LINKER_FILE_SAM4S4}\" -Wl,-Map,paneldue.map" )
 
 if ("${DEVICE}" STREQUAL "v2-4.3")
 	target_sources( paneldue.elf PRIVATE
@@ -120,7 +122,7 @@ elseif ("${DEVICE}" STREQUAL "7.0i")
 	set( DEVICE_FLAGS "${CPU_FLAGS_SAM4S4} -DSCREEN_70E=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
 else()
-	message(FATAL_ERROR "Please configure a device cmake -DDEVICE=v2-4.3|v2-5.0|v2-7.0|v2-7.0c|v3-4.3|v3-5.0|v3-7.0|v3-7.0c|5.0i|7.0i")
+	message(FATAL_ERROR "${DEVICE} is invalid. Please configure a device cmake -DDEVICE=v2-4.3|v2-5.0|v2-7.0|v2-7.0c|v3-4.3|v3-5.0|v3-7.0|v3-7.0c|5.0i|7.0i")
 endif()
 
 set( CMAKE_ASM_FLAGS "${BASIC_C_FLAGS} ${DEVICE_FLAGS} ${CMAKE_ASM_FLAGS}" )
