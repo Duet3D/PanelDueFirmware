@@ -1,6 +1,5 @@
 
 set( CROSS_COMPILE "arm-none-eabi-" CACHE STRING "cross compile prefix" )
-message( "CROSS_COMPILE: ${CROSS_COMPILE}" )
 
 set( CMAKE_SYSTEM_NAME          Generic )
 set( CMAKE_SYSTEM_PROCESSOR     cortex-m4 )
@@ -39,6 +38,7 @@ set( CMAKE_CXX_FLAGS "${COMMON_FLAGS} -std=gnu++17 -fno-threadsafe-statics -fno-
 set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
 
 message( "Toolchain definition:" )
+message( "  CROSS_COMPILE prefix: ${CROSS_COMPILE}" )
 message( "  asm: " "${CMAKE_ASM_COMPILER}" )
 message( "  c: " "${CMAKE_C_COMPILER}" )
 message( "  cxx: " "${CMAKE_CXX_COMPILER}" )
