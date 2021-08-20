@@ -62,3 +62,6 @@ src/OEM
 # Misc
 .settings/language.settings.xml
 compile_commands.json
+
+# IDEs
+.vscode
