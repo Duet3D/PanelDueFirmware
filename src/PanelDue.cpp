@@ -984,7 +984,7 @@ static void StartReceivedMessage();
 static void EndReceivedMessage();
 static void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[]);
 static void ProcessArrayEnd(const char id[], const size_t indices[]);
-static void ParserErrorEncountered(int currentState, const char*, const char*, const size_t[]);
+static void ParserErrorEncountered(int currentState, const char*);
 
 static struct SerialIo::SerialIoCbs serial_cbs = {
 	.StartReceivedMessage = StartReceivedMessage,
@@ -2022,7 +2022,7 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 }
 
-static void ParserErrorEncountered(int currentState, const char *id, const char*data, const size_t arraysize[])
+static void ParserErrorEncountered(int currentState, const char *id)
 {
 	MessageLog::AppendMessageF("Warning: failed to parse response %s in state %d", id, currentState);
 	if (currentRespSeq == nullptr)
