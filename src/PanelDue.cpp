@@ -984,7 +984,7 @@ static void StartReceivedMessage();
 static void EndReceivedMessage();
 static void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[]);
 static void ProcessArrayEnd(const char id[], const size_t indices[]);
-static void ParserErrorEncountered(int currentState, const char*, const char*, const size_t[]);
+static void ParserErrorEncountered(int currentState, const char*);
 
 static struct SerialIo::SerialIoCbs serial_cbs = {
 	.StartReceivedMessage = StartReceivedMessage,
@@ -2022,7 +2022,7 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 }
 
-static void ParserErrorEncountered(int currentState, const char *id, const char*data, const size_t arraysize[])
+static void ParserErrorEncountered(int currentState, const char *id)
 {
 	MessageLog::AppendMessageF("Warning: failed to parse response %s in state %d", id, currentState);
 	if (currentRespSeq == nullptr)
@@ -2071,6 +2071,32 @@ static pwm_channel_t backlightPwm =
 	.ul_prescaler = PWM_CMR_CPRE_CLKA,
 	.alignment = PWM_ALIGN_LEFT,
 	.polarity = PWM_HIGH,
+	.ul_duty = 0,
+	.ul_period = 0,
+#if (SAM3U || SAM3S || SAM3XA || SAM4S || SAM4E)
+	.counter_event = static_cast<pwm_counter_event_t>(0),
+	.b_deadtime_generator = 0,
+	.b_pwmh_output_inverted = false,
+	.b_pwml_output_inverted = false,
+	.us_deadtime_pwmh = 0,
+	.us_deadtime_pwml = 0,
+	.output_selection = {
+		.b_override_pwmh = false,
+		.b_override_pwml = false,
+		.override_level_pwmh = static_cast<pwm_level_t>(0),
+		.override_level_pwml = static_cast<pwm_level_t>(0),
+	},
+	.b_sync_ch = false,
+	.fault_id = static_cast<pwm_fault_id_t>(0),
+	.ul_fault_output_pwmh = static_cast<pwm_level_t>(0),
+	.ul_fault_output_pwml = static_cast<pwm_level_t>(0),
+#endif
+#if SAM4E
+	.ul_spread = 0,
+	.spread_spectrum_mode = PWM_SPREAD_SPECTRUM_MODE_TRIANGULAR,
+	.ul_additional_edge = 0,
+	.additional_edge_mode = static_cast<pwm_additional_edge_mode_t>(0),
+#endif
 };
 
 /**

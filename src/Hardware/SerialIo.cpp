@@ -504,7 +504,7 @@ namespace SerialIo
 
 					if (cbs && cbs->ParserErrorEncountered)
 					{
-						cbs->ParserErrorEncountered(lastState, fieldId.c_str(), fieldVal.c_str(), arrayIndices); // Notify the consumer that we ran into an error
+						cbs->ParserErrorEncountered(lastState, fieldId.c_str()); // Notify the consumer that we ran into an error
 						lastState = jsBegin;
 					}
 				}
