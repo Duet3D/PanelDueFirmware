@@ -853,7 +853,6 @@ static void ActivateScreensaver()
 
 	if (!screensaverActive)
 	{
-		DimBrightness();
 		screensaverActive = true;
 		UI::ActivateScreensaver();
 		UpdatePollRate(screensaverActive);
@@ -873,7 +872,6 @@ static bool DeactivateScreensaver()
 			return false;
 
 		screensaverActive = false;
-		backlight->SetState(BacklightStateNormal);
 		UpdatePollRate(screensaverActive);
 	}
 
