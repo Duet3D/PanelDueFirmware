@@ -829,10 +829,9 @@ void SetBrightness(int percent)
 
 static void DimBrightness()
 {
-	if (   (nvData.displayDimmerType == DisplayDimmerType::always)
-		|| (nvData.displayDimmerType == DisplayDimmerType::onIdle &&
-		    (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off))
-	   )
+	if ((nvData.displayDimmerType == DisplayDimmerType::always) ||
+	    (nvData.displayDimmerType == DisplayDimmerType::onIdle &&
+	     (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off)))
 	{
 		backlight->SetState(BacklightStateDimmed);
 	}
