@@ -2271,7 +2271,7 @@ int main(void)
 
 		if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
 		{
-			if (backlight->GetState() != BacklightStateDimmed && UI::CanDimDisplay())
+			if (UI::CanDimDisplay())
 			{
 				DimBrightness();				// it might not actually dim the display, depending on various flags
 			}
