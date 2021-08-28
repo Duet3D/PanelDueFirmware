@@ -686,11 +686,6 @@ static void InitLcd()
 	backlight->SetState(BacklightStateNormal);
 }
 
-void RestoreBrightness()
-{
-	backlight->SetState(BacklightStateNormal);
-}
-
 // Ignore touches for a long time
 void DelayTouchLong()
 {
@@ -837,6 +832,11 @@ static void DimBrightness()
 	}
 }
 
+void RestoreBrightness()
+{
+	dbg("\n");
+	backlight->SetState(BacklightStateNormal);
+}
 
 void CurrentAlertModeClear()
 {
