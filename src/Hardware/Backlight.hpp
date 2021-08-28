@@ -22,8 +22,8 @@ public:
 		uint32_t dimBrightness, uint32_t normalBrightness,
 		uint32_t minDuty, uint32_t maxDuty);
 
-	void SetDimBrightness(uint32_t p_dimBrightness) { dimBrightness = p_dimBrightness; }
-	void SetNormalBrightness(uint32_t p_normalBrightness) { normalBrightness = p_normalBrightness; }
+	void SetDimBrightness(uint32_t p_dimBrightness) { dimBrightness = p_dimBrightness; UpdateBrightness(dimBrightness); }
+	void SetNormalBrightness(uint32_t p_normalBrightness) { normalBrightness = p_normalBrightness; UpdateBrightness(normalBrightness); }
 
 	void SetState(enum BacklightState state);
 	enum BacklightState GetState() { return state; }
@@ -43,7 +43,7 @@ private:
 
 	enum BacklightState state;
 
-	void SetBrightness(uint32_t brightness);
+	void UpdateBrightness(uint32_t brightness);
 };
 
 #endif /* ifndef HARDWARE_BACKLIGHT_HPP */
