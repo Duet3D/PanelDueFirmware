@@ -864,7 +864,6 @@ static void ActivateScreensaver()
 
 static bool DeactivateScreensaver()
 {
-	lastActionTime = SystemTick::GetTickCount();
 	if (screensaverActive)
 	{
 		if (!UI::DeactivateScreensaver())
