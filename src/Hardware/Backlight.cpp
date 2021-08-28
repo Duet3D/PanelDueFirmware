@@ -41,6 +41,11 @@ void Backlight::SetState(enum BacklightState newState)
 {
 	uint32_t brightness = 100;
 
+	if (state == newState)
+	{
+		return;
+	}
+
 	switch (newState)
 	{
 	case BacklightStateDimmed:
