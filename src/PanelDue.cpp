@@ -2289,7 +2289,8 @@ int main(void)
 		}
 
 		uint32_t screensaverTimeout = nvData.GetScreensaverTimeout();
-		if (screensaverTimeout > 0 && SystemTick::GetTickCount() - lastActionTime >= screensaverTimeout)
+		if (screensaverTimeout > 0 && SystemTick::GetTickCount() - lastActionTime >= screensaverTimeout &&
+		    (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off))
 		{
 			ActivateScreensaver();
 		}
