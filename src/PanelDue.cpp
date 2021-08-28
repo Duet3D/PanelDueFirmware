@@ -855,7 +855,6 @@ static void ActivateScreensaver()
 	{
 		screensaverActive = true;
 		UI::ActivateScreensaver();
-		UpdatePollRate(screensaverActive);
 	}
 	else
 	{
@@ -872,7 +871,6 @@ static bool DeactivateScreensaver()
 			return false;
 
 		screensaverActive = false;
-		UpdatePollRate(screensaverActive);
 	}
 
 	return true;
@@ -2318,6 +2316,9 @@ int main(void)
 		// 6. If it is time, poll the printer status.
 		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
 		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
+
+		UpdatePollRate(screensaverActive);
+
 		const uint32_t now = SystemTick::GetTickCount();
 		if (UI::DoPolling())
 		{
