@@ -10,6 +10,7 @@
 #include "ecv.h"
 #include "asf.h"
 #include "Buzzer.hpp"
+#include "Backlight.hpp"
 #include "SysTick.hpp"
 #include "Configuration.hpp"
 #include <cstring>
@@ -25,6 +26,10 @@ namespace Buzzer
 #endif
 
 	static const uint32_t backlightPeriod = pwmClockFrequency/backlightPwmFrequency; 
+
+
+	static Backlight *backlight = nullptr;
+
 
 	static pwm_channel_t buzzer_pwm_channel_instance =
 	{
@@ -48,9 +53,12 @@ namespace Buzzer
 	};
 	static pwm_channel_t backlight_pwm_channel_instance =
 	{
-		.channel = 1,
+		.channel = PWM_CHANNEL_1,
 		.ul_prescaler = PWM_CMR_CPRE_CLKA,
-		.alignment = PWM_ALIGN_LEFT
+		.alignment = PWM_ALIGN_LEFT,
+		.polarity = PWM_HIGH,
+		.ul_duty = 0,
+		.ul_period = 0,
 //		.b_deadtime_generator = false,
 //		.b_pwmh_output_inverted = false,
 //		.b_pwml_output_inverted = false,
@@ -66,6 +74,7 @@ namespace Buzzer
 //		.us_deadtime_pwml = 0,
 //		.us_deadtime_pwmh = 0
 	};
+
 	static uint32_t beepTicksToGo = 0;
 	static bool inBuzzer = true;
 
@@ -86,6 +95,27 @@ namespace Buzzer
 
 		beepTicksToGo = 0;
 		inBuzzer = false;
+
+#if IS_ER
+		// pb13 indicates which frequency to use, LOW indicates new backlight chip, HIGH indicates old chip
+		pio_configure(PIOB, PIO_INPUT, PIO_PB13, PIO_PULLUP);
+		if (pio_get(PIOB, PIO_INPUT, PIO_PB13))
+		{
+			backlight = new Backlight(&backlight_pwm_channel_instance,
+					pwmClockFrequency, 20000,
+					15, 100, 5, 100);
+		}
+		else
+		{
+			backlight = new Backlight(&backlight_pwm_channel_instance,
+					pwmClockFrequency, 300,
+					15, 100, 20, 40);
+		}
+#else
+		backlight = new Backlight(&backlight_pwm_channel_instance, pwmClockFrequency, 300, 15, 100, 5, 100); // init the backlight
+#endif
+
+		backlight->SetState(BacklightStateNormal);
 	}
 
 	static const uint32_t volumeTable[MaxVolume] = { 3, 9, 20, 40, 80 };
@@ -148,10 +178,7 @@ namespace Buzzer
 	// Must call Init before calling this.
 	void SetBacklight(uint32_t brightness)
 	{
-		backlight_pwm_channel_instance.ul_period = backlightPeriod;
-		backlight_pwm_channel_instance.ul_duty = ((backlightPeriod - 1) * (MaxBrightness - brightness))/MaxBrightness;
-		pwm_channel_init(PWM, &backlight_pwm_channel_instance);
-		pwm_channel_enable(PWM, PWM_CHANNEL_1);
+		backlight->SetBrightness(brightness);
 	}
 }
 
