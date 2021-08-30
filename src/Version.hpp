@@ -8,7 +8,7 @@
 #ifndef SRC_VERSION_HPP_
 #define SRC_VERSION_HPP_
 
-#define VERSION_TEXT_MAIN		"3.4.0-dev"
+#define VERSION_TEXT_MAIN		"3.4.0-pre1"
 
 #ifdef SUPPORT_ENCODER
 #define VERSION_TEXT	VERSION_TEXT_MAIN "+enc"
