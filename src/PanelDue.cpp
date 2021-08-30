@@ -687,14 +687,13 @@ static void InitLcd()
 }
 
 // Ignore touches for a long time
-void DelayTouchLong()
+static void DelayTouchLong()
 {
-	lastTouchTime = SystemTick::GetTickCount();
 	ignoreTouchTime = longTouchDelay;
 }
 
 // Ignore touches for a short time instead of the long time we already asked for
-void ShortenTouchDelay()
+static void ShortenTouchDelay()
 {
 	ignoreTouchTime = shortTouchDelay;
 }
@@ -1015,17 +1014,6 @@ static void EndReceivedMessage()
 		MessageLog::DisplayNewMessage();
 	}
 	FileManager::EndReceivedMessage();
-	if (currentAlert.flags.IsBitSet(Alert::GotMode) && currentAlert.mode < 0)
-	{
-		UI::ClearAlert();
-	}
-	else if (currentAlert.AllFlagsSet() && currentAlert.seq != lastAlertSeq)
-	{
-		lastActionTime = SystemTick::GetTickCount();
-		backlight->SetState(BacklightStateNormal);
-		UI::ProcessAlert(currentAlert);
-		lastAlertSeq = currentAlert.seq;
-	}
 }
 
 void HandleOutOfBufferResponse()
@@ -2230,45 +2218,36 @@ int main(void)
 		// 2. if displaying the message log, update the times
 		UI::Spin();
 
-		// 3. Check for a touch on the touch panel.
-		if (SystemTick::GetTickCount() - lastTouchTime >= ignoreTouchTime)
+		uint16_t x, y;
+		bool touched = false;
+
+		if (touch.read(x, y))
 		{
-			UI::OnButtonPressTimeout();
-
-			uint16_t x, y;
-			if (touch.read(x, y))
+			if (SystemTick::GetTickCount() - lastTouchTime >= ignoreTouchTime)
 			{
-
-				lastActionTime = SystemTick::GetTickCount();
+				lastTouchTime = SystemTick::GetTickCount();
+				touched = true;
 				if (screensaverActive)
 				{
 					DelayTouchLong();			// ignore further touches for a while
 				}
-				else
-				{
-					ButtonPress bp = mgr.FindEvent(x, y);
-					if (bp.IsValid())
-					{
-						DelayTouchLong();		// by default, ignore further touches for a long time
-						backlight->SetState(BacklightStateNormal);
-						UI::ProcessTouch(bp);
-						if (!initialized)		// Last button press was E-Stop
-						{
-							continue;
-						}
-					}
-					else
-					{
-						bp = mgr.FindEventOutsidePopup(x, y);
-						if (bp.IsValid())
-						{
-							UI::ProcessTouchOutsidePopup(bp);
-						}
-					}
-				}
 			}
 		}
 
+		// TODO move into main loop
+		if (currentAlert.AllFlagsSet() &&
+		    currentAlert.mode >= 0 &&
+		    currentAlert.seq != lastAlertSeq)
+		{
+			lastActionTime = SystemTick::GetTickCount();
+		}
+
+		// TODO also alert popups activate backlight and deactivate screensaver
+		// if alert deactivate screensaver
+		//   process userinterface
+		//   process alert
+		// if touch event deactivate screensaver
+		//   process userinterface
 		if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
 		{
 			if (UI::CanDimDisplay())
@@ -2297,6 +2276,46 @@ int main(void)
 		else
 		{
 			DeactivateScreensaver();
+			DelayTouchLong();			// ignore further touches for a while
+		}
+
+		// 3. Check for a touch on the touch panel.
+		if (touched)
+		{
+			UI::OnButtonPressTimeout();
+
+			lastActionTime = SystemTick::GetTickCount();
+
+			ButtonPress bp = mgr.FindEvent(x, y);
+			if (bp.IsValid())
+			{
+				backlight->SetState(BacklightStateNormal);
+				UI::ProcessTouch(bp);
+				if (!initialized)		// Last button press was E-Stop
+				{
+					continue;
+				}
+			}
+			else
+			{
+				bp = mgr.FindEventOutsidePopup(x, y);
+				if (bp.IsValid())
+				{
+					UI::ProcessTouchOutsidePopup(bp);
+				}
+			}
+		}
+
+		// TODO show alert here
+		// now screensaver is closed... save to show an alert in normal mode
+		if (currentAlert.flags.IsBitSet(Alert::GotMode) && currentAlert.mode < 0)
+		{
+			UI::ClearAlert();
+		}
+		else if (currentAlert.AllFlagsSet() && currentAlert.seq != lastAlertSeq)
+		{
+			UI::ProcessAlert(currentAlert);
+			lastAlertSeq = currentAlert.seq;
 		}
 
 		// 4. Refresh the display
@@ -2362,8 +2381,9 @@ int main(void)
 					lastPollTime = SystemTick::GetTickCount();
 				}
 			}
-			else if (now > lastPollTime + printerResponseTimeout)	  // request timeout
+			else if (now > lastPollTime + printerPollInterval + printerResponseTimeout)	  // request timeout
 			{
+				dbg("request timeout\n");
 				SerialIo::Sendf("M409 F\"d99f\"\n");
 				lastPollTime = SystemTick::GetTickCount();
 			}

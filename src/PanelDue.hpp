@@ -21,8 +21,6 @@
 extern bool IsPrintingStatus(OM::PrinterStatus status);
 extern bool PrintInProgress();
 extern OM::PrinterStatus GetStatus();
-extern void DelayTouchLong();
-extern void ShortenTouchDelay();
 extern void TouchBeep();
 extern void ErrorBeep();
 extern void CalibrateTouch();
