@@ -2220,6 +2220,7 @@ int main(void)
 		uint16_t x, y;
 		bool touched = false;
 
+		// check for valid touch event
 		if (touch.read(x, y))
 		{
 			if (SystemTick::GetTickCount() - lastTouchTime >= ignoreTouchTime)
@@ -2233,7 +2234,7 @@ int main(void)
 			}
 		}
 
-		// TODO move into main loop
+		// check for new alert
 		if (currentAlert.AllFlagsSet() &&
 		    currentAlert.mode >= 0 &&
 		    currentAlert.seq != lastAlertSeq)
@@ -2241,12 +2242,7 @@ int main(void)
 			lastActionTime = SystemTick::GetTickCount();
 		}
 
-		// TODO also alert popups activate backlight and deactivate screensaver
-		// if alert deactivate screensaver
-		//   process userinterface
-		//   process alert
-		// if touch event deactivate screensaver
-		//   process userinterface
+		// dim handling
 		if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
 		{
 			if (UI::CanDimDisplay())
@@ -2266,6 +2262,7 @@ int main(void)
 			}
 		}
 
+		// screensaver handling
 		uint32_t screensaverTimeout = nvData.GetScreensaverTimeout();
 		if (screensaverTimeout > 0 && SystemTick::GetTickCount() - lastActionTime >= screensaverTimeout &&
 		    (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off))
@@ -2278,7 +2275,7 @@ int main(void)
 			DelayTouchLong();			// ignore further touches for a while
 		}
 
-		// 3. Check for a touch on the touch panel.
+		// touch event handling
 		if (touched)
 		{
 			UI::OnButtonPressTimeout();
@@ -2305,8 +2302,7 @@ int main(void)
 			}
 		}
 
-		// TODO show alert here
-		// now screensaver is closed... save to show an alert in normal mode
+		// alert event handling
 		if (currentAlert.flags.IsBitSet(Alert::GotMode) && currentAlert.mode < 0)
 		{
 			UI::ClearAlert();
@@ -2317,11 +2313,11 @@ int main(void)
 			lastAlertSeq = currentAlert.seq;
 		}
 
-		// 4. Refresh the display
+		// refresh the display
 		UpdateDebugInfo();
 		mgr.Refresh(false);
 
-		// 5. Generate a beep if asked to
+		// beep handling
 		if (beepFrequency != 0 && beepLength != 0)
 		{
 			if (beepFrequency >= 100 && beepFrequency <= 10000 && beepLength > 0)
@@ -2335,10 +2331,7 @@ int main(void)
 			beepFrequency = beepLength = 0;
 		}
 
-		// 6. If it is time, poll the printer status.
-		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
-		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
-
+		// printer communication handling
 		UpdatePollRate(screensaverActive);
 
 		const uint32_t now = SystemTick::GetTickCount();
