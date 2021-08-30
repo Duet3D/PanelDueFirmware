@@ -686,20 +686,14 @@ static void InitLcd()
 	backlight->SetState(BacklightStateNormal);
 }
 
-void RestoreBrightness()
-{
-	backlight->SetState(BacklightStateNormal);
-}
-
 // Ignore touches for a long time
-void DelayTouchLong()
+static void DelayTouchLong()
 {
-	lastTouchTime = SystemTick::GetTickCount();
 	ignoreTouchTime = longTouchDelay;
 }
 
 // Ignore touches for a short time instead of the long time we already asked for
-void ShortenTouchDelay()
+static void ShortenTouchDelay()
 {
 	ignoreTouchTime = shortTouchDelay;
 }
@@ -829,15 +823,19 @@ void SetBrightness(int percent)
 
 static void DimBrightness()
 {
-	if (   (nvData.displayDimmerType == DisplayDimmerType::always)
-		|| (nvData.displayDimmerType == DisplayDimmerType::onIdle &&
-		    (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off))
-	   )
+	if ((nvData.displayDimmerType == DisplayDimmerType::always) ||
+	    (nvData.displayDimmerType == DisplayDimmerType::onIdle &&
+	     (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off)))
 	{
 		backlight->SetState(BacklightStateDimmed);
 	}
 }
 
+void RestoreBrightness()
+{
+	dbg("\n");
+	backlight->SetState(BacklightStateNormal);
+}
 
 void CurrentAlertModeClear()
 {
@@ -854,10 +852,8 @@ static void ActivateScreensaver()
 
 	if (!screensaverActive)
 	{
-		DimBrightness();
 		screensaverActive = true;
 		UI::ActivateScreensaver();
-		UpdatePollRate(screensaverActive);
 	}
 	else
 	{
@@ -867,15 +863,12 @@ static void ActivateScreensaver()
 
 static bool DeactivateScreensaver()
 {
-	lastActionTime = SystemTick::GetTickCount();
 	if (screensaverActive)
 	{
 		if (!UI::DeactivateScreensaver())
 			return false;
 
 		screensaverActive = false;
-		backlight->SetState(BacklightStateNormal);
-		UpdatePollRate(screensaverActive);
 	}
 
 	return true;
@@ -1021,18 +1014,6 @@ static void EndReceivedMessage()
 		MessageLog::DisplayNewMessage();
 	}
 	FileManager::EndReceivedMessage();
-	if (currentAlert.flags.IsBitSet(Alert::GotMode) && currentAlert.mode < 0)
-	{
-		UI::ClearAlert();
-	}
-	else if (currentAlert.AllFlagsSet() && currentAlert.seq != lastAlertSeq)
-	{
-		DeactivateScreensaver();
-		UI::DeactivateScreensaver();
-		backlight->SetState(BacklightStateNormal);
-		UI::ProcessAlert(currentAlert);
-		lastAlertSeq = currentAlert.seq;
-	}
 }
 
 void HandleOutOfBufferResponse()
@@ -2183,7 +2164,6 @@ int main(void)
 	backlight->SetNormalBrightness(nvData.GetBrightness());
 	backlight->SetState(BacklightStateNormal);
 
-	// Set up the baud rate
 	UpdatePollRate(false);
 
 	MessageLog::Init();
@@ -2237,67 +2217,107 @@ int main(void)
 		// 2. if displaying the message log, update the times
 		UI::Spin();
 
-		// 3. Check for a touch on the touch panel.
-		if (SystemTick::GetTickCount() - lastTouchTime >= ignoreTouchTime)
+		uint16_t x, y;
+		bool touched = false;
+
+		// check for valid touch event
+		if (touch.read(x, y))
 		{
-			UI::OnButtonPressTimeout();
-
-			uint16_t x, y;
-			if (touch.read(x, y))
+			if (SystemTick::GetTickCount() - lastTouchTime >= ignoreTouchTime)
 			{
-				lastActionTime = SystemTick::GetTickCount();
-				if (screensaverActive && DeactivateScreensaver())
+				lastTouchTime = SystemTick::GetTickCount();
+				touched = true;
+				if (screensaverActive)
 				{
-					dbg("deactivated screensaver");
-					//DeactivateScreensaver();
 					DelayTouchLong();			// ignore further touches for a while
-				}
-				else
-				{
-					ButtonPress bp = mgr.FindEvent(x, y);
-					if (bp.IsValid())
-					{
-						DelayTouchLong();		// by default, ignore further touches for a long time
-						backlight->SetState(BacklightStateNormal);
-						UI::ProcessTouch(bp);
-						if (!initialized)		// Last button press was E-Stop
-						{
-							continue;
-						}
-					}
-					else
-					{
-						bp = mgr.FindEventOutsidePopup(x, y);
-						if (bp.IsValid())
-						{
-							UI::ProcessTouchOutsidePopup(bp);
-						}
-					}
-				}
-			}
-			else
-			{
-				if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
-				{
-					if (backlight->GetState() == BacklightStateNormal && UI::CanDimDisplay())
-					{
-						DimBrightness();				// it might not actually dim the display, depending on various flags
-					}
-				}
-
-				uint32_t screensaverTimeout = nvData.GetScreensaverTimeout();
-				if (screensaverTimeout > 0 && SystemTick::GetTickCount() - lastActionTime >= screensaverTimeout)
-				{
-					ActivateScreensaver();
 				}
 			}
 		}
 
-		// 4. Refresh the display
+		// check for new alert
+		if (currentAlert.AllFlagsSet() &&
+		    currentAlert.mode >= 0 &&
+		    currentAlert.seq != lastAlertSeq)
+		{
+			lastActionTime = SystemTick::GetTickCount();
+		}
+
+		// dim handling
+		if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
+		{
+			if (UI::CanDimDisplay())
+			{
+				DimBrightness();				// it might not actually dim the display, depending on various flags
+			}
+			else
+			{
+				RestoreBrightness();
+			}
+		}
+		else
+		{
+			if (backlight->GetState() != BacklightStateNormal)
+			{
+				backlight->SetState(BacklightStateNormal);
+			}
+		}
+
+		// screensaver handling
+		uint32_t screensaverTimeout = nvData.GetScreensaverTimeout();
+		if (screensaverTimeout > 0 && SystemTick::GetTickCount() - lastActionTime >= screensaverTimeout &&
+		    (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off))
+		{
+			ActivateScreensaver();
+		}
+		else
+		{
+			DeactivateScreensaver();
+			DelayTouchLong();			// ignore further touches for a while
+		}
+
+		// touch event handling
+		if (touched)
+		{
+			UI::OnButtonPressTimeout();
+
+			lastActionTime = SystemTick::GetTickCount();
+
+			ButtonPress bp = mgr.FindEvent(x, y);
+			if (bp.IsValid())
+			{
+				backlight->SetState(BacklightStateNormal);
+				UI::ProcessTouch(bp);
+				if (!initialized)		// Last button press was E-Stop
+				{
+					continue;
+				}
+			}
+			else
+			{
+				bp = mgr.FindEventOutsidePopup(x, y);
+				if (bp.IsValid())
+				{
+					UI::ProcessTouchOutsidePopup(bp);
+				}
+			}
+		}
+
+		// alert event handling
+		if (currentAlert.flags.IsBitSet(Alert::GotMode) && currentAlert.mode < 0)
+		{
+			UI::ClearAlert();
+		}
+		else if (currentAlert.AllFlagsSet() && currentAlert.seq != lastAlertSeq)
+		{
+			UI::ProcessAlert(currentAlert);
+			lastAlertSeq = currentAlert.seq;
+		}
+
+		// refresh the display
 		UpdateDebugInfo();
 		mgr.Refresh(false);
 
-		// 5. Generate a beep if asked to
+		// beep handling
 		if (beepFrequency != 0 && beepLength != 0)
 		{
 			if (beepFrequency >= 100 && beepFrequency <= 10000 && beepLength > 0)
@@ -2311,9 +2331,9 @@ int main(void)
 			beepFrequency = beepLength = 0;
 		}
 
-		// 6. If it is time, poll the printer status.
-		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
-		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
+		// printer communication handling
+		UpdatePollRate(screensaverActive);
+
 		const uint32_t now = SystemTick::GetTickCount();
 		if (UI::DoPolling())
 		{
@@ -2353,8 +2373,9 @@ int main(void)
 					lastPollTime = SystemTick::GetTickCount();
 				}
 			}
-			else if (now > lastPollTime + printerResponseTimeout)	  // request timeout
+			else if (now > lastPollTime + printerPollInterval + printerResponseTimeout)	  // request timeout
 			{
+				dbg("request timeout\n");
 				SerialIo::Sendf("M409 F\"d99f\"\n");
 				lastPollTime = SystemTick::GetTickCount();
 			}

@@ -28,7 +28,7 @@ Backlight::Backlight(pwm_channel_t *p_pwm,
 	pwm_channel_enable(PWM, pwm->channel);
 }
 
-void Backlight::SetBrightness(uint32_t brightness)
+void Backlight::UpdateBrightness(uint32_t brightness)
 {
 	pwm->ul_period = period;
 	pwm->ul_duty = (minDuty + (maxDuty - minDuty) * brightness / Backlight::MaxDutyRange) * (period - 1) / Backlight::MaxBrightness;
@@ -40,6 +40,11 @@ void Backlight::SetBrightness(uint32_t brightness)
 void Backlight::SetState(enum BacklightState newState)
 {
 	uint32_t brightness = 100;
+
+	if (state == newState)
+	{
+		return;
+	}
 
 	switch (newState)
 	{
@@ -54,5 +59,5 @@ void Backlight::SetState(enum BacklightState newState)
 	}
 
 	state = newState;
-	SetBrightness(brightness);
+	UpdateBrightness(brightness);
 }

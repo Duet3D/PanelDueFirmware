@@ -2388,7 +2388,6 @@ namespace UI
 						break;
 					}
 					ib->SetValue(newValue);
-					ShortenTouchDelay();
 				}
 				break;
 
@@ -2640,12 +2639,10 @@ namespace UI
 
 			case evScrollFiles:
 				FileManager::ScrollFiles(bp.GetIParam() * NumFileRows);
-				ShortenTouchDelay();
 				break;
 
 			case evScrollMacros:
 				FileManager::ScrollMacros(bp.GetIParam() * NumMacroRows);
-				ShortenTouchDelay();
 				break;
 
 			case evChangeCard:
@@ -2718,7 +2715,6 @@ namespace UI
 			case evBrighter:
 			case evDimmer:
 				ChangeBrightness(ev == evBrighter);
-				ShortenTouchDelay();
 				break;
 
 			case evAdjustVolume:
@@ -2868,7 +2864,6 @@ namespace UI
 				{
 					userCommandBuffers[currentUserCommandBuffer].Erase(userCommandBuffers[currentUserCommandBuffer].strlen() - 1);
 					userCommandField->SetChanged();
-					ShortenTouchDelay();
 				}
 				break;
 
@@ -2931,7 +2926,6 @@ namespace UI
 	{
 		if (bp == fieldBeingAdjusted)
 		{
-			DelayTouchLong();	// by default, ignore further touches for a long time
 			TouchBeep();
 			switch(fieldBeingAdjusted.GetEvent())
 			{
@@ -2982,7 +2976,6 @@ namespace UI
 			case evTabMsg:
 			case evTabSetup:
 				StopAdjusting();
-				DelayTouchLong();	// by default, ignore further touches for a long time
 				TouchBeep();
 				{
 					ButtonBase *btn = bp.GetButton();
@@ -3007,7 +3000,6 @@ namespace UI
 			case evFactoryReset:
 				// On the Setup tab, we allow any other button to be pressed to exit the current popup
 				StopAdjusting();
-				DelayTouchLong();	// by default, ignore further touches for a long time
 				mgr.ClearPopup();
 				ProcessTouch(bp);
 				break;
