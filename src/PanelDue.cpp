@@ -2164,7 +2164,6 @@ int main(void)
 	backlight->SetNormalBrightness(nvData.GetBrightness());
 	backlight->SetState(BacklightStateNormal);
 
-	// Set up the baud rate
 	UpdatePollRate(false);
 
 	MessageLog::Init();
