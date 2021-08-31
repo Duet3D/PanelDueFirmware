@@ -76,8 +76,8 @@ const uint32_t touchBeepFrequency = 4500;			// beep frequency in Hz. Resonant fr
 const uint32_t errorBeepLength = 100;
 const uint32_t errorBeepFrequency = 2250;
 
-const uint32_t longTouchDelay = 250;				// how long we ignore new touches for after pressing Set
-const uint32_t shortTouchDelay = 100;				// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
+const uint32_t normalTouchDelay = 250;				// how long we ignore new touches for after pressing Set
+const uint32_t repeatTouchDelay = 100;				// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
 
 
 static uint32_t lastActionTime = 0;
@@ -133,7 +133,6 @@ UTouch touch(23, 24, 22, 21, 20);
 Backlight *backlight = nullptr;
 
 static uint32_t lastTouchTime;
-static uint32_t ignoreTouchTime;
 
 static uint32_t lastPollTime = 0;
 static uint32_t lastResponseTime = 0;
@@ -686,18 +685,6 @@ static void InitLcd()
 	backlight->SetState(BacklightStateNormal);
 }
 
-// Ignore touches for a long time
-static void DelayTouchLong()
-{
-	ignoreTouchTime = longTouchDelay;
-}
-
-// Ignore touches for a short time instead of the long time we already asked for
-static void ShortenTouchDelay()
-{
-	ignoreTouchTime = shortTouchDelay;
-}
-
 void TouchBeep()
 {
 	Buzzer::Beep(touchBeepFrequency, touchBeepLength, nvData.touchVolume);
@@ -722,7 +709,8 @@ void DoTouchCalib(PixelNumber x, PixelNumber y, PixelNumber altX, PixelNumber al
 	for (;;)
 	{
 		uint16_t tx, ty, rawX, rawY;
-		if (touch.read(tx, ty, &rawX, &rawY))
+		bool repeat;
+		if (touch.read(tx, ty, repeat, &rawX, &rawY))
 		{
 			if (   (abs((int)tx - (int)x) <= touchCalibMaxError || abs((int)tx - (int)altX) <= touchCalibMaxError)
 				&& (abs((int)ty - (int)y) <= touchCalibMaxError || abs((int)ty - (int)altY) <= touchCalibMaxError)
@@ -2178,7 +2166,8 @@ int main(void)
 		do
 		{
 			uint16_t x, y;
-			if (touch.read(x, y))
+			bool repeat;
+			if (touch.read(x, y, repeat))
 			{
 				break;
 			}
@@ -2218,19 +2207,19 @@ int main(void)
 		UI::Spin();
 
 		uint16_t x, y;
+		bool repeat;
 		bool touched = false;
 
 		// check for valid touch event
-		if (touch.read(x, y))
+		if (touch.read(x, y, repeat))
 		{
-			if (SystemTick::GetTickCount() - lastTouchTime >= ignoreTouchTime)
+			uint32_t now = SystemTick::GetTickCount();
+			if (now - lastTouchTime >= normalTouchDelay ||
+			    (repeat && now - lastTouchTime >= repeatTouchDelay)
+					)
 			{
 				lastTouchTime = SystemTick::GetTickCount();
 				touched = true;
-				if (screensaverActive)
-				{
-					DelayTouchLong();			// ignore further touches for a while
-				}
 			}
 		}
 
@@ -2272,7 +2261,6 @@ int main(void)
 		else
 		{
 			DeactivateScreensaver();
-			DelayTouchLong();			// ignore further touches for a while
 		}
 
 		// touch event handling
