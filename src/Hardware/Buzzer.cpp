@@ -12,6 +12,7 @@
 #include "Buzzer.hpp"
 #include "SysTick.hpp"
 #include "Configuration.hpp"
+#include "OneBitPort.hpp"
 #include <cstring>
 
 namespace Buzzer
@@ -21,10 +22,19 @@ namespace Buzzer
 #if IS_ER
 	static const uint32_t backlightPwmFrequency = 20000;	// 20kHz is recommend by East Rising
 #else
-	static const uint32_t backlightPwmFrequency = 300;		// Working range is about 100Hz to 1KHz. MP3202 dataseet says use 1kHz or below due to soft start. Some frequencies causes flickering on the 4.3" display.
+	static const uint32_t backlightPwmFrequency = 300;		// Working range is about 100Hz to 1KHz. MP3202 datasheet says use 1kHz or below due to soft start. Some frequencies causes flickering on the 4.3" display.
 #endif
 
 	static const uint32_t backlightPeriod = pwmClockFrequency/backlightPwmFrequency; 
+
+#if IS_ER
+	// Newer ER displays use the MP3302 backlight inverter and smooth the PWM to an analog input. The range of this input is nominally 0.7 to 1.4V.
+	// These displays have PB13 grounded so that we can tell which backlight inverter is fitted.
+	constexpr uint32_t maxPwm = (uint32_t)(backlightPeriod * 1.4/3.3);
+	constexpr uint32_t minPwm = (uint32_t)(backlightPeriod * 0.7/3.3);
+	constexpr unsigned int PortB13 = (1 * 32) + 13;
+	static OneBitPort boardTypePort(PortB13);
+#endif
 
 	static pwm_channel_t buzzer_pwm_channel_instance =
 	{
@@ -86,6 +96,9 @@ namespace Buzzer
 
 		beepTicksToGo = 0;
 		inBuzzer = false;
+#if IS_ER
+		boardTypePort.setMode(OneBitPort::InputPullup);
+#endif
 	}
 
 	static const uint32_t volumeTable[MaxVolume] = { 3, 9, 20, 40, 80 };
@@ -149,7 +162,13 @@ namespace Buzzer
 	void SetBacklight(uint32_t brightness)
 	{
 		backlight_pwm_channel_instance.ul_period = backlightPeriod;
+#if IS_ER
+		backlight_pwm_channel_instance.ul_duty = (boardTypePort.read())
+												? ((backlightPeriod - 1) * (MaxBrightness - brightness))/MaxBrightness
+													: minPwm + ((maxPwm - minPwm) * (MaxBrightness - brightness))/MaxBrightness;
+#else
 		backlight_pwm_channel_instance.ul_duty = ((backlightPeriod - 1) * (MaxBrightness - brightness))/MaxBrightness;
+#endif
 		pwm_channel_init(PWM, &backlight_pwm_channel_instance);
 		pwm_channel_enable(PWM, PWM_CHANNEL_1);
 	}
