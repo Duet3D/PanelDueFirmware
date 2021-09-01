@@ -8,7 +8,7 @@
 #ifndef SRC_VERSION_HPP_
 #define SRC_VERSION_HPP_
 
-#define VERSION_TEXT_MAIN		"1.25rc1"
+#define VERSION_TEXT_MAIN		"1.25-rc1"
 
 #ifdef SUPPORT_ENCODER
 #define VERSION_TEXT	VERSION_TEXT_MAIN "+enc"
