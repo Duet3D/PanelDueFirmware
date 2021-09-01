@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 
+#include "ObjectModel/PrinterStatus.hpp"
+
 enum class DisplayDimmerType : uint8_t
 {
 	never = 0,				// never dim the display
@@ -132,10 +134,18 @@ static int print_index(size_t index)
 
 
 	std::cout << "Status Values:" << std::endl;
-	for (size_t j = 0; j < ARRAY_SIZE(orig->statusValues); j++) {
-		PRINT_ENTRY(statusValues[j]);
-	}
-
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::connecting]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::idle]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::printing]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::stopped]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::configuring]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::paused]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::resuming]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::flashing]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::toolChange]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::simulating]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::off]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::cancelling]);
 
 	std::cout << "Colour Scheme Names:" << std::endl;
 	for (size_t j = 0; j < ARRAY_SIZE(orig->colourSchemeNames); j++) {
@@ -143,14 +153,13 @@ static int print_index(size_t index)
 	}
 
 	std::cout << "Display Dimming Names:" << std::endl;
-	for (size_t j = 0; j < ARRAY_SIZE(orig->displayDimmingNames); j++) {
-		PRINT_ENTRY(displayDimmingNames[j]);
-	}
+	PRINT_ENTRY(displayDimmingNames[(unsigned int)DisplayDimmerType::never]);
+	PRINT_ENTRY(displayDimmingNames[(unsigned int)DisplayDimmerType::always]);
+	PRINT_ENTRY(displayDimmingNames[(unsigned int)DisplayDimmerType::onIdle]);
 
 	std::cout << "Heater Combine Type Names:" << std::endl;
-	for (size_t j = 0; j < ARRAY_SIZE(orig->heaterCombineTypeNames); j++) {
-		PRINT_ENTRY(heaterCombineTypeNames[j]);
-	}
+	PRINT_ENTRY(heaterCombineTypeNames[(unsigned int)HeaterCombineType::notCombined]);
+	PRINT_ENTRY(heaterCombineTypeNames[(unsigned int)HeaterCombineType::combined]);
 	
 	return 0;
 
