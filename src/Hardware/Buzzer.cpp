@@ -28,7 +28,8 @@ namespace Buzzer
 	static const uint32_t backlightPeriod = pwmClockFrequency/backlightPwmFrequency; 
 
 #if IS_ER
-	// Newer ER displays use the MP3302 backlight inverter and smooth the PWM to an analog input. The range of this input is nominally 0.7 to 1.4V.
+	// Newer ER displays use the MP3302 backlight inverter and smooth the PWM to an analog input.
+	// The range of this input is nominally 0.7 to 1.4V. The smoothed PWM output has a range of 0V to 3.3V.
 	// These displays have PB13 grounded so that we can tell which backlight inverter is fitted.
 	constexpr uint32_t maxPwm = (uint32_t)(backlightPeriod * 1.4/3.3);
 	constexpr uint32_t minPwm = (uint32_t)(backlightPeriod * 0.7/3.3);
