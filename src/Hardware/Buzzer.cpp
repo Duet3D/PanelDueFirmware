@@ -20,7 +20,7 @@ namespace Buzzer
 	static const uint32_t pwmClockFrequency = 2000000;		// 2MHz clock (OK down to 30Hz PWM frequency)
 
 #if IS_ER
-	static const uint32_t backlightPwmFrequency = 20000;	// 20kHz is recommend by East Rising
+	static const uint32_t backlightPwmFrequency = 20000;	// 20kHz is recommend by East Rising. This is good for both the old backlight chip and the new one + smoothing filter.
 #else
 	static const uint32_t backlightPwmFrequency = 300;		// Working range is about 100Hz to 1KHz. MP3202 datasheet says use 1kHz or below due to soft start. Some frequencies causes flickering on the 4.3" display.
 #endif
@@ -29,10 +29,12 @@ namespace Buzzer
 
 #if IS_ER
 	// Newer ER displays use the MP3302 backlight inverter and smooth the PWM to an analog input.
-	// The range of this input is nominally 0.7 to 1.4V. The smoothed PWM output has a range of 0V to 3.3V.
+	// The range of this input is nominally 0.7 to 1.4V. We go slightly higher than 1.4V to ensure we can get full brightness.
+	// The smoothed PWM output has a range of 0V to 3.3V.
+	// The PWM output is inverted.
 	// These displays have PB13 grounded so that we can tell which backlight inverter is fitted.
-	constexpr uint32_t maxPwm = (uint32_t)(backlightPeriod * 1.4/3.3);
-	constexpr uint32_t minPwm = (uint32_t)(backlightPeriod * 0.7/3.3);
+	constexpr uint32_t minPwm = (uint32_t)((float)backlightPeriod * (3.3 - 1.45)/3.3);
+	constexpr uint32_t maxPwm = (uint32_t)((float)backlightPeriod * (3.3 - 0.7)/3.3);
 	constexpr unsigned int PortB13 = (1 * 32) + 13;
 	static OneBitPort boardTypePort(PortB13);
 #endif
@@ -158,7 +160,7 @@ namespace Buzzer
 		return beepTicksToGo != 0;
 	}
 	
-	// Set the backlight brightness on a scale of 0 to MaxBrightness.
+	// Set the backlight brightness on a scale of 0 to MaxBrightness. The PWM output is inverted.
 	// Must call Init before calling this.
 	void SetBacklight(uint32_t brightness)
 	{
