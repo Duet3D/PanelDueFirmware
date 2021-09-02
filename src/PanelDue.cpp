@@ -2090,6 +2090,8 @@ int main(void)
 
 	wdt_init (WDT, WDT_MR_WDRSTEN, 1000, 1000);
 	SysTick_Config(SystemCoreClock / 1000);
+
+	nvData.Load();
 	SerialIo::Init(nvData.GetBaudRate(), &serial_cbs);
 
 	lastTouchTime = SystemTick::GetTickCount();
@@ -2130,7 +2132,6 @@ int main(void)
 	backlight = new Backlight(&backlightPwm, pwmClockFrequency, 300, 15, 100, 5, 100); // init the backlight
 #endif
 	// Read parameters from flash memory
-	nvData.Load();
 	if (nvData.IsValid())
 	{
 		// The touch panel has already been calibrated
