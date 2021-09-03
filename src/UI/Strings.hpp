@@ -379,7 +379,7 @@ const StringTable LanguageTables[] =
 
 		// Heater combine types
 		{
-			"Heaters nicht kombiniert",
+			"Heat's nicht kombiniert",
 			"Heaters kombiniert",
 		}
 	},
