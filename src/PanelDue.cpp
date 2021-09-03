@@ -2205,6 +2205,7 @@ int main(void)
 
 	for (;;)
 	{
+		const uint32_t now = SystemTick::GetTickCount();
 
 		// 1. Check for input from the serial port and process it.
 		// This calls back into functions StartReceivedMessage, ProcessReceivedValue, EndReceivedMessage and ParserErrorEncountered
@@ -2215,19 +2216,28 @@ int main(void)
 
 		uint16_t x, y;
 		bool repeat;
+		static struct {
+			uint32_t x;
+			uint32_t y;
+			bool pressed;
+			bool released;
+		} event = { 0, 0, false, false };
 		bool touched = false;
 
 		// check for valid touch event
 		if (touch.read(x, y, repeat))
 		{
-			uint32_t now = SystemTick::GetTickCount();
 			if (now - lastTouchTime >= normalTouchDelay ||
-			    (repeat && now - lastTouchTime >= repeatTouchDelay)
-					)
+			    (repeat && now - lastTouchTime >= repeatTouchDelay))
 			{
 				lastTouchTime = SystemTick::GetTickCount();
 				touched = true;
+				event.pressed = true;
+				event.x = x;
+				event.y = y;
 			}
+		} else if (event.pressed && now - lastTouchTime >= normalTouchDelay) {
+			event.released = true;
 		}
 
 		// check for new alert
@@ -2295,6 +2305,27 @@ int main(void)
 					UI::ProcessTouchOutsidePopup(bp);
 				}
 			}
+		} else if (event.released)
+		{
+			ButtonPress bp = mgr.FindEvent(x, y);
+			if (bp.IsValid()) {
+				switch(bp.GetEvent())
+				{
+				case evTabControl:
+				case evTabStatus:
+				case evTabMsg:
+				case evTabSetup:
+					break;
+				default:
+					mgr.Press(bp, false);
+					break;
+				}
+			}
+
+			event.x = 0;
+			event.y = 0;
+			event.pressed = false;
+			event.released = false;
 		}
 
 		// alert event handling
@@ -2329,7 +2360,6 @@ int main(void)
 		// printer communication handling
 		UpdatePollRate(screensaverActive);
 
-		const uint32_t now = SystemTick::GetTickCount();
 		if (UI::DoPolling())
 		{
 			if (lastResponseTime >= lastPollTime &&
