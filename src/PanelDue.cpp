@@ -2203,25 +2203,27 @@ int main(void)
 
 	dbg("basic init DONE\n");
 
+	struct TouchEvent {
+		uint32_t x;
+		uint32_t y;
+		enum {
+			EventStateNone = 0,
+			EventStatePressed = 1,
+			EventStateReleased = 2
+		} state;
+	} event = { 0, 0, TouchEvent::EventStateNone };
+
 	for (;;)
 	{
 		const uint32_t now = SystemTick::GetTickCount();
 
-		// 1. Check for input from the serial port and process it.
-		// This calls back into functions StartReceivedMessage, ProcessReceivedValue, EndReceivedMessage and ParserErrorEncountered
 		SerialIo::CheckInput();
 
-		// 2. if displaying the message log, update the times
+		// if displaying the message log, update the times
 		UI::Spin();
 
 		uint16_t x, y;
 		bool repeat;
-		static struct {
-			uint32_t x;
-			uint32_t y;
-			bool pressed;
-			bool released;
-		} event = { 0, 0, false, false };
 		bool touched = false;
 
 		// check for valid touch event
@@ -2232,12 +2234,13 @@ int main(void)
 			{
 				lastTouchTime = SystemTick::GetTickCount();
 				touched = true;
-				event.pressed = true;
+				event.state = TouchEvent::EventStatePressed;
 				event.x = x;
 				event.y = y;
 			}
-		} else if (event.pressed && now - lastTouchTime >= normalTouchDelay) {
-			event.released = true;
+		} else if (event.state == TouchEvent::EventStatePressed && now - lastTouchTime >= normalTouchDelay) {
+			touched = true;
+			event.state = TouchEvent::EventStateReleased;
 		}
 
 		// check for new alert
@@ -2283,49 +2286,55 @@ int main(void)
 		// touch event handling
 		if (touched)
 		{
-			UI::OnButtonPressTimeout();
+			ButtonPress bp = mgr.FindEvent(event.x, event.y);
 
-			lastActionTime = SystemTick::GetTickCount();
+			// release button handling
+			switch (event.state)
+			{
+			case TouchEvent::EventStatePressed:
+				UI::OnButtonPressTimeout();
 
-			ButtonPress bp = mgr.FindEvent(x, y);
-			if (bp.IsValid())
-			{
-				backlight->SetState(BacklightStateNormal);
-				UI::ProcessTouch(bp);
-				if (!initialized)		// Last button press was E-Stop
-				{
-					continue;
-				}
-			}
-			else
-			{
-				bp = mgr.FindEventOutsidePopup(x, y);
+				lastActionTime = SystemTick::GetTickCount();
+
 				if (bp.IsValid())
 				{
-					UI::ProcessTouchOutsidePopup(bp);
+					backlight->SetState(BacklightStateNormal);
+					UI::ProcessTouch(bp);
+					if (!initialized)		// Last button press was E-Stop
+					{
+						continue;
+					}
 				}
-			}
-		} else if (event.released)
-		{
-			ButtonPress bp = mgr.FindEvent(x, y);
-			if (bp.IsValid()) {
-				switch(bp.GetEvent())
+				else
 				{
-				case evTabControl:
-				case evTabStatus:
-				case evTabMsg:
-				case evTabSetup:
-					break;
-				default:
-					mgr.Press(bp, false);
-					break;
+					bp = mgr.FindEventOutsidePopup(x, y);
+					if (bp.IsValid())
+					{
+						UI::ProcessTouchOutsidePopup(bp);
+					}
 				}
-			}
+				break;
 
-			event.x = 0;
-			event.y = 0;
-			event.pressed = false;
-			event.released = false;
+			case TouchEvent::EventStateReleased:
+				if (bp.IsValid()) {
+					switch(bp.GetEvent())
+					{
+					case evTabControl:
+					case evTabStatus:
+					case evTabMsg:
+					case evTabSetup:
+						break;
+					default:
+						mgr.Press(bp, false);
+						break;
+					}
+				}
+
+				event.state = TouchEvent::EventStateNone;
+				break;
+			default:
+				break;
+			}
 		}
 
 		// alert event handling
