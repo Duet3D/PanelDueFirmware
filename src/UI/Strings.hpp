@@ -269,7 +269,7 @@ const StringTable LanguageTables[] =
 		"Druck",
 		"Status",
 		"Konsole",
-		"Setup",
+		"Einstellung",
 		"Istwert" THIN_SPACE DEGREE_SYMBOL "C",
 		"Aktiv" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
@@ -280,11 +280,11 @@ const StringTable LanguageTables[] =
 
 		// Print page
 		"Extruder" THIN_SPACE "%",
-		"Tempo ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
+		"Geschwindigkeit ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
 		"Lüfter ",							// note space at end
 		"Restzeit: ",
-		"Datei ",							// note space at end
 		"Simul. ",							// note space at end
+		"Datei ",							// note space at end
 		"Filament ",						// note space at end
 		"Slicer ",							// note space at end
 		"n/v",
@@ -302,13 +302,13 @@ const StringTable LanguageTables[] =
 		"Anzeige spiegeln",
 		"Anzeige umkehren",
 		"Darstellung",
-		"Beleuchtung  -",
-		"Beleuchtung  +",
-		"Einstllgen sichern",
+		"Helligkeit  -",
+		"Helligkeit  +",
+		"Einstellungen sichern",
 		"Werks-Reset",
-		"Sichern & Reboot",
-		"Info timeout ",					// note space at end
-		"Screensaver ",						// note space at end
+		"Sichern & Neustarten",
+		"Info Timeout ",					// note space at end
+		"Bildschirmschoner ",					// note space at end
 		"Babystep ",						// note space at end
 		"Feedrate ",						// note space at end
 
@@ -342,7 +342,7 @@ const StringTable LanguageTables[] =
 		"Erzeugt mit: ",
 		"Letzte Änderung: ",
 		"Geschätzte Druckdauer: ",
-		"Errechnete Druckdauer: ",
+		"Simulierte Druckdauer: ",
 		"Simulieren",
 
 		// Printer status strings
@@ -360,13 +360,14 @@ const StringTable LanguageTables[] =
 			"Wechsle Tool",
 			"Simuliert",
 			"Aus",
+			"Abbrechen",
 		},
 
 		// Theme names
 		{
 			"Anzeige hell",
-			"Anzeige inv. 1",
-			"Anzeige inv. 2"
+			"Anzeige dunkel 1",
+			"Anzeige dunkel 2"
 		},
 
 		// Display dimming types
@@ -378,8 +379,8 @@ const StringTable LanguageTables[] =
 
 		// Heater combine types
 		{
-			"Heat's not comb.",
-			"Heaters comb.",
+			"Heaters nicht kombiniert",
+			"Heaters kombiniert",
 		}
 	},
 
