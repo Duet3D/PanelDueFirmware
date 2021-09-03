@@ -2075,6 +2075,8 @@ static pwm_channel_t backlightPwm =
  */
 int main(void)
 {
+	bool initializedSettings = false;
+
 	SystemInit();						// set up the clock etc.
 	InitMemory();
 
@@ -2090,6 +2092,13 @@ int main(void)
 
 	wdt_init (WDT, WDT_MR_WDRSTEN, 1000, 1000);
 	SysTick_Config(SystemCoreClock / 1000);
+
+	nvData.Load();
+	if (!nvData.IsValid())
+	{
+		initializedSettings = true;
+		nvData.SetDefaults();
+	}
 	SerialIo::Init(nvData.GetBaudRate(), &serial_cbs);
 
 	lastTouchTime = SystemTick::GetTickCount();
@@ -2129,12 +2138,12 @@ int main(void)
 #else
 	backlight = new Backlight(&backlightPwm, pwmClockFrequency, 300, 15, 100, 5, 100); // init the backlight
 #endif
+
+	InitLcd();
 	// Read parameters from flash memory
-	nvData.Load();
-	if (nvData.IsValid())
+	if (!initializedSettings)
 	{
 		// The touch panel has already been calibrated
-		InitLcd();
 		touch.init(DisplayX, DisplayY, nvData.touchOrientation);
 		touch.calibrate(nvData.xmin, nvData.xmax, nvData.ymin, nvData.ymax, touchCalibMargin);
 		savedNvData = nvData;
@@ -2142,8 +2151,6 @@ int main(void)
 	else
 	{
 		// The touch panel has not been calibrated, and we do not know which way up it is
-		nvData.SetDefaults();
-		InitLcd();
 		CalibrateTouch();							// this includes the touch driver initialisation
 		SaveSettings();
 	}
