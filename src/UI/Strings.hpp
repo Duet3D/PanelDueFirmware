@@ -515,12 +515,12 @@ const StringTable LanguageTables[] =
 		// Main page strings
 		"Control",
 		"Imprimir",
-		"Estatus",
+		"Estado",
 		"Consola",
 		"Configuración",
 		"Actual" THIN_SPACE DEGREE_SYMBOL "C",
 		"Activo" THIN_SPACE DEGREE_SYMBOL "C",
-		"Esperando" THIN_SPACE DEGREE_SYMBOL "C",
+		"En espera" THIN_SPACE DEGREE_SYMBOL "C",
 		"Mover",
 		"Extrusión",
 		"Macro",
@@ -534,14 +534,14 @@ const StringTable LanguageTables[] =
 		"simul. ",							// note space at end
 		"archivo ",							// note space at end
 		"filamento ",						// note space at end
-		"slicer ",							// note space at end
+		"laminador ",							// note space at end
 		"n/d",								// Not available / no disponible
 		"Pausa",
 		"Micro paso",						// Literal translation of baby step it's very odd in spanish...
-		"Resumir",
+		"Reanudar",
 		"Cancelar",
-		"Print again",
-		"Simulate again",
+		"Imprimir de nuevo",
+		"Simular",
 		"Fijar",							// "Establecer" would be more correct, but it's longer.
 
 		// Setup page
@@ -556,25 +556,25 @@ const StringTable LanguageTables[] =
 		"Borrar parámetros",
 		"Guardar y Reiniciar",
 		"Info timeout ",					// note space at end
-		"Screensaver ",						// note space at end
-		"Babystep ",						// note space at end
-		"Feedrate ",						// note space at end
+		"Salvapantallas ",					// note space at end
+		"Micropaso ",						// note space at end
+		"Vel. de movimiento ",					// note space at end
 
 		// Misc
 		"Confirma restablecimiento de fábrica",
 		"Confirma borrar archivo",
 		"Está seguro?",
-		"Tocar el punto",
+		"Toca el punto",
 		"Mover cabezal",
 		"Cantidad de extrusión (mm)",
 		"Velocidad (mm/s)",
 		"Extruir",
 		"Retraer",
-		"Micro paso",
+		"Micro pasos",
 		"Separación actual de Z: ",
 		"Mensaje",
 		"Mensajes",
-		"Panel Due versión de firmware ",	// note space at end
+		"Versión del Firmware del Panel Due ",	// note space at end
 		"Respuesta",
 
 		// File popup
@@ -582,12 +582,12 @@ const StringTable LanguageTables[] =
 		"Macros",
 		"Error ",							// note the space at the end
 		" accediendo a la tarjeta SD",		// note the space at the start
-		"Nombre de archivo: ",
+		"Nombre del archivo: ",
 		"Tamaño: ",
 		"Altura de capa: ",
 		"Altura de objeto: ",
 		"Filamento necesario: ",
-		"Procesado por: ",					// there is no translation in spanish for this meaning, so I proposed to use "processed by" which is understandable
+		"Laminado por: ",					// there is no translation in spanish for this meaning, so I proposed to use "processed by" which is understandable
 		"Última modificación: ",
 		"Tiempo estimado de impresión: ",
 		"Tiempo de impresión simulado: ",
@@ -595,17 +595,20 @@ const StringTable LanguageTables[] =
 
 		// Printer status strings
 		{
-			"conexión",
+			"conectando",
 			"en espera",					// it's more frequently use "en espera" than "ocioso", it makes more sense for a machine
 			"imprimiendo",
-			"detuvo",
+			"parado",
 			"empezando",
 			"pausado",
 			"ocupado",
 			"pausando",
 			"reanudando",
 			"carga del firmware",
-			"herramienta de cambio",
+			"cambio de herramienta",
+			"simulando",
+			"apagado",
+			"cancelando"
 		},
 
 		// Theme names
@@ -624,8 +627,8 @@ const StringTable LanguageTables[] =
 
 		// Heater combine types
 		{
-			"Heat's not comb.",
-			"Heaters comb.",
+			"Calentadores no comb.",
+			"Calentadores combinados",
 		}
 	},
 
