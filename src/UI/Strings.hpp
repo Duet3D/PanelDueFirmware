@@ -520,7 +520,7 @@ const StringTable LanguageTables[] =
 		"Configuración",
 		"Actual" THIN_SPACE DEGREE_SYMBOL "C",
 		"Activo" THIN_SPACE DEGREE_SYMBOL "C",
-		"En espera" THIN_SPACE DEGREE_SYMBOL "C",
+		"Inactivo" THIN_SPACE DEGREE_SYMBOL "C",
 		"Mover",
 		"Extrusión",
 		"Macro",
@@ -541,7 +541,7 @@ const StringTable LanguageTables[] =
 		"Reanudar",
 		"Cancelar",
 		"Imprimir de nuevo",
-		"Simular",
+		"Simular de nuevo",
 		"Fijar",							// "Establecer" would be more correct, but it's longer.
 
 		// Setup page
@@ -558,7 +558,7 @@ const StringTable LanguageTables[] =
 		"Info timeout ",					// note space at end
 		"Salvapantallas ",					// note space at end
 		"Micropaso ",						// note space at end
-		"Vel. de movimiento ",					// note space at end
+		"Vel. avance",						// note space at end
 
 		// Misc
 		"Confirma restablecimiento de fábrica",
@@ -627,8 +627,8 @@ const StringTable LanguageTables[] =
 
 		// Heater combine types
 		{
-			"Calentadores no comb.",
-			"Calentadores combinados",
+			"Heat's not comb.",
+			"Heaters comb.",
 		}
 	},
 
