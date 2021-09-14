@@ -79,7 +79,7 @@ namespace UI
 	extern void UpdateWarmupDuration(uint32_t warmupDuration);
 	extern void SetSimulatedTime(uint32_t simulatedTime);
 	extern bool ChangePage(ButtonBase *newTab);
-	extern bool DoPolling();
+	extern bool IsSetupTab();
 	extern void Tick();
 	extern void Spin();
 	extern void PrintStarted();

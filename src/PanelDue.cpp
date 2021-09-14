@@ -2325,7 +2325,8 @@ int main(void)
 					case evTabSetup:
 						break;
 					default:
-						mgr.Press(bp, false);
+						if (!UI::IsSetupTab())
+							mgr.Press(bp, false);
 						break;
 					}
 				}
@@ -2369,7 +2370,7 @@ int main(void)
 		// printer communication handling
 		UpdatePollRate(screensaverActive);
 
-		if (UI::DoPolling())
+		if (!UI::IsSetupTab())
 		{
 			if (lastResponseTime >= lastPollTime &&
 			    (now > lastPollTime + printerPollInterval ||
