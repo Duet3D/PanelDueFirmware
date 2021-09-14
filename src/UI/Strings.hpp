@@ -909,7 +909,7 @@ const StringTable LanguageTables[] =
 		"Nawiew ",								// note space at end
 		"Pozostało:: ",
 		"sim'd ",							// note space at end
-		"Plik ",							// note space at end
+		"plik ",							// note space at end
 		"filament ",						// note space at end
 		"slicer ",							// note space at end
 		"N/A",
