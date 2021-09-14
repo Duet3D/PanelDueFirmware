@@ -280,7 +280,7 @@ const StringTable LanguageTables[] =
 
 		// Print page
 		"Extruder" THIN_SPACE "%",
-		"Geschwindigkeit ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
+		"Speed ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
 		"Lüfter ",							// note space at end
 		"Restzeit: ",
 		"Simul. ",							// note space at end
@@ -305,7 +305,7 @@ const StringTable LanguageTables[] =
 		"Helligkeit  -",
 		"Helligkeit  +",
 		"Einstellungen sichern",
-		"Werks-Reset",
+		"Werksreset",
 		"Sichern & Neustarten",
 		"Info Timeout ",					// note space at end
 		"Bildschirmschoner ",					// note space at end
@@ -379,8 +379,8 @@ const StringTable LanguageTables[] =
 
 		// Heater combine types
 		{
-			"Heat's nicht kombiniert",
-			"Heaters kombiniert",
+			"Heat's nicht komb.",
+			"Heat's kombiniert"
 		}
 	},
 
