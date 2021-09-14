@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <cstring>
 #include <string>
 
 #include "ObjectModel/PrinterStatus.hpp"
@@ -48,7 +49,8 @@ static int print_index(size_t index)
 #define STRINGIFY2(x) #x
 #define STRINGIFY(x) STRINGIFY2(x)
 #define PRINT_ENTRY(name) do { std::cout << STRINGIFY(orig->name) << ": '" << orig->name << "'" << ", "; \
-			translation->name ? std::cout << "'" << translation->name << "'" << std::endl : std::cout << "MISSING" << std::endl; } while(0)
+			translation->name ? std::cout << "'" << translation->name << "'" : std::cout << "MISSING"; \
+			translation->name ? std::cout << " l: " << std::strlen(orig->name) << "/" << std::strlen(translation->name) << std::endl : std::cout << std::endl; } while(0)
 
 	std::cout << "*****: " << translation->languageName << std::endl;
 	PRINT_ENTRY(languageName);
