@@ -1,7 +1,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <cstring>
 #include <string>
+
+#include "ObjectModel/PrinterStatus.hpp"
 
 enum class DisplayDimmerType : uint8_t
 {
@@ -46,7 +49,8 @@ static int print_index(size_t index)
 #define STRINGIFY2(x) #x
 #define STRINGIFY(x) STRINGIFY2(x)
 #define PRINT_ENTRY(name) do { std::cout << STRINGIFY(orig->name) << ": '" << orig->name << "'" << ", "; \
-			translation->name ? std::cout << "'" << translation->name << "'" << std::endl : std::cout << "MISSING" << std::endl; } while(0)
+			translation->name ? std::cout << "'" << translation->name << "'" : std::cout << "MISSING"; \
+			translation->name ? std::cout << " l: " << std::strlen(orig->name) << "/" << std::strlen(translation->name) << std::endl : std::cout << std::endl; } while(0)
 
 	std::cout << "*****: " << translation->languageName << std::endl;
 	PRINT_ENTRY(languageName);
@@ -132,10 +136,18 @@ static int print_index(size_t index)
 
 
 	std::cout << "Status Values:" << std::endl;
-	for (size_t j = 0; j < ARRAY_SIZE(orig->statusValues); j++) {
-		PRINT_ENTRY(statusValues[j]);
-	}
-
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::connecting]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::idle]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::printing]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::stopped]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::configuring]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::paused]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::resuming]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::flashing]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::toolChange]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::simulating]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::off]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::cancelling]);
 
 	std::cout << "Colour Scheme Names:" << std::endl;
 	for (size_t j = 0; j < ARRAY_SIZE(orig->colourSchemeNames); j++) {
@@ -143,14 +155,13 @@ static int print_index(size_t index)
 	}
 
 	std::cout << "Display Dimming Names:" << std::endl;
-	for (size_t j = 0; j < ARRAY_SIZE(orig->displayDimmingNames); j++) {
-		PRINT_ENTRY(displayDimmingNames[j]);
-	}
+	PRINT_ENTRY(displayDimmingNames[(unsigned int)DisplayDimmerType::never]);
+	PRINT_ENTRY(displayDimmingNames[(unsigned int)DisplayDimmerType::always]);
+	PRINT_ENTRY(displayDimmingNames[(unsigned int)DisplayDimmerType::onIdle]);
 
 	std::cout << "Heater Combine Type Names:" << std::endl;
-	for (size_t j = 0; j < ARRAY_SIZE(orig->heaterCombineTypeNames); j++) {
-		PRINT_ENTRY(heaterCombineTypeNames[j]);
-	}
+	PRINT_ENTRY(heaterCombineTypeNames[(unsigned int)HeaterCombineType::notCombined]);
+	PRINT_ENTRY(heaterCombineTypeNames[(unsigned int)HeaterCombineType::combined]);
 	
 	return 0;
 
