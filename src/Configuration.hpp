@@ -54,7 +54,7 @@
 #define IS_ER			(false)
 #endif
 
-#define USE_CYRILLIC_CHARACTERS		(0)
+#define USE_CYRILLIC_CHARACTERS		(1)
 
 const uint32_t DefaultBaudRate = 57600;
 const uint32_t DimDisplayTimeout = 60000;				// dim this display after no activity for this number of milliseconds
