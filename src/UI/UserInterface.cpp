@@ -1610,9 +1610,9 @@ namespace UI
 	}
 
 	// Return true if polling should be performed
-	bool DoPolling()
+	bool IsSetupTab()
 	{
-		return currentTab != tabSetup;			// don't poll while we are on the Setup page
+		return currentTab == tabSetup;			// don't poll while we are on the Setup page
 	}
 
 	void Tick()
@@ -2924,6 +2924,11 @@ namespace UI
 	// Process a touch event outside the popup on the field being adjusted
 	void ProcessTouchOutsidePopup(ButtonPress bp)
 	{
+		if (!IsSetupTab())
+		{
+			return;
+		}
+
 		if (bp == fieldBeingAdjusted)
 		{
 			TouchBeep();
