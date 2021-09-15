@@ -269,7 +269,7 @@ const StringTable LanguageTables[] =
 		"Druck",
 		"Status",
 		"Konsole",
-		"Setup",
+		"Einstellung",
 		"Istwert" THIN_SPACE DEGREE_SYMBOL "C",
 		"Aktiv" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
@@ -280,11 +280,11 @@ const StringTable LanguageTables[] =
 
 		// Print page
 		"Extruder" THIN_SPACE "%",
-		"Tempo ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
+		"Speed ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
 		"Lüfter ",							// note space at end
 		"Restzeit: ",
-		"Datei ",							// note space at end
 		"Simul. ",							// note space at end
+		"Datei ",							// note space at end
 		"Filament ",						// note space at end
 		"Slicer ",							// note space at end
 		"n/v",
@@ -302,13 +302,13 @@ const StringTable LanguageTables[] =
 		"Anzeige spiegeln",
 		"Anzeige umkehren",
 		"Darstellung",
-		"Beleuchtung  -",
-		"Beleuchtung  +",
-		"Einstllgen sichern",
-		"Werks-Reset",
-		"Sichern & Reboot",
-		"Info timeout ",					// note space at end
-		"Screensaver ",						// note space at end
+		"Helligkeit  -",
+		"Helligkeit  +",
+		"Einstellungen sichern",
+		"Werksreset",
+		"Sichern & Neustarten",
+		"Info Timeout ",					// note space at end
+		"Bildschirmschoner ",					// note space at end
 		"Babystep ",						// note space at end
 		"Feedrate ",						// note space at end
 
@@ -342,7 +342,7 @@ const StringTable LanguageTables[] =
 		"Erzeugt mit: ",
 		"Letzte Änderung: ",
 		"Geschätzte Druckdauer: ",
-		"Errechnete Druckdauer: ",
+		"Simulierte Druckdauer: ",
 		"Simulieren",
 
 		// Printer status strings
@@ -360,13 +360,14 @@ const StringTable LanguageTables[] =
 			"Wechsle Tool",
 			"Simuliert",
 			"Aus",
+			"Abbrechen",
 		},
 
 		// Theme names
 		{
 			"Anzeige hell",
-			"Anzeige inv. 1",
-			"Anzeige inv. 2"
+			"Anzeige dunkel 1",
+			"Anzeige dunkel 2"
 		},
 
 		// Display dimming types
@@ -378,8 +379,8 @@ const StringTable LanguageTables[] =
 
 		// Heater combine types
 		{
-			"Heat's not comb.",
-			"Heaters comb.",
+			"Heat's nicht komb.",
+			"Heat's kombiniert"
 		}
 	},
 
@@ -483,6 +484,8 @@ const StringTable LanguageTables[] =
 			"Flasher firmware",
 			"Changer outil",
 			"Simuler",
+			"Off",
+			"Cancelling"
 		},
 
 		// Theme names
@@ -514,12 +517,12 @@ const StringTable LanguageTables[] =
 		// Main page strings
 		"Control",
 		"Imprimir",
-		"Estatus",
+		"Estado",
 		"Consola",
 		"Configuración",
 		"Actual" THIN_SPACE DEGREE_SYMBOL "C",
 		"Activo" THIN_SPACE DEGREE_SYMBOL "C",
-		"Esperando" THIN_SPACE DEGREE_SYMBOL "C",
+		"Inactivo" THIN_SPACE DEGREE_SYMBOL "C",
 		"Mover",
 		"Extrusión",
 		"Macro",
@@ -533,14 +536,14 @@ const StringTable LanguageTables[] =
 		"simul. ",							// note space at end
 		"archivo ",							// note space at end
 		"filamento ",						// note space at end
-		"slicer ",							// note space at end
+		"laminador ",							// note space at end
 		"n/d",								// Not available / no disponible
 		"Pausa",
 		"Micro paso",						// Literal translation of baby step it's very odd in spanish...
-		"Resumir",
+		"Reanudar",
 		"Cancelar",
-		"Print again",
-		"Simulate again",
+		"Imprimir de nuevo",
+		"Simular de nuevo",
 		"Fijar",							// "Establecer" would be more correct, but it's longer.
 
 		// Setup page
@@ -555,25 +558,25 @@ const StringTable LanguageTables[] =
 		"Borrar parámetros",
 		"Guardar y Reiniciar",
 		"Info timeout ",					// note space at end
-		"Screensaver ",						// note space at end
-		"Babystep ",						// note space at end
-		"Feedrate ",						// note space at end
+		"Salvapantallas ",					// note space at end
+		"Micropaso ",						// note space at end
+		"Vel. avance",						// note space at end
 
 		// Misc
 		"Confirma restablecimiento de fábrica",
 		"Confirma borrar archivo",
 		"Está seguro?",
-		"Tocar el punto",
+		"Toca el punto",
 		"Mover cabezal",
 		"Cantidad de extrusión (mm)",
 		"Velocidad (mm/s)",
 		"Extruir",
 		"Retraer",
-		"Micro paso",
+		"Micro pasos",
 		"Separación actual de Z: ",
 		"Mensaje",
 		"Mensajes",
-		"Panel Due versión de firmware ",	// note space at end
+		"Versión del Firmware del Panel Due ",	// note space at end
 		"Respuesta",
 
 		// File popup
@@ -581,12 +584,12 @@ const StringTable LanguageTables[] =
 		"Macros",
 		"Error ",							// note the space at the end
 		" accediendo a la tarjeta SD",		// note the space at the start
-		"Nombre de archivo: ",
+		"Nombre del archivo: ",
 		"Tamaño: ",
 		"Altura de capa: ",
 		"Altura de objeto: ",
 		"Filamento necesario: ",
-		"Procesado por: ",					// there is no translation in spanish for this meaning, so I proposed to use "processed by" which is understandable
+		"Laminado por: ",					// there is no translation in spanish for this meaning, so I proposed to use "processed by" which is understandable
 		"Última modificación: ",
 		"Tiempo estimado de impresión: ",
 		"Tiempo de impresión simulado: ",
@@ -594,17 +597,20 @@ const StringTable LanguageTables[] =
 
 		// Printer status strings
 		{
-			"conexión",
+			"conectando",
 			"en espera",					// it's more frequently use "en espera" than "ocioso", it makes more sense for a machine
 			"imprimiendo",
-			"detuvo",
+			"parado",
 			"empezando",
 			"pausado",
 			"ocupado",
 			"pausando",
 			"reanudando",
 			"carga del firmware",
-			"herramienta de cambio",
+			"cambio de herramienta",
+			"simulando",
+			"apagado",
+			"cancelando"
 		},
 
 		// Theme names
@@ -728,6 +734,8 @@ const StringTable LanguageTables[] =
 			"Nahrává firmware",
 			"Výměna nástroje",
 			"Simulace",
+			"Off",
+			"Cancelling"
 		},
 
 		// Theme names
@@ -851,6 +859,8 @@ const StringTable LanguageTables[] =
 			"Caricamento firmware",
 			"Cambiando tool",
 			"Simulando",
+			"Off",
+			"Cancelling"
 		},
 
 		// Theme names
