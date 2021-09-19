@@ -2207,11 +2207,11 @@ int main(void)
 		uint32_t x;
 		uint32_t y;
 		enum {
-			EventStateNone = 0,
+			EventStateReleased = 0,
 			EventStatePressed = 1,
-			EventStateReleased = 2
+			EventStateRepeated = 2
 		} state;
-	} event = { 0, 0, TouchEvent::EventStateNone };
+	} event = { 0, 0, TouchEvent::EventStateReleased };
 
 	for (;;)
 	{
@@ -2229,16 +2229,40 @@ int main(void)
 		// check for valid touch event
 		if (touch.read(x, y, repeat))
 		{
-			if (now - lastTouchTime >= normalTouchDelay ||
-			    (repeat && now - lastTouchTime >= repeatTouchDelay))
+			switch (event.state)
 			{
-				lastTouchTime = SystemTick::GetTickCount();
+			case TouchEvent::EventStateReleased:
 				touched = true;
 				event.state = TouchEvent::EventStatePressed;
+				break;
+			case TouchEvent::EventStatePressed:
+				if (now - lastTouchTime >= normalTouchDelay)
+				{
+					touched = true;
+					event.state = TouchEvent::EventStateRepeated;
+				}
+				break;
+			case TouchEvent::EventStateRepeated:
+				if (now - lastTouchTime >= repeatTouchDelay)
+				{
+					touched = true;
+				}
+				break;
+			}
+
+
+			if (touched)
+			{
+				dbg("delta %d state %d\n", now - lastTouchTime, event.state);
+
+				dbg("pressed\n");
+				lastTouchTime = SystemTick::GetTickCount();
+
 				event.x = x;
 				event.y = y;
 			}
-		} else if (event.state == TouchEvent::EventStatePressed && now - lastTouchTime >= normalTouchDelay) {
+		} else if (event.state != TouchEvent::EventStateReleased && now - lastTouchTime >= normalTouchDelay) {
+			//dbg("released\n");
 			touched = true;
 			event.state = TouchEvent::EventStateReleased;
 		}
@@ -2292,6 +2316,7 @@ int main(void)
 			switch (event.state)
 			{
 			case TouchEvent::EventStatePressed:
+			case TouchEvent::EventStateRepeated:
 				UI::OnButtonPressTimeout();
 
 				lastActionTime = SystemTick::GetTickCount();
@@ -2330,9 +2355,8 @@ int main(void)
 						break;
 					}
 				}
-
-				event.state = TouchEvent::EventStateNone;
 				break;
+
 			default:
 				break;
 			}
