@@ -160,7 +160,6 @@ static int8_t lastBed = -1;
 static int8_t lastChamber = -1;
 static int8_t lastSpindle = -1;
 static int8_t lastTool = -1;
-static uint8_t mountedVolumesCounted = 0;
 static uint32_t remoteUpTime = 0;
 static bool initialized = false;
 static float pollIntervalMultiplier = 1.0;
@@ -322,9 +321,6 @@ enum ReceivedDataEvent
 	rcvToolsSpindleRpm,
 	rcvToolsStandby,
 	rcvToolsState,
-
-	// Keys for volumes response
-	rcvVolumesMounted,
 };
 
 struct FieldTableEntry
@@ -434,9 +430,6 @@ static FieldTableEntry fieldTable[] =
 	{ rcvToolsSpindleRpm,				"tools^:spindleRpm" },
 	{ rcvToolsStandby, 					"tools^:standby^" },
 	{ rcvToolsState, 					"tools^:state" },
-
-	// M409 K"volumes" response
-	{ rcvVolumesMounted, 				"volumes^:mounted" },
 
 	// M20 response
 	{ rcvM20Dir,						"dir" },
@@ -1104,9 +1097,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 			case rcvOMKeyTools:
 				lastTool = -1;
 				break;
-			case rcvOMKeyVolumes:
-				mountedVolumesCounted = 0;
-				break;
 			default:
 				break;
 			}
@@ -1748,17 +1738,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		}
 		break;
 
-	// Volumes section
-	case rcvVolumesMounted:
-		{
-			bool mounted;
-			if (GetBool(data, mounted) && mounted)
-			{
-				++mountedVolumesCounted;
-			}
-		}
-		break;
-
 	// Push messages
 	case rcvPushResponse:
 		MessageLog::SaveMessage(data);
@@ -1987,7 +1966,7 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 	else if (currentResponseType == rcvOMKeyVolumes && strcasecmp(id, "volumes^") == 0)
 	{
-		FileManager::SetNumVolumes(mountedVolumesCounted);
+		FileManager::SetNumVolumes(indices[0]);
 	}
 }
 
