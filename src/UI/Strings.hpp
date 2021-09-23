@@ -394,7 +394,7 @@ const StringTable LanguageTables[] =
 		"Imprimer",
 		"Statut",
 		"Console",
-		"Installation",
+		"Configuration",
 		"Actuel" THIN_SPACE DEGREE_SYMBOL "C",
 		"Actif" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
@@ -417,54 +417,54 @@ const StringTable LanguageTables[] =
 		"Baby step",
 		"Reprise",
 		"Annuler",
-		"Print again",
-		"Simulate again",
+		"Réimprimer",
+		"Resimuler",
 		"Set",
 
 		// Setup page
 		"Volume ",								// note space at end
-		"Calibrer touch",
+		"Calibrer l'écran",
 		"Affichage en négatif",
 		"Inverser affichage",
 		"Théme",
 		"Luminosité -",
 		"Luminosité +",
 		"Sauver paramêtres",
-		"Effacer paramêtres",
+		"Réinitialisation",
 		"Sauvegarde & Redémarrage",
 		"Info timeout ",						// note space at end
-		"Screensaver ",							// note space at end
+		"Veille ecran ",							// note space at end
 		"Babystep ",							// note space at end
 		"Feedrate ",							// note space at end
 
 		// Misc
-		"Confirmer le réinitialisation de l'imprimante",
-		"Confirm suppression fichier",
-		"Vous êtes sûre?",
+		"Confirmer la réinitialisation",
+		"Confirmer la suppression du fichier",
+		"Etes-vous sûre?",
 		"Appuyer sur le point",
 		"Mouvement de la  tête",
-		"Quantité de Matière extrudée (mm)",
+		"Quantité de matière extrudée (mm)",
 		"Vitesse (mm/s)",
 		"Extruder",
-		"Retracter",
+		"Rétracter",
 		"Baby stepping",
-		"décalage Z courant : ",
+		"Z offset actuel:  ",
 		"Message",
 		"Messages",
 		"Version du firmware du Panel Due ",	// note space at end
 		"Réponse",
 
 		// File popup
-		"Fichier sur carte ",					// note the space on the end
+		"Fichier sur la carte ",					// note the space on the end
 		"Macros",
 		"Erreur ",								// note the space at the end
-		" accés SD card en cours",				// note the space at the start
+		" accés à la carte SD en cours",				// note the space at the start
 		"Nom du fichier : ",
 		"Taille : ",
 		"Hauteur de couche: ",
 		"Hauteur de l'objet: ",
 		"Filament requis: ",
-		"Sliced par: ",
+		"Slicé par: ",
 		"Dernière modification: ",
 		"Temps d'impression estimé: ",
 		"Temps d'impression simulé: ",
@@ -472,20 +472,20 @@ const StringTable LanguageTables[] =
 
 		// Printer status strings
 		{
-			"Liaison en cours",					// "Connexion en cours" was too long
+			"Conn. en cours",					// "Connexion en cours" was too long
 			"Au repos",
 			"Impression",
-			"Arrêt",
+			"Arrêté",
 			"Démarrage",
 			"Pause",
 			"Occupé",
 			"Pause",
-			"Reprise",
-			"Flasher firmware",
-			"Changer outil",
-			"Simuler",
+			"Reprendre",
+			"Updating",
+			"Chgt d'outil",
+			"Simul. en cours",
 			"Off",
-			"Cancelling"
+			"Annulation..."
 		},
 
 		// Theme names
@@ -497,9 +497,9 @@ const StringTable LanguageTables[] =
 
 		// Display dimming types
 		{
-			"Jamais Dim",
-			"Idle Dim",
-			"Toujours Dim"
+			"Jamais tamiser",
+			"Tamiser si inactive",
+			"Toujours tamiser"
 		},
 
 		// Heater combine types
