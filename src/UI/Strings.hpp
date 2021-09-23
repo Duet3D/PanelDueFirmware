@@ -433,7 +433,7 @@ const StringTable LanguageTables[] =
 		"Réinitialisation",
 		"Sauvegarde & Redémarrage",
 		"Info timeout ",						// note space at end
-		"Ecran de veille ",							// note space at end
+		"Veille ecran ",							// note space at end
 		"Babystep ",							// note space at end
 		"Feedrate ",							// note space at end
 
@@ -472,7 +472,7 @@ const StringTable LanguageTables[] =
 
 		// Printer status strings
 		{
-			"Connexion en cours",					// "Connexion en cours" was too long
+			"Conn. en cours",					// "Connexion en cours" was too long
 			"Au repos",
 			"Impression",
 			"Arrêté",
@@ -481,11 +481,11 @@ const StringTable LanguageTables[] =
 			"Occupé",
 			"Pause",
 			"Reprendre",
-			"Flasher firmware",
-			"Changement d'outil",
-			"Simulation en cours",
+			"Updating",
+			"Chgt d'outil",
+			"Simul. en cours",
 			"Off",
-			"Annulation en cours"
+			"Annulation..."
 		},
 
 		// Theme names
