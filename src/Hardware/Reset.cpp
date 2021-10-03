@@ -38,13 +38,13 @@ void EraseAndReset()
 #define IFLASH_PAGE_SIZE			IFLASH0_PAGE_SIZE
 #define IFLASH_NB_OF_PAGES			(IFLASH0_SIZE / IFLASH_PAGE_SIZE)
 
-	WDT->WDT_CR = WDT_CR_KEY_PASSWD | WDT_CR_WDRSTT;	// kick the watchdog
+    WDT->WDT_CR = WDT_CR_KEY_PASSWD | WDT_CR_WDRSTT;	// kick the watchdog
 #endif
 
     for(size_t i = 0; i <= IFLASH_NB_OF_PAGES; i++)
     {
 #if SAM4S
-	WDT->WDT_CR = WDT_CR_KEY_PASSWD | WDT_CR_WDRSTT;	// kick the watchdog
+        WDT->WDT_CR = WDT_CR_KEY_PASSWD | WDT_CR_WDRSTT;	// kick the watchdog
 #endif
         wdt_restart(WDT);
         size_t pageStartAddr = IFLASH_ADDR + i * IFLASH_PAGE_SIZE;
@@ -52,8 +52,8 @@ void EraseAndReset()
     }
 
     flash_clear_gpnvm(1);			// tell the system to boot from ROM next time
-	rstc_start_software_reset(RSTC);
-	__builtin_unreachable();
+    rstc_start_software_reset(RSTC);
+    __builtin_unreachable();
 }
 
 #ifdef __cplusplus
