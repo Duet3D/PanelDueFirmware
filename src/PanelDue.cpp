@@ -2320,20 +2320,7 @@ int main(void)
 				break;
 
 			case TouchEvent::EventStateReleased:
-				if (bp.IsValid()) {
-					switch(bp.GetEvent())
-					{
-					case evTabControl:
-					case evTabStatus:
-					case evTabMsg:
-					case evTabSetup:
-						break;
-					default:
-						if (!UI::IsSetupTab())
-							mgr.Press(bp, false);
-						break;
-					}
-				}
+				UI::ProcessRelease(bp);
 				break;
 
 			default:

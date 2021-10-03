@@ -113,8 +113,8 @@ namespace UI
 	extern void UpdatePrintTimeText(uint32_t seconds, bool isSimulated);
 	extern void UpdateSpeedPercent(int ival);
 	extern void ProcessTouch(ButtonPress bp);
-	extern void ProcessTouchOutsidePopup(ButtonPress bp)
-	pre(bp.IsValid());
+	extern void ProcessTouchOutsidePopup(ButtonPress bp) pre(bp.IsValid());
+	extern void ProcessRelease(ButtonPress bp);
 	extern void OnButtonPressTimeout();
 	extern bool IsDisplayingFileInfo();
 	extern void AllToolsSeen();

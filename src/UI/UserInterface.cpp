@@ -2131,6 +2131,41 @@ namespace UI
 		return slot;
 	}
 
+	void ProcessRelease(ButtonPress bp)
+	{
+		if (!bp.IsValid())
+		{
+			return;
+		}
+
+		ButtonBase *f = bp.GetButton();
+		Event ev = (Event)(f->GetEvent());
+
+		switch(ev)
+		{
+		case evTabControl:
+		case evTabStatus:
+		case evTabMsg:
+		case evTabSetup:
+
+		case evExtrudeAmount:
+		case evExtrudeRate:
+
+		case evAdjustBaudRate:
+		case evAdjustVolume:
+		case evAdjustInfoTimeout:
+		case evAdjustScreensaverTimeout:
+		case evAdjustBabystepAmount:
+		case evAdjustFeedrate:
+		case evAdjustColours:
+		case evAdjustLanguage:
+			break;
+		default:
+			mgr.Press(bp, false);
+			break;
+		}
+	}
+
 	// Process a touch event
 	void ProcessTouch(ButtonPress bp)
 	{
