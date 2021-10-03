@@ -43,7 +43,10 @@ void EraseAndReset()
 
     for(size_t i = 0; i <= IFLASH_NB_OF_PAGES; i++)
     {
-    	wdt_restart(WDT);
+#if SAM4S
+	WDT->WDT_CR = WDT_CR_KEY_PASSWD | WDT_CR_WDRSTT;	// kick the watchdog
+#endif
+        wdt_restart(WDT);
         size_t pageStartAddr = IFLASH_ADDR + i * IFLASH_PAGE_SIZE;
         flash_unlock(pageStartAddr, pageStartAddr + IFLASH_PAGE_SIZE - 1, nullptr, nullptr);
     }
