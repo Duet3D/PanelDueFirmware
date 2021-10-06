@@ -3271,8 +3271,7 @@ namespace UI
 						tool->IterateHeaters([&slot, &tool](OM::ToolHeater*, size_t index)
 						{
 							// only one heater per slot can be displayed
-							dbg("slot %u index %u\n", slot, index);
-							if (slot >= MaxSlots || index > 0)
+							if (slot >= MaxSlots)
 							{
 								return;
 							}
