@@ -3268,7 +3268,7 @@ namespace UI
 				{
 					if (nvData.GetHeaterCombineType() == HeaterCombineType::notCombined)
 					{
-						tool->IterateHeaters([&slot, &tool](OM::ToolHeater*, size_t index)
+						tool->IterateHeaters([&slot, &tool](OM::ToolHeater*, size_t)
 						{
 							// only one heater per slot can be displayed
 							if (slot >= MaxSlots)
