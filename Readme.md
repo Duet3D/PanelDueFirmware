@@ -73,8 +73,17 @@ $ git submodule update --recursive
 
 ## Setup build for specific device
 
+With the default build system
+
 ```
 $ cmake -B build -DDEVICE="5.0i" .
+$ make -C build all -j12
+```
+
+Or with an explicit build system
+
+```
+$ cmake -B build -G "Unix Makefiles" -DDEVICE="5.0i" .
 $ make -C build all -j12
 ```
 
