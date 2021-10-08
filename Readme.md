@@ -6,6 +6,21 @@ running primarily RepRapFirmware though since it simply sends GCodes over
 serial line it can be basically used with every controller that understands the
 sent commands.
 
+## Devices
+
+The following devices are supported:
+
+- v2-4.3
+- v2-5.0
+- v2-7.0
+- v2-7.0c
+- v3-4.3
+- v3-5.0
+- v3-7.0
+- v3-7.0c
+- 5.0i
+- 7.0i
+
 ## Download
 
 Download the latest firmware images at
@@ -58,8 +73,17 @@ $ git submodule update --recursive
 
 ## Setup build for specific device
 
+With the default build system
+
 ```
 $ cmake -B build -DDEVICE="5.0i" .
+$ make -C build all -j12
+```
+
+Or with an explicit build system
+
+```
+$ cmake -B build -G "Unix Makefiles" -DDEVICE="5.0i" .
 $ make -C build all -j12
 ```
 
@@ -84,30 +108,18 @@ $ cmake -B build -DDEVICE="5.0i" -DCROSS_COMPILE="C:/Program\ Files\ (x86)/GNU\ 
 Create build system for Eclipse CDT which can be easily integrated
 
 ```
-$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE=5.0i
+$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE="5.0i"
 ```
 
 To switching the target device re-run cmake with another device setting
 
 ```
-$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE=v3-5.0
+$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE="v3-5.0"
 ```
 
 For further Eclipse CDT integration please visit
 
 https://cmake.org/cmake/help/latest/generator/Eclipse%20CDT4.html
-
-The following devices are supported:
-- v2-4.3
-- v2-5.0
-- v2-7.0
-- v2-7.0c
-- v3-4.3
-- v3-5.0
-- v3-7.0
-- v3-7.0c
-- 5.0i
-- 7.0i
 
 ## Local Configuration
 
@@ -123,9 +135,9 @@ It is possible to configure the local build system permamently instead of passin
 $ bossac -e -w -v -b build/paneldue.bin -R -p /dev/ttyACM1
 ```
 
-# Customization
+## Customization
 
-## Splash Screen
+### Splash Screen
 
 Customising the splash screen (versions 1.20RC4 and later)
 
