@@ -6,6 +6,21 @@ running primarily RepRapFirmware though since it simply sends GCodes over
 serial line it can be basically used with every controller that understands the
 sent commands.
 
+## Devices
+
+The following devices are supported:
+
+- v2-4.3
+- v2-5.0
+- v2-7.0
+- v2-7.0c
+- v3-4.3
+- v3-5.0
+- v3-7.0
+- v3-7.0c
+- 5.0i
+- 7.0i
+
 ## Download
 
 Download the latest firmware images at
@@ -97,18 +112,6 @@ For further Eclipse CDT integration please visit
 
 https://cmake.org/cmake/help/latest/generator/Eclipse%20CDT4.html
 
-The following devices are supported:
-- v2-4.3
-- v2-5.0
-- v2-7.0
-- v2-7.0c
-- v3-4.3
-- v3-5.0
-- v3-7.0
-- v3-7.0c
-- 5.0i
-- 7.0i
-
 ## Local Configuration
 
 It is possible to configure the local build system permamently instead of passing DEVICE and CROSS_COMPILE variable.
@@ -123,9 +126,9 @@ It is possible to configure the local build system permamently instead of passin
 $ bossac -e -w -v -b build/paneldue.bin -R -p /dev/ttyACM1
 ```
 
-# Customization
+## Customization
 
-## Splash Screen
+### Splash Screen
 
 Customising the splash screen (versions 1.20RC4 and later)
 
