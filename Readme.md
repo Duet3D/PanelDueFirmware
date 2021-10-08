@@ -99,13 +99,13 @@ $ cmake -B build -DDEVICE="5.0i" -DCROSS_COMPILE="C:/Program\ Files\ (x86)/GNU\ 
 Create build system for Eclipse CDT which can be easily integrated
 
 ```
-$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE=5.0i
+$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE="5.0i"
 ```
 
 To switching the target device re-run cmake with another device setting
 
 ```
-$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE=v3-5.0
+$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE="v3-5.0"
 ```
 
 For further Eclipse CDT integration please visit
