@@ -659,9 +659,9 @@ const StringTable LanguageTables[] =
 		"Vent. ",							// note space at end
 		"Čas do konce: ",
 		"simul. ",							// note space at end
-		"slicer ",							// note space at end
 		"soubor ",							// note space at end
-		"materiál ",						// note space at end
+		"materiál ",							// note space at end
+		"slicer ",						// note space at end
 		"n/a",
 		"Pozastavit",
 		"Baby step",
@@ -734,8 +734,8 @@ const StringTable LanguageTables[] =
 			"Nahrává firmware",
 			"Výměna nástroje",
 			"Simulace",
-			"Off",
-			"Cancelling"
+			"Vypnuto",
+			"Ruší se"
 		},
 
 		// Theme names
