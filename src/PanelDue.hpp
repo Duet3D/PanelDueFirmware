@@ -35,7 +35,6 @@ extern void LandscapeDisplay(const bool withTouch = true);
 extern void PortraitDisplay(const bool withTouch = true);
 extern void SetBaudRate(uint32_t rate);
 extern void SetBrightness(int percent);
-extern void RestoreBrightness();
 
 extern void CurrentAlertModeClear();
 

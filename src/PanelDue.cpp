@@ -802,22 +802,6 @@ void SetBrightness(int percent)
 	backlight->SetState(BacklightStateNormal);
 }
 
-static void DimBrightness()
-{
-	if ((nvData.displayDimmerType == DisplayDimmerType::always) ||
-	    (nvData.displayDimmerType == DisplayDimmerType::onIdle &&
-	     (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off)))
-	{
-		backlight->SetState(BacklightStateDimmed);
-	}
-}
-
-void RestoreBrightness()
-{
-	dbg("\n");
-	backlight->SetState(BacklightStateNormal);
-}
-
 void CurrentAlertModeClear()
 {
 	currentAlert.mode = 0;
@@ -882,11 +866,12 @@ static void SetStatus(OM::PrinterStatus newStatus)
 	if (newStatus != status)
 	{
 		dbg("printer status %d -> %d\n", status, newStatus);
-		backlight->SetState(BacklightStateNormal);
 		UI::ChangeStatus(status, newStatus);
 
 		status = newStatus;
 		UI::UpdatePrintingFields();
+
+		lastActionTime = SystemTick::GetTickCount();
 	}
 }
 
@@ -1750,7 +1735,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		}
 		else
 		{
-			backlight->SetState(BacklightStateNormal);
 			UI::ProcessSimpleAlert(data);
 		}
 		break;
@@ -2248,28 +2232,41 @@ int main(void)
 
 		// check for new alert
 		if (currentAlert.AllFlagsSet() &&
-		    currentAlert.mode >= 0 &&
+		    !UI::CanDimDisplay() &&
 		    currentAlert.seq != lastAlertSeq)
 		{
+			dbg("message updated last action time\n");
 			lastActionTime = SystemTick::GetTickCount();
 		}
 
 		// dim handling
 		if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
 		{
-			if (UI::CanDimDisplay())
+			if ((nvData.displayDimmerType == DisplayDimmerType::always) ||
+			    (nvData.displayDimmerType == DisplayDimmerType::onIdle &&
+			     (status == OM::PrinterStatus::idle ||
+			      status == OM::PrinterStatus::off)))
 			{
-				DimBrightness();				// it might not actually dim the display, depending on various flags
+				if (backlight->GetState() != BacklightStateDimmed)
+				{
+					dbg("dim brightness\n");
+					backlight->SetState(BacklightStateDimmed);
+				}
 			}
 			else
 			{
-				RestoreBrightness();
+				if (backlight->GetState() != BacklightStateNormal)
+				{
+					dbg("backlight state to normal\n");
+					backlight->SetState(BacklightStateNormal);
+				}
 			}
 		}
 		else
 		{
 			if (backlight->GetState() != BacklightStateNormal)
 			{
+				dbg("backlight state to normal\n");
 				backlight->SetState(BacklightStateNormal);
 			}
 		}
@@ -2299,10 +2296,10 @@ int main(void)
 				UI::OnButtonPressTimeout();
 
 				lastActionTime = SystemTick::GetTickCount();
+				backlight->SetState(BacklightStateNormal);
 
 				if (bp.IsValid())
 				{
-					backlight->SetState(BacklightStateNormal);
 					UI::ProcessTouch(bp);
 					if (!initialized)		// Last button press was E-Stop
 					{
