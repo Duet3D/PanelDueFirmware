@@ -2232,7 +2232,7 @@ int main(void)
 
 		// check for new alert
 		if (currentAlert.AllFlagsSet() &&
-		    !UI::CanDimDisplay() &&
+		    currentAlert.mode >= 0 &&
 		    currentAlert.seq != lastAlertSeq)
 		{
 			dbg("message updated last action time\n");
@@ -2240,26 +2240,17 @@ int main(void)
 		}
 
 		// dim handling
-		if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
+		if (UI::CanDimDisplay() &&
+		    SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout &&
+		    ((nvData.displayDimmerType == DisplayDimmerType::always) ||
+		     (nvData.displayDimmerType == DisplayDimmerType::onIdle &&
+		      (status == OM::PrinterStatus::idle ||
+		       status == OM::PrinterStatus::off))))
 		{
-			if ((nvData.displayDimmerType == DisplayDimmerType::always) ||
-			    (nvData.displayDimmerType == DisplayDimmerType::onIdle &&
-			     (status == OM::PrinterStatus::idle ||
-			      status == OM::PrinterStatus::off)))
+			if (backlight->GetState() != BacklightStateDimmed)
 			{
-				if (backlight->GetState() != BacklightStateDimmed)
-				{
-					dbg("dim brightness\n");
-					backlight->SetState(BacklightStateDimmed);
-				}
-			}
-			else
-			{
-				if (backlight->GetState() != BacklightStateNormal)
-				{
-					dbg("backlight state to normal\n");
-					backlight->SetState(BacklightStateNormal);
-				}
+				dbg("dim brightness\n");
+				backlight->SetState(BacklightStateDimmed);
 			}
 		}
 		else
