@@ -802,22 +802,6 @@ void SetBrightness(int percent)
 	backlight->SetState(BacklightStateNormal);
 }
 
-static void DimBrightness()
-{
-	if ((nvData.displayDimmerType == DisplayDimmerType::always) ||
-	    (nvData.displayDimmerType == DisplayDimmerType::onIdle &&
-	     (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off)))
-	{
-		backlight->SetState(BacklightStateDimmed);
-	}
-}
-
-void RestoreBrightness()
-{
-	dbg("\n");
-	backlight->SetState(BacklightStateNormal);
-}
-
 void CurrentAlertModeClear()
 {
 	currentAlert.mode = 0;
@@ -882,11 +866,12 @@ static void SetStatus(OM::PrinterStatus newStatus)
 	if (newStatus != status)
 	{
 		dbg("printer status %d -> %d\n", status, newStatus);
-		backlight->SetState(BacklightStateNormal);
 		UI::ChangeStatus(status, newStatus);
 
 		status = newStatus;
 		UI::UpdatePrintingFields();
+
+		lastActionTime = SystemTick::GetTickCount();
 	}
 }
 
@@ -1057,11 +1042,11 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	// no matching key found
 	if (!searchResult)
 	{
-		dbg("no matching key found for %s\n", id.c_str());
+		//dbg("no matching key found for %s\n", id.c_str());
 		return;
 	}
 	const ReceivedDataEvent rde = searchResult->val;
-	dbg("event: %s(%d) rtype %d data '%s'\n", searchResult->key, searchResult->val, currentResponseType, data);
+	//dbg("event: %s(%d) rtype %d data '%s'\n", searchResult->key, searchResult->val, currentResponseType, data);
 	switch (rde)
 	{
 	// M409 section
@@ -1750,7 +1735,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		}
 		else
 		{
-			backlight->SetState(BacklightStateNormal);
 			UI::ProcessSimpleAlert(data);
 		}
 		break;
@@ -2251,25 +2235,29 @@ int main(void)
 		    currentAlert.mode >= 0 &&
 		    currentAlert.seq != lastAlertSeq)
 		{
+			dbg("message updated last action time\n");
 			lastActionTime = SystemTick::GetTickCount();
 		}
 
 		// dim handling
-		if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
+		if (UI::CanDimDisplay() &&
+		    SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout &&
+		    ((nvData.displayDimmerType == DisplayDimmerType::always) ||
+		     (nvData.displayDimmerType == DisplayDimmerType::onIdle &&
+		      (status == OM::PrinterStatus::idle ||
+		       status == OM::PrinterStatus::off))))
 		{
-			if (UI::CanDimDisplay())
+			if (backlight->GetState() != BacklightStateDimmed)
 			{
-				DimBrightness();				// it might not actually dim the display, depending on various flags
-			}
-			else
-			{
-				RestoreBrightness();
+				dbg("dim brightness\n");
+				backlight->SetState(BacklightStateDimmed);
 			}
 		}
 		else
 		{
 			if (backlight->GetState() != BacklightStateNormal)
 			{
+				dbg("backlight state to normal\n");
 				backlight->SetState(BacklightStateNormal);
 			}
 		}
@@ -2299,10 +2287,10 @@ int main(void)
 				UI::OnButtonPressTimeout();
 
 				lastActionTime = SystemTick::GetTickCount();
+				backlight->SetState(BacklightStateNormal);
 
 				if (bp.IsValid())
 				{
-					backlight->SetState(BacklightStateNormal);
 					UI::ProcessTouch(bp);
 					if (!initialized)		// Last button press was E-Stop
 					{

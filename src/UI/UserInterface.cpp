@@ -2006,7 +2006,6 @@ namespace UI
 			&& (isErrorMessage || infoTimeout != 0)
 		   )
 		{
-			RestoreBrightness();
 			if (isLandscape)
 			{
 				alertPopup->Set(strings->response, text, 1, 0);
