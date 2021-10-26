@@ -406,7 +406,7 @@ const StringTable LanguageTables[] =
 		// Print page
 		"Extrudeuse" THIN_SPACE "%",
 		"Vitesse ",								// note space at end
-		"Ventilo ",								// note space at end. "Ventilateur 0%" was too long to fit.
+		"Ventil. ",								// note space at end. "Ventilateur 0%" was too long to fit.
 		"Temps Restant: ",
 		"Simul. ",								// note space at end
 		"Fichier ",								// note space at end
@@ -426,7 +426,7 @@ const StringTable LanguageTables[] =
 		"Calibrer l'écran",
 		"Affichage en négatif",
 		"Inverser affichage",
-		"Théme",
+		"Thème",
 		"Luminosité -",
 		"Luminosité +",
 		"Sauver paramêtres",
@@ -442,7 +442,7 @@ const StringTable LanguageTables[] =
 		"Confirmer la suppression du fichier",
 		"Etes-vous sûre?",
 		"Appuyer sur le point",
-		"Mouvement de la  tête",
+		"Mouvement de la tête",
 		"Quantité de matière extrudée (mm)",
 		"Vitesse (mm/s)",
 		"Extruder",
@@ -473,7 +473,7 @@ const StringTable LanguageTables[] =
 		// Printer status strings
 		{
 			"Conn. en cours",					// "Connexion en cours" was too long
-			"Au repos",
+			"En attente",
 			"Impression",
 			"Arrêté",
 			"Démarrage",
@@ -481,7 +481,7 @@ const StringTable LanguageTables[] =
 			"Occupé",
 			"Pause",
 			"Reprendre",
-			"Updating",
+			"Update en cours",
 			"Chgt d'outil",
 			"Simul. en cours",
 			"Off",
