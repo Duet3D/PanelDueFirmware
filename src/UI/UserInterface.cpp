@@ -1185,9 +1185,9 @@ namespace UI
 		mgr.Show(resumeButton,		false);
 		mgr.Show(cancelButton,		false);
 		mgr.Show(pauseButton,		false);
-		mgr.Show(babystepButton,	false);
 		mgr.Show(printProgressBar,	false);
 
+		mgr.Show(babystepButton,	true);
 		mgr.Show(reprintButton,		lastJobFileNameAvailable);
 		mgr.Show(filesButton,		true);
 	}
