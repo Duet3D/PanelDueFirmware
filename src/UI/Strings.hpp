@@ -580,7 +580,7 @@ const StringTable LanguageTables[] =
 		"Respuesta",
 
 		// File popup
-		"Archivos en la tarjeta ",			// note the space on the end
+		"Archivos SD ",			// note the space on the end
 		"Macros",
 		"Error ",							// note the space at the end
 		" accediendo a la tarjeta SD",		// note the space at the start
