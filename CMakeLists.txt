@@ -185,6 +185,7 @@ target_sources( paneldue.elf PRIVATE
 	src/UI/ColourSchemes.cpp
 	src/UI/Display.cpp
 	src/UI/MessageLog.cpp
+	src/UI/Popup.cpp
 	src/UI/UserInterface.cpp
 )
 
