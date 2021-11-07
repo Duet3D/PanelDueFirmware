@@ -31,6 +31,7 @@ enum Event : uint8_t
 	// Control functions
 	evMovePopup, evExtrudePopup, evFan, evListMacros,
 	evMoveAxis,
+	evMoveSelectAxis,
 	evExtrudeAmount, evExtrudeRate, evExtrude, evRetract,
 	evHomeAxis,
 

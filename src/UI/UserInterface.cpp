@@ -7,28 +7,33 @@
 
 #include <UI/UserInterface.hpp>
 
-#include <UI/Popup.hpp>
-#include <UI/UserInterfaceConstants.hpp>
 #include "Configuration.hpp"
-#include "ObjectModel/PrinterStatus.hpp"
-#include "PanelDue.hpp"
-#include "FlashData.hpp"
 #include "FileManager.hpp"
-#include <UI/MessageLog.hpp>
-#include "Icons/Icons.hpp"
-#include "Library/Misc.hpp"
+#include "FlashData.hpp"
+
 #include "Hardware/Buzzer.hpp"
 #include "Hardware/Reset.hpp"
 #include "Hardware/SerialIo.hpp"
 #include "Hardware/SysTick.hpp"
-#include <UI/Strings.hpp>
+
+#include "Icons/Icons.hpp"
+#include "Library/Misc.hpp"
+#include "ObjectModel/PrinterStatus.hpp"
+#include "PanelDue.hpp"
 #include "Version.hpp"
-#include <ObjectModel/Axis.hpp>
-#include <ObjectModel/Utils.hpp>
+
 #include <General/SafeVsnprintf.h>
 #include <General/SimpleMath.h>
 #include <General/String.h>
 #include <General/StringFunctions.h>
+
+#include <ObjectModel/Axis.hpp>
+#include <ObjectModel/Utils.hpp>
+
+#include <UI/MessageLog.hpp>
+#include <UI/Popup.hpp>
+#include <UI/Strings.hpp>
+#include <UI/UserInterfaceConstants.hpp>
 
 MainWindow mgr;
 
@@ -2161,6 +2166,8 @@ namespace UI
 		case evExtrudeAmount:
 		case evExtrudeRate:
 
+		case evMoveSelectAxis:
+
 		case evAdjustBaudRate:
 		case evAdjustVolume:
 		case evAdjustInfoTimeout:
@@ -2440,6 +2447,11 @@ namespace UI
 				mgr.SetPopup(movePopup, AutoPlace, AutoPlace);
 				break;
 
+			case evMoveSelectAxis:
+				{
+					alertPopup->ChangeLetter(bp.GetIParam());
+				}
+				break;
 			case evMoveAxis:
 				{
 					TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(bp.GetButton());

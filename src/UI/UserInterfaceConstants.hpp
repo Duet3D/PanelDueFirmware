@@ -194,7 +194,7 @@ const PixelNumber minControlPageMacroButtonsWidth = (tempButtonWidth * 3)/2;
 const PixelNumber maxControlPageMacroButtonsWidth = DisplayX/2 - 2 * margin;
 
 const PixelNumber alertPopupWidth = fullPopupWidth - 6 * margin;
-const PixelNumber alertPopupHeight = 2 * popupTopMargin + 6 * rowTextHeight + 2 * buttonHeight + moveButtonRowSpacing;
+const PixelNumber alertPopupHeight = 2 * popupTopMargin + 6 * rowTextHeight + 3 * buttonHeight + 2 * moveButtonRowSpacing;
 
 const PixelNumber babystepPopupWidth = (2 * fullPopupWidth)/3;
 const PixelNumber babystepPopupHeight = 3 * rowHeight + 2 * popupTopMargin;
