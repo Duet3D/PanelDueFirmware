@@ -123,6 +123,8 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	constexpr PixelNumber totalUnits = (numButtons * buttonWidthUnits) + ((numButtons - 1) * buttonSpacingUnits);
 	constexpr PixelNumber unitWidth = (alertPopupWidth - 2 * popupSideMargin)/totalUnits;
 	constexpr PixelNumber buttonWidth = buttonWidthUnits * unitWidth;
+	constexpr PixelNumber buttonAxis = 72;
+	constexpr PixelNumber buttonAxisWidth = 52;
 	constexpr PixelNumber buttonStep = (buttonWidthUnits + buttonSpacingUnits) * unitWidth;
 	constexpr PixelNumber hOffset = popupSideMargin + (alertPopupWidth - 2 * popupSideMargin - totalUnits * unitWidth)/2;
 
@@ -133,7 +135,7 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 		struct AxisMap *axis = &axisMap[i];
 		TextButton *button = new TextButton(
 				popupTopMargin + 5 * rowTextHeight,
-				hOffset + i * buttonStep, buttonWidth,
+				hOffset + i * buttonAxis, buttonAxisWidth,
 				axis->letter, evMoveSelectAxis, i);
 		assert(button);
 
