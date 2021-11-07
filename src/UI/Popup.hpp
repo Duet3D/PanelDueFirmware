@@ -28,12 +28,17 @@ class AlertPopup : public StandardPopupWindow
 public:
 	AlertPopup(const ColourScheme& colours);
 	void Set(const char *title, const char *text, int32_t mode, uint32_t controls);
+	void ChangeLetter(const size_t index);
 
 private:
-	TextButton *okButton, *cancelButton;
-	TextButtonForAxis *zUpCourseButton, *zUpMedButton, *zUpFineButton, *zDownCourseButton, *zDownMedButton, *zDownFineButton;
-	String<alertTextLength/3> alertText1, alertText2, alertText3;
+	TextButtonForAxis *axis[3];
+	TextButtonForAxis *steps[6];
+
 	String<alertTitleLength> alertTitle;
+	String<alertTextLength/3> alertText1, alertText2, alertText3;
+
+	TextButton *okButton;
+	TextButton *cancelButton;
 };
 
 #endif /* ifndef SRC_UI_POPUP_HPP_ */

@@ -2166,6 +2166,8 @@ namespace UI
 		case evExtrudeAmount:
 		case evExtrudeRate:
 
+		case evMoveSelectAxis:
+
 		case evAdjustBaudRate:
 		case evAdjustVolume:
 		case evAdjustInfoTimeout:
@@ -2445,6 +2447,11 @@ namespace UI
 				mgr.SetPopup(movePopup, AutoPlace, AutoPlace);
 				break;
 
+			case evMoveSelectAxis:
+				{
+					alertPopup->ChangeLetter(bp.GetIParam());
+				}
+				break;
 			case evMoveAxis:
 				{
 					TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(bp.GetButton());
