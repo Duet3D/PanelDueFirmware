@@ -86,6 +86,14 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 			ChangeLetter(i);
 		}
 	}
+
+	for (size_t i = 0; i < ARRAY_SIZE(dirMap); i++)
+	{
+		struct DirMap *dir = &dirMap[i];
+
+		assert(dir->button);
+		dir->button->Show(controls ? true : false);
+	}
 }
 
 void AlertPopup::ChangeLetter(const size_t index)
