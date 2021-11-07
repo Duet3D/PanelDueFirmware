@@ -31,9 +31,6 @@ public:
 	void ChangeLetter(const size_t index);
 
 private:
-	TextButtonForAxis *axis[3];
-	TextButtonForAxis *steps[6];
-
 	String<alertTitleLength> alertTitle;
 	String<alertTextLength/3> alertText1, alertText2, alertText3;
 
