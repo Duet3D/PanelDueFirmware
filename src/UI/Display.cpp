@@ -778,12 +778,12 @@ size_t TextButton::PrintText(size_t offset) const
 }
 
 TextButtonWithLabel::TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param, const char* _ecv_array null label)
-	: TextButton(py, px, pw, pt, e, param), label(label)
+	: TextButton(py - 2, px, pw, pt, e, param), label(label)
 {
 }
 
 TextButtonWithLabel::TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param, const char* _ecv_array null label)
-	: TextButton(py, px, pw, pt, e, param), label(label)
+	: TextButton(py - 2, px, pw, pt, e, param), label(label)
 {
 }
 
