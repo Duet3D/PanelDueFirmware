@@ -36,6 +36,36 @@ private:
 
 	TextButton *okButton;
 	TextButton *cancelButton;
+
+	struct AxisMap {
+		const char *letter;
+		TextButton *button;
+	} axisMap[10] = {
+		{ .letter = "X", .button = nullptr },
+		{ .letter = "Y", .button = nullptr },
+		{ .letter = "Z", .button = nullptr },
+		{ .letter = "U", .button = nullptr },
+		{ .letter = "V", .button = nullptr },
+		{ .letter = "W", .button = nullptr },
+		{ .letter = "A", .button = nullptr },
+		{ .letter = "B", .button = nullptr },
+		{ .letter = "C", .button = nullptr },
+		{ .letter = "D", .button = nullptr },
+	};
+
+	struct DirMap {
+		const char *text;
+		const char *param;
+		TextButtonForAxis *button;
+	} dirMap[6] {
+		{ .text = LESS_ARROW "2.0", .param = "-2.0", .button = nullptr },
+		{ .text = LESS_ARROW "0.2", .param = "-0.2", .button = nullptr },
+		{ .text = LESS_ARROW "0.02", .param = "-0.02", .button = nullptr },
+		{ .text = MORE_ARROW "0.02", .param = "0.02", .button = nullptr },
+		{ .text = MORE_ARROW "0.2", .param = "0.2", .button = nullptr },
+		{ .text = MORE_ARROW "2.0", .param = "2.0", .button = nullptr },
+};
+
 };
 
 #endif /* ifndef SRC_UI_POPUP_HPP_ */
