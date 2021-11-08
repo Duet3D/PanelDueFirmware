@@ -20,34 +20,6 @@ StandardPopupWindow::StandardPopupWindow(PixelNumber ph, PixelNumber pw, Colour 
 	AddField(closeButton = new IconButton(popupTopMargin, pw - (closeButtonWidth + popupSideMargin), closeButtonWidth, IconCancel, evCancel));
 }
 
-static struct AxisMap {
-	const char *letter;
-	TextButton *button;
-} axisMap[10] = {
-	{ .letter = "X", .button = nullptr },
-	{ .letter = "Y", .button = nullptr },
-	{ .letter = "Z", .button = nullptr },
-	{ .letter = "U", .button = nullptr },
-	{ .letter = "V", .button = nullptr },
-	{ .letter = "W", .button = nullptr },
-	{ .letter = "A", .button = nullptr },
-	{ .letter = "B", .button = nullptr },
-	{ .letter = "C", .button = nullptr },
-	{ .letter = "D", .button = nullptr },
-};
-
-static struct DirMap {
-	const char *text;
-	const char *param;
-	TextButtonForAxis *button;
-} dirMap[6] {
-	{ .text = LESS_ARROW "2.0", .param = "-2.0", .button = nullptr },
-	{ .text = LESS_ARROW "0.2", .param = "-0.2", .button = nullptr },
-	{ .text = LESS_ARROW "0.02", .param = "-0.02", .button = nullptr },
-	{ .text = MORE_ARROW "0.02", .param = "0.02", .button = nullptr },
-	{ .text = MORE_ARROW "0.2", .param = "0.2", .button = nullptr },
-	{ .text = MORE_ARROW "2.0", .param = "2.0", .button = nullptr },
-};
 
 void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t controls)
 {

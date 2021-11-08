@@ -68,7 +68,6 @@ constexpr uint32_t defaultPrinterPollInterval = 500;	// poll interval in millise
 constexpr uint32_t printerResponseTimeout = 2000;	// shortest time after a response that we send another poll (gives printer time to catch up)
 
 constexpr uint32_t slowPrinterPollInterval = 4000;		// poll interval in milliseconds when screensaver active
-const uint32_t printerPollTimeout = 2000;			// poll timeout in milliseconds
 
 const uint32_t touchBeepLength = 20;				// beep length in ms
 const uint32_t touchBeepFrequency = 4500;			// beep frequency in Hz. Resonant frequency of the piezo sounder is 4.5kHz.
@@ -882,7 +881,8 @@ static void Reconnect()
 
 	initialized = false;
 	lastPollTime = 0;
-	lastResponseTime = 0;
+	lastResponseTime = SystemTick::GetTickCount();
+
 	lastOutOfBufferResponse = 0;
 
 	SetStatus(OM::PrinterStatus::connecting);
@@ -2350,7 +2350,12 @@ int main(void)
 
 		if (!UI::IsSetupTab())
 		{
-			if (lastResponseTime >= lastPollTime &&
+
+			if (now > lastResponseTime + 3 * (printerPollInterval + printerResponseTimeout))
+			{
+				Reconnect();
+			}
+			else if (lastResponseTime >= lastPollTime &&
 			    (now > lastPollTime + printerPollInterval ||
 			     !initialized))
 			{
