@@ -704,7 +704,7 @@ int GetAxisIndex(const char* axisLetter)
 // The M23 and M30 commands don't work if we send the full path, because "0:/gcodes/" gets prepended regardless.
 const char * _ecv_array StripPrefix(const char * _ecv_array dir)
 {
-	if (!GetFirmwareFeatures().IsBitSet(noGcodesFolder))			// if running RepRapFirmware
+	if (GetFirmwareFeatures().IsBitSet(noGcodesFolder))			// if running RepRapFirmware
 	{
 		const size_t len = strlen(dir);
 		if (len >= 8 && memcmp(dir, "/gcodes/", 8) == 0)
