@@ -2604,6 +2604,11 @@ namespace UI
 #ifdef SUPPORT_ENCODER
 	void HandleEncoderChange(const int change)
 	{
+		if (GetScreensaverActive())
+		{
+			// nothing to do
+			return;
+		}
 		auto status = GetStatus();
 
 		// In some cases we just ignore user input
