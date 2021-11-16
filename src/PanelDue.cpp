@@ -951,6 +951,11 @@ void DeactivateScreensaver()
 	}
 }
 
+bool GetScreensaverActive()
+{
+	return screensaverActive;
+}
+
 extern void RestoreBrightness()
 {
 	Buzzer::SetBacklight(nvData.brightness);

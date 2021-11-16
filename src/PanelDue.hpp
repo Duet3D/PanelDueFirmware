@@ -58,6 +58,7 @@ extern void RestoreBrightness();
 extern void SetVolume(uint8_t newVolume);
 extern void SetInfoTimeout(uint8_t newInfoTimeout);
 extern void SetScreensaverTimeout(uint32_t screensaverTimeout);
+extern bool GetScreensaverActive();
 extern bool SetColourScheme(uint8_t newColours);
 extern bool SetLanguage(uint8_t newLanguage);
 extern uint32_t GetBaudRate();
