@@ -78,6 +78,7 @@ const uint32_t errorBeepFrequency = 2250;
 const uint32_t normalTouchDelay = 250;				// how long we ignore new touches for after pressing Set
 const uint32_t repeatTouchDelay = 100;				// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
 
+const int parserMinErrors = 3;
 
 static uint32_t lastActionTime = 0;
 
@@ -878,6 +879,7 @@ static void SetStatus(OM::PrinterStatus newStatus)
 static void Reconnect()
 {
 	dbg("Reconnect\n");
+	MessageLog::AppendMessageF("Info: connecting...");
 
 	initialized = false;
 	lastPollTime = 0;
@@ -943,7 +945,7 @@ static void StartReceivedMessage();
 static void EndReceivedMessage();
 static void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[]);
 static void ProcessArrayEnd(const char id[], const size_t indices[]);
-static void ParserErrorEncountered(int currentState, const char*);
+static void ParserErrorEncountered(int currentState, const char*, int errors);
 
 static struct SerialIo::SerialIoCbs serial_cbs = {
 	.StartReceivedMessage = StartReceivedMessage,
@@ -1954,9 +1956,14 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 }
 
-static void ParserErrorEncountered(int currentState, const char *id)
+static void ParserErrorEncountered(int currentState, const char*, int errors)
 {
-	MessageLog::AppendMessageF("Warning: failed to parse response %s in state %d", id, currentState);
+	(void)currentState;
+
+	if (errors > parserMinErrors)
+	{
+		MessageLog::AppendMessageF("Warning: received %d malformed responses.", errors);
+	}
 	if (currentRespSeq == nullptr)
 	{
 		return;
