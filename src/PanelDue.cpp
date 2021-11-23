@@ -1962,7 +1962,7 @@ static void ParserErrorEncountered(int currentState, const char*, int errors)
 
 	if (errors > parserMinErrors)
 	{
-		MessageLog::AppendMessageF("Info: received %d malformed responses.", errors);
+		MessageLog::AppendMessageF("Warning: received %d malformed responses.", errors);
 	}
 	if (currentRespSeq == nullptr)
 	{
