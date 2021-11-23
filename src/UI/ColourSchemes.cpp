@@ -13,6 +13,7 @@
 const Colour
 	grey = UTFT::fromRGB(128, 128, 128),
 	darkGrey = UTFT::fromRGB(60, 60, 60),
+	lightGrey = UTFT::fromRGB(100, 100, 100),
 	midGrey = UTFT::fromRGB(80, 80, 80),
 	veryDarkGrey = UTFT::fromRGB(40, 40, 40),
 	red = UTFT::fromRGB(255,0,0),
@@ -153,7 +154,7 @@ const ColourScheme colourSchemes[] =
 		.errorTextColour = white,
 		.errorBackColour = veryDarkGrey,
 
-		.popupBorderColour = darkGrey,
+		.popupBorderColour = lightGrey,
 		.popupBackColour = darkGrey,
 		.popupTextColour = white,
 		.popupButtonTextColour = white,
