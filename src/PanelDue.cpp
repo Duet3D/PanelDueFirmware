@@ -879,7 +879,6 @@ static void SetStatus(OM::PrinterStatus newStatus)
 static void Reconnect()
 {
 	dbg("Reconnect\n");
-	MessageLog::AppendMessageF("Info: connecting...");
 
 	initialized = false;
 	lastPollTime = 0;
@@ -2172,6 +2171,9 @@ int main(void)
 	lastActionTime = SystemTick::GetTickCount();
 
 	dbg("basic init DONE\n");
+
+
+	MessageLog::AppendMessage("Info: successfully initialized.");
 
 	struct TouchEvent {
 		uint32_t x;

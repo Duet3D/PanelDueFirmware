@@ -1372,8 +1372,28 @@ namespace UI
 	static uint32_t jobWarmUpDuration;
 	static String<50> timesLeftText;
 
+	static const char *GetStatusString(OM::PrinterStatus status)
+	{
+		unsigned int index = (unsigned int)status;
+		if (index >= ARRAY_SIZE(strings->statusValues) || !strings->statusValues[index])
+		{
+			return "unknown status";
+		}
+
+		return strings->statusValues[index];
+	}
+
 	void ChangeStatus(OM::PrinterStatus oldStatus, OM::PrinterStatus newStatus)
 	{
+
+		if (oldStatus != newStatus)
+		{
+			const char *fromStatus = GetStatusString(oldStatus);
+			const char *toStatus = GetStatusString(newStatus);
+
+			MessageLog::AppendMessageF("Info: status changed from %s to %s.", fromStatus, toStatus);
+		}
+
 		switch (newStatus)
 		{
 		case OM::PrinterStatus::printing:
