@@ -78,7 +78,7 @@ const uint32_t errorBeepFrequency = 2250;
 const uint32_t normalTouchDelay = 250;				// how long we ignore new touches for after pressing Set
 const uint32_t repeatTouchDelay = 100;				// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
 
-const int parserMinErrors = 3;
+const int parserMinErrors = 2;
 
 static uint32_t lastActionTime = 0;
 
