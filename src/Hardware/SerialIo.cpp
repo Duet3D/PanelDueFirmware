@@ -37,6 +37,7 @@ namespace SerialIo
 	static unsigned int lineNumber = 0;
 
 	static struct SerialIoCbs *cbs = nullptr;
+	static int serialIoErrors = 0;
 
 	// Translation tables for combining characters.
 	// The first character in each pair is the character that the combining mark is applied to.
@@ -470,6 +471,8 @@ namespace SerialIo
 				RemoveLastId();
 				if (fieldId.strlen() == 0)
 				{
+					serialIoErrors = 0;
+
 					if (cbs && cbs->EndReceivedMessage)
 					{
 						cbs->EndReceivedMessage();
@@ -502,9 +505,11 @@ namespace SerialIo
 				{
 					dbg("ParserErrorEncountered");
 
+					serialIoErrors++;
+
 					if (cbs && cbs->ParserErrorEncountered)
 					{
-						cbs->ParserErrorEncountered(lastState, fieldId.c_str()); // Notify the consumer that we ran into an error
+						cbs->ParserErrorEncountered(lastState, fieldId.c_str(), serialIoErrors); // Notify the consumer that we ran into an error
 						lastState = jsBegin;
 					}
 				}
@@ -542,6 +547,8 @@ namespace SerialIo
 						RemoveLastId();
 						if (fieldId.strlen() == 0)
 						{
+							serialIoErrors = 0;
+
 							if (cbs && cbs->EndReceivedMessage)
 							{
 								cbs->EndReceivedMessage();

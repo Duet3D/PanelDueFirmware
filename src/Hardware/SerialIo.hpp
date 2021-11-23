@@ -25,7 +25,7 @@ namespace SerialIo
 		void (*EndReceivedMessage)(void);
 		void (*ProcessReceivedValue)(StringRef id, const char val[], const size_t indices[]);
 		void (*ProcessArrayEnd)(const char id[], const size_t indices[]);
-		void (*ParserErrorEncountered)(int currentState, const char* id);
+		void (*ParserErrorEncountered)(int currentState, const char* id, int errors);
 	};
 
 	void Init(uint32_t baudRate, struct SerialIoCbs *callbacks);
