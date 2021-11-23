@@ -1957,7 +1957,7 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 
 static void ParserErrorEncountered(int currentState, const char *id)
 {
-	MessageLog::AppendMessageF("Warning: failed to parse response %s in state %d", id, currentState);
+	MessageLog::AppendMessageF("Info: received malformed response.");
 	if (currentRespSeq == nullptr)
 	{
 		return;
