@@ -878,6 +878,7 @@ static void SetStatus(OM::PrinterStatus newStatus)
 static void Reconnect()
 {
 	dbg("Reconnect\n");
+	MessageLog::AppendMessageF("Info: connecting...");
 
 	initialized = false;
 	lastPollTime = 0;
