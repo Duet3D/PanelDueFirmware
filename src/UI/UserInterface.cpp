@@ -2864,9 +2864,12 @@ namespace UI
 					axis->slotP = slotP;
 					jobTabAxisPos[slotP]->SetLabel(letter);
 
-					// Update axis letter to be sent for homing commands
-					homeButtonsP[slotP]->SetEvent(homeButtonsP[slotP]->GetEvent(), letter);
-					homeButtonsP[slotP]->SetColours(colours->buttonTextColour, (axis->homed) ? colours->homedButtonBackColour : colours->notHomedButtonBackColour);
+					if (homeButtonsP[slotP])
+					{
+						// Update axis letter to be sent for homing commands
+						homeButtonsP[slotP]->SetEvent(homeButtonsP[slotP]->GetEvent(), letter);
+						homeButtonsP[slotP]->SetColours(colours->buttonTextColour, (axis->homed) ? colours->homedButtonBackColour : colours->notHomedButtonBackColour);
+					}
 
 					ShowAxisP(slotP, slotP < MaxDisplayableAxesP, axis->letter);
 					++slotP;
