@@ -4,6 +4,11 @@ cmake_minimum_required( VERSION 3.11 )
 
 include( "env.cmake" OPTIONAL )
 
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+endif()
+
 set( CMAKE_TOOLCHAIN_FILE "toolchains/arm-none-eabi.cmake" )
 
 # skip compiler build tests
