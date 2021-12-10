@@ -44,18 +44,18 @@ https://duet3d.dozuki.com/Wiki/PanelDue_Firmware_update
 - bossa
 
 ### Ubuntu
-```
-apt install gcc-arm-none-eabi
+```sh
+$ apt install gcc-arm-none-eabi
 ```
 
 ### Arch
-```
-pacman -S arm-none-abi-gcc arm-none-eabi-newlib
+```sh
+$ pacman -S arm-none-abi-gcc arm-none-eabi-newlib
 ```
 
 ### Mac OS
-```
-brew install gcc-arm-embedded
+```sh
+$ brew install gcc-arm-embedded
 ```
 
 ### Windows
@@ -64,7 +64,7 @@ Download and install latest toolchain from https://developer.arm.com/tools-and-s
 
 ## Setup repository
 
-```
+```sh
 $ git clone git@github.com:Duet3D/PanelDueFirmware.git
 $ cd PanelDueFirmware
 $ git submodule init
@@ -75,21 +75,21 @@ $ git submodule update --recursive
 
 With the default build system
 
-```
+```sh
 $ cmake -B build -DDEVICE="5.0i" .
 $ make -C build all -j12
 ```
 
 Or with an explicit build system
 
-```
+```sh
 $ cmake -B build -G "Unix Makefiles" -DDEVICE="5.0i" .
 $ make -C build all -j12
 ```
 
 The default compiler can be easily overwritten by setting the cross compiler prefix.
 
-```
+```sh
 $ cmake -B build -DDEVICE="5.0i" -DCROSS_COMPILE="/path/to/cross/compiler/arm-none-eabi-" .
 $ make -C build all -j12
 ```
@@ -101,19 +101,19 @@ When passing a path name use
 - slashes instead of backslashes to separate directories and
 - use backslashes to escape whitespaces.
 
-```
+```sh
 $ cmake -B build -DDEVICE="5.0i" -DCROSS_COMPILE="C:/Program\ Files\ (x86)/GNU\ Tools\ ARM\ Embedded/8\ 2018-q4-major/bin/arm-none-eabi-" .
 ```
 
 Create build system for Eclipse CDT which can be easily integrated
 
-```
+```sh
 $ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE="5.0i"
 ```
 
 To switching the target device re-run cmake with another device setting
 
-```
+```sh
 $ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE="v3-5.0"
 ```
 
@@ -131,7 +131,7 @@ It is possible to configure the local build system permamently instead of passin
 
 ## Flash a firmware image to a device
 
-```
+```sh
 $ bossac -e -w -v -b build/paneldue.bin -R -p /dev/ttyACM1
 ```
 
@@ -150,8 +150,8 @@ If you wish to display a custom splash screen when PanelDue is powered up, you n
 There is a tool included in `Tools/gobmp2c/(linux|macos|win)` containing pre-compiled binaries for the three major operating systems.
 It's a command-line tool and can be used like follows:
 
-```
-$ ./bmp2c --help
+```sh
+$ Tools/gobmp2c/linux/bmp2c --help
 Usage of ./bmp2c:
   -binary
         Binary output
@@ -162,8 +162,8 @@ Usage of ./bmp2c:
 Use the `-binary` parameter to create splash screen and append it like this to the compiled firmware binary and provide the name of
 the input file as the last parameter e.g.
 
-```
-bmp2c -binary -outfile mysplashscreen.bin mysplashscreen.bmp
+```sh
+$ Tools/gobmp2c/linux/bmp2c -binary -outfile mysplashscreen.bin mysplashscreen.bmp
 ```
 
 *On Windows:*
@@ -198,8 +198,8 @@ converted into a paletted representation. The palette contains 12 different colo
 
 The tool can convert multiple input files into one output file. To convert icons into a paletted representation use
 
-```
-bmp2c -outfile Icons.hpp icon1.bmp [icon2.bmp ...]
+```sh
+$ Tools/gobmp2c/linux/bmp2c -outfile Icons.hpp icon1.bmp [icon2.bmp ...]
 ```
 
 It will append to the output file.
