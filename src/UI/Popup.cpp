@@ -59,7 +59,6 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 			continue;
 		}
 
-		dbg("%04x %d %d %s\n", controls, show, i, omAxis ? omAxis->letter : "null");
 		axis->SetText(omAxis->letter);
 		axis->Show(show);
 
