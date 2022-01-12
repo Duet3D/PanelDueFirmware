@@ -37,20 +37,17 @@ private:
 	TextButton *okButton;
 	TextButton *cancelButton;
 
-	struct AxisMap {
-		const char *letter;
-		TextButton *button;
-	} axisMap[10] = {
-		{ .letter = "X", .button = nullptr },
-		{ .letter = "Y", .button = nullptr },
-		{ .letter = "Z", .button = nullptr },
-		{ .letter = "U", .button = nullptr },
-		{ .letter = "V", .button = nullptr },
-		{ .letter = "W", .button = nullptr },
-		{ .letter = "A", .button = nullptr },
-		{ .letter = "B", .button = nullptr },
-		{ .letter = "C", .button = nullptr },
-		{ .letter = "D", .button = nullptr },
+	TextButton *axisMap[10] = {
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
 	};
 
 	struct DirMap {
