@@ -46,20 +46,22 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 	bool selected = false;
 	for (size_t i = 0; i < ARRAY_SIZE(axisMap); i++)
 	{
-		struct AxisMap *axis = &axisMap[i];
+		TextButton *axis = axisMap[i];
 
 		bool show = controls & (1u << i);
 
-		assert(axis->button);
+		assert(axis);
 		OM::Axis *omAxis = OM::GetAxis(i);
+
 		if (!omAxis)
 		{
-			axis->button->Show(false);
+			axis->Show(false);
 			continue;
 		}
 
-		axis->button->SetText(omAxis->letter);
-		axis->button->Show(show);
+		dbg("%04x %d %d %s\n", controls, show, i, omAxis ? omAxis->letter : "null");
+		axis->SetText(omAxis->letter);
+		axis->Show(show);
 
 		if (show && !selected)
 		{
@@ -126,15 +128,14 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 
 	for (size_t i = 0; i < ARRAY_SIZE(axisMap); i++)
 	{
-		struct AxisMap *axis = &axisMap[i];
 		TextButton *button = new TextButton(
 				popupTopMargin + 5 * rowTextHeight,
 				hOffset + i * buttonAxis, buttonAxisWidth,
-				axis->letter, evMoveSelectAxis, i);
+				"none", evMoveSelectAxis, i);
 		assert(button);
 
 		AddField(button);
-		axis->button = button;
+		axisMap[i] = button;
 	}
 
 	for (size_t i = 0; i < ARRAY_SIZE(dirMap); i++)
