@@ -165,6 +165,19 @@ static bool initialized = false;
 static float pollIntervalMultiplier = 1.0;
 static uint32_t printerPollInterval = defaultPrinterPollInterval;
 
+static struct Thumbnail
+{
+	uint16_t width;
+	uint16_t height;
+	uint16_t offset;
+	uint16_t size;
+	enum ImageFormat {
+		Invalid = 0,
+		Qoi,
+	} imageFormat;
+} thumbnail;
+
+
 static const ColourScheme *colours = &colourSchemes[0];
 
 static Alert currentAlert;
@@ -201,6 +214,11 @@ enum ReceivedDataEvent
 	rcvM36PrintTime,
 	rcvM36SimulatedTime,
 	rcvM36Size,
+	rcvM36ThumbnailsFormat,
+	rcvM36ThumbnailsHeight,
+	rcvM36ThumbnailsOffset,
+	rcvM36ThumbnailsSize,
+	rcvM36ThumbnailsWidth,
 
 	// Keys for M409 response
 	rcvKey,
@@ -446,6 +464,11 @@ static FieldTableEntry fieldTable[] =
 	{ rcvM36PrintTime,					"printTime" },
 	{ rcvM36SimulatedTime,				"simulatedTime" },
 	{ rcvM36Size,						"size" },
+	{ rcvM36ThumbnailsFormat,			"thumbnails^:format" },
+	{ rcvM36ThumbnailsHeight,			"thumbnails^:height" },
+	{ rcvM36ThumbnailsOffset,			"thumbnails^:offsset" },
+	{ rcvM36ThumbnailsSize,				"thumbnails^:size" },
+	{ rcvM36ThumbnailsWidth,			"thumbnails^:width" },
 
 	// Push messages
 	{ rcvPushMessage,					"message" },
@@ -960,6 +983,9 @@ static void StartReceivedMessage()
 	MessageLog::BeginNewMessage();
 	FileManager::BeginNewMessage();
 	currentAlert.flags.Clear();
+
+	memset(&thumbnail, 0, sizeof(thumbnail));
+	thumbnail.imageFormat = Thumbnail::ImageFormat::Invalid;
 }
 
 static void EndReceivedMessage()
@@ -981,6 +1007,15 @@ static void EndReceivedMessage()
 		MessageLog::DisplayNewMessage();
 	}
 	FileManager::EndReceivedMessage();
+
+#if DEBUG
+	if (thumbnail.imageFormat != Thumbnail::ImageFormat::Invalid)
+	{
+		dbg("width %d height %d format %d offset %d size %d\n",
+			thumbnail.width, thumbnail.height, thumbnail.imageFormat,
+			thumbnail.offset, thumbnail.size);
+	}
+#endif
 }
 
 void HandleOutOfBufferResponse()
@@ -1848,6 +1883,42 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 			{
 				UI::UpdateFileSize(sz);
 			}
+		}
+		break;
+
+	case rcvM36ThumbnailsFormat:
+		thumbnail.imageFormat = Thumbnail::ImageFormat::Invalid;
+		if (strcmp(data, "qoi") == 0)
+		{
+			thumbnail.imageFormat = Thumbnail::ImageFormat::Qoi;
+		}
+		break;
+	case rcvM36ThumbnailsHeight:
+		uint32_t height;
+		if (GetUnsignedInteger(data, height))
+		{
+			thumbnail.height = height;
+		}
+		break;
+	case rcvM36ThumbnailsOffset:
+		uint32_t offset;
+		if (GetUnsignedInteger(data, offset))
+		{
+			thumbnail.offset = offset;
+		}
+		break;
+	case rcvM36ThumbnailsSize:
+		uint32_t size;
+		if (GetUnsignedInteger(data, size))
+		{
+			thumbnail.size = size;
+		}
+		break;
+	case rcvM36ThumbnailsWidth:
+		uint32_t width;
+		if (GetUnsignedInteger(data, width))
+		{
+			thumbnail.width = width;
 		}
 		break;
 
