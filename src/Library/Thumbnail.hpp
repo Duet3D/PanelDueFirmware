@@ -1,16 +1,8 @@
-#ifndef THUMBNAIL
-#define THUMBNAIL 1
+#ifndef THUMBNAIL_HPP
+#define THUMBNAIL_HPP 1
 
 #include <cstdint>
-
-struct ThumbnailData
-{
-	uint16_t size;
-	uint16_t sizeTotal;
-	uint16_t next;
-
-	const char *buffer;
-};
+#include <cstddef>
 
 struct Thumbnail
 {
@@ -27,4 +19,14 @@ struct Thumbnail
 	} imageFormat;
 };
 
-#endif /* ifndef THUMBNAIL */
+struct ThumbnailData
+{
+	uint16_t size;
+	const char *buffer;
+};
+
+typedef int (*ThumbnailProcessCb)(const char *data, size_t size);
+
+int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data, ThumbnailProcessCb callback);
+
+#endif /* ifndef THUMBNAIL_HPP */

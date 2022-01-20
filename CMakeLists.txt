@@ -180,6 +180,7 @@ target_sources( paneldue.elf PRIVATE
 	src/Icons/MiscIcons.cpp
 	src/Icons/NozzleIcons.cpp
 	src/Library/Misc.cpp
+	src/Library/Thumbnail.cpp
 	src/ObjectModel/Axis.cpp
 	src/ObjectModel/BedOrChamber.cpp
 	src/ObjectModel/Spindle.cpp
