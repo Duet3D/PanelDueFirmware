@@ -35,6 +35,7 @@
 #include <ObjectModel/Axis.hpp>
 #include <ObjectModel/PrinterStatus.hpp>
 #include "ControlCommands.hpp"
+#include "Library/Thumbnail.hpp"
 
 extern uint16_t _esplash[];							// defined in linker script
 
@@ -165,18 +166,8 @@ static bool initialized = false;
 static float pollIntervalMultiplier = 1.0;
 static uint32_t printerPollInterval = defaultPrinterPollInterval;
 
-static struct Thumbnail
-{
-	uint16_t width;
-	uint16_t height;
-	uint16_t offset;
-	uint16_t size;
-	enum ImageFormat {
-		Invalid = 0,
-		Qoi,
-	} imageFormat;
-} thumbnail;
-
+static struct ThumbnailData thumbnailData;
+static struct Thumbnail thumbnail;
 
 static const ColourScheme *colours = &colourSchemes[0];
 
