@@ -1050,6 +1050,7 @@ static void EndReceivedMessage()
 			thumbnail.width, thumbnail.height);
 	}
 #endif
+	int ret;
 
 	switch (thumbnailContext.state) {
 	case ThumbnailState::Init:
@@ -1067,9 +1068,9 @@ static void EndReceivedMessage()
 			thumbnailContext.state = ThumbnailState::Init;
 			break;
 		}
-		if (ThumbnailDecodeChunk(thumbnail, thumbnailData, nullptr) < 0)
+		if ((ret = ThumbnailDecodeChunk(thumbnail, thumbnailData, nullptr, nullptr)) < 0)
 		{
-			dbg("failed to decode thumbnail chunk.\n");
+			dbg("failed to decode thumbnail chunk %d.\n", ret);
 			thumbnailContext.state = ThumbnailState::Init;
 		}
 		if (thumbnailContext.next == 0)
@@ -1990,8 +1991,8 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvM361ThumbnailData:
-		thumbnailData.buffer = data;
 		thumbnailData.size = strlen(data);
+		strncpy(thumbnailData.buffer, data, sizeof(thumbnailData.buffer));
 		break;
 	case rcvM361ThumbnailErr:
 		if (!GetInteger(data, thumbnailContext.err))
