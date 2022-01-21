@@ -193,10 +193,12 @@ target_sources( paneldue.elf PRIVATE
 	src/UI/MessageLog.cpp
 	src/UI/Popup.cpp
 	src/UI/UserInterface.cpp
+	lib/base64/base64.c
 )
 
 
 target_include_directories( paneldue.elf PRIVATE
+	lib/base64
 	src
 	src/ASF/common/boards
 	src/ASF/common/boards/user_board

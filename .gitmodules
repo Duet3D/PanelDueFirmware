@@ -4,3 +4,6 @@
 [submodule "lib/qoi"]
 	path = lib/qoi
 	url = https://github.com/phoboslab/qoi.git
+[submodule "lib/base64"]
+	path = lib/base64
+	url = git@github.com:zhicheng/base64.git
