@@ -199,6 +199,7 @@ target_sources( paneldue.elf PRIVATE
 
 target_include_directories( paneldue.elf PRIVATE
 	lib/base64
+	lib/qoi
 	src
 	src/ASF/common/boards
 	src/ASF/common/boards/user_board
