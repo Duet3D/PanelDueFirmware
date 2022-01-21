@@ -27,6 +27,9 @@ struct ThumbnailData
 
 typedef int (*ThumbnailProcessCb)(const char *data, size_t size);
 
+bool ThumbnailIsValid(struct Thumbnail &thumbnail);
+bool ThumbnailDataIsValid(struct Thumbnail &thumbnail, struct ThumbnailData &data);
+
 int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data, ThumbnailProcessCb callback);
 
 #endif /* ifndef THUMBNAIL_HPP */
