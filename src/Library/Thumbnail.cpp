@@ -1,6 +1,6 @@
 #include "Library/Thumbnail.hpp"
 
-#define DEBUG 2
+#define DEBUG 0
 #include "Debug.hpp"
 
 bool ThumbnailIsValid(struct Thumbnail &thumbnail)
@@ -10,39 +10,17 @@ bool ThumbnailIsValid(struct Thumbnail &thumbnail)
 		return false;
 	}
 
-	if (thumbnail.size == 0)
-	{
-		return false;
-	}
-
 	if (thumbnail.height == 0 || thumbnail.width == 0)
 	{
 		return false;
 	}
 
-#if 0 // TODO remove this?
-	if (!thumbnail.filename || strlen(thumbnail.filename) == 0)
-	{
-		return false;
-	}
-#endif
-
 	return true;
 }
 
-bool ThumbnailDataIsValid(struct Thumbnail &thumbnail, struct ThumbnailData &data)
+bool ThumbnailDataIsValid(struct ThumbnailData &data)
 {
-	if (!ThumbnailIsValid(thumbnail))
-	{
-		return false;
-	}
-
 	if (!data.buffer)
-	{
-		return false;
-	}
-
-	if (data.size >= thumbnail.size)
 	{
 		return false;
 	}
@@ -52,8 +30,7 @@ bool ThumbnailDataIsValid(struct Thumbnail &thumbnail, struct ThumbnailData &dat
 
 int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data, ThumbnailProcessCb callback)
 {
-	dbg("name %s format %s size %d data %s",
-		thumbnail.filename,
+	dbg("format %s size %d data %s",
 		thumbnail.imageFormat == Thumbnail::ImageFormat::Qoi ? "qoi" : "invalid",
 		data.size,
 		data.buffer);

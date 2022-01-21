@@ -6,12 +6,8 @@
 
 struct Thumbnail
 {
-	const char *filename;
-
 	uint16_t width;
 	uint16_t height;
-	uint16_t offset;
-	uint16_t size;
 
 	enum ImageFormat {
 		Invalid = 0,
@@ -28,7 +24,7 @@ struct ThumbnailData
 typedef int (*ThumbnailProcessCb)(const char *data, size_t size);
 
 bool ThumbnailIsValid(struct Thumbnail &thumbnail);
-bool ThumbnailDataIsValid(struct Thumbnail &thumbnail, struct ThumbnailData &data);
+bool ThumbnailDataIsValid(struct ThumbnailData &data);
 
 int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data, ThumbnailProcessCb callback);
 

@@ -182,6 +182,7 @@ static struct ThumbnailContext {
 	enum ThumbnailState state;
 	int16_t parseErr;
 	int32_t err;
+	uint32_t size;
 	uint32_t offset;
 	uint32_t next;
 } thumbnailContext;
@@ -1039,14 +1040,14 @@ static void EndReceivedMessage()
 			thumbnailContext.err);
 		thumbnailContext.state = ThumbnailState::Init;
 	}
-#if 0 // DEBUG
+#if 0 // && DEBUG
 	if (thumbnail.imageFormat != Thumbnail::ImageFormat::Invalid)
 	{
-		dbg("filename %s width %d height %d format %d offset %d size %d\n",
+		dbg("filename %s offset %d size %d format %d width %d height %d\n",
 			thumbnailContext.filename.c_str(),
-			thumbnail.width, thumbnail.height,
+			thumbnailContext.offset, thumbnailContext.size,
 			thumbnail.imageFormat,
-			thumbnail.offset, thumbnail.size);
+			thumbnail.width, thumbnail.height);
 	}
 #endif
 
@@ -1060,7 +1061,7 @@ static void EndReceivedMessage()
 		thumbnailContext.state = ThumbnailState::Data;
 		break;
 	case ThumbnailState::Data:
-		if (!ThumbnailDataIsValid(thumbnail, thumbnailData))
+		if (!ThumbnailDataIsValid(thumbnailData))
 		{
 			dbg("thumbnail meta or data invalid.\n");
 			thumbnailContext.state = ThumbnailState::Init;
@@ -1969,7 +1970,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		uint32_t offset;
 		if (GetUnsignedInteger(data, offset))
 		{
-			thumbnail.offset = offset;
 			thumbnailContext.next = offset;
 			dbg("receive initial offset %d.\n", offset);
 		}
@@ -1978,7 +1978,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		uint32_t size;
 		if (GetUnsignedInteger(data, size))
 		{
-			thumbnail.size = size;
+			thumbnailContext.size = size;
 		}
 		break;
 	case rcvM36ThumbnailsWidth:
