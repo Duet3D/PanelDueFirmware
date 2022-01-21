@@ -178,7 +178,7 @@ enum ThumbnailState {
 };
 
 static struct ThumbnailContext {
-	String<100> filename;
+	String<MaxFilnameLength> filename;
 	enum ThumbnailState state;
 	int16_t parseErr;
 	int32_t err;
