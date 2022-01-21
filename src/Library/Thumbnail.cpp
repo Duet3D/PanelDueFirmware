@@ -1,5 +1,12 @@
 #include "Library/Thumbnail.hpp"
 
+extern "C"
+{
+#include "base64.h"
+}
+
+#include "sys/param.h"
+
 #define DEBUG 0
 #include "Debug.hpp"
 
@@ -20,6 +27,11 @@ bool ThumbnailIsValid(struct Thumbnail &thumbnail)
 
 bool ThumbnailDataIsValid(struct ThumbnailData &data)
 {
+	if (data.size == 0)
+	{
+		return false;
+	}
+
 	if (!data.buffer)
 	{
 		return false;
@@ -28,18 +40,37 @@ bool ThumbnailDataIsValid(struct ThumbnailData &data)
 	return true;
 }
 
-int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data, ThumbnailProcessCb callback)
+int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data, ThumbnailProcessCb callback, void *callbackContext)
 {
-	dbg("format %s size %d data %s",
-		thumbnail.imageFormat == Thumbnail::ImageFormat::Qoi ? "qoi" : "invalid",
-		data.size,
-		data.buffer);
+	if (!ThumbnailIsValid(thumbnail))
+	{
+		dbg("meta invalid.\n");
+		return -1;
+	}
 
-	// TODO
-	// do validity checks
-	// decode base64
-	// decode qoi to rgba
-	// send data to callback
+	if (!ThumbnailDataIsValid(data))
+	{
+		dbg("data invalid.\n");
+		return -2;
+	}
+
+	dbg("size %d buffer %s\n", data.size, data.buffer);
+	int ret = base64_decode(data.buffer, data.size, reinterpret_cast<unsigned char *>(data.buffer));
+	if (ret < 0)
+	{
+		dbg("decode error %d size %d data\n%s\n",
+			ret, data.size, data.buffer);
+		return -3;
+	}
+
+	if (callback)
+	{
+		ret = callback(callbackContext, reinterpret_cast<unsigned char *>(data.buffer), ret);
+		if (ret < 0)
+		{
+			return -4;
+		}
+	}
 
 	return 0;
 }

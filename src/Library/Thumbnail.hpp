@@ -18,14 +18,14 @@ struct Thumbnail
 struct ThumbnailData
 {
 	uint16_t size;
-	const char *buffer;
+	char buffer[1024];
 };
 
-typedef int (*ThumbnailProcessCb)(const char *data, size_t size);
+typedef int (*ThumbnailProcessCb)(void *context, const unsigned char *data, size_t size);
 
 bool ThumbnailIsValid(struct Thumbnail &thumbnail);
 bool ThumbnailDataIsValid(struct ThumbnailData &data);
 
-int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data, ThumbnailProcessCb callback);
+int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data, ThumbnailProcessCb callback, void *callbackContext);
 
 #endif /* ifndef THUMBNAIL_HPP */
