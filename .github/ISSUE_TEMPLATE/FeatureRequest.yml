@@ -1,7 +1,7 @@
 name: Feature Request
 description: Suggest an idea for this project
 title: "ADD A MEANINGFUL TITLE FOR YOUR FEATURE REQUEST"
-labels: [feature]
+labels: [enhancement]
 body:
 - type: textarea
   id: description
