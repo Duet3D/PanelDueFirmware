@@ -1009,6 +1009,7 @@ static void StartReceivedMessage()
 	{
 		memset(&thumbnailContext, 0, sizeof(thumbnailContext));
 		memset(&thumbnail, 0, sizeof(thumbnail));
+		ThumbnailInit(thumbnail);
 		memset(&thumbnailData, 0, sizeof(thumbnailData));
 	}
 }
