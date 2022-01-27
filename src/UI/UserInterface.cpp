@@ -3796,6 +3796,7 @@ namespace UI
 			case evSetAxesOffsetToCurrent:
 				{
 					SerialIo::Sendf("G10 L20 P%s %c0\n", currentWCSPress.GetSParam(), bp.GetSParam()[0]);
+					SerialIo::Sendf("M500\n");
 				}
 				break;
 
