@@ -732,4 +732,24 @@ public:
 	PixelNumber GetHeight() const override { return height; }
 };
 
+#include "qoi.h"
+
+class DrawDirect: public DisplayField
+{
+	PixelNumber height;
+
+public:
+	DrawDirect(PixelNumber py, PixelNumber px, PixelNumber ph, PixelNumber pw)
+		: DisplayField(py, px, pw), height(ph)
+	{
+	}
+
+	PixelNumber GetHeight() const { return height; }
+	PixelNumber GetWidth() const { return width; }
+
+	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override;
+
+	void DrawRect(PixelNumber widthRect, PixelNumber heightRect, unsigned int pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count);
+};
+
 #endif /* DISPLAY_H_ */

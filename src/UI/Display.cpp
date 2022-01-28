@@ -1058,4 +1058,49 @@ void StaticImageField::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffs
 	}
 }
 
+void DrawDirect::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
+{
+	// nothing todo
+	UNUSED(full); UNUSED(xOffset); UNUSED(yOffset);
+
+	// TODO need to do draw background???
+
+	changed = false;
+}
+
+void DrawDirect::DrawRect(PixelNumber widthRect, PixelNumber heightRect, unsigned int pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count)
+{
+	// check if element is visible
+	//dbg("visible %d.\n", IsVisible());
+	if (!IsVisible())
+	{
+		dbg("not visible.\n");
+		return;
+	}
+
+	// check if data fits into rectangle at given offset
+#if 0
+	if (heightRect > height || widthRect > width ||
+	    pixels_offset + pixels_count > height * width ||
+	    pixels == nullptr)
+#else
+	if (pixels == nullptr)
+#endif
+	{
+		dbg("invalid parameter.\n");
+		return;
+	}
+
+#if 1
+	//dbg("draw thumbnail chunk.\n");
+	// TODO
+	// draw data
+	//void UTFT::drawBitmapRgba(int x, int y, int width, int height, int pixels_offset, const uint32_t *pixels, size_t pixels_count)
+	lcd.drawBitmapRgba(x, y, widthRect, heightRect, pixels_offset, reinterpret_cast<const uint32_t *>(pixels), pixels_count);
+	changed = false;
+#else
+	lcd.fillRect(x, y, x + width, y + height, UTFT::fromRGB(255, 0, 0), 0);
+#endif
+}
+
 // End
