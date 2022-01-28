@@ -2194,6 +2194,52 @@ void UTFT::drawBitmap16(int x, int y, int sx, int sy, const uint16_t * data, int
 	removeCS();
 }
 
+// Draw a bitmap using rgba colors
+void UTFT::drawBitmapRgba(int x, int y, int sx, int sy, const uint32_t * data, int scale, bool byCols)
+{
+	int curY = y;
+	assertCS();
+	for (int ty = 0; ty < sy; ty++)
+	{
+		for (int i = 0; i < scale; ++i)
+		{
+			bool xySet = false;
+			for (int tx = 0; tx < sx; tx++)
+			{
+				const int actualX = (orient & InvertBitmap) ? sx - tx - 1 : tx;
+				const uint32_t pixel = data[(byCols) ? (actualX * sy) + ty : (ty * sx) + actualX];
+#define UTFT_RED(v) ((v & (0xf8 << 0)) << (11 - 3))
+#define UTFT_GREEN(v) ((v & (0xfc << 8)) >> (8 + 2 - 5))
+#define UTFT_BLUE(v) ((v & (0xf8 << 16)) >> (16 + 3 - 0))
+#define UTFT_ALPHA(v) (v & 0x00)
+				const uint16_t col = UTFT_RED(pixel) | UTFT_GREEN(pixel) | UTFT_BLUE(pixel);
+				if (transparentBackground && col == 0xFFFF)
+				{
+					xySet = false;
+				}
+				else
+				{
+					if (!xySet)
+					{
+						if (orient & InvertBitmap)
+						{
+							setXY(x, curY, x + ((sx - tx) * scale) - 1, curY);
+						}
+						else
+						{
+							setXY(x + (tx * scale), curY, x + (sx * scale) - 1, curY);
+						}
+						xySet = true;
+					}
+					LCD_Write_Repeated_DATA16(col, scale);
+				}
+			}
+			++curY;
+		}
+	}
+	removeCS();
+}
+
 // Seaw a bitmap using 4-bit colours and a palette
 void UTFT::drawBitmap4(int x, int y, int sx, int sy, const uint8_t * data, Palette palette, int scale, bool byCols)
 {

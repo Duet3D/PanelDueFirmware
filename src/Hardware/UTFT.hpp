@@ -142,6 +142,7 @@ public:
 
 	void setFont(const uint8_t* font);
 	void drawBitmap16(int x, int y, int sx, int sy, const uint16_t *data, int scale = 1, bool byCols = true);
+	void drawBitmapRgba(int x, int y, int sx, int sy, const uint32_t *data, int scale = 1, bool byCols = true);
 	void drawBitmap4(int x, int y, int sx, int sy, const uint8_t *data, Palette palette, int scale = 1, bool byCols = true);
 	void drawCompressedBitmap(int x, int y, int sx, int sy, const uint16_t *data);
 	void drawCompressedBitmapBottomToTop(int x, int y, int sx, int sy, const uint16_t *data);
