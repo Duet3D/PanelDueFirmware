@@ -2195,47 +2195,34 @@ void UTFT::drawBitmap16(int x, int y, int sx, int sy, const uint16_t * data, int
 }
 
 // Draw a bitmap using rgba colors
-void UTFT::drawBitmapRgba(int x, int y, int sx, int sy, const uint32_t * data, int scale, bool byCols)
+void UTFT::drawBitmapRgba(int x, int y, int width, int height, int pixels_offset, const uint32_t *pixels, size_t pixels_count)
 {
-	int curY = y;
+	dbg("orient %d x %d y %d w %d h %d off %d cnt %d\n", orient, x, y, width, height, pixels_offset, pixels_count, pixels);
+
 	assertCS();
-	for (int ty = 0; ty < sy; ty++)
+	for (int i = 0; i < pixels_count; i++)
 	{
-		for (int i = 0; i < scale; ++i)
-		{
-			bool xySet = false;
-			for (int tx = 0; tx < sx; tx++)
-			{
-				const int actualX = (orient & InvertBitmap) ? sx - tx - 1 : tx;
-				const uint32_t pixel = data[(byCols) ? (actualX * sy) + ty : (ty * sx) + actualX];
+		const uint32_t pixel = pixels[i];
 #define UTFT_RED(v) ((v & (0xf8 << 0)) << (11 - 3))
 #define UTFT_GREEN(v) ((v & (0xfc << 8)) >> (8 + 2 - 5))
 #define UTFT_BLUE(v) ((v & (0xf8 << 16)) >> (16 + 3 - 0))
 #define UTFT_ALPHA(v) (v & 0x00)
-				const uint16_t col = UTFT_RED(pixel) | UTFT_GREEN(pixel) | UTFT_BLUE(pixel);
-				if (transparentBackground && col == 0xFFFF)
-				{
-					xySet = false;
-				}
-				else
-				{
-					if (!xySet)
-					{
-						if (orient & InvertBitmap)
-						{
-							setXY(x, curY, x + ((sx - tx) * scale) - 1, curY);
-						}
-						else
-						{
-							setXY(x + (tx * scale), curY, x + (sx * scale) - 1, curY);
-						}
-						xySet = true;
-					}
-					LCD_Write_Repeated_DATA16(col, scale);
-				}
-			}
-			++curY;
-		}
+		const uint16_t col = UTFT_RED(pixel) | UTFT_GREEN(pixel) | UTFT_BLUE(pixel);
+
+		int xd = x + (pixels_offset + i) % width;
+		int yd = y + (pixels_offset + i) / width;
+
+		//dbg("x %d y %d pixel %08x col %04x\n", xd, yd, pixel, col);
+
+#if 1
+		setXY(xd, yd, xd, yd);
+
+		//LCD_Write_Repeated_DATA16(0xf800, 1);
+		LCD_Write_Repeated_DATA16(col, 1);
+#else
+		drawHLine(x, y, width);
+		drawVLine(x, y, height);
+#endif
 	}
 	removeCS();
 }
