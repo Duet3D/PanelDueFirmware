@@ -104,6 +104,7 @@ static SingleButton *tabControl, *tabStatus, *tabMsg, *tabSetup;
 static ButtonBase *filesButton, *pauseButton, *resumeButton, *cancelButton, *babystepButton, *reprintButton;
 static TextField *timeLeftField, *zProbe;
 static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
+static DrawDirect *fpThumbnail;
 static StaticTextField *moveAxisRows[MaxDisplayableAxes];
 static StaticTextField *nameField, *statusField;
 static StaticTextField *screensaverText;
@@ -575,24 +576,40 @@ pre(fileButtons.lim == numRows * numCols)
 // Create the popup window used to display the file dialog
 static void CreateFileActionPopup(const ColourScheme& colours)
 {
+	PixelNumber y_start, y_stop, height;
+	PixelNumber x_start, width;
+
 	fileDetailPopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
 	PixelNumber ypos = popupTopMargin + (3 * rowTextHeight)/2;
 	fpNameField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->fileName);
 	ypos += rowTextHeight;
-	fpSizeField = new IntegerField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->fileSize, " b");
+
+	y_start = ypos + rowTextHeight + popupTopMargin / 2;
+	height = 192;
+	x_start = fileInfoPopupWidth - popupSideMargin / 2 - fileInfoPopupWidth / 3;
+	width = fileInfoPopupWidth / 3;
+	fpThumbnail = new DrawDirect(y_start, x_start, height, width);
+
+	fpSizeField = new IntegerField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->fileSize, " b");
 	ypos += rowTextHeight;
-	fpLayerHeightField = new FloatField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, 2, strings->layerHeight, "mm");
+	fpLayerHeightField = new FloatField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, 2, strings->layerHeight, "mm");
 	ypos += rowTextHeight;
-	fpHeightField = new FloatField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, 1, strings->objectHeight, "mm");
+	fpHeightField = new FloatField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, 1, strings->objectHeight, "mm");
 	ypos += rowTextHeight;
-	fpFilamentField = new IntegerField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->filamentNeeded, "mm");
+	fpFilamentField = new IntegerField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->filamentNeeded, "mm");
 	ypos += rowTextHeight;
+	fpLastModifiedField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->lastModified, lastModifiedText.c_str());
+	ypos += rowTextHeight;
+	fpPrintTimeField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->estimatedPrintTime, printTimeText.c_str());
+	ypos += rowTextHeight;
+	y_stop = ypos;
 	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
-	ypos += rowTextHeight;
-	fpLastModifiedField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->lastModified, lastModifiedText.c_str());
-	ypos += rowTextHeight;
-	fpPrintTimeField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->estimatedPrintTime, printTimeText.c_str());
+
+	dbg("y_start %d x_start %d height %d width %d\n", y_start, x_start, height, width);
+
+	dbg("size x %d y %d\n", fileInfoPopupWidth / 3, y_stop - y_start);
+	dbg("text height %d\n", rowTextHeight);
 
 	fileDetailPopup->AddField(fpNameField);
 	fileDetailPopup->AddField(fpSizeField);
@@ -602,6 +619,7 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	fileDetailPopup->AddField(fpGeneratedByField);
 	fileDetailPopup->AddField(fpLastModifiedField);
 	fileDetailPopup->AddField(fpPrintTimeField);
+	fileDetailPopup->AddField(fpThumbnail);
 
 	// Add the buttons
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
