@@ -14,6 +14,9 @@
 #undef result
 #include <algorithm>
 
+#define DEBUG 0
+#include "Debug.hpp"
+
 extern UTFT lcd;
 
 const int maxXerror = 8, maxYerror = 8;		// how close (in pixels) the X and Y coordinates of a touch event need to be to the outline of the button for us to allow it
