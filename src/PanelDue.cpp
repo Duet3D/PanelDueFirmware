@@ -1059,7 +1059,7 @@ static void EndReceivedMessage()
 			thumbnailContext.state = ThumbnailState::Init;
 			break;
 		}
-		if ((ret = ThumbnailDecodeChunk(thumbnail, thumbnailData, nullptr, nullptr)) < 0)
+		if ((ret = ThumbnailDecodeChunk(thumbnail, thumbnailData, UI::UpdateFileThumbnailChunk, nullptr)) < 0)
 		{
 			dbg("failed to decode thumbnail chunk %d.\n", ret);
 			thumbnailContext.state = ThumbnailState::Init;
