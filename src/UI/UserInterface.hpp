@@ -9,6 +9,7 @@
 #define SRC_UI_USERINTERFACE_HPP_
 
 #include "FirmwareFeatures.hpp"
+#include "Library/Thumbnail.hpp"
 #include <ObjectModel/BedOrChamber.hpp>
 #include <ObjectModel/PrinterStatus.hpp>
 #include <ObjectModel/Spindle.hpp>
@@ -71,6 +72,7 @@ namespace UI
 	extern void UpdateFileLayerHeight(float f);
 	extern void UpdateFileSize(int size);
 	extern void UpdateFileFilament(int len);
+	extern void UpdateFileThumbnailChunk(const struct Thumbnail &thumbnail, uint32_t pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count);
 	extern void UpdateFanPercent(size_t fanIndex, int rpm);
 	extern void UpdateActiveTemperature(size_t index, int ival);
 	extern void UpdateToolTemp(size_t toolIndex, size_t toolHeaterIndex, int32_t temp, bool active);

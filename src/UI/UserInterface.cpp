@@ -2153,6 +2153,25 @@ namespace UI
 		fpFilamentField->SetValue(len);
 	}
 
+	void UpdateFileThumbnailChunk(const struct Thumbnail &thumbnail, uint32_t pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count)
+	{
+		dbg("offset %d pixels %08x count %d\n", pixels_offset, pixels, pixels_count);
+#if 0
+		qoi_rgba_t pixel[100];
+
+		//memset(pixel, 0xaa, sizeof(pixel));
+		for (size_t i = 0; i < ARRAY_SIZE(pixel); i++)
+		{
+			pixel[i].v = 0;
+			pixel[i].rgba.r = 0xaa;
+		}
+
+		fpThumbnail->DrawRect(thumbnail.width, thumbnail.height, pixels_offset, pixel, ARRAY_SIZE(pixel));
+#else
+		fpThumbnail->DrawRect(thumbnail.width, thumbnail.height, pixels_offset, pixels, pixels_count);
+#endif
+	}
+
 	// Return true if we are displaying file information
 	bool IsDisplayingFileInfo()
 	{
