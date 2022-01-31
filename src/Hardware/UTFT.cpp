@@ -2200,10 +2200,24 @@ void UTFT::drawBitmap16(int x, int y, int sx, int sy, const uint16_t * data, int
 // Draw a bitmap using rgba colors
 void UTFT::drawBitmapRgba(int x, int y, int width, int height, int pixels_offset, const uint32_t *pixels, size_t pixels_count)
 {
+	int xd = x + pixels_offset % width;
+	int yd = x + pixels_offset / width;
+
 	dbg("orient %d x %d y %d w %d h %d off %d cnt %d\n", orient, x, y, width, height, pixels_offset, pixels_count, pixels);
+	dbg("current x %d y %d\n", xd, yd);
+
+#if DEBUG
+	Colour fcoloursave = fcolour;
+	fcolour = UTFT::fromRGB(255, 0, 0),
+	drawHLine(x, y, width);
+	drawHLine(x, y + height, width);
+	drawVLine(x, y, height);
+	drawVLine(x + width, y, height);
+	fcolour = fcoloursave;
+#endif
 
 	assertCS();
-	for (int i = 0; i < pixels_count; i++)
+	for (size_t i = 0; i < pixels_count; i++)
 	{
 		const uint32_t pixel = pixels[i];
 #define UTFT_RED(v) ((v & (0xf8 << 0)) << (11 - 3))
@@ -2212,10 +2226,10 @@ void UTFT::drawBitmapRgba(int x, int y, int width, int height, int pixels_offset
 #define UTFT_ALPHA(v) (v & 0x00)
 		const uint16_t col = UTFT_RED(pixel) | UTFT_GREEN(pixel) | UTFT_BLUE(pixel);
 
-		int xd = x + (pixels_offset + i) % width;
-		int yd = y + (pixels_offset + i) / width;
+		xd = x + (pixels_offset + i) % width;
+		yd = y + (pixels_offset + i) / width;
 
-		//dbg("x %d y %d pixel %08x col %04x\n", xd, yd, pixel, col);
+		//dbg("%d x %d y %d pixel %08x col %04x\n", i, xd, yd, pixel, col);
 
 #if 1
 		setXY(xd, yd, xd, yd);
