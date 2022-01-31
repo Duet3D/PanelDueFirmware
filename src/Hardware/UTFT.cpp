@@ -54,6 +54,9 @@
 #include "memorysaver.h"
 #include <cstring>			// for strchr
 
+#define DEBUG 0
+#include "Debug.hpp"
+
 // Write the previous 16-bit data again the specified number of times.
 // Only supported in 9 and 16 bit modes. Used to speed up setting large blocks of pixels to the same colour.
 void UTFT::LCD_Write_Again(uint32_t num)
