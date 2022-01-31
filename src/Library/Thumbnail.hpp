@@ -30,7 +30,7 @@ struct ThumbnailData
 	char buffer[1024];
 };
 
-typedef int (*ThumbnailProcessCb)(void *context, const unsigned char *data, size_t size);
+typedef void (*ThumbnailProcessCb)(const struct Thumbnail &thumbnail, uint32_t pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count);
 
 bool ThumbnailIsValid(struct Thumbnail &thumbnail);
 bool ThumbnailDataIsValid(struct ThumbnailData &data);
