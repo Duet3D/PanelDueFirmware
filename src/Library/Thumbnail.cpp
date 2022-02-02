@@ -74,15 +74,20 @@ int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data
 
 	dbg("*** received size %d decoded size %d\n", data.size, ret);
 
+	data.size = ret;
+
 	int size_done = 0;
 	int pixel_decoded = 0;
-	qoi_rgba_t buffer[64];
+	qoi_rgba_t rgba_buffer[64];
 
 	do
 	{
-		ret = qoi_decode_chunked(&thumbnail.qoi, ((const unsigned char *)data.buffer) + size_done, data.size - size_done, buffer, sizeof(buffer), &pixel_decoded);
+		dbg("buffer %08x size %d/%d pixbuf %08x pixbuf size %d decoded %08x\n",
+			data.buffer, data.size, size_done, rgba_buffer, &pixel_decoded);
+		ret = qoi_decode_chunked(&thumbnail.qoi, ((const unsigned char *)data.buffer) + size_done, data.size - size_done, rgba_buffer, sizeof(rgba_buffer), &pixel_decoded);
 		if (ret < 0)
 		{
+			dbg("failed qoi decoding state %d %d.\n", qoi_decode_state_get(&thumbnail.qoi), ret);
 			return -4;
 		}
 
@@ -91,19 +96,20 @@ int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data
 		if (callback)
 		{
 			//dbg("calling callback\n");
-			callback(thumbnail, thumbnail.pixel_count, buffer, pixel_decoded);
+			callback(thumbnail, thumbnail.pixel_count, rgba_buffer, pixel_decoded);
 		}
 
 		thumbnail.pixel_count += pixel_decoded;
 
-		dbg("ret %d done %d/%d decoded %d count %d/%d\n",
-			ret, size_done, data.size, pixel_decoded, thumbnail.pixel_count, thumbnail.height * thumbnail.width);
+		dbg("ret %d done %d/%d decoded %d missing %d(%02x) count %d/%d/%d\n",
+			ret, size_done, data.size, pixel_decoded, thumbnail.qoi.last_bytes_size, thumbnail.qoi.last_bytes[0] & 0xc0,
+			thumbnail.qoi.pixels_count, thumbnail.pixel_count, thumbnail.height * thumbnail.width);
 
 
-	} while (thumbnail.pixel_count < thumbnail.qoi.width * thumbnail.qoi.height && size_done < data.size);
+	} while (size_done < data.size && qoi_decode_state_get(&thumbnail.qoi) == qoi_decoder_body);
 
 	dbg("done %d/%d pixels %d/%d\n",
 		size_done, data.size, thumbnail.pixel_count, thumbnail.height * thumbnail.width);
 
-	return 0;
+	return qoi_decode_state_get(&thumbnail.qoi) != qoi_decoder_done;
 }

@@ -4,10 +4,8 @@
 #include <cstdint>
 #include <cstddef>
 
-extern "C"
-{
-	#include "qoi.h"
-}
+#include "qoi.h"
+
 
 struct Thumbnail
 {
