@@ -37,18 +37,8 @@
 
 MainWindow mgr;
 
-#define DEBUG	(0) // 0: off, 1: MessageLog, 2: Uart
-
-#if (DEBUG == 1)
-#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
-
-#elif (DEBUG == 2)
-#define dbg(fmt, args...)		do { SerialIo::Dbg("%s(%d): " fmt, __FUNCTION__, __LINE__, ##args); } while(0)
-
-#else
-#define dbg(fmt, args...)		do {} while(0)
-
-#endif
+#define DEBUG 0
+#include "Debug.hpp"
 
 // Public fields
 TextField *fwVersionField, *userCommandField, *ipAddressField;
