@@ -2146,7 +2146,8 @@ namespace UI
 	void UpdateFileThumbnailChunk(const struct Thumbnail &thumbnail, uint32_t pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count)
 	{
 		dbg("offset %d pixels %08x count %d\n", pixels_offset, pixels, pixels_count);
-#if 0
+#define DRAW_TEST 0
+#if DRAW_TEST == 1
 		qoi_rgba_t pixel[100];
 
 		//memset(pixel, 0xaa, sizeof(pixel));
@@ -2157,6 +2158,19 @@ namespace UI
 		}
 
 		fpThumbnail->DrawRect(thumbnail.width, thumbnail.height, pixels_offset, pixel, ARRAY_SIZE(pixel));
+#elif DRAW_TEST == 2
+		int line = 64;
+		for (int i = 0; i < line; i++) {
+			qoi_rgba_t test_pixels[64];
+
+			for (size_t p = 0; p < ARRAY_SIZE(test_pixels); p++) {
+				test_pixels[p].v = 0;
+				test_pixels[p].rgba.r = 128 + p;
+				test_pixels[p].rgba.g = 64 + i;
+			}
+
+			fpThumbnail->DrawRect(ARRAY_SIZE(test_pixels), 1, i * ARRAY_SIZE(test_pixels), test_pixels, ARRAY_SIZE(test_pixels));
+		}
 #else
 		fpThumbnail->DrawRect(thumbnail.width, thumbnail.height, pixels_offset, pixels, pixels_count);
 #endif
