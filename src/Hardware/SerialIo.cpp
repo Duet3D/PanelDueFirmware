@@ -231,7 +231,7 @@ namespace SerialIo
 
 	// fieldId is the name of the field being received. A '^' character indicates the position of an _ecv_array index, and a ':' character indicates a field separator.
 	String<100> fieldId;
-	String<1024> fieldVal;
+	String<1028> fieldVal;
 	size_t arrayIndices[MaxArrayNesting];
 	size_t arrayDepth = 0;
 
