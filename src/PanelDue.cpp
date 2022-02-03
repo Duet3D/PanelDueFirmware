@@ -175,6 +175,19 @@ static struct ThumbnailContext {
 	uint32_t size;
 	uint32_t offset;
 	uint32_t next;
+
+	void Init()
+	{
+		filename.Clear();
+		state = ThumbnailState::Init;
+		parseErr = 0;
+		err = 0;
+		size = 0;
+		offset = 0;
+		next = 0;
+
+	};
+
 } thumbnailContext;
 
 static const ColourScheme *colours = &colourSchemes[0];
@@ -997,7 +1010,7 @@ static void StartReceivedMessage()
 
 	if (thumbnailContext.state == ThumbnailState::Init)
 	{
-		memset(&thumbnailContext, 0, sizeof(thumbnailContext));
+		thumbnailContext.Init();
 		memset(&thumbnail, 0, sizeof(thumbnail));
 		ThumbnailInit(thumbnail);
 		memset(&thumbnailData, 0, sizeof(thumbnailData));
