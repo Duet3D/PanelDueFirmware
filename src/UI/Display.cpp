@@ -1066,22 +1066,17 @@ void DrawDirect::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 	// nothing todo
 	UNUSED(full); UNUSED(xOffset); UNUSED(yOffset);
 
-	// TODO need to do draw background???
-
 	changed = false;
 }
 
 void DrawDirect::DrawRect(PixelNumber widthRect, PixelNumber heightRect, unsigned int pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count)
 {
-	// check if element is visible
-	//dbg("visible %d.\n", IsVisible());
 	if (!IsVisible())
 	{
 		dbg("not visible.\n");
 		return;
 	}
 
-	// check if data fits into rectangle at given offset
 	lcd.drawBitmapRgbaStream(x, y, widthRect, heightRect, pixels_offset, reinterpret_cast<const uint32_t *>(pixels), pixels_count);
 	changed = false;
 }
