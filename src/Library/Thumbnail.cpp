@@ -64,7 +64,7 @@ int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data
 		return -2;
 	}
 
-	int ret = base64_decode(data.buffer, data.size, reinterpret_cast<unsigned char *>(data.buffer));
+	int ret = base64_decode((const char *)data.buffer, data.size, data.buffer);
 	if (ret < 0)
 	{
 		dbg("decode error %d size %d data\n%s\n",
@@ -84,7 +84,7 @@ int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data
 	{
 		dbg("buffer %08x size %d/%d pixbuf %08x pixbuf size %d decoded %08x\n",
 			data.buffer, data.size, size_done, rgba_buffer, &pixel_decoded);
-		ret = qoi_decode_chunked(&thumbnail.qoi, ((const unsigned char *)data.buffer) + size_done, data.size - size_done, rgba_buffer, sizeof(rgba_buffer), &pixel_decoded);
+		ret = qoi_decode_chunked(&thumbnail.qoi, (data.buffer) + size_done, data.size - size_done, rgba_buffer, sizeof(rgba_buffer), &pixel_decoded);
 		if (ret < 0)
 		{
 			dbg("failed qoi decoding state %d %d.\n", qoi_decode_state_get(&thumbnail.qoi), ret);

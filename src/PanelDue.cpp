@@ -1995,8 +1995,8 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvM361ThumbnailData:
-		thumbnailData.size = strlen(data);
-		strncpy(thumbnailData.buffer, data, sizeof(thumbnailData.buffer));
+		thumbnailData.size = std::min(strlen(data), sizeof(thumbnailData.buffer));
+		memcpy(thumbnailData.buffer, data, thumbnailData.size);
 		break;
 	case rcvM361ThumbnailErr:
 		if (!GetInteger(data, thumbnailContext.err))

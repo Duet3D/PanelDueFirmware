@@ -25,7 +25,7 @@ struct Thumbnail
 struct ThumbnailData
 {
 	uint16_t size;
-	char buffer[1024];
+	unsigned char buffer[1024];
 };
 
 typedef void (*ThumbnailProcessCb)(const struct Thumbnail &thumbnail, uint32_t pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count);
