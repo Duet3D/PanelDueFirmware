@@ -1077,6 +1077,12 @@ void DrawDirect::DrawRect(PixelNumber widthRect, PixelNumber heightRect, unsigne
 		return;
 	}
 
+	if (widthRect > width || heightRect > height)
+	{
+		dbg("rect does not fit\n");
+		return;
+	}
+
 	lcd.drawBitmapRgbaStream(x, y, widthRect, heightRect, pixels_offset, reinterpret_cast<const uint32_t *>(pixels), pixels_count);
 	changed = false;
 }
