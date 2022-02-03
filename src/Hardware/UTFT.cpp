@@ -2198,8 +2198,17 @@ void UTFT::drawBitmap16(int x, int y, int sx, int sy, const uint16_t * data, int
 }
 
 // Draw a bitmap using rgba colors
-void UTFT::drawBitmapRgba(int x, int y, int width, int height, int pixels_offset, const uint32_t *pixels, size_t pixels_count)
+void UTFT::drawBitmapRgbaStream(int x, int y, int width, int height, int pixels_offset, const uint32_t *pixels, size_t pixels_count)
 {
+
+	if (x < 0 || y < 0 || width < 0 || height < 0 ||
+	    pixels_offset < 0 || pixels == nullptr ||
+	    (y + (pixels_offset + (int)pixels_count) / width) > (y + height))
+	{
+		dbg("invalid parameter\n");
+		return;
+	}
+
 	int xd = x + pixels_offset % width;
 	int yd = x + pixels_offset / width;
 
