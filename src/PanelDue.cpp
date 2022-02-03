@@ -1013,7 +1013,6 @@ static void StartReceivedMessage()
 	if (thumbnailContext.state == ThumbnailState::Init)
 	{
 		thumbnailContext.Init();
-		memset(&thumbnail, 0, sizeof(thumbnail));
 		ThumbnailInit(thumbnail);
 		memset(&thumbnailData, 0, sizeof(thumbnailData));
 	}

@@ -45,7 +45,10 @@ bool ThumbnailDataIsValid(struct ThumbnailData &data)
 
 int ThumbnailInit(struct Thumbnail &thumbnail)
 {
+	thumbnail.width = 0;
+	thumbnail.height = 0;
 	thumbnail.pixel_count = 0;
+	thumbnail.imageFormat = Thumbnail::ImageFormat::Invalid;
 
 	return qoi_decode_init(&thumbnail.qoi);
 }
