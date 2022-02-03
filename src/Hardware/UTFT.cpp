@@ -2197,7 +2197,7 @@ void UTFT::drawBitmap16(int x, int y, int sx, int sy, const uint16_t * data, int
 	removeCS();
 }
 
-// Draw a bitmap using rgba colors
+// Draw a bitmap stream using rgba colors
 void UTFT::drawBitmapRgbaStream(int x, int y, int width, int height, int pixels_offset, const uint32_t *pixels, size_t pixels_count)
 {
 
@@ -2238,17 +2238,9 @@ void UTFT::drawBitmapRgbaStream(int x, int y, int width, int height, int pixels_
 		xd = x + (pixels_offset + i) % width;
 		yd = y + (pixels_offset + i) / width;
 
-		//dbg("%d x %d y %d pixel %08x col %04x\n", i, xd, yd, pixel, col);
-
-#if 1
 		setXY(xd, yd, xd, yd);
 
-		//LCD_Write_Repeated_DATA16(0xf800, 1);
 		LCD_Write_Repeated_DATA16(col, 1);
-#else
-		drawHLine(x, y, width);
-		drawVLine(x, y, height);
-#endif
 	}
 	removeCS();
 }
