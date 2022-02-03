@@ -50,7 +50,7 @@ int ThumbnailInit(struct Thumbnail &thumbnail)
 	return qoi_decode_init(&thumbnail.qoi);
 }
 
-int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data, ThumbnailProcessCb callback, void *callbackContext)
+int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data, ThumbnailProcessCb callback)
 {
 	if (!ThumbnailIsValid(thumbnail))
 	{

@@ -34,6 +34,6 @@ bool ThumbnailIsValid(struct Thumbnail &thumbnail);
 bool ThumbnailDataIsValid(struct ThumbnailData &data);
 
 int ThumbnailInit(struct Thumbnail &thumbnail);
-int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data, ThumbnailProcessCb callback, void *callbackContext);
+int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data, ThumbnailProcessCb callback);
 
 #endif /* ifndef THUMBNAIL_HPP */
