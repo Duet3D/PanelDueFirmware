@@ -163,6 +163,8 @@ static struct Thumbnail thumbnail;
 
 enum ThumbnailState {
 	Init = 0,
+	Header,
+	DataWait,
 	Data,
 	DataDone
 };
@@ -1058,12 +1060,15 @@ static void EndReceivedMessage()
 
 	switch (thumbnailContext.state) {
 	case ThumbnailState::Init:
+	case ThumbnailState::DataWait:
+		break;
+	case ThumbnailState::Header:
 		if (!ThumbnailIsValid(thumbnail))
 		{
 			dbg("thumbnail meta invalid.\n");
 			break;
 		}
-		thumbnailContext.state = ThumbnailState::Data;
+		thumbnailContext.state = ThumbnailState::DataWait;
 		break;
 	case ThumbnailState::Data:
 		if (!ThumbnailDataIsValid(thumbnailData))
@@ -1077,6 +1082,7 @@ static void EndReceivedMessage()
 			dbg("failed to decode thumbnail chunk %d.\n", ret);
 			thumbnailContext.state = ThumbnailState::Init;
 		}
+		thumbnailContext.state = ThumbnailState::DataWait;
 		if (thumbnailContext.next == 0)
 		{
 				thumbnailContext.state = ThumbnailState::DataDone;
@@ -1962,6 +1968,8 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		if (strcmp(data, "qoi") == 0)
 		{
 			thumbnail.imageFormat = Thumbnail::ImageFormat::Qoi;
+
+			thumbnailContext.state = ThumbnailState::Header;
 		}
 		break;
 	case rcvM36ThumbnailsHeight:
@@ -1997,6 +2005,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	case rcvM361ThumbnailData:
 		thumbnailData.size = std::min(strlen(data), sizeof(thumbnailData.buffer));
 		memcpy(thumbnailData.buffer, data, thumbnailData.size);
+		thumbnailContext.state = ThumbnailState::Data;
 		break;
 	case rcvM361ThumbnailErr:
 		if (!GetInteger(data, thumbnailContext.err))
@@ -2555,9 +2564,9 @@ int main(void)
 			else if (lastResponseTime >= lastPollTime &&
 			    (now > lastPollTime + printerPollInterval ||
 			     !initialized ||
-			     thumbnailContext.state == ThumbnailState::Data))
+			     thumbnailContext.state == ThumbnailState::DataWait))
 			{
-				if (thumbnailContext.state == ThumbnailState::Data)
+				if (thumbnailContext.state == ThumbnailState::DataWait)
 				{
 					SerialIo::Sendf("M36.1 P\"%s\" S%d\n",
 						thumbnailContext.filename.c_str(),
