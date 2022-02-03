@@ -566,7 +566,7 @@ pre(fileButtons.lim == numRows * numCols)
 // Create the popup window used to display the file dialog
 static void CreateFileActionPopup(const ColourScheme& colours)
 {
-	PixelNumber y_start, y_stop, height;
+	PixelNumber y_start, height;
 	PixelNumber x_start, width;
 
 	fileDetailPopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
@@ -593,12 +593,11 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	ypos += rowTextHeight;
 	fpPrintTimeField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->estimatedPrintTime, printTimeText.c_str());
 	ypos += rowTextHeight;
-	y_stop = ypos;
 	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
 
 	dbg("y_start %d x_start %d height %d width %d\n", y_start, x_start, height, width);
 
-	dbg("size x %d y %d\n", fileInfoPopupWidth / 3, y_stop - y_start);
+	dbg("size x %d y %d\n", fileInfoPopupWidth / 3, y_stop - ypos);
 	dbg("text height %d\n", rowTextHeight);
 
 	fileDetailPopup->AddField(fpNameField);
