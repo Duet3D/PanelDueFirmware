@@ -164,9 +164,9 @@ static struct Thumbnail thumbnail;
 enum ThumbnailState {
 	Init = 0,
 	Header,
+	DataRequest,
 	DataWait,
-	Data,
-	DataDone
+	Data
 };
 
 static struct ThumbnailContext {
@@ -1059,6 +1059,7 @@ static void EndReceivedMessage()
 
 	switch (thumbnailContext.state) {
 	case ThumbnailState::Init:
+	case ThumbnailState::DataRequest:
 	case ThumbnailState::DataWait:
 		break;
 	case ThumbnailState::Header:
@@ -1067,7 +1068,7 @@ static void EndReceivedMessage()
 			dbg("thumbnail meta invalid.\n");
 			break;
 		}
-		thumbnailContext.state = ThumbnailState::DataWait;
+		thumbnailContext.state = ThumbnailState::DataRequest;
 		break;
 	case ThumbnailState::Data:
 		if (!ThumbnailDataIsValid(thumbnailData))
@@ -1081,14 +1082,13 @@ static void EndReceivedMessage()
 			dbg("failed to decode thumbnail chunk %d.\n", ret);
 			thumbnailContext.state = ThumbnailState::Init;
 		}
-		thumbnailContext.state = ThumbnailState::DataWait;
 		if (thumbnailContext.next == 0)
 		{
-				thumbnailContext.state = ThumbnailState::DataDone;
+			thumbnailContext.state = ThumbnailState::Init;
+		} else
+		{
+			thumbnailContext.state = ThumbnailState::DataRequest;
 		}
-		break;
-	case ThumbnailState::DataDone:
-		thumbnailContext.state = ThumbnailState::Init;
 		break;
 	}
 }
@@ -2563,14 +2563,15 @@ int main(void)
 			else if (lastResponseTime >= lastPollTime &&
 			    (now > lastPollTime + printerPollInterval ||
 			     !initialized ||
-			     thumbnailContext.state == ThumbnailState::DataWait))
+			     thumbnailContext.state == ThumbnailState::DataRequest))
 			{
-				if (thumbnailContext.state == ThumbnailState::DataWait)
+				if (thumbnailContext.state == ThumbnailState::DataRequest)
 				{
 					SerialIo::Sendf("M36.1 P\"%s\" S%d\n",
 						thumbnailContext.filename.c_str(),
 						thumbnailContext.next);
 					lastPollTime = SystemTick::GetTickCount();
+					thumbnailContext.state = ThumbnailState::DataWait;
 				}
 				else
 				{
