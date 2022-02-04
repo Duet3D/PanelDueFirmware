@@ -94,6 +94,12 @@ int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data
 			return -4;
 		}
 
+		if (thumbnail.qoi.height != thumbnail.height ||
+		    thumbnail.qoi.width != thumbnail.width)
+		{
+			return -5;
+		}
+
 		size_done += ret;
 
 		if (callback)
