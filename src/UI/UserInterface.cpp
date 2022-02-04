@@ -2142,9 +2142,13 @@ namespace UI
 		fpFilamentField->SetValue(len);
 	}
 
-	void UpdateFileThumbnailChunk(const struct Thumbnail &thumbnail, uint32_t pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count)
+	bool UpdateFileThumbnailChunk(const struct Thumbnail &thumbnail, uint32_t pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count)
 	{
 		dbg("offset %d pixels %08x count %d\n", pixels_offset, pixels, pixels_count);
+		if (!mgr.IsPopupActive(fileDetailPopup))
+		{
+			return false;
+		}
 #define DRAW_TEST 0
 #if DRAW_TEST == 1
 		qoi_rgba_t pixel[100];
@@ -2173,6 +2177,7 @@ namespace UI
 #else
 		fpThumbnail->DrawRect(thumbnail.width, thumbnail.height, pixels_offset, pixels, pixels_count);
 #endif
+		return true;
 	}
 
 	// Return true if we are displaying file information
