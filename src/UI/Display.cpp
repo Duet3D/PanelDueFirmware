@@ -291,6 +291,19 @@ void Window::ClearPopup(bool redraw, PopupWindow *whichOne)
 	}
 }
 
+bool Window::IsPopupActive(const PopupWindow *popup)
+{
+	for (PopupWindow *pw = next; pw; pw = pw->next)
+	{
+		if (pw == popup)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+
 // Redraw the specified field
 void Window::Redraw(DisplayField *f)
 {
