@@ -99,7 +99,9 @@ int ThumbnailDecodeChunk(struct Thumbnail &thumbnail, struct ThumbnailData &data
 		if (callback)
 		{
 			//dbg("calling callback\n");
-			callback(thumbnail, thumbnail.pixel_count, rgba_buffer, pixel_decoded);
+			bool cont = callback(thumbnail, thumbnail.pixel_count, rgba_buffer, pixel_decoded);
+			if (!cont)
+				return -6;
 		}
 
 		thumbnail.pixel_count += pixel_decoded;

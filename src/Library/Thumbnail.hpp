@@ -28,7 +28,7 @@ struct ThumbnailData
 	unsigned char buffer[1024];
 };
 
-typedef void (*ThumbnailProcessCb)(const struct Thumbnail &thumbnail, uint32_t pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count);
+typedef bool (*ThumbnailProcessCb)(const struct Thumbnail &thumbnail, uint32_t pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count);
 
 bool ThumbnailIsValid(struct Thumbnail &thumbnail);
 bool ThumbnailDataIsValid(struct ThumbnailData &data);
