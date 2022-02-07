@@ -589,10 +589,15 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	ypos += rowTextHeight;
 
 	y_start = ypos + rowTextHeight + popupTopMargin / 2;
-	height = 192;
+	height = 6 * rowTextHeight;
+
 	x_start = fileInfoPopupWidth - popupSideMargin / 2 - fileInfoPopupWidth / 3;
 	width = fileInfoPopupWidth / 3;
+
 	fpThumbnail = new DrawDirect(y_start, x_start, height, width, ThumbnailRefreshNotify);
+
+	dbg("y_start %d x_start %d height %d width %d\n", y_start, x_start, height, width);
+	dbg("text height %d\n", rowTextHeight);
 
 	fpSizeField = new IntegerField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->fileSize, " b");
 	ypos += rowTextHeight;
@@ -607,10 +612,6 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	fpPrintTimeField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->estimatedPrintTime, printTimeText.c_str());
 	ypos += rowTextHeight;
 	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
-
-	dbg("y_start %d x_start %d height %d width %d\n", y_start, x_start, height, width);
-
-	dbg("text height %d\n", rowTextHeight);
 
 	fileDetailPopup->AddField(fpNameField);
 	fileDetailPopup->AddField(fpSizeField);
