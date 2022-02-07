@@ -14,6 +14,9 @@
 #undef result
 #include <algorithm>
 
+#define DEBUG 0
+#include "Debug.hpp"
+
 extern UTFT lcd;
 
 const int maxXerror = 8, maxYerror = 8;		// how close (in pixels) the X and Y coordinates of a touch event need to be to the outline of the button for us to allow it
@@ -287,6 +290,19 @@ void Window::ClearPopup(bool redraw, PopupWindow *whichOne)
 		}
 	}
 }
+
+bool Window::IsPopupActive(const PopupWindow *popup)
+{
+	for (PopupWindow *pw = next; pw; pw = pw->next)
+	{
+		if (pw == popup)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 
 // Redraw the specified field
 void Window::Redraw(DisplayField *f)
@@ -1056,6 +1072,35 @@ void StaticImageField::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffs
 		lcd.drawCompressedBitmap(x + xOffset, y + yOffset, width, height, data);
 		changed = false;
 	}
+}
+
+void DrawDirect::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
+{
+	// nothing todo
+	UNUSED(full); UNUSED(xOffset); UNUSED(yOffset);
+
+	if (refreshNotify)
+		refreshNotify(full, changed);
+
+	changed = false;
+}
+
+void DrawDirect::DrawRect(PixelNumber widthRect, PixelNumber heightRect, unsigned int pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count)
+{
+	if (!IsVisible())
+	{
+		dbg("not visible.\n");
+		return;
+	}
+
+	if (widthRect > width || heightRect > height)
+	{
+		dbg("rect does not fit\n");
+		return;
+	}
+
+	lcd.drawBitmapRgbaStream(x, y, widthRect, heightRect, pixels_offset, reinterpret_cast<const uint32_t *>(pixels), pixels_count);
+	changed = false;
 }
 
 // End

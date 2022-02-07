@@ -37,18 +37,8 @@
 
 MainWindow mgr;
 
-#define DEBUG	(0) // 0: off, 1: MessageLog, 2: Uart
-
-#if (DEBUG == 1)
-#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
-
-#elif (DEBUG == 2)
-#define dbg(fmt, args...)		do { SerialIo::Dbg("%s(%d): " fmt, __FUNCTION__, __LINE__, ##args); } while(0)
-
-#else
-#define dbg(fmt, args...)		do {} while(0)
-
-#endif
+#define DEBUG 0
+#include "Debug.hpp"
 
 // Public fields
 TextField *fwVersionField, *userCommandField, *ipAddressField;
@@ -104,6 +94,7 @@ static SingleButton *tabControl, *tabStatus, *tabMsg, *tabSetup;
 static ButtonBase *filesButton, *pauseButton, *resumeButton, *cancelButton, *babystepButton, *reprintButton;
 static TextField *timeLeftField, *zProbe;
 static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
+static DrawDirect *fpThumbnail;
 static StaticTextField *moveAxisRows[MaxDisplayableAxes];
 static StaticTextField *nameField, *statusField;
 static StaticTextField *screensaverText;
@@ -572,27 +563,55 @@ pre(fileButtons.lim == numRows * numCols)
 	return popup;
 }
 
+static void ThumbnailRefreshNotify(bool full, bool changed)
+{
+	UNUSED(changed);
+
+	if (!full || !currentFile)
+		return;
+
+	dbg("full %d changed %d currentFile %s\n", full, changed, currentFile);
+	SerialIo::Sendf(GetFirmwareFeatures().IsBitSet(noM20M36) ? "M408 S36 P" : "M36 ");			// ask for the file info
+	SerialIo::SendFilename(CondStripDrive(FileManager::GetFilesDir()), currentFile);
+	SerialIo::SendChar('\n');
+}
+
 // Create the popup window used to display the file dialog
 static void CreateFileActionPopup(const ColourScheme& colours)
 {
+	PixelNumber y_start, height;
+	PixelNumber x_start, width;
+
 	fileDetailPopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
 	PixelNumber ypos = popupTopMargin + (3 * rowTextHeight)/2;
 	fpNameField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->fileName);
 	ypos += rowTextHeight;
-	fpSizeField = new IntegerField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->fileSize, " b");
+
+	y_start = ypos + rowTextHeight + popupTopMargin / 2;
+	height = 6 * rowTextHeight;
+
+	x_start = fileInfoPopupWidth - popupSideMargin / 2 - fileInfoPopupWidth / 3;
+	width = fileInfoPopupWidth / 3;
+
+	fpThumbnail = new DrawDirect(y_start, x_start, height, width, ThumbnailRefreshNotify);
+
+	dbg("y_start %d x_start %d height %d width %d\n", y_start, x_start, height, width);
+	dbg("text height %d\n", rowTextHeight);
+
+	fpSizeField = new IntegerField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->fileSize, " b");
 	ypos += rowTextHeight;
-	fpLayerHeightField = new FloatField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, 2, strings->layerHeight, "mm");
+	fpLayerHeightField = new FloatField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, 2, strings->layerHeight, "mm");
 	ypos += rowTextHeight;
-	fpHeightField = new FloatField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, 1, strings->objectHeight, "mm");
+	fpHeightField = new FloatField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, 1, strings->objectHeight, "mm");
 	ypos += rowTextHeight;
-	fpFilamentField = new IntegerField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->filamentNeeded, "mm");
+	fpFilamentField = new IntegerField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->filamentNeeded, "mm");
+	ypos += rowTextHeight;
+	fpLastModifiedField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->lastModified, lastModifiedText.c_str());
+	ypos += rowTextHeight;
+	fpPrintTimeField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->estimatedPrintTime, printTimeText.c_str());
 	ypos += rowTextHeight;
 	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
-	ypos += rowTextHeight;
-	fpLastModifiedField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->lastModified, lastModifiedText.c_str());
-	ypos += rowTextHeight;
-	fpPrintTimeField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->estimatedPrintTime, printTimeText.c_str());
 
 	fileDetailPopup->AddField(fpNameField);
 	fileDetailPopup->AddField(fpSizeField);
@@ -602,6 +621,7 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	fileDetailPopup->AddField(fpGeneratedByField);
 	fileDetailPopup->AddField(fpLastModifiedField);
 	fileDetailPopup->AddField(fpPrintTimeField);
+	fileDetailPopup->AddField(fpThumbnail);
 
 	// Add the buttons
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
@@ -2135,6 +2155,44 @@ namespace UI
 		fpFilamentField->SetValue(len);
 	}
 
+	bool UpdateFileThumbnailChunk(const struct Thumbnail &thumbnail, uint32_t pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count)
+	{
+		dbg("offset %d pixels %08x count %d\n", pixels_offset, pixels, pixels_count);
+		if (!mgr.IsPopupActive(fileDetailPopup))
+		{
+			return false;
+		}
+#define DRAW_TEST 0
+#if DRAW_TEST == 1
+		qoi_rgba_t pixel[100];
+
+		//memset(pixel, 0xaa, sizeof(pixel));
+		for (size_t i = 0; i < ARRAY_SIZE(pixel); i++)
+		{
+			pixel[i].v = 0;
+			pixel[i].rgba.r = 0xaa;
+		}
+
+		fpThumbnail->DrawRect(thumbnail.width, thumbnail.height, pixels_offset, pixel, ARRAY_SIZE(pixel));
+#elif DRAW_TEST == 2
+		int line = 64;
+		for (int i = 0; i < line; i++) {
+			qoi_rgba_t test_pixels[64];
+
+			for (size_t p = 0; p < ARRAY_SIZE(test_pixels); p++) {
+				test_pixels[p].v = 0;
+				test_pixels[p].rgba.r = 128 + p;
+				test_pixels[p].rgba.g = 64 + i;
+			}
+
+			fpThumbnail->DrawRect(ARRAY_SIZE(test_pixels), 1, i * ARRAY_SIZE(test_pixels), test_pixels, ARRAY_SIZE(test_pixels));
+		}
+#else
+		fpThumbnail->DrawRect(thumbnail.width, thumbnail.height, pixels_offset, pixels, pixels_count);
+#endif
+		return true;
+	}
+
 	// Return true if we are displaying file information
 	bool IsDisplayingFileInfo()
 	{
@@ -2616,9 +2674,6 @@ namespace UI
 						{
 							// It's a regular file
 							currentFile = fileName;
-							SerialIo::Sendf(GetFirmwareFeatures().IsBitSet(noM20M36) ? "M408 S36 P" : "M36 ");			// ask for the file info
-							SerialIo::SendFilename(CondStripDrive(FileManager::GetFilesDir()), currentFile);
-							SerialIo::SendChar('\n');
 							FileSelected(currentFile);
 							mgr.SetPopup(fileDetailPopup, AutoPlace, AutoPlace);
 						}

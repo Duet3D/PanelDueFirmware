@@ -180,6 +180,7 @@ target_sources( paneldue.elf PRIVATE
 	src/Icons/MiscIcons.cpp
 	src/Icons/NozzleIcons.cpp
 	src/Library/Misc.cpp
+	src/Library/Thumbnail.cpp
 	src/ObjectModel/Axis.cpp
 	src/ObjectModel/BedOrChamber.cpp
 	src/ObjectModel/Spindle.cpp
@@ -192,10 +193,13 @@ target_sources( paneldue.elf PRIVATE
 	src/UI/MessageLog.cpp
 	src/UI/Popup.cpp
 	src/UI/UserInterface.cpp
+	lib/base64/base64.c
 )
 
 
 target_include_directories( paneldue.elf PRIVATE
+	lib/base64
+	lib/qoi
 	src
 	src/ASF/common/boards
 	src/ASF/common/boards/user_board

@@ -1,3 +1,9 @@
 [submodule "lib/librrf"]
 	path = lib/librrf
 	url = https://github.com/Duet3D/RRFLibraries.git
+[submodule "lib/qoi"]
+	path = lib/qoi
+	url = https://github.com/Duet3D/qoi.git
+[submodule "lib/base64"]
+	path = lib/base64
+	url = git@github.com:Duet3D/base64.git

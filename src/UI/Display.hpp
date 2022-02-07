@@ -149,6 +149,7 @@ public:
 	PopupWindow * null GetPopup() const { return next; }
 	void ClearPopup(bool redraw = true, PopupWindow *whichOne = nullptr);
 	inline bool IsPopupActive() const { return GetPopup() == nullptr; }
+	bool IsPopupActive(const PopupWindow *popup);
 	bool ObscuredByPopup(const DisplayField *p) const;
 	bool Visible(const DisplayField *p) const;
 	virtual bool Contains(PixelNumber xmin, PixelNumber ymin, PixelNumber xmax, PixelNumber ymax) const = 0;
@@ -730,6 +731,31 @@ public:
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override;
 
 	PixelNumber GetHeight() const override { return height; }
+};
+
+#include "qoi.h"
+
+class DrawDirect: public DisplayField
+{
+	PixelNumber height;
+
+	typedef void (*RefreshNotify)(bool full, bool changed);
+
+	RefreshNotify refreshNotify;
+
+public:
+	DrawDirect(PixelNumber py, PixelNumber px, PixelNumber ph, PixelNumber pw, RefreshNotify pRefreshNotify)
+		: DisplayField(py, px, pw), height(ph)
+	{
+		refreshNotify = pRefreshNotify;
+	}
+
+	PixelNumber GetHeight() const { return height; }
+	PixelNumber GetWidth() const { return width; }
+
+	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override;
+
+	void DrawRect(PixelNumber widthRect, PixelNumber heightRect, unsigned int pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count);
 };
 
 #endif /* DISPLAY_H_ */

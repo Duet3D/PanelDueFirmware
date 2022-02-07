@@ -10,9 +10,11 @@
 #include "PanelDue.hpp"
 #include "asf.h"
 
-#include <cstring>
 #include <cctype>
 #include <cmath>
+#include <cstdint>
+#include <cstring>
+
 
 #include <Hardware/Mem.hpp>
 #include <Hardware/UTFT.hpp>
@@ -35,23 +37,14 @@
 #include <ObjectModel/Axis.hpp>
 #include <ObjectModel/PrinterStatus.hpp>
 #include "ControlCommands.hpp"
+#include "Library/Thumbnail.hpp"
 
 extern uint16_t _esplash[];							// defined in linker script
 
 #define DEBUG	(0) // 0: off, 1: MessageLog, 2: Uart
+#include "Debug.hpp"
+
 #define DEBUG2	(0) // 0: off, 1: DebugField
-
-#if (DEBUG == 1)
-#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
-
-#elif (DEBUG == 2)
-#define dbg(fmt, args...)		do { SerialIo::Dbg("%s(%d): " fmt, __FUNCTION__, __LINE__, ##args); } while(0)
-
-#else
-#define dbg(fmt, args...)		do {} while(0)
-
-#endif
-
 #if (DEBUG2)
 
 #define STRINGIFY(x)	#x
@@ -165,6 +158,40 @@ static bool initialized = false;
 static float pollIntervalMultiplier = 1.0;
 static uint32_t printerPollInterval = defaultPrinterPollInterval;
 
+static struct ThumbnailData thumbnailData;
+static struct Thumbnail thumbnail;
+
+enum ThumbnailState {
+	Init = 0,
+	Header,
+	DataRequest,
+	DataWait,
+	Data
+};
+
+static struct ThumbnailContext {
+	String<MaxFilnameLength> filename;
+	enum ThumbnailState state;
+	int16_t parseErr;
+	int32_t err;
+	uint32_t size;
+	uint32_t offset;
+	uint32_t next;
+
+	void Init()
+	{
+		filename.Clear();
+		state = ThumbnailState::Init;
+		parseErr = 0;
+		err = 0;
+		size = 0;
+		offset = 0;
+		next = 0;
+
+	};
+
+} thumbnailContext;
+
 static const ColourScheme *colours = &colourSchemes[0];
 
 static Alert currentAlert;
@@ -201,6 +228,17 @@ enum ReceivedDataEvent
 	rcvM36PrintTime,
 	rcvM36SimulatedTime,
 	rcvM36Size,
+	rcvM36ThumbnailsFormat,
+	rcvM36ThumbnailsHeight,
+	rcvM36ThumbnailsOffset,
+	rcvM36ThumbnailsSize,
+	rcvM36ThumbnailsWidth,
+
+	rcvM361ThumbnailData,
+	rcvM361ThumbnailErr,
+	rcvM361ThumbnailFilename,
+	rcvM361ThumbnailNext,
+	rcvM361ThumbnailOffset,
 
 	// Keys for M409 response
 	rcvKey,
@@ -446,6 +484,17 @@ static FieldTableEntry fieldTable[] =
 	{ rcvM36PrintTime,					"printTime" },
 	{ rcvM36SimulatedTime,				"simulatedTime" },
 	{ rcvM36Size,						"size" },
+	{ rcvM36ThumbnailsFormat,			"thumbnails^:format" },
+	{ rcvM36ThumbnailsHeight,			"thumbnails^:height" },
+	{ rcvM36ThumbnailsOffset,			"thumbnails^:offset" },
+	{ rcvM36ThumbnailsSize,				"thumbnails^:size" },
+	{ rcvM36ThumbnailsWidth,			"thumbnails^:width" },
+
+	{ rcvM361ThumbnailData,				"thumbnail:data" },
+	{ rcvM361ThumbnailErr,				"thumbnail:err" },
+	{ rcvM361ThumbnailFilename,			"thumbnail:fileName" },
+	{ rcvM361ThumbnailNext,				"thumbnail:next" },
+	{ rcvM361ThumbnailOffset,			"thumbnail:offset" },
 
 	// Push messages
 	{ rcvPushMessage,					"message" },
@@ -960,6 +1009,13 @@ static void StartReceivedMessage()
 	MessageLog::BeginNewMessage();
 	FileManager::BeginNewMessage();
 	currentAlert.flags.Clear();
+
+	if (thumbnailContext.state == ThumbnailState::Init)
+	{
+		thumbnailContext.Init();
+		ThumbnailInit(thumbnail);
+		memset(&thumbnailData, 0, sizeof(thumbnailData));
+	}
 }
 
 static void EndReceivedMessage()
@@ -981,6 +1037,61 @@ static void EndReceivedMessage()
 		MessageLog::DisplayNewMessage();
 	}
 	FileManager::EndReceivedMessage();
+
+	if (thumbnailContext.parseErr != 0 || thumbnailContext.err != 0)
+	{
+		dbg("thumbnail parseErr %d err %d.\n",
+			thumbnailContext.parseErr,
+			thumbnailContext.err);
+		thumbnailContext.state = ThumbnailState::Init;
+	}
+#if 0 // && DEBUG
+	if (thumbnail.imageFormat != Thumbnail::ImageFormat::Invalid)
+	{
+		dbg("filename %s offset %d size %d format %d width %d height %d\n",
+			thumbnailContext.filename.c_str(),
+			thumbnailContext.offset, thumbnailContext.size,
+			thumbnail.imageFormat,
+			thumbnail.width, thumbnail.height);
+	}
+#endif
+	int ret;
+
+	switch (thumbnailContext.state) {
+	case ThumbnailState::Init:
+	case ThumbnailState::DataRequest:
+	case ThumbnailState::DataWait:
+		break;
+	case ThumbnailState::Header:
+		if (!ThumbnailIsValid(thumbnail))
+		{
+			dbg("thumbnail meta invalid.\n");
+			break;
+		}
+		thumbnailContext.state = ThumbnailState::DataRequest;
+		break;
+	case ThumbnailState::Data:
+		if (!ThumbnailDataIsValid(thumbnailData))
+		{
+			dbg("thumbnail meta or data invalid.\n");
+			thumbnailContext.state = ThumbnailState::Init;
+			break;
+		}
+		if ((ret = ThumbnailDecodeChunk(thumbnail, thumbnailData, UI::UpdateFileThumbnailChunk)) < 0)
+		{
+			dbg("failed to decode thumbnail chunk %d.\n", ret);
+			thumbnailContext.state = ThumbnailState::Init;
+			break;
+		}
+		if (thumbnailContext.next == 0)
+		{
+			thumbnailContext.state = ThumbnailState::Init;
+		} else
+		{
+			thumbnailContext.state = ThumbnailState::DataRequest;
+		}
+		break;
+	}
 }
 
 void HandleOutOfBufferResponse()
@@ -1800,6 +1911,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		}
 		break;
 	case rcvM36Filename:
+		thumbnailContext.filename.copy(data);
 		break;
 
 	case rcvM36GeneratedBy:
@@ -1849,6 +1961,79 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 				UI::UpdateFileSize(sz);
 			}
 		}
+		break;
+
+	case rcvM36ThumbnailsFormat:
+		thumbnail.imageFormat = Thumbnail::ImageFormat::Invalid;
+		if (strcmp(data, "qoi") == 0)
+		{
+			thumbnail.imageFormat = Thumbnail::ImageFormat::Qoi;
+
+			thumbnailContext.state = ThumbnailState::Header;
+		}
+		break;
+	case rcvM36ThumbnailsHeight:
+		uint32_t height;
+		if (GetUnsignedInteger(data, height))
+		{
+			thumbnail.height = height;
+		}
+		break;
+	case rcvM36ThumbnailsOffset:
+		uint32_t offset;
+		if (GetUnsignedInteger(data, offset))
+		{
+			thumbnailContext.next = offset;
+			dbg("receive initial offset %d.\n", offset);
+		}
+		break;
+	case rcvM36ThumbnailsSize:
+		uint32_t size;
+		if (GetUnsignedInteger(data, size))
+		{
+			thumbnailContext.size = size;
+		}
+		break;
+	case rcvM36ThumbnailsWidth:
+		uint32_t width;
+		if (GetUnsignedInteger(data, width))
+		{
+			thumbnail.width = width;
+		}
+		break;
+
+	case rcvM361ThumbnailData:
+		thumbnailData.size = std::min(strlen(data), sizeof(thumbnailData.buffer));
+		memcpy(thumbnailData.buffer, data, thumbnailData.size);
+		thumbnailContext.state = ThumbnailState::Data;
+		break;
+	case rcvM361ThumbnailErr:
+		if (!GetInteger(data, thumbnailContext.err))
+		{
+			thumbnailContext.parseErr = -1;
+		}
+		break;
+	case rcvM361ThumbnailFilename:
+		if (!thumbnailContext.filename.Equals(data))
+		{
+			thumbnailContext.parseErr = -2;
+		}
+		break;
+	case rcvM361ThumbnailNext:
+		if (!GetUnsignedInteger(data, thumbnailContext.next))
+		{
+			thumbnailContext.parseErr = -3;
+			break;
+		}
+		dbg("receive next offset %d.\n", thumbnailContext.next);
+		break;
+	case rcvM361ThumbnailOffset:
+		if (!GetUnsignedInteger(data, thumbnailContext.offset))
+		{
+			thumbnailContext.parseErr = -4;
+			break;
+		}
+		dbg("receive current offset %d.\n", thumbnailContext.offset);
 		break;
 
 	case rcvControlCommand:
@@ -2357,6 +2542,18 @@ int main(void)
 		// printer communication handling
 		UpdatePollRate(screensaverActive);
 
+#if DEBUG
+		static enum ThumbnailState stateOld = ThumbnailState::Init;
+
+		if (stateOld != thumbnailContext.state)
+		{
+			dbg("thumbnail state %d -> %d.\n",
+					stateOld, thumbnailContext.state);
+			stateOld = thumbnailContext.state;
+		}
+#endif
+
+
 		if (!UI::IsSetupTab())
 		{
 
@@ -2366,38 +2563,50 @@ int main(void)
 			}
 			else if (lastResponseTime >= lastPollTime &&
 			    (now > lastPollTime + printerPollInterval ||
-			     !initialized))
+			     !initialized ||
+			     thumbnailContext.state == ThumbnailState::DataRequest))
 			{
-				currentReqSeq = GetNextSeq(currentReqSeq);
-				if (currentReqSeq != nullptr)
+				if (thumbnailContext.state == ThumbnailState::DataRequest)
 				{
-					dbg("requesting %s\n", currentReqSeq->key);
-					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", currentReqSeq->key, currentReqSeq->flags);
+					SerialIo::Sendf("M36.1 P\"%s\" S%d\n",
+						thumbnailContext.filename.c_str(),
+						thumbnailContext.next);
 					lastPollTime = SystemTick::GetTickCount();
+					thumbnailContext.state = ThumbnailState::DataWait;
 				}
 				else
 				{
-					// Once we get here the first time we will have work all seqs once
-					if (!initialized)
+					currentReqSeq = GetNextSeq(currentReqSeq);
+					if (currentReqSeq != nullptr)
 					{
-						dbg("seqs init DONE\n");
-						UI::AllToolsSeen();
-						initialized = true;
+						dbg("requesting %s\n", currentReqSeq->key);
+						SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", currentReqSeq->key, currentReqSeq->flags);
+						lastPollTime = SystemTick::GetTickCount();
 					}
+					else
+					{
+						// Once we get here the first time we will have work all seqs once
+						if (!initialized)
+						{
+							dbg("seqs init DONE\n");
+							UI::AllToolsSeen();
+							initialized = true;
+						}
 
-					// check if specific info is needed
-					bool sent = false;
-					if (OkToSend())
-					{
-						sent = FileManager::ProcessTimers();
-					}
+						// check if specific info is needed
+						bool sent = false;
+						if (OkToSend())
+						{
+							sent = FileManager::ProcessTimers();
+						}
 
-					// if nothing was fetched do a status update
-					if (!sent)
-					{
-						SerialIo::Sendf("M409 F\"d99f\"\n");
+						// if nothing was fetched do a status update
+						if (!sent)
+						{
+							SerialIo::Sendf("M409 F\"d99f\"\n");
+						}
+						lastPollTime = SystemTick::GetTickCount();
 					}
-					lastPollTime = SystemTick::GetTickCount();
 				}
 			}
 			else if (now > lastPollTime + printerPollInterval + printerResponseTimeout)	  // request timeout
