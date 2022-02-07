@@ -1079,6 +1079,9 @@ void DrawDirect::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
 	// nothing todo
 	UNUSED(full); UNUSED(xOffset); UNUSED(yOffset);
 
+	if (refreshNotify)
+		refreshNotify(full, changed);
+
 	changed = false;
 }
 

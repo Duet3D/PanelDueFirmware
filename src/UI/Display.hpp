@@ -739,10 +739,15 @@ class DrawDirect: public DisplayField
 {
 	PixelNumber height;
 
+	typedef void (*RefreshNotify)(bool full, bool changed);
+
+	RefreshNotify refreshNotify;
+
 public:
-	DrawDirect(PixelNumber py, PixelNumber px, PixelNumber ph, PixelNumber pw)
+	DrawDirect(PixelNumber py, PixelNumber px, PixelNumber ph, PixelNumber pw, RefreshNotify pRefreshNotify)
 		: DisplayField(py, px, pw), height(ph)
 	{
+		refreshNotify = pRefreshNotify;
 	}
 
 	PixelNumber GetHeight() const { return height; }
