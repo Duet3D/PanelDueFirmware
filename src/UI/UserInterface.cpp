@@ -563,6 +563,19 @@ pre(fileButtons.lim == numRows * numCols)
 	return popup;
 }
 
+static void ThumbnailRefreshNotify(bool full, bool changed)
+{
+	UNUSED(changed);
+
+	if (!full || !currentFile)
+		return;
+
+	dbg("full %d changed %d currentFile %s\n", full, changed, currentFile);
+	SerialIo::Sendf(GetFirmwareFeatures().IsBitSet(noM20M36) ? "M408 S36 P" : "M36 ");			// ask for the file info
+	SerialIo::SendFilename(CondStripDrive(FileManager::GetFilesDir()), currentFile);
+	SerialIo::SendChar('\n');
+}
+
 // Create the popup window used to display the file dialog
 static void CreateFileActionPopup(const ColourScheme& colours)
 {
@@ -579,7 +592,7 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	height = 192;
 	x_start = fileInfoPopupWidth - popupSideMargin / 2 - fileInfoPopupWidth / 3;
 	width = fileInfoPopupWidth / 3;
-	fpThumbnail = new DrawDirect(y_start, x_start, height, width);
+	fpThumbnail = new DrawDirect(y_start, x_start, height, width, ThumbnailRefreshNotify);
 
 	fpSizeField = new IntegerField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->fileSize, " b");
 	ypos += rowTextHeight;
@@ -597,7 +610,6 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 
 	dbg("y_start %d x_start %d height %d width %d\n", y_start, x_start, height, width);
 
-	dbg("size x %d y %d\n", fileInfoPopupWidth / 3, y_stop - ypos);
 	dbg("text height %d\n", rowTextHeight);
 
 	fileDetailPopup->AddField(fpNameField);
@@ -2661,9 +2673,6 @@ namespace UI
 						{
 							// It's a regular file
 							currentFile = fileName;
-							SerialIo::Sendf(GetFirmwareFeatures().IsBitSet(noM20M36) ? "M408 S36 P" : "M36 ");			// ask for the file info
-							SerialIo::SendFilename(CondStripDrive(FileManager::GetFilesDir()), currentFile);
-							SerialIo::SendChar('\n');
 							FileSelected(currentFile);
 							mgr.SetPopup(fileDetailPopup, AutoPlace, AutoPlace);
 						}
