@@ -586,12 +586,12 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
 
 	PixelNumber ypos = popupTopMargin;
-	fpNameField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->fileName);
-	ypos += rowTextHeight;
+	fpNameField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - closeButtonWidth - 3 * popupSideMargin, TextAlignment::Left, strings->fileName);
+	ypos += rowTextHeight + 3;
 	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
 	ypos += rowTextHeight;
 
-	y_start = ypos + rowTextHeight + popupTopMargin / 2;
+	y_start = ypos + 3;
 	height = 7 * rowTextHeight + (2 * rowTextHeight) / 3;
 
 	x_start = fileInfoPopupWidth - popupSideMargin / 2 - fileInfoPopupWidth / 3;
