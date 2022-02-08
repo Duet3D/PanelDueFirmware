@@ -582,14 +582,17 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	PixelNumber y_start, height;
 	PixelNumber x_start, width;
 
-	fileDetailPopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, "File information");
+	fileDetailPopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, nullptr);
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
-	PixelNumber ypos = popupTopMargin + (3 * rowTextHeight)/2;
+
+	PixelNumber ypos = popupTopMargin;
 	fpNameField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->fileName);
+	ypos += rowTextHeight;
+	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
 	ypos += rowTextHeight;
 
 	y_start = ypos + rowTextHeight + popupTopMargin / 2;
-	height = 6 * rowTextHeight;
+	height = 7 * rowTextHeight;
 
 	x_start = fileInfoPopupWidth - popupSideMargin / 2 - fileInfoPopupWidth / 3;
 	width = fileInfoPopupWidth / 3;
@@ -610,9 +613,6 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	fpLastModifiedField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->lastModified, lastModifiedText.c_str());
 	ypos += rowTextHeight;
 	fpPrintTimeField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin - fileInfoPopupWidth / 3, TextAlignment::Left, strings->estimatedPrintTime, printTimeText.c_str());
-	ypos += rowTextHeight;
-	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
-
 	fileDetailPopup->AddField(fpNameField);
 	fileDetailPopup->AddField(fpSizeField);
 	fileDetailPopup->AddField(fpLayerHeightField);
