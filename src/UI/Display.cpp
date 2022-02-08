@@ -176,6 +176,7 @@ Window::Window(Colour pb)
 // Prepend a field to the linked list of displayed fields
 void Window::AddField(DisplayField *d)
 {
+	d->parent = this;
 	d->next = root;
 	root = d;
 }
@@ -1093,13 +1094,22 @@ void DrawDirect::DrawRect(PixelNumber widthRect, PixelNumber heightRect, unsigne
 		return;
 	}
 
+	PixelNumber xabs = x;
+	PixelNumber yabs = y;
+
+	if (parent)
+	{
+		xabs += parent->Xpos();
+		yabs += parent->Ypos();
+	}
+
 	if (widthRect > width || heightRect > height)
 	{
 		dbg("rect does not fit\n");
 		return;
 	}
 
-	lcd.drawBitmapRgbaStream(x, y, widthRect, heightRect, pixels_offset, reinterpret_cast<const uint32_t *>(pixels), pixels_count);
+	lcd.drawBitmapRgbaStream(xabs, yabs, widthRect, heightRect, pixels_offset, reinterpret_cast<const uint32_t *>(pixels), pixels_count);
 	changed = false;
 }
 
