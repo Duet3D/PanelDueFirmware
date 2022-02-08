@@ -209,13 +209,13 @@ const StringTable LanguageTables[] =
 		"Macros",
 		"Error ",						// note the space at the end
 		" accessing SD card",			// note the space at the start
-		"Filename: ",
+		"File: ",
 		"Size: ",
 		"Layer height: ",
 		"Object height: ",
 		"Filament needed: ",
 		"Sliced by: ",
-		"Last modified: ",
+		"Date: ",
 		"Estimated print time: ",
 		"Simulated print time: ",
 		"Simulate",
