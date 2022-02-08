@@ -592,7 +592,7 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	ypos += rowTextHeight;
 
 	y_start = ypos + rowTextHeight + popupTopMargin / 2;
-	height = 7 * rowTextHeight;
+	height = 7 * rowTextHeight + (2 * rowTextHeight) / 3;
 
 	x_start = fileInfoPopupWidth - popupSideMargin / 2 - fileInfoPopupWidth / 3;
 	width = fileInfoPopupWidth / 3;
