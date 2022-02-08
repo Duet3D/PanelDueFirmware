@@ -595,7 +595,7 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	height = 7 * rowTextHeight + (2 * rowTextHeight) / 3;
 
 	x_start = fileInfoPopupWidth - popupSideMargin / 2 - fileInfoPopupWidth / 3;
-	width = fileInfoPopupWidth / 3;
+	width = fileInfoPopupWidth / 3 + 5;
 
 	fpThumbnail = new DrawDirect(y_start, x_start, height, width, ThumbnailRefreshNotify);
 
