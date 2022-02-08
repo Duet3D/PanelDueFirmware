@@ -459,13 +459,13 @@ const StringTable LanguageTables[] =
 		"Macros",
 		"Erreur ",								// note the space at the end
 		" accés à la carte SD en cours",				// note the space at the start
-		"Nom du fichier : ",
-		"Taille : ",
+		"Fichier: ",
+		"Taille: ",
 		"Hauteur de couche: ",
 		"Hauteur de l'objet: ",
 		"Filament requis: ",
 		"Slicé par: ",
-		"Dernière modification: ",
+		"Date: ",
 		"Temps d'impression estimé: ",
 		"Temps d'impression simulé: ",
 		"Simuler",
