@@ -334,13 +334,13 @@ const StringTable LanguageTables[] =
 		"Makros",
 		"Fehler ",						// note the space at the end
 		" beim Zugriff auf SD-Karte",	// note the space at the start
-		"Dateiname: ",
+		"Datei: ",
 		"Größe: ",
 		"Schichthöhe: ",
 		"Objekthöhe: ",
 		"Benötigtes Filament: ",
 		"Erzeugt mit: ",
-		"Letzte Änderung: ",
+		"Datum: ",
 		"Geschätzte Druckdauer: ",
 		"Simulierte Druckdauer: ",
 		"Simulieren",
