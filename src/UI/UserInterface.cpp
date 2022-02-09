@@ -3287,6 +3287,8 @@ namespace UI
 
 	static void DoEmergencyStop()
 	{
+		SerialIo::Sendf("M98 P\"estop.g\"\n");					// Run the estop.g macro
+		Delay(500);
 		// We send M112 for the benefit of old firmware, and F0 0F (an invalid UTF8 sequence) for new firmware
 		SerialIo::Sendf("M112 ;" "\xF0" "\x0F" "\n");
 		TouchBeep();											// needed when we are called from ProcessTouchOutsidePopup

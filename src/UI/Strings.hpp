@@ -176,7 +176,7 @@ const StringTable LanguageTables[] =
 		"Move",
 		"Extrusion",
 		"Macro",
-		"STOP",
+		"RESET",
 
 		// Print page
 		"Extruder" THIN_SPACE "%",
