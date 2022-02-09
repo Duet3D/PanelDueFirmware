@@ -39,6 +39,7 @@ const event_t nullEvent = 0;
 enum class TextAlignment : uint8_t { Left, Centre, Right };
 
 class ButtonBase;
+class Window;
 
 // Small by-value class to identify what button has been pressed
 class ButtonPress
@@ -90,6 +91,7 @@ protected:
 	virtual void CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) { UNUSED(x); UNUSED(y); UNUSED(bestError); UNUSED(best); }
 
 public:
+	Window * null parent;
 	DisplayField * null next;					// link to next field in list
 
 	virtual bool IsButton() const { return false; }

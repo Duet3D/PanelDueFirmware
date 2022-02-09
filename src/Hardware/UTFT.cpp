@@ -1588,6 +1588,14 @@ void UTFT::drawRect(int x1, int y1, int x2, int y2)
 	drawVLine(x2, y1, y2-y1+1);
 }
 
+void UTFT::drawRect(int x1, int y1, int x2, int y2, Colour colour)
+{
+	Colour save = fcolour;
+	fcolour = colour;
+	drawRect(x1, y1, x2, y2);
+	fcolour = save;
+}
+
 void UTFT::drawRoundRect(int x1, int y1, int x2, int y2)
 {
 	if (x1>x2)

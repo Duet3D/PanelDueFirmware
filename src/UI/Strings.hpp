@@ -209,13 +209,13 @@ const StringTable LanguageTables[] =
 		"Macros",
 		"Error ",						// note the space at the end
 		" accessing SD card",			// note the space at the start
-		"Filename: ",
+		"File: ",
 		"Size: ",
 		"Layer height: ",
 		"Object height: ",
 		"Filament needed: ",
 		"Sliced by: ",
-		"Last modified: ",
+		"Date: ",
 		"Estimated print time: ",
 		"Simulated print time: ",
 		"Simulate",
@@ -334,13 +334,13 @@ const StringTable LanguageTables[] =
 		"Makros",
 		"Fehler ",						// note the space at the end
 		" beim Zugriff auf SD-Karte",	// note the space at the start
-		"Dateiname: ",
+		"Datei: ",
 		"Größe: ",
 		"Schichthöhe: ",
 		"Objekthöhe: ",
 		"Benötigtes Filament: ",
 		"Erzeugt mit: ",
-		"Letzte Änderung: ",
+		"Datum: ",
 		"Geschätzte Druckdauer: ",
 		"Simulierte Druckdauer: ",
 		"Simulieren",
@@ -459,13 +459,13 @@ const StringTable LanguageTables[] =
 		"Macros",
 		"Erreur ",								// note the space at the end
 		" accés à la carte SD en cours",				// note the space at the start
-		"Nom du fichier : ",
-		"Taille : ",
+		"Fichier: ",
+		"Taille: ",
 		"Hauteur de couche: ",
 		"Hauteur de l'objet: ",
 		"Filament requis: ",
 		"Slicé par: ",
-		"Dernière modification: ",
+		"Date: ",
 		"Temps d'impression estimé: ",
 		"Temps d'impression simulé: ",
 		"Simuler",
