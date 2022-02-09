@@ -585,16 +585,16 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	fileDetailPopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, nullptr);
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
 
-	PixelNumber ypos = popupTopMargin;
+	PixelNumber ypos = popupTopMargin - 2;
 	fpNameField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - closeButtonWidth - 3 * popupSideMargin, TextAlignment::Left, strings->fileName);
 	ypos += rowTextHeight + 3;
-	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
+	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - closeButtonWidth - 3 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
 	ypos += rowTextHeight;
 
 	y_start = ypos + 3;
 	height = 7 * rowTextHeight + (2 * rowTextHeight) / 3;
 
-	x_start = fileInfoPopupWidth - popupSideMargin / 2 - fileInfoPopupWidth / 3;
+	x_start = fileInfoPopupWidth - popupSideMargin * 3 / 2 - fileInfoPopupWidth / 3;
 	width = fileInfoPopupWidth / 3 + 5;
 
 	fpThumbnail = new DrawDirect(y_start, x_start, height, width, ThumbnailRefreshNotify);
