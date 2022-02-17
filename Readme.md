@@ -31,7 +31,7 @@ https://github.com/Duet3D/PanelDueFirmware/releases
 
 Detailed flashing instruction can be found at
 
-https://duet3d.dozuki.com/Wiki/PanelDue_Firmware_update
+https://docs.duet3d.com/en/User_manual/RepRapFirmware/Updating_PanelDue
 
 # Development
 
