@@ -1094,6 +1094,12 @@ void DrawDirect::DrawRect(PixelNumber widthRect, PixelNumber heightRect, unsigne
 		return;
 	}
 
+	if (widthRect > width || heightRect > height)
+	{
+		dbg("rect does not fit\n");
+		return;
+	}
+
 	PixelNumber xabs = x;
 	PixelNumber yabs = y;
 
@@ -1103,10 +1109,14 @@ void DrawDirect::DrawRect(PixelNumber widthRect, PixelNumber heightRect, unsigne
 		yabs += parent->Ypos();
 	}
 
-	if (widthRect > width || heightRect > height)
+	if (widthRect < width)
 	{
-		dbg("rect does not fit\n");
-		return;
+		xabs += (width - widthRect);
+	}
+
+	if (heightRect < height)
+	{
+		yabs += (height - heightRect) / 2;
 	}
 
 	lcd.drawBitmapRgbaStream(xabs, yabs, widthRect, heightRect, pixels_offset, reinterpret_cast<const uint32_t *>(pixels), pixels_count);
