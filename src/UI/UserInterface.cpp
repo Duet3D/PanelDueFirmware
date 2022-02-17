@@ -585,10 +585,10 @@ static void CreateFileActionPopup(const ColourScheme& colours)
 	fileDetailPopup = new StandardPopupWindow(fileInfoPopupHeight, fileInfoPopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, nullptr);
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
 
-	PixelNumber ypos = popupTopMargin - 2;
+	PixelNumber ypos = popupTopMargin + 1;
 	fpNameField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - closeButtonWidth - 3 * popupSideMargin, TextAlignment::Left, strings->fileName);
 	ypos += rowTextHeight + 3;
-	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - closeButtonWidth - 3 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
+	fpGeneratedByField = new TextField(ypos, popupSideMargin, fileInfoPopupWidth - 2 * popupSideMargin, TextAlignment::Left, strings->generatedBy, generatedByText.c_str());
 	ypos += rowTextHeight;
 
 	y_start = ypos + 3;
