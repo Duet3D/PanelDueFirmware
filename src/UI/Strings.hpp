@@ -895,16 +895,16 @@ const StringTable LanguageTables[] =
 		"Status",
 		"Konsola",
 		"Ustawienia",
-		"Odczyt" THIN_SPACE DEGREE_SYMBOL "C",
-		"Active" THIN_SPACE DEGREE_SYMBOL "C",
-		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
+		"Aktualna" THIN_SPACE DEGREE_SYMBOL "C",
+		"Żądana" THIN_SPACE DEGREE_SYMBOL "C",
+		"Czuwanie" THIN_SPACE DEGREE_SYMBOL "C",
 		"Ruch",
 		"Ekstruzja",
-		"Makro",
+		"Polecenie",
 		"STOP",
 
 		// Print page
-		"Ekstruder" THIN_SPACE "%",
+		"Ekstruzja" THIN_SPACE "%",
 		"Prędkość ",							// note space at end
 		"Nawiew ",								// note space at end
 		"Pozostało:: ",
@@ -914,7 +914,7 @@ const StringTable LanguageTables[] =
 		"slicer ",							// note space at end
 		"N/A",
 		"Pauza",
-		"Baby step",
+		"Mały krok",
 		"Wznów",
 		"Anuluj",
 		"Drukuj ponownie",
@@ -934,31 +934,31 @@ const StringTable LanguageTables[] =
 		"zapisz i uruch.ponow.",
 		"Czas powiad. ",					// note space at end
 		"Wygaszacz ",						// note space at end
-		"Babystep ",						// note space at end
+		"Mały krok ",						// note space at end
 		"Prędkość ",						// note space at end
 
 		// Misc
 		"Potwierdź przywrócenie do ustawień fabrycznych.",
 		"Potwierdź usuń.pliku",
 		"Jesteś pewny?",
-		"Touch the spot",
+		"Dotknij miejsce",
 		"Ruch głowicy",
 		"Ilość filamentu (mm)",
 		"Prędkość (mm/s)",
 		"Ekstruduj",
 		"Retrakuj",
-		"Baby stepping",
+		"Małe kroki",
 		"Aktualny offset Z : ",
 		"Wiadomość",
 		"Wiadomości",
-		"Panel Due firmware version ",	// note space at end
+		"Panel Due firmware wersja ",	// note space at end
 		"Odpowiedź",
 
 		// File popup
 		"Pliki na karcie ",				// note the space on the end
-		"Makra",
-		"Error ",						// note the space at the end
-		"Otwieranie karty SD",			// note the space at the start
+		"Polecenia",
+		"Błąd ",						// note the space at the end
+		"Otczyt karty SD",			// note the space at the start
 		"Nazwa pliku: ",
 		"Rozmiar: ",
 		"Wysok.warstwy: ",
@@ -973,18 +973,19 @@ const StringTable LanguageTables[] =
 		// Printer status strings
 		{
 			"Łączenie",
-			"Idle",
+			"Bezczynny",
 			"Drukowanie",
 			"Rozpoczynanie",
-			"Pauza",
+			"Uruchamianie",
+			"Pałza",
 			"Zajęty",
 			"Pauzowanie",
 			"Wznawianie",
-			"Ładowanie systemu",
+			"Przesyłanie firmware",
 			"Zmiana narzędzia",
-			"Symulowanie",
-			"Standby",
-			"Inicjowanie",
+			"Symulacja",
+			"Off",
+			"Cancelling",
 		},
 
 		// Theme names
@@ -998,13 +999,13 @@ const StringTable LanguageTables[] =
 		{
 			"Nie wygaszaj",
 			"Wygaszaj gdy bezczynny",
-			"Zawsze wygaszaj"
+			"Zawsze wygaszaj",
 		},
 
 		// Heater combine types
 		{
-			"Heat's not comb.",
-			"Heaters comb.",
+			"Głowica prosta",
+			"Głowica inna",
 		}
 	},
 
