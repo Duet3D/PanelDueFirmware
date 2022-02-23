@@ -77,7 +77,7 @@ namespace SerialIo
 	{
 		cbs = callbacks;
 
-		check = CheckType::Simple;
+		check = CheckType::CRC16;
 
 		uart_disable_interrupt(UARTn, 0xFFFFFFFF);
 #if SAM4S

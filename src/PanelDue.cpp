@@ -929,8 +929,6 @@ static void Reconnect()
 {
 	dbg("Reconnect\n");
 
-	SerialIo::SetCRC16(false);
-
 	initialized = false;
 	lastPollTime = 0;
 	lastResponseTime = SystemTick::GetTickCount();
