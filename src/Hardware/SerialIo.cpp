@@ -41,6 +41,7 @@ namespace SerialIo
 	CRC16 crc;
 
 	enum CheckType {
+		None,
 		Simple,
 		CRC16
 	} check;
@@ -126,6 +127,8 @@ namespace SerialIo
 	{
 		switch (check)
 		{
+		case CheckType::None:
+			break;
 		case CheckType::Simple:
 			checksum ^= c;
 			break;
@@ -146,6 +149,8 @@ namespace SerialIo
 			{
 				switch (check)
 				{
+				case CheckType::None:
+					break;
 				case CheckType::Simple:
 					{
 						// Send the checksum
