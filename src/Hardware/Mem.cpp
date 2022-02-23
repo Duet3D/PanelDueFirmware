@@ -8,6 +8,8 @@
 #include "Mem.hpp"
 #include <General/SimpleMath.h>
 
+#define MEM_DEBUG 0
+
 const uint32_t memPattern = 0xA5A5A5A5;
 
 extern int _end;				// end of allocated data, always on a 4-byte boundary
@@ -73,6 +75,7 @@ uint32_t GetRamSize()
 
 uint32_t GetFreeMemory()
 {
+#if MEM_DEBUG
 	register const uint32_t * stack_ptr asm ("sp");
 	const uint32_t *heapend = reinterpret_cast<const uint32_t*>(heap);
 	while (heapend < stack_ptr && *heapend == memPattern)
@@ -81,6 +84,11 @@ uint32_t GetFreeMemory()
 	}
 
 	return (unsigned char*)heapend - heap;
+#else
+	register const unsigned char* stack_ptr asm ("sp");
+
+	return stack_ptr - heap;
+#endif
 }
 
 // End
