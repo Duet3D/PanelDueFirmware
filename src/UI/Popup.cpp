@@ -42,33 +42,41 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 	okButton->Show(mode >= 2);
 	cancelButton->Show(mode == 3);
 
-	// show controls
-	bool selected = false;
+	// hide all buttons
 	for (size_t i = 0; i < ARRAY_SIZE(axisMap); i++)
 	{
-		TextButton *axis = axisMap[i];
+		axisMap[i]->Show(false);
+	}
 
-		bool show = controls & (1u << i);
-
-		assert(axis);
-		OM::Axis *omAxis = OM::GetAxis(i);
-
-		if (!omAxis)
+	size_t axisIndex = 0;
+	for (size_t i = 0; i < MaxTotalAxes; i++)
+	{
+		if (!(controls & (1u << i)))
 		{
-			axis->Show(false);
 			continue;
 		}
 
-		axis->SetText(omAxis->letter);
-		axis->Show(show);
-
-		if (show && !selected)
+		OM::Axis *omAxis = OM::GetAxis(i);
+		if (!omAxis)
 		{
-			selected = true;
-			ChangeLetter(i);
+			continue;
 		}
+
+		TextButton *axis = axisMap[axisIndex];
+
+		axisIndex++;
+
+		axis->SetText(omAxis->letter);
+		axis->Show(true);
 	}
 
+	// select first axis if there is at least one
+	if (controls)
+	{
+		ChangeLetter(0);
+	}
+
+	// show jog buttons
 	for (size_t i = 0; i < ARRAY_SIZE(dirMap); i++)
 	{
 		struct DirMap *dir = &dirMap[i];
