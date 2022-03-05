@@ -7,6 +7,8 @@
 
 #include <UI/UserInterface.hpp>
 
+#include <ctype.h>
+
 #include "Configuration.hpp"
 #include "FileManager.hpp"
 #include "FlashData.hpp"
@@ -2534,7 +2536,8 @@ namespace UI
 			case evMoveAxis:
 				{
 					TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(bp.GetButton());
-					SerialIo::Sendf("G91 G1 %c%s F%d G90\n", textButton->GetAxisLetter(), bp.GetSParam(), nvData.GetFeedrate());
+					const char letter = textButton->GetAxisLetter();
+					SerialIo::Sendf("G91 G1 %s%c%s F%d G90\n", islower(letter) ? "'" : "", letter, bp.GetSParam(), nvData.GetFeedrate());
 				}
 				break;
 
@@ -2767,7 +2770,10 @@ namespace UI
 				break;
 
 			case evHomeAxis:
-				SerialIo::Sendf("G28 %s0\n", bp.GetSParam());
+				{
+					const char letter = bp.GetSParam()[0];
+					SerialIo::Sendf("G28 %s%c0\n", islower(letter) ? "'" : "", letter);
+				}
 				break;
 
 			case evScrollFiles:
