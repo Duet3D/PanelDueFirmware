@@ -2247,8 +2247,6 @@ namespace UI
 		case evExtrudeAmount:
 		case evExtrudeRate:
 
-		case evMoveSelectAxis:
-
 		case evAdjustBaudRate:
 		case evAdjustVolume:
 		case evAdjustInfoTimeout:
