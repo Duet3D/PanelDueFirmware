@@ -33,6 +33,7 @@ public:
 private:
 	String<alertTitleLength> alertTitle;
 	String<alertTextLength/3> alertText1, alertText2, alertText3;
+	String<2> driveLetter;
 
 	TextButton *okButton;
 	TextButton *cancelButton;
@@ -49,6 +50,8 @@ private:
 		nullptr,
 		nullptr,
 	};
+
+	StaticTextField *driveLetterField;
 
 	struct DirMap {
 		const char *text;
