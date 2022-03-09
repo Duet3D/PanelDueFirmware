@@ -64,16 +64,17 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 
 		TextButton *axis = axisMap[axisIndex];
 
+		// select first axis if there is at least one
+		if (axisIndex == 0)
+		{
+			ChangeLetter(i);
+		}
+
 		axisIndex++;
 
 		axis->SetText(omAxis->letter);
+		axis->SetEvent(evMoveSelectAxis, i);
 		axis->Show(true);
-	}
-
-	// select first axis if there is at least one
-	if (controls)
-	{
-		ChangeLetter(0);
 	}
 
 	driveLetterField->Show(controls ? true : false);
