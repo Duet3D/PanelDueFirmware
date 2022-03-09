@@ -76,6 +76,8 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 		ChangeLetter(0);
 	}
 
+	driveLetterField->Show(controls ? true : false);
+
 	// show jog buttons
 	for (size_t i = 0; i < ARRAY_SIZE(dirMap); i++)
 	{
@@ -100,6 +102,9 @@ void AlertPopup::ChangeLetter(const size_t index)
 		return;
 	}
 
+	driveLetter.copy(axis->letter);
+	driveLetterField->SetValue(driveLetter.c_str(), true);
+
 	for (size_t i = 0; i < ARRAY_SIZE(dirMap); i++)
 	{
 		assert(dirMap[i].button);
@@ -120,7 +125,7 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	AddField(new StaticTextField(popupTopMargin + 4 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText3.c_str()));
 
 	// Calculate the button positions
-	constexpr unsigned int numButtons = 6;
+	constexpr unsigned int numButtons = 7;
 	constexpr PixelNumber buttonWidthUnits = 5;
 	constexpr PixelNumber buttonSpacingUnits = 1;
 	constexpr PixelNumber totalUnits = (numButtons * buttonWidthUnits) + ((numButtons - 1) * buttonSpacingUnits);
@@ -130,6 +135,13 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	constexpr PixelNumber buttonAxisWidth = 52;
 	constexpr PixelNumber buttonStep = (buttonWidthUnits + buttonSpacingUnits) * unitWidth;
 	constexpr PixelNumber hOffset = popupSideMargin + (alertPopupWidth - 2 * popupSideMargin - totalUnits * unitWidth)/2;
+
+	// add drive letter text field
+	driveLetterField = new StaticTextField(
+				popupTopMargin + 5 * rowTextHeight + buttonHeight + moveButtonRowSpacing,
+				hOffset + ARRAY_SIZE(dirMap) / 2 * buttonStep,
+				buttonWidth, TextAlignment::Centre, driveLetter.c_str(), true);
+	AddField(driveLetterField);
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 
@@ -145,13 +157,27 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 		axisMap[i] = button;
 	}
 
-	for (size_t i = 0; i < ARRAY_SIZE(dirMap); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(dirMap) / 2; i++)
 	{
 		struct DirMap *dir = &dirMap[i];
 
 		TextButtonForAxis *button = new TextButtonForAxis(
 				popupTopMargin + 5 * rowTextHeight + buttonHeight + moveButtonRowSpacing ,
 				hOffset + i * buttonStep, buttonWidth,
+				dir->text, evMoveAxis, dir->param);
+
+		assert(button);
+		AddField(button);
+		dir->button = button;
+	}
+
+	for (size_t i = ARRAY_SIZE(dirMap) / 2; i < ARRAY_SIZE(dirMap); i++)
+	{
+		struct DirMap *dir = &dirMap[i];
+
+		TextButtonForAxis *button = new TextButtonForAxis(
+				popupTopMargin + 5 * rowTextHeight + buttonHeight + moveButtonRowSpacing ,
+				hOffset + (i + 1) * buttonStep, buttonWidth,
 				dir->text, evMoveAxis, dir->param);
 
 		assert(button);
