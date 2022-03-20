@@ -141,7 +141,9 @@ $ bossac -e -w -v -b build/paneldue.bin -R -p /dev/ttyACM1
 
 Customising the splash screen (versions 1.20RC4 and later)
 
-If you wish to display a custom splash screen when PanelDue is powered up, you need to append a compressed version of the splash screen image to the -nologo version of the PanelDue firmware appropriate to your model of PanelDue and screen size.
+If you wish to display a custom splash screen when PanelDue is powered up, you
+need to append a compressed version of the splash screen image to the bare firmware
+version appropriate to your model's screen size.
 
 - First export the image you want to display in 24-bit bitmap (.bmp) format. The width and height in pixels must match exactly the resolution of the TFT panel (480x272 for the 4.3" panel, or 800x480 for the 5" and 7" panels)
 - The image must compress sufficiently well to fit in the available flash memory. Images containing large blocks of the same colour compress well.
