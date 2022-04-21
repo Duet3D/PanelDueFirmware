@@ -2495,11 +2495,6 @@ namespace UI
 #ifdef SUPPORT_ENCODER
 	void HandleEncoderChange(const int change)
 	{
-		if (GetScreensaverActive())
-		{
-			// nothing to do
-			return;
-		}
 		auto status = GetStatus();
 
 		// In some cases we just ignore user input
@@ -2512,74 +2507,75 @@ namespace UI
 		default:
 			break;
 		}
-		bool sent = false;
 		const PopupWindow *popup = mgr.GetPopup();
-		// There is a pop-up - we will exit here after possibly doing something
-		if (popup != nullptr)
+
+		// nothing to do
+		if (popup == screensaverPopup) {
+			return;
+		}
+
+		// Oh wait the pop-up is the Set button
+		if (popup == setTempPopupEncoder)
 		{
-			// Oh wait the pop-up is the Set button
-			if (popup == setTempPopupEncoder)
+			if (fieldBeingAdjusted.IsValid())
 			{
-				if (fieldBeingAdjusted.IsValid())
+				IntegerButton *ib = static_cast<IntegerButton*>(fieldBeingAdjusted.GetButton());
+				int newValue = ib->GetValue() + change;
+				switch(fieldBeingAdjusted.GetEvent())
 				{
-					IntegerButton *ib = static_cast<IntegerButton*>(fieldBeingAdjusted.GetButton());
-					int newValue = ib->GetValue() + change;
-					switch(fieldBeingAdjusted.GetEvent())
+				case evAdjustBedActiveTemp:
+				case evAdjustChamberActiveTemp:
+				case evAdjustToolActiveTemp:
+				case evAdjustBedStandbyTemp:
+				case evAdjustChamberStandbyTemp:
+				case evAdjustToolStandbyTemp:
+					newValue = constrain<int>(newValue, 0, 1600);		// some users want to print at high temperatures
+					break;
+
+				case evAdjustSpeed:
+					newValue = constrain<int>(newValue, 1, 1000);
+					break;
+
+				case evPAdjustExtrusionPercent:
+					newValue = constrain<int>(newValue, 1, 1000);
+					break;
+
+				case evAdjustActiveRPM:
 					{
-					case evAdjustBedActiveTemp:
-					case evAdjustChamberActiveTemp:
-					case evAdjustToolActiveTemp:
-					case evAdjustBedStandbyTemp:
-					case evAdjustChamberStandbyTemp:
-					case evAdjustToolStandbyTemp:
-						newValue = constrain<int>(newValue, 0, 1600);		// some users want to print at high temperatures
-						break;
-
-					case evAdjustSpeed:
-						newValue = constrain<int>(newValue, 1, 1000);
-						break;
-
-					case evPAdjustExtrusionPercent:
-						newValue = constrain<int>(newValue, 1, 1000);
-						break;
-
-					case evAdjustActiveRPM:
-						{
-							static const uint8_t spindleRpmMultiplier = 100;
-							auto spindle = OM::GetSpindle(fieldBeingAdjusted.GetIParam());
-							const int maxSpindleRpm = spindle->max;
-							newValue = constrain<int>((newValue - change) + (change * spindleRpmMultiplier), -maxSpindleRpm, maxSpindleRpm);
-						}
-						break;
-
-					default:
-						break;
+						static const uint8_t spindleRpmMultiplier = 100;
+						auto spindle = OM::GetSpindle(fieldBeingAdjusted.GetIParam());
+						const int maxSpindleRpm = spindle->max;
+						newValue = constrain<int>((newValue - change) + (change * spindleRpmMultiplier), -maxSpindleRpm, maxSpindleRpm);
 					}
-					ib->SetValue(newValue);
+					break;
+
+				default:
+					break;
 				}
-				return;
+				ib->SetValue(newValue);
 			}
-			else if (popup == wcsOffsetsPopup)
+			return;
+		}
+		else if (popup == wcsOffsetsPopup)
+		{
+			if (currentWCSAxisSelectPress.IsValid() && currentWCSAxisMovementAmountPress.IsValid())
 			{
-				if (currentWCSAxisSelectPress.IsValid() && currentWCSAxisMovementAmountPress.IsValid())
-				{
-					const float adjustAmount = currentWCSAxisMovementAmountPress.GetFParam();
-					FloatButton *axisValue = static_cast<FloatButton*>(currentWCSAxisSelectPress.GetButton());
-					const char* currentWCSNumber = static_cast<TextButton*>(currentWCSPress.GetButton())->GetSParam(0);
-					const int workplaceIndex = currentWCSNumber[0] - 49;
-					const char *axisLetter = axisValue->GetSParam(0);
-					const int axisIndex = GetAxisIndex(axisLetter);
-					const float changeAmount = change * adjustAmount;
-					SerialIo::Sendf(
-							"G10 L2 P%s %s{move.axes[%d].workplaceOffsets[%d] + %.3f}\n",
-							currentWCSNumber,
-							axisLetter,
-							axisIndex,
-							workplaceIndex,
-							changeAmount);
-					axisValue->SetValue(axisValue->GetValue()+changeAmount);
-					sent = true;
-				}
+				const float adjustAmount = currentWCSAxisMovementAmountPress.GetFParam();
+				FloatButton *axisValue = static_cast<FloatButton*>(currentWCSAxisSelectPress.GetButton());
+				const char* currentWCSNumber = static_cast<TextButton*>(currentWCSPress.GetButton())->GetSParam(0);
+				const int workplaceIndex = currentWCSNumber[0] - 49;
+				const char *axisLetter = axisValue->GetSParam(0);
+				const int axisIndex = GetAxisIndex(axisLetter);
+				float changeAmount = change * adjustAmount;
+				SerialIo::Sendf(
+						"G10 L2 P%s %s{move.axes[%d].workplaceOffsets[%d] + %.3f}\n",
+						currentWCSNumber,
+						axisLetter,
+						axisIndex,
+						workplaceIndex,
+						changeAmount);
+				axisValue->SetValue(axisValue->GetValue()+changeAmount);
+				lastEncoderCommandSentAt = SystemTick::GetTickCount();
 			}
 		}
 
@@ -2588,16 +2584,12 @@ namespace UI
 		{
 			if (currentJogAxis.IsValid() && currentJogAmount.IsValid())
 			{
-				const float jogAmount = currentJogAmount.GetFParam();
+				float jogAmount = currentJogAmount.GetFParam();
 				const unsigned int feedRate = jogAmount < 5.0f ? 6000 : 12000;
 				TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(currentJogAxis.GetButton());
 				SerialIo::Sendf("G91 G0 %c%.3f F%d G90\n", textButton->GetAxisLetter(), change * jogAmount, feedRate);
-				sent = true;
+				lastEncoderCommandSentAt = SystemTick::GetTickCount();
 			}
-		}
-
-		if (sent) {
-			lastEncoderCommandSentAt = SystemTick::GetTickCount();
 		}
 	}
 #endif
