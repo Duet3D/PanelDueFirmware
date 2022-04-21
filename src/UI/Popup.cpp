@@ -37,6 +37,10 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 	text += splitPoint;
 	alertText3.copy(text);
 
+	closeButton->Press(false, 0);
+	okButton->Press(false, 0);
+	cancelButton->Press(false, 0);
+
 	closeButton->Show(mode == 1);
 
 	okButton->Show(mode >= 2);
@@ -258,6 +262,10 @@ void AlertPopupP::Set(const char *title, const char *text, int32_t mode, uint32_
 	alertText4.Truncate(splitPoint);
 	text += splitPoint;
 	alertText5.copy(text);
+
+	closeButton->Press(false, 0);
+	okButton->Press(false, 0);
+	cancelButton->Press(false, 0);
 
 	closeButton->Show(mode == 1);
 	okButton->Show(mode >= 2);
