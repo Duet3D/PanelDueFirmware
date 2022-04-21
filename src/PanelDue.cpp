@@ -7,30 +7,26 @@
 // 3. No pure virtual functions. This is because in release builds, having pure virtual functions causes huge amounts of the C++ library to be linked in
 //    (possibly because it wants to print a message if a pure virtual function is called).
 
-#include <UI/Display.hpp>
 #include "PanelDue.hpp"
 #include "asf.h"
 
-#include <cstring>
 #include <cctype>
 #include <cmath>
+#include <cstdint>
+#include <cstring>
+
 
 #include <Hardware/Mem.hpp>
 #include <Hardware/UTFT.hpp>
 #include <Hardware/UTouch.hpp>
 #include <Hardware/SerialIo.hpp>
 #include <Hardware/Buzzer.hpp>
+#include <Hardware/Backlight.hpp>
 #include <Hardware/SysTick.hpp>
 #include <Hardware/Reset.hpp>
 #include <General/SafeStrtod.h>
 #include <General/SimpleMath.h>
 #include <General/StringFunctions.h>
-
-#if SAM4S
-#include "flash_efc.h"
-#else
-#include <Hardware/FlashStorage.hpp>
-#endif
 
 #include "Configuration.hpp"
 #include <UI/UserInterfaceConstants.hpp>
@@ -41,20 +37,15 @@
 #include <ObjectModel/Axis.hpp>
 #include <ObjectModel/PrinterStatus.hpp>
 #include "ControlCommands.hpp"
+#include "Library/Thumbnail.hpp"
 
 extern uint16_t _esplash[];							// defined in linker script
 
-#define DEBUG	(0) // 1: MessageLog only, 2: DebugField only, 3: MessageLog & DebugField
+#define DEBUG	(0) // 0: off, 1: MessageLog, 2: Uart
+#include "Debug.hpp"
 
-#if (DEBUG & 1)
-#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
-
-#else
-#define dbg(fmt, args...)		do {} while(0)
-
-#endif
-
-#if (DEBUG & (1 << 1))
+#define DEBUG2	(0) // 0: off, 1: DebugField
+#if (DEBUG2)
 
 #define STRINGIFY(x)	#x
 #define TOSTRING(x)	STRINGIFY(x)
@@ -67,16 +58,22 @@ extern uint16_t _esplash[];							// defined in linker script
 
 // Controlling constants
 constexpr uint32_t defaultPrinterPollInterval = 500;	// poll interval in milliseconds
-constexpr uint32_t defaultPrinterResponseInterval = defaultPrinterPollInterval * 0.7;		// shortest time after a response that we send another poll (gives printer time to catch up)
+constexpr uint32_t printerResponseTimeout = 2000;	// shortest time after a response that we send another poll (gives printer time to catch up)
+
 constexpr uint32_t slowPrinterPollInterval = 4000;		// poll interval in milliseconds when screensaver active
-const uint32_t printerPollTimeout = 2000;			// poll timeout in milliseconds
-const uint32_t FileInfoRequestTimeout = 8000;		// file info request timeout in milliseconds
+
 const uint32_t touchBeepLength = 20;				// beep length in ms
 const uint32_t touchBeepFrequency = 4500;			// beep frequency in Hz. Resonant frequency of the piezo sounder is 4.5kHz.
+
 const uint32_t errorBeepLength = 100;
 const uint32_t errorBeepFrequency = 2250;
-const uint32_t longTouchDelay = 250;				// how long we ignore new touches for after pressing Set
-const uint32_t shortTouchDelay = 100;				// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
+
+const uint32_t normalTouchDelay = 250;				// how long we ignore new touches for after pressing Set
+const uint32_t repeatTouchDelay = 100;				// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
+
+const int parserMinErrors = 2;
+
+static uint32_t lastActionTime = 0;
 
 struct HostFirmwareType
 {
@@ -126,170 +123,81 @@ UTouch touch(23, 24, 22, 21, 20);
 #define FETCH_TOOLS			(1)
 #define FETCH_VOLUMES		(1)
 
-MainWindow mgr;
+Backlight *backlight = nullptr;
 
 static uint32_t lastTouchTime;
-static uint32_t ignoreTouchTime;
+
 static uint32_t lastPollTime = 0;
 static uint32_t lastResponseTime = 0;
 static uint32_t lastOutOfBufferResponse = 0;
+
 static uint8_t oobCounter = 0;
 static bool outOfBuffers = false;
-static uint32_t lastActionTime = 0;							// the last time anything significant happened
+
 static FirmwareFeatureMap firmwareFeatures;
-static bool isDimmed = false;								// true if we have dimmed the display
+
 static bool screensaverActive = false;						// true if screensaver is active
 static bool isDelta = false;
+
 static size_t numAxes = MIN_AXES;
-static int32_t beepFrequency = 0, beepLength = 0;
+static int32_t beepFrequency = 0;
+static int32_t beepLength = 0;
+
 static uint32_t messageSeq = 0;
 static uint32_t newMessageSeq = 0;
+
 static uint32_t fileSize = 0;
 static uint8_t visibleAxesCounted = 0;
+
 static int8_t lastBed = -1;
 static int8_t lastChamber = -1;
 static int8_t lastSpindle = -1;
 static int8_t lastTool = -1;
-static uint8_t mountedVolumesCounted = 0;
 static uint32_t remoteUpTime = 0;
 static bool initialized = false;
 static float pollIntervalMultiplier = 1.0;
 static uint32_t printerPollInterval = defaultPrinterPollInterval;
-static uint32_t printerResponseInterval = defaultPrinterResponseInterval;
 
-const ColourScheme *colours = &colourSchemes[0];
+static struct ThumbnailData thumbnailData;
+static struct Thumbnail thumbnail;
 
-Alert currentAlert;
+enum ThumbnailState {
+	Init = 0,
+	Header,
+	DataRequest,
+	DataWait,
+	Data
+};
+
+static struct ThumbnailContext {
+	String<MaxFilnameLength> filename;
+	enum ThumbnailState state;
+	int16_t parseErr;
+	int32_t err;
+	uint32_t size;
+	uint32_t offset;
+	uint32_t next;
+
+	void Init()
+	{
+		filename.Clear();
+		state = ThumbnailState::Init;
+		parseErr = 0;
+		err = 0;
+		size = 0;
+		offset = 0;
+		next = 0;
+
+	};
+
+} thumbnailContext;
+
+static const ColourScheme *colours = &colourSchemes[0];
+
+static Alert currentAlert;
 uint32_t lastAlertSeq = 0;
 
 static OM::PrinterStatus status = OM::PrinterStatus::connecting;
-
-struct FlashData
-{
-	// The magic value should be changed whenever the layout of the NVRAM changes
-	// We now use a different magic value for each display size, to force the "touch the spot" screen to be displayed when you change the display size
-	static const uint32_t magicVal = 0x3AB64B40 + DISPLAY_TYPE;
-	static const uint32_t muggleVal = 0xFFFFFFFF;
-
-	alignas(4) uint32_t magic;
-	uint32_t baudRate;
-	uint16_t xmin;
-	uint16_t xmax;
-	uint16_t ymin;
-	uint16_t ymax;
-	DisplayOrientation lcdOrientation;
-	DisplayOrientation touchOrientation;
-	uint8_t touchVolume;
-	uint8_t language;
-	uint8_t colourScheme;
-	uint8_t brightness;
-	DisplayDimmerType displayDimmerType;
-	uint8_t infoTimeout;
-	uint32_t screensaverTimeout;
-	uint8_t babystepAmountIndex;
-	uint16_t feedrate;
-	HeaterCombineType heaterCombineType;
-	alignas(4) char dummy;								// must be at a multiple of 4 bytes from the start because flash is read/written in whole dwords
-
-	FlashData() : magic(muggleVal) { SetDefaults(); }
-	bool operator==(const FlashData& other);
-	bool operator!=(const FlashData& other) { return !operator==(other); }
-	bool IsValid() const;
-	void SetInvalid() { magic = muggleVal; }
-	void SetDefaults();
-	void Load();
-	void Save() const;
-};
-
-#if SAM4S
-// FlashData must fit in user signature flash area
-static_assert(sizeof(FlashData) <= 512, "Flash data too large");
-#else
-// FlashData must fit in the area we have reserved
-static_assert(sizeof(FlashData) <= FLASH_DATA_LENGTH, "Flash data too large");
-#endif
-
-bool FlashData::IsValid() const
-{
-	return magic == magicVal
-		&& touchVolume <= Buzzer::MaxVolume
-		&& brightness >= Buzzer::MinBrightness
-		&& brightness <= Buzzer::MaxBrightness
-		&& language < UI::GetNumLanguages()
-		&& colourScheme < NumColourSchemes
-		&& displayDimmerType < DisplayDimmerType::NumTypes
-		&& babystepAmountIndex < ARRAY_SIZE(babystepAmounts)
-		&& feedrate > 0
-		&& heaterCombineType < HeaterCombineType::NumTypes;
-}
-
-bool FlashData::operator==(const FlashData& other)
-{
-	return magic == other.magic
-		&& baudRate == other.baudRate
-		&& xmin == other.xmin
-		&& xmax == other.xmax
-		&& ymin == other.ymin
-		&& ymax == other.ymax
-		&& lcdOrientation == other.lcdOrientation
-		&& touchOrientation == other.touchOrientation
-		&& touchVolume == other.touchVolume
-		&& language == other.language
-		&& colourScheme == other.colourScheme
-		&& brightness == other.brightness
-		&& displayDimmerType == other.displayDimmerType
-		&& infoTimeout == other.infoTimeout
-		&& screensaverTimeout == other.screensaverTimeout
-		&& babystepAmountIndex == other.babystepAmountIndex
-		&& feedrate == other.feedrate
-		&& heaterCombineType == other.heaterCombineType;
-}
-
-void FlashData::SetDefaults()
-{
-	baudRate = DefaultBaudRate;
-	xmin = 0;
-	xmax = DisplayX - 1;
-	ymin = 0;
-	ymax = DisplayY - 1;
-	lcdOrientation = DefaultDisplayOrientAdjust;
-	touchOrientation = DefaultTouchOrientAdjust;
-	touchVolume = Buzzer::DefaultVolume;
-	brightness = Buzzer::DefaultBrightness;
-	language = 0;
-	colourScheme = 0;
-	displayDimmerType = DisplayDimmerType::always;
-	infoTimeout = DefaultInfoTimeout;
-	screensaverTimeout = DefaultScreensaverTimeout;
-	babystepAmountIndex = DefaultBabystepAmountIndex;
-	feedrate = DefaultFeedrate;
-	heaterCombineType = HeaterCombineType::combined;
-	magic = magicVal;
-}
-
-// Load parameters from flash memory
-void FlashData::Load()
-{
-	magic = 0xFFFFFFFF;				// to make sure we know if the read failed
-#if SAM4S
-	flash_read_user_signature(&(this->magic), (&(this->dummy) - reinterpret_cast<const char*>(&(this->magic)))/sizeof(uint32_t));
-#else
-	FlashStorage::read(0, &(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
-#endif
-}
-
-// Save parameters to flash memory
-void FlashData::Save() const
-{
-#if SAM4S
-	flash_erase_user_signature();
-	flash_write_user_signature(&(this->magic), (&(this->dummy) - reinterpret_cast<const char*>(&(this->magic)))/sizeof(uint32_t));
-#else
-	FlashStorage::write(0, &(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
-#endif
-}
-
-FlashData nvData, savedNvData;
 
 enum ReceivedDataEvent
 {
@@ -320,6 +228,17 @@ enum ReceivedDataEvent
 	rcvM36PrintTime,
 	rcvM36SimulatedTime,
 	rcvM36Size,
+	rcvM36ThumbnailsFormat,
+	rcvM36ThumbnailsHeight,
+	rcvM36ThumbnailsOffset,
+	rcvM36ThumbnailsSize,
+	rcvM36ThumbnailsWidth,
+
+	rcvM361ThumbnailData,
+	rcvM361ThumbnailErr,
+	rcvM361ThumbnailFilename,
+	rcvM361ThumbnailNext,
+	rcvM361ThumbnailOffset,
 
 	// Keys for M409 response
 	rcvKey,
@@ -440,9 +359,6 @@ enum ReceivedDataEvent
 	rcvToolsSpindleRpm,
 	rcvToolsStandby,
 	rcvToolsState,
-
-	// Keys for volumes response
-	rcvVolumesMounted,
 };
 
 struct FieldTableEntry
@@ -478,7 +394,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvJobFileSimulatedTime, 			"job:file:simulatedTime" },
 	{ rcvJobFilePosition,				"job:filePosition" },
 	{ rcvJobLastFileName,				"job:lastFileName" },
-	{ rcvJobLastFileSimulated,			"job:lastFileSimulated" },
+	{ rcvJobDuration,				"job:duration" },
 	{ rcvJobTimesLeftFilament,			"job:timesLeft:filament" },
 	{ rcvJobTimesLeftFile,				"job:timesLeft:file" },
 	{ rcvJobTimesLeftSlicer,			"job:timesLeft:slicer" },
@@ -553,9 +469,6 @@ static FieldTableEntry fieldTable[] =
 	{ rcvToolsStandby, 					"tools^:standby^" },
 	{ rcvToolsState, 					"tools^:state" },
 
-	// M409 K"volumes" response
-	{ rcvVolumesMounted, 				"volumes^:mounted" },
-
 	// M20 response
 	{ rcvM20Dir,						"dir" },
 	{ rcvM20Err,						"err" },
@@ -571,6 +484,17 @@ static FieldTableEntry fieldTable[] =
 	{ rcvM36PrintTime,					"printTime" },
 	{ rcvM36SimulatedTime,				"simulatedTime" },
 	{ rcvM36Size,						"size" },
+	{ rcvM36ThumbnailsFormat,			"thumbnails^:format" },
+	{ rcvM36ThumbnailsHeight,			"thumbnails^:height" },
+	{ rcvM36ThumbnailsOffset,			"thumbnails^:offset" },
+	{ rcvM36ThumbnailsSize,				"thumbnails^:size" },
+	{ rcvM36ThumbnailsWidth,			"thumbnails^:width" },
+
+	{ rcvM361ThumbnailData,				"thumbnail:data" },
+	{ rcvM361ThumbnailErr,				"thumbnail:err" },
+	{ rcvM361ThumbnailFilename,			"thumbnail:fileName" },
+	{ rcvM361ThumbnailNext,				"thumbnail:next" },
+	{ rcvM361ThumbnailOffset,			"thumbnail:offset" },
 
 	// Push messages
 	{ rcvPushMessage,					"message" },
@@ -677,7 +601,7 @@ static struct Seq* GetNextSeq(struct Seq *current)
 
 static struct Seq *FindSeqByKey(const char *key)
 {
-	dbg("key %s", key);
+	dbg("key %s\n", key);
 
 	for (size_t i = 0; i < ARRAY_SIZE(seqs); ++i)
 	{
@@ -697,9 +621,9 @@ static void UpdateSeq(const ReceivedDataEvent seqid, int32_t val)
 	{
 		if (seqs[i].seqid == seqid)
 		{
-			dbg("%s %d %d", seqs[i].key, seqs[i].lastSeq, val);
 			if (seqs[i].lastSeq != val)
 			{
+				dbg("%s %d -> %d\n", seqs[i].key, seqs[i].lastSeq, val);
 				seqs[i].lastSeq = val;
 				seqs[i].state = SeqStateUpdate;
 			}
@@ -779,28 +703,28 @@ OM::PrinterStatus GetStatus()
 	return status;
 }
 
+static void UpdatePollRate(bool idle)
+{
+	if (idle)
+	{
+		printerPollInterval = slowPrinterPollInterval;
+	}
+	else
+	{
+		printerPollInterval = defaultPrinterPollInterval * pollIntervalMultiplier;
+	}
+}
+
 // Initialise the LCD and user interface. The non-volatile data must be set up before calling this.
-void InitLcd()
+static void InitLcd()
 {
 	lcd.InitLCD(nvData.lcdOrientation, IS_24BIT, IS_ER);				// set up the LCD
 	colours = &colourSchemes[nvData.colourScheme];
+	UI::InitColourScheme(colours);
 	UI::CreateFields(nvData.language, *colours, nvData.infoTimeout);	// create all the fields
 	lcd.fillScr(black);													// make sure the memory is clear
 	Delay(100);															// give the LCD time to update
-	RestoreBrightness();												// turn the display on
-}
-
-// Ignore touches for a long time
-void DelayTouchLong()
-{
-	lastTouchTime = SystemTick::GetTickCount();
-	ignoreTouchTime = longTouchDelay;
-}
-
-// Ignore touches for a short time instead of the long time we already asked for
-void ShortenTouchDelay()
-{
-	ignoreTouchTime = shortTouchDelay;
+	backlight->SetState(BacklightStateNormal);
 }
 
 void TouchBeep()
@@ -827,7 +751,8 @@ void DoTouchCalib(PixelNumber x, PixelNumber y, PixelNumber altX, PixelNumber al
 	for (;;)
 	{
 		uint16_t tx, ty, rawX, rawY;
-		if (touch.read(tx, ty, &rawX, &rawY))
+		bool repeat;
+		if (touch.read(tx, ty, repeat, &rawX, &rawY))
 		{
 			if (   (abs((int)tx - (int)x) <= touchCalibMaxError || abs((int)tx - (int)altX) <= touchCalibMaxError)
 				&& (abs((int)ty - (int)y) <= touchCalibMaxError || abs((int)ty - (int)altY) <= touchCalibMaxError)
@@ -876,11 +801,6 @@ void CalibrateTouch()
 	mgr.Refresh(true);
 }
 
-bool IsSaveNeeded()
-{
-	return nvData != savedNvData;
-}
-
 void MirrorDisplay()
 {
 	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ ReverseX);
@@ -919,74 +839,35 @@ void PortraitDisplay(const bool withTouch)
 
 void SetBaudRate(uint32_t rate)
 {
-	nvData.baudRate = rate;
+	nvData.SetBaudRate(rate);
 	SerialIo::SetBaudRate(rate);
 }
 
-extern void SetBrightness(int percent)
+void SetBrightness(int percent)
 {
-	nvData.brightness = constrain<int>(percent, Buzzer::MinBrightness, Buzzer::MaxBrightness);
-	RestoreBrightness();
+	nvData.SetBrightness(percent);
+	backlight->SetDimBrightness(nvData.GetBrightness() / 8);
+	backlight->SetNormalBrightness(nvData.GetBrightness());
+	backlight->SetState(BacklightStateNormal);
 }
 
-void UpdatePollRate()
+void CurrentAlertModeClear()
 {
-	if (screensaverActive)
+	currentAlert.mode = 0;
+}
+
+static void ActivateScreensaver()
+{
+	if (currentAlert.mode == 2 ||
+	    currentAlert.mode == 3)
 	{
-		printerPollInterval = slowPrinterPollInterval;
+		return;
 	}
-	else
-	{
-		printerPollInterval = defaultPrinterPollInterval * pollIntervalMultiplier;
-		printerResponseInterval = defaultPrinterResponseInterval * pollIntervalMultiplier;
-	}
-}
 
-void DeactivateScreensaver()
-{
-	if (screensaverActive) {
-		UI::DeactivateScreensaver();
-		screensaverActive = false;
-		UpdatePollRate();
-	}
-}
-
-bool GetScreensaverActive()
-{
-	return screensaverActive;
-}
-
-extern void RestoreBrightness()
-{
-	Buzzer::SetBacklight(nvData.brightness);
-	lastActionTime = SystemTick::GetTickCount();
-	isDimmed = false;
-	DeactivateScreensaver();
-}
-
-extern void DimBrightness()
-{
-	if (   (nvData.displayDimmerType == DisplayDimmerType::always)
-		|| (nvData.displayDimmerType == DisplayDimmerType::onIdle && (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off))
-	   )
-	{
-		Buzzer::SetBacklight(nvData.brightness/8);
-		isDimmed = true;
-	}
-}
-
-void ActivateScreensaver()
-{
 	if (!screensaverActive)
 	{
-		if (!isDimmed)
-		{
-			Buzzer::SetBacklight(nvData.brightness/4);	// If the user disabled dimming we do it still here
-			isDimmed = true;
-		}
 		screensaverActive = true;
 		UI::ActivateScreensaver();
-		UpdatePollRate();
 	}
 	else
 	{
@@ -994,93 +875,17 @@ void ActivateScreensaver()
 	}
 }
 
-DisplayDimmerType GetDisplayDimmerType()
+static bool DeactivateScreensaver()
 {
-	return nvData.displayDimmerType;
-}
+	if (screensaverActive)
+	{
+		if (!UI::DeactivateScreensaver())
+			return false;
 
-void SetDisplayDimmerType(DisplayDimmerType newType)
-{
-	nvData.displayDimmerType = newType;
-}
+		screensaverActive = false;
+	}
 
-void SetVolume(uint8_t newVolume)
-{
-	nvData.touchVolume = newVolume;
-}
-
-void SetInfoTimeout(uint8_t newInfoTimeout)
-{
-	nvData.infoTimeout = newInfoTimeout;
-}
-
-void SetScreensaverTimeout(uint32_t screensaverTimeout)
-{
-	nvData.screensaverTimeout = screensaverTimeout;
-}
-
-bool SetColourScheme(uint8_t newColours)
-{
-	const bool ret = (newColours != nvData.colourScheme);
-	nvData.colourScheme = newColours;
-	return ret;
-}
-
-// Set the language, returning true if it has changed
-bool SetLanguage(uint8_t newLanguage)
-{
-	const bool ret = (newLanguage != nvData.language);
-	nvData.language = newLanguage;
-	return ret;
-}
-
-uint32_t GetBaudRate()
-{
-	return nvData.baudRate;
-}
-
-uint32_t GetVolume()
-{
-	return nvData.touchVolume;
-}
-
-int GetBrightness()
-{
-	return (int)nvData.brightness;
-}
-
-uint32_t GetScreensaverTimeout() {
-	return nvData.screensaverTimeout;
-}
-
-uint8_t GetBabystepAmountIndex()
-{
-	return nvData.babystepAmountIndex;
-}
-
-void SetBabystepAmountIndex(uint8_t babystepAmountIndex)
-{
-	nvData.babystepAmountIndex = babystepAmountIndex;
-}
-
-uint16_t GetFeedrate()
-{
-	return nvData.feedrate;
-}
-
-void SetFeedrate(uint16_t feedrate)
-{
-	nvData.feedrate = feedrate;
-}
-
-HeaterCombineType GetHeaterCombineType()
-{
-	return nvData.heaterCombineType;
-}
-
-void SetHeaterCombineType(HeaterCombineType combine)
-{
-	nvData.heaterCombineType = combine;
+	return true;
 }
 
 // Factory reset
@@ -1109,26 +914,25 @@ static void SetStatus(OM::PrinterStatus newStatus)
 {
 	if (newStatus != status)
 	{
-		dbg("printer status %d -> %d", status, newStatus);
-		if (isDimmed)
-		{
-			RestoreBrightness();
-		}
+		dbg("printer status %d -> %d\n", status, newStatus);
 		UI::ChangeStatus(status, newStatus);
 
 		status = newStatus;
 		UI::UpdatePrintingFields();
+
+		lastActionTime = SystemTick::GetTickCount();
 	}
 }
 
 // Set the status back to "Connecting"
 static void Reconnect()
 {
-	dbg("Reconnect");
+	dbg("Reconnect\n");
 
 	initialized = false;
 	lastPollTime = 0;
-	lastResponseTime = 0;
+	lastResponseTime = SystemTick::GetTickCount();
+
 	lastOutOfBufferResponse = 0;
 
 	SetStatus(OM::PrinterStatus::connecting);
@@ -1141,7 +945,7 @@ static void Reconnect()
 }
 
 // Try to get an integer value from a string. If it is actually a floating point value, round it.
-bool GetInteger(const char s[], int32_t &rslt)
+static bool GetInteger(const char s[], int32_t &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 
@@ -1159,7 +963,7 @@ bool GetInteger(const char s[], int32_t &rslt)
 }
 
 // Try to get an unsigned integer value from a string
-bool GetUnsignedInteger(const char s[], uint32_t &rslt)
+static bool GetUnsignedInteger(const char s[], uint32_t &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 	const char* endptr;
@@ -1168,7 +972,7 @@ bool GetUnsignedInteger(const char s[], uint32_t &rslt)
 }
 
 // Try to get a floating point value from a string. if it is actually a floating point value, round it.
-bool GetFloat(const char s[], float &rslt)
+static bool GetFloat(const char s[], float &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 	const char* endptr;
@@ -1177,7 +981,7 @@ bool GetFloat(const char s[], float &rslt)
 }
 
 // Try to get a bool value from a string.
-bool GetBool(const char s[], bool &rslt)
+static bool GetBool(const char s[], bool &rslt)
 {
 	if (s[0] == 0) return false;			// empty string
 
@@ -1189,7 +993,7 @@ static void StartReceivedMessage();
 static void EndReceivedMessage();
 static void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[]);
 static void ProcessArrayEnd(const char id[], const size_t indices[]);
-static void ParserErrorEncountered(int currentState, const char*, const char*, const size_t[]);
+static void ParserErrorEncountered(int currentState, const char*, int errors);
 
 static struct SerialIo::SerialIoCbs serial_cbs = {
 	.StartReceivedMessage = StartReceivedMessage,
@@ -1201,24 +1005,28 @@ static struct SerialIo::SerialIoCbs serial_cbs = {
 
 static void StartReceivedMessage()
 {
-	dbg2();
 	newMessageSeq = messageSeq;
 	MessageLog::BeginNewMessage();
 	FileManager::BeginNewMessage();
 	currentAlert.flags.Clear();
-	dbg2();
+
+	if (thumbnailContext.state == ThumbnailState::Init)
+	{
+		thumbnailContext.Init();
+		ThumbnailInit(thumbnail);
+		memset(&thumbnailData, 0, sizeof(thumbnailData));
+	}
 }
 
 static void EndReceivedMessage()
 {
-	dbg2();
 
 	lastResponseTime = SystemTick::GetTickCount();
 
 	if (currentRespSeq != nullptr)
 	{
 		currentRespSeq->state = outOfBuffers ? SeqStateError : SeqStateOk;
-		dbg("seq %s %d DONE", currentRespSeq->key, currentRespSeq->state);
+		dbg("seq %s %d DONE\n", currentRespSeq->key, currentRespSeq->state);
 		currentRespSeq = nullptr;
 	}
 	outOfBuffers = false;							// Reset the out-of-buffers flag
@@ -1229,20 +1037,65 @@ static void EndReceivedMessage()
 		MessageLog::DisplayNewMessage();
 	}
 	FileManager::EndReceivedMessage();
-	if (currentAlert.flags.IsBitSet(Alert::GotMode) && currentAlert.mode < 0)
+
+	if (thumbnailContext.parseErr != 0 || thumbnailContext.err != 0)
 	{
-		UI::ClearAlert();
+		dbg("thumbnail parseErr %d err %d.\n",
+			thumbnailContext.parseErr,
+			thumbnailContext.err);
+		thumbnailContext.state = ThumbnailState::Init;
 	}
-	else if (currentAlert.AllFlagsSet() && currentAlert.seq != lastAlertSeq)
+#if 0 // && DEBUG
+	if (thumbnail.imageFormat != Thumbnail::ImageFormat::Invalid)
 	{
-		UI::ProcessAlert(currentAlert);
-		lastAlertSeq = currentAlert.seq;
+		dbg("filename %s offset %d size %d format %d width %d height %d\n",
+			thumbnailContext.filename.c_str(),
+			thumbnailContext.offset, thumbnailContext.size,
+			thumbnail.imageFormat,
+			thumbnail.width, thumbnail.height);
 	}
-	dbg2();
+#endif
+	int ret;
+
+	switch (thumbnailContext.state) {
+	case ThumbnailState::Init:
+	case ThumbnailState::DataRequest:
+	case ThumbnailState::DataWait:
+		break;
+	case ThumbnailState::Header:
+		if (!ThumbnailIsValid(thumbnail))
+		{
+			dbg("thumbnail meta invalid.\n");
+			break;
+		}
+		thumbnailContext.state = ThumbnailState::DataRequest;
+		break;
+	case ThumbnailState::Data:
+		if (!ThumbnailDataIsValid(thumbnailData))
+		{
+			dbg("thumbnail meta or data invalid.\n");
+			thumbnailContext.state = ThumbnailState::Init;
+			break;
+		}
+		if ((ret = ThumbnailDecodeChunk(thumbnail, thumbnailData, UI::UpdateFileThumbnailChunk)) < 0)
+		{
+			dbg("failed to decode thumbnail chunk %d.\n", ret);
+			thumbnailContext.state = ThumbnailState::Init;
+			break;
+		}
+		if (thumbnailContext.next == 0)
+		{
+			thumbnailContext.state = ThumbnailState::Init;
+		} else
+		{
+			thumbnailContext.state = ThumbnailState::DataRequest;
+		}
+		break;
+	}
 }
 
-void HandleOutOfBufferResponse() {
-
+void HandleOutOfBufferResponse()
+{
 	const uint32_t now = SystemTick::GetTickCount();
 
 	// We received the previous out-of-buffer within 10s
@@ -1256,9 +1109,9 @@ void HandleOutOfBufferResponse() {
 	// Slow down the poll interval by 10% if we see too many out-of-buffer in short time
 	if (oobCounter >= 3) {
 		pollIntervalMultiplier += 0.1;
-		UpdatePollRate();
+		UpdatePollRate(screensaverActive);
 		oobCounter = 0;
-		MessageLog::AppendMessage("Slowing down poll rate");
+		MessageLog::AppendMessage("Info: slowing down poll rate");
 	}
 	lastOutOfBufferResponse = now;
 	outOfBuffers = true;
@@ -1301,16 +1154,15 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	// no matching key found
 	if (!searchResult)
 	{
-		dbg("no matching key found for %s", id.c_str());
+		//dbg("no matching key found for %s\n", id.c_str());
 		return;
 	}
 	const ReceivedDataEvent rde = searchResult->val;
-	//dbg("event: %s(%d) rtype %d data '%s'", searchResult->key, searchResult->val, currentResponseType, data);
+	//dbg("event: %s(%d) rtype %d data '%s'\n", searchResult->key, searchResult->val, currentResponseType, data);
 	switch (rde)
 	{
 	// M409 section
 	case rcvKey:
-		dbg2();
 		{
 			// try a quick check otherwise search for key
 			if (currentReqSeq && (strcasecmp(data, currentReqSeq->key) == 0))
@@ -1342,9 +1194,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 			case rcvOMKeyTools:
 				lastTool = -1;
 				break;
-			case rcvOMKeyVolumes:
-				mountedVolumesCounted = 0;
-				break;
 			default:
 				break;
 			}
@@ -1353,7 +1202,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	// Boards section
 	case rcvBoardsFirmwareName:
-		dbg2();
 		if (indices[0] == 0)			// currently we only handle the first board
 		{
 			for (size_t i = 0; i < ARRAY_SIZE(firmwareTypes); ++i)
@@ -1364,7 +1212,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 					if (newFeatures != firmwareFeatures)
 					{
 						firmwareFeatures = newFeatures;
-						UI::FirmwareFeaturesChanged(firmwareFeatures);
 						FileManager::FirmwareFeaturesChanged();
 					}
 					break;
@@ -1375,7 +1222,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	// Fans section
 	case rcvFansRequestedValue:
-		dbg2();
 		{
 			float f;
 			bool b = GetFloat(data, f);
@@ -1388,7 +1234,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	// Heat section
 	case rcvHeatBedHeaters:
-		dbg2();
 		{
 			int32_t heaterNumber;
 			if (GetInteger(data, heaterNumber) && heaterNumber > -1)
@@ -1404,7 +1249,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvHeatChamberHeaters:
-		dbg2();
 		{
 			int32_t heaterNumber;
 			if (GetInteger(data, heaterNumber) && heaterNumber > -1)
@@ -1420,7 +1264,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvHeatHeatersActive:
-		dbg2();
 		{
 			int32_t ival;
 			if (GetInteger(data, ival))
@@ -1431,19 +1274,16 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvHeatHeatersCurrent:
-		dbg2();
 		{
 			float fval;
 			if (GetFloat(data, fval))
 			{
-				dbg2();
 				UI::UpdateCurrentTemperature(indices[0], fval);
 			}
 		}
 		break;
 
 	case rcvHeatHeatersStandby:
-		dbg2();
 		{
 			int32_t ival;
 			if (GetInteger(data, ival))
@@ -1454,7 +1294,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvHeatHeatersState:
-		dbg2();
 		{
 			const OM::HeaterStatusMapEntry key = (OM::HeaterStatusMapEntry) {data, OM::HeaterStatus::off};
 			const OM::HeaterStatusMapEntry * statusFromMap =
@@ -1471,7 +1310,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	// Job section
 	case rcvJobDuration:
-		dbg2();
 		{
 			uint32_t duration;
 			if (GetUnsignedInteger(data, duration))
@@ -1486,12 +1324,10 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvJobFileFilename:
-		dbg2();
 		UI::PrintingFilenameChanged(data);
 		break;
 
 	case rcvJobFileSize:
-		dbg2();
 		{
 			uint32_t ival;
 			if (GetUnsignedInteger(data, ival))
@@ -1506,7 +1342,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvJobFileSimulatedTime:
-		dbg2();
 		{
 			uint32_t simulatedTime;
 			if (GetUnsignedInteger(data, simulatedTime))
@@ -1521,7 +1356,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvJobFilePosition:
-		dbg2();
 		{
 			if (PrintInProgress() && fileSize > 0)
 			{
@@ -1536,12 +1370,10 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvJobLastFileName:
-		dbg2();
 		UI::LastJobFileNameAvailable(true);	// If we get here there is a filename
 		break;
 
 	case rcvJobLastFileSimulated:
-		dbg2();
 		{
 			bool lastFileSimulated;
 			if (GetBool(data, lastFileSimulated))
@@ -1554,7 +1386,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	case rcvJobTimesLeftFile:
 	case rcvJobTimesLeftFilament:
 	case rcvJobTimesLeftSlicer:
-		dbg2();
 		{
 			int32_t timeLeft;
 			bool b = GetInteger(data, timeLeft);
@@ -1566,7 +1397,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvJobWarmUpDuration:
-		dbg2();
 		{
 			uint32_t warmUpDuration;
 			if (GetUnsignedInteger(data, warmUpDuration))
@@ -1582,7 +1412,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	// Move section
 	case rcvMoveAxesBabystep:
-		dbg2();
 		{
 			float f;
 			if (GetFloat(data, f))
@@ -1593,7 +1422,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvMoveAxesHomed:
-		dbg2();
 		{
 			bool isHomed;
 			if (indices[0] < MaxTotalAxes && GetBool(data, isHomed))
@@ -1604,14 +1432,12 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvMoveAxesLetter:
-		dbg2();
 		{
 			UI::SetAxisLetter(indices[0], data[0]);
 		}
 		break;
 
 	case rcvMoveAxesUserPosition:
-		dbg2();
 		{
 			float fval;
 			if (GetFloat(data, fval))
@@ -1622,7 +1448,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvMoveAxesVisible:
-		dbg2();
 		{
 			bool visible;
 			if (GetBool(data, visible))
@@ -1638,7 +1463,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvMoveAxesWorkplaceOffsets:
-		dbg2();
 		{
 			float offset;
 			if (GetFloat(data, offset))
@@ -1649,7 +1473,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvMoveExtrudersFactor:
-		dbg2();
 		{
 			float fval;
 			if (GetFloat(data, fval))
@@ -1660,7 +1483,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvMoveKinematicsName:
-		dbg2();
 		if (status != OM::PrinterStatus::configuring && status != OM::PrinterStatus::connecting)
 		{
 			isDelta = (strcasecmp(data, "delta") == 0);
@@ -1669,7 +1491,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvMoveSpeedFactor:
-		dbg2();
 		{
 			float fval;
 			if (GetFloat(data, fval))
@@ -1691,7 +1512,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	// Network section
 	case rcvNetworkName:
-		dbg2();
 		if (status != OM::PrinterStatus::configuring && status != OM::PrinterStatus::connecting)
 		{
 			UI::UpdateMachineName(data);
@@ -1725,7 +1545,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	case rcvSeqsState:
 	case rcvSeqsTools:
 	case rcvSeqsVolumes:
-		dbg2();
 		{
 			int32_t ival;
 
@@ -1739,7 +1558,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	// Sensors section
 	case rcvSensorsProbeValue:
-		dbg2();
 		{
 			if (indices[0] == 0 && indices[1] == 0)			// currently we only handle one probe with one value
 			UI::UpdateZProbe(data);
@@ -1748,7 +1566,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	// Spindles section
 	case rcvSpindlesActive:
-		dbg2();
 		{
 			int32_t active;
 			if (GetInteger(data, active))
@@ -1769,7 +1586,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvSpindlesCurrent:
-		dbg2();
 		{
 			int32_t current;
 			if (GetInteger(data, current))
@@ -1785,7 +1601,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	case rcvSpindlesMax:
 	case rcvSpindlesMin:
-		dbg2();
 		// fans also has a field "result^:max"
 		if (currentResponseType != rcvOMKeySpindles)
 		{
@@ -1801,7 +1616,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvSpindlesState:
-		dbg2();
 		{
 			const OM::SpindleStateMapEntry key = (OM::SpindleStateMapEntry) {data, OM::SpindleState::stopped};
 			const OM::SpindleStateMapEntry * statusFromMap =
@@ -1817,7 +1631,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvSpindlesTool:
-		dbg2();
 		{
 			int32_t toolNumber;
 			if (GetInteger(data, toolNumber))
@@ -1830,7 +1643,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	// State section
 	case rcvStateCurrentTool:
-		dbg2();
 		if (status == OM::PrinterStatus::connecting)
 		{
 			break;
@@ -1845,8 +1657,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvStateMessageBox:
-		dbg2();
-		// Nessage box has been dealt with somewhere else
 		if (data[0] == 0)
 		{
 			UI::ClearAlert();
@@ -1854,7 +1664,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvStateMessageBoxAxisControls:
-		dbg2();
 		if (GetUnsignedInteger(data, currentAlert.controls))
 		{
 			currentAlert.flags.SetBit(Alert::GotControls);
@@ -1862,21 +1671,22 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvStateMessageBoxMessage:
-		dbg2();
 		currentAlert.text.copy(data);
 		currentAlert.flags.SetBit(Alert::GotText);
 		break;
 
 	case rcvStateMessageBoxMode:
-		dbg2();
 		if (GetInteger(data, currentAlert.mode))
 		{
 			currentAlert.flags.SetBit(Alert::GotMode);
 		}
+		else
+		{
+			currentAlert.mode = 0;
+		}
 		break;
 
 	case rcvStateMessageBoxSeq:
-		dbg2();
 		if (GetUnsignedInteger(data, currentAlert.seq))
 		{
 			currentAlert.flags.SetBit(Alert::GotSeq);
@@ -1884,7 +1694,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvStateMessageBoxTimeout:
-		dbg2();
 		if (GetFloat(data, currentAlert.timeout))
 		{
 			currentAlert.flags.SetBit(Alert::GotTimeout);
@@ -1892,13 +1701,11 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvStateMessageBoxTitle:
-		dbg2();
 		currentAlert.title.copy(data);
 		currentAlert.flags.SetBit(Alert::GotTitle);
 		break;
 
 	case rcvStateStatus:
-		dbg2();
 		{
 			const OM::PrinterStatusMapEntry key = (OM::PrinterStatusMapEntry) { .key = data, .val = OM::PrinterStatus::connecting};
 			const OM::PrinterStatusMapEntry * statusFromMap =
@@ -1918,7 +1725,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvStateUptime:
-		dbg2();
 		{
 			uint32_t uival;
 			if (GetUnsignedInteger(data, uival))
@@ -1936,7 +1742,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	// Tools section
 	case rcvToolsActive:
 	case rcvToolsStandby:
-		dbg2();
 		{
 			if (indices[1] >= MaxHeatersPerTool)
 			{
@@ -1951,7 +1756,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvToolsExtruders:
-		dbg2();
 		{
 			uint32_t extruder;
 			if (GetUnsignedInteger(data, extruder))
@@ -1962,7 +1766,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvToolsFans:
-		dbg2();
 		{
 			uint32_t fan;
 			if (GetUnsignedInteger(data, fan))
@@ -1973,7 +1776,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvToolsHeaters:
-		dbg2();
 		{
 			if (indices[1] >= MaxHeatersPerTool)
 			{
@@ -1988,7 +1790,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvToolsNumber:
-		dbg2();
 		{
 			for (size_t i = lastTool + 1; i < indices[0]; ++i)
 			{
@@ -1999,7 +1800,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvToolsOffsets:
-		dbg2();
 		{
 			float offset;
 			if (GetFloat(data, offset))
@@ -2010,7 +1810,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvToolsSpindle:
-		dbg2();
 		{
 			int32_t spindleNumber;
 			if (GetInteger(data, spindleNumber))
@@ -2022,7 +1821,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvToolsState:
-		dbg2();
 		{
 			const OM::ToolStatusMapEntry key = (OM::ToolStatusMapEntry) {data, OM::ToolStatus::off};
 			const OM::ToolStatusMapEntry * statusFromMap =
@@ -2037,26 +1835,12 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		}
 		break;
 
-	// Volumes section
-	case rcvVolumesMounted:
-		dbg2();
-		{
-			bool mounted;
-			if (GetBool(data, mounted) && mounted)
-			{
-				++mountedVolumesCounted;
-			}
-		}
-		break;
-
 	// Push messages
 	case rcvPushResponse:
-		dbg2();
 		MessageLog::SaveMessage(data);
 		break;
 
 	case rcvPushMessage:
-		dbg2();
 		if (data[0] == 0)
 		{
 			UI::ClearAlert();
@@ -2068,28 +1852,23 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvPushSeq:
-		dbg2();
 		GetUnsignedInteger(data, newMessageSeq);
 		break;
 
 	case rcvPushBeepDuration:
-		dbg2();
 		GetInteger(data, beepLength);
 		break;
 
 	case rcvPushBeepFrequency:
-		dbg2();
 		GetInteger(data, beepFrequency);
 		break;
 
 	// M20 section
 	case rcvM20Dir:
-		dbg2();
 		FileManager::ReceiveDirectoryName(data);
 		break;
 
 	case rcvM20Err:
-		dbg2();
 		{
 			int32_t i;
 			if (GetInteger(data, i))
@@ -2108,7 +1887,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvM20Files:
-		dbg2();
 		if (indices[0] == 0)
 		{
 			FileManager::BeginReceivingFiles();
@@ -2118,7 +1896,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	// M36 section
 	case rcvM36Filament:
-		dbg2();
 		{
 			static float totalFilament = 0.0;
 			if (indices[0] == 0)
@@ -2134,15 +1911,14 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		}
 		break;
 	case rcvM36Filename:
+		thumbnailContext.filename.copy(data);
 		break;
 
 	case rcvM36GeneratedBy:
-		dbg2();
 		UI::UpdateFileGeneratedByText(data);
 		break;
 
 	case rcvM36Height:
-		dbg2();
 		{
 			float f;
 			if (GetFloat(data, f))
@@ -2153,12 +1929,10 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvM36LastModified:
-		dbg2();
 		UI::UpdateFileLastModifiedText(data);
 		break;
 
 	case rcvM36LayerHeight:
-		dbg2();
 		{
 			float f;
 			if (GetFloat(data, f))
@@ -2170,7 +1944,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 
 	case rcvM36PrintTime:
 	case rcvM36SimulatedTime:
-		dbg2();
 		{
 			int32_t sz;
 			if (GetInteger(data, sz) && sz > 0)
@@ -2181,7 +1954,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvM36Size:
-		dbg2();
 		{
 			int32_t sz;
 			if (GetInteger(data, sz))
@@ -2191,8 +1963,80 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		}
 		break;
 
+	case rcvM36ThumbnailsFormat:
+		thumbnail.imageFormat = Thumbnail::ImageFormat::Invalid;
+		if (strcmp(data, "qoi") == 0)
+		{
+			thumbnail.imageFormat = Thumbnail::ImageFormat::Qoi;
+
+			thumbnailContext.state = ThumbnailState::Header;
+		}
+		break;
+	case rcvM36ThumbnailsHeight:
+		uint32_t height;
+		if (GetUnsignedInteger(data, height))
+		{
+			thumbnail.height = height;
+		}
+		break;
+	case rcvM36ThumbnailsOffset:
+		uint32_t offset;
+		if (GetUnsignedInteger(data, offset))
+		{
+			thumbnailContext.next = offset;
+			dbg("receive initial offset %d.\n", offset);
+		}
+		break;
+	case rcvM36ThumbnailsSize:
+		uint32_t size;
+		if (GetUnsignedInteger(data, size))
+		{
+			thumbnailContext.size = size;
+		}
+		break;
+	case rcvM36ThumbnailsWidth:
+		uint32_t width;
+		if (GetUnsignedInteger(data, width))
+		{
+			thumbnail.width = width;
+		}
+		break;
+
+	case rcvM361ThumbnailData:
+		thumbnailData.size = std::min(strlen(data), sizeof(thumbnailData.buffer));
+		memcpy(thumbnailData.buffer, data, thumbnailData.size);
+		thumbnailContext.state = ThumbnailState::Data;
+		break;
+	case rcvM361ThumbnailErr:
+		if (!GetInteger(data, thumbnailContext.err))
+		{
+			thumbnailContext.parseErr = -1;
+		}
+		break;
+	case rcvM361ThumbnailFilename:
+		if (!thumbnailContext.filename.Equals(data))
+		{
+			thumbnailContext.parseErr = -2;
+		}
+		break;
+	case rcvM361ThumbnailNext:
+		if (!GetUnsignedInteger(data, thumbnailContext.next))
+		{
+			thumbnailContext.parseErr = -3;
+			break;
+		}
+		dbg("receive next offset %d.\n", thumbnailContext.next);
+		break;
+	case rcvM361ThumbnailOffset:
+		if (!GetUnsignedInteger(data, thumbnailContext.offset))
+		{
+			thumbnailContext.parseErr = -4;
+			break;
+		}
+		dbg("receive current offset %d.\n", thumbnailContext.offset);
+		break;
+
 	case rcvControlCommand:
-		dbg2();
 		{
 			const ControlCommandMapEntry key = (ControlCommandMapEntry) {data, ControlCommand::invalid};
 			const ControlCommandMapEntry * controlCommandFromMap =
@@ -2221,7 +2065,6 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	default:
 		break;
 	}
-	dbg2();
 }
 
 // Public function called when the serial I/O module finishes receiving an array of values
@@ -2230,14 +2073,12 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 	ReceivedDataEvent currentResponseType = currentRespSeq != nullptr ? currentRespSeq->event : ReceivedDataEvent::rcvUnknown;
 	if (indices[0] == 0 && strcmp(id, "files^") == 0)
 	{
-		dbg2();
 		FileManager::BeginReceivingFiles();				// received an empty file list - need to tell the file manager about it
 	}
 	else if (currentResponseType == rcvOMKeyHeat)
 	{
 		if (strcasecmp(id, "heat:bedHeaters^") == 0)
 		{
-			dbg2();
 			OM::RemoveBed(lastBed + 1, true);
 			if (initialized)
 			{
@@ -2246,7 +2087,6 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 		}
 		else if (strcasecmp(id, "heat:chamberHeaters^") == 0)
 		{
-			dbg2();
 			OM::RemoveChamber(lastChamber + 1, true);
 			if (initialized)
 			{
@@ -2256,7 +2096,6 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 	else if (currentResponseType == rcvOMKeyMove && strcasecmp(id, "move:axes^") == 0)
 	{
-		dbg2();
 		OM::RemoveAxis(indices[0], true);
 		numAxes = constrain<unsigned int>(visibleAxesCounted, MIN_AXES, MaxDisplayableAxes);
 		UI::UpdateGeometry(numAxes, isDelta);
@@ -2265,7 +2104,6 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 	{
 		if (strcasecmp(id, "spindles^") == 0)
 		{
-			dbg2();
 			OM::RemoveSpindle(lastSpindle + 1, true);
 			if (initialized)
 			{
@@ -2277,7 +2115,6 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 	{
 		if (strcasecmp(id, "tools^") == 0)
 		{
-			dbg2();
 			OM::RemoveTool(lastTool + 1, true);
 			if (initialized)
 			{
@@ -2286,12 +2123,10 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 		}
 		else if (strcasecmp(id, "tools^:extruders^") == 0 && indices[1] == 0)
 		{
-			dbg2();
 			UI::SetToolExtruder(indices[0], -1);			// No extruder defined for this tool
 		}
 		else if (strcasecmp(id, "tools^:heaters^") == 0)
 		{
-			dbg2();
 			// Remove all heaters no longer defined
 			if (UI::RemoveToolHeaters(indices[0], indices[1]) && initialized)
 			{
@@ -2301,15 +2136,18 @@ static void ProcessArrayEnd(const char id[], const size_t indices[])
 	}
 	else if (currentResponseType == rcvOMKeyVolumes && strcasecmp(id, "volumes^") == 0)
 	{
-		dbg2();
-		FileManager::SetNumVolumes(mountedVolumesCounted);
+		FileManager::SetNumVolumes(indices[0]);
 	}
 }
 
-static void ParserErrorEncountered(int currentState, const char *id, const char*data, const size_t arraysize[])
+static void ParserErrorEncountered(int currentState, const char*, int errors)
 {
-	MessageLog::AppendMessageF("Error parsing response %s in state %d", id, currentState);
-	// TODO: Handle parser errors
+	(void)currentState;
+
+	if (errors > parserMinErrors)
+	{
+		MessageLog::AppendMessageF("Warning: received %d malformed responses.", errors);
+	}
 	if (currentRespSeq == nullptr)
 	{
 		return;
@@ -2349,6 +2187,40 @@ void SelfTest()
 	extrusionFactors[1]->SetValue(169);
 }
 #endif
+const uint32_t pwmClockFrequency = 2000000;		// 2MHz clock (OK down to 30Hz PWM frequency)
+static pwm_channel_t backlightPwm =
+{
+	.channel = PWM_CHANNEL_1,
+	.ul_prescaler = PWM_CMR_CPRE_CLKA,
+	.alignment = PWM_ALIGN_LEFT,
+	.polarity = PWM_HIGH,
+	.ul_duty = 0,
+	.ul_period = 0,
+#if (SAM3U || SAM3S || SAM3XA || SAM4S || SAM4E)
+	.counter_event = static_cast<pwm_counter_event_t>(0),
+	.b_deadtime_generator = 0,
+	.b_pwmh_output_inverted = false,
+	.b_pwml_output_inverted = false,
+	.us_deadtime_pwmh = 0,
+	.us_deadtime_pwml = 0,
+	.output_selection = {
+		.b_override_pwmh = false,
+		.b_override_pwml = false,
+		.override_level_pwmh = static_cast<pwm_level_t>(0),
+		.override_level_pwml = static_cast<pwm_level_t>(0),
+	},
+	.b_sync_ch = false,
+	.fault_id = static_cast<pwm_fault_id_t>(0),
+	.ul_fault_output_pwmh = static_cast<pwm_level_t>(0),
+	.ul_fault_output_pwml = static_cast<pwm_level_t>(0),
+#endif
+#if SAM4E
+	.ul_spread = 0,
+	.spread_spectrum_mode = PWM_SPREAD_SPECTRUM_MODE_TRIANGULAR,
+	.ul_additional_edge = 0,
+	.additional_edge_mode = static_cast<pwm_additional_edge_mode_t>(0),
+#endif
+};
 
 /**
  * \brief Application entry point.
@@ -2357,6 +2229,8 @@ void SelfTest()
  */
 int main(void)
 {
+	bool initializedSettings = false;
+
 	SystemInit();						// set up the clock etc.
 	InitMemory();
 
@@ -2370,20 +2244,60 @@ int main(void)
 	pmc_enable_periph_clk(ID_UART1);	// enable UART1 clock
 #endif
 
-	Buzzer::Init();						// init the buzzer, must also call this before the backlight can be used
-
 	wdt_init (WDT, WDT_MR_WDRSTEN, 1000, 1000);
 	SysTick_Config(SystemCoreClock / 1000);
+
+	nvData.Load();
+	if (!nvData.IsValid())
+	{
+		initializedSettings = true;
+		nvData.SetDefaults();
+	}
+	SerialIo::Init(nvData.GetBaudRate(), &serial_cbs);
+
 	lastTouchTime = SystemTick::GetTickCount();
 
 	firmwareFeatures = firmwareTypes[0].features;		// assume RepRapFirmware until we hear otherwise
 
+	// configure hardware for buzzer and backlight
+	pwm_clock_t clock_setting =
+	{
+		.ul_clka = pwmClockFrequency,
+		.ul_clkb = 0,
+		.ul_mck = SystemCoreClock
+	};
+
+	pwm_channel_disable(PWM, PWM_CHANNEL_0);	// make sure buzzer PWM is off
+	pwm_channel_disable(PWM, backlightPwm.channel);	// make sure backlight PWM is off
+
+	pwm_init(PWM, &clock_setting);	// set up the PWM clock needed for buzzer and backlight
+
+	Buzzer::Init();
+
+#if IS_ER
+	// pb13 indicates which frequency to use, LOW indicates new backlight chip, HIGH indicates old chip
+	pio_configure(PIOB, PIO_INPUT, PIO_PB13, PIO_PULLUP);
+	if (pio_get(PIOB, PIO_INPUT, PIO_PB13))
+	{
+		backlight = new Backlight(&backlightPwm,
+			pwmClockFrequency, 20000,
+			15, 100, 5, 100);
+	}
+	else
+	{
+		backlight = new Backlight(&backlightPwm,
+			pwmClockFrequency, 300,
+			15, 100, 20, 40);
+	}
+#else
+	backlight = new Backlight(&backlightPwm, pwmClockFrequency, 300, 15, 100, 5, 100); // init the backlight
+#endif
+
+	InitLcd();
 	// Read parameters from flash memory
-	nvData.Load();
-	if (nvData.IsValid())
+	if (!initializedSettings)
 	{
 		// The touch panel has already been calibrated
-		InitLcd();
 		touch.init(DisplayX, DisplayY, nvData.touchOrientation);
 		touch.calibrate(nvData.xmin, nvData.xmax, nvData.ymin, nvData.ymax, touchCalibMargin);
 		savedNvData = nvData;
@@ -2391,14 +2305,15 @@ int main(void)
 	else
 	{
 		// The touch panel has not been calibrated, and we do not know which way up it is
-		nvData.SetDefaults();
-		InitLcd();
 		CalibrateTouch();							// this includes the touch driver initialisation
 		SaveSettings();
 	}
 
-	// Set up the baud rate
-	SerialIo::Init(nvData.baudRate, &serial_cbs);
+	backlight->SetDimBrightness(nvData.GetBrightness() / 8);
+	backlight->SetNormalBrightness(nvData.GetBrightness());
+	backlight->SetState(BacklightStateNormal);
+
+	UpdatePollRate(false);
 
 	MessageLog::Init();
 
@@ -2412,7 +2327,8 @@ int main(void)
 		do
 		{
 			uint16_t x, y;
-			if (touch.read(x, y))
+			bool repeat;
+			if (touch.read(x, y, repeat))
 			{
 				break;
 			}
@@ -2439,85 +2355,177 @@ int main(void)
 
 	lastActionTime = SystemTick::GetTickCount();
 
-	dbg("basic init DONE");
+	dbg("basic init DONE\n");
+
+
+	MessageLog::AppendMessage("Info: successfully initialized.");
+
+	struct TouchEvent {
+		uint32_t x;
+		uint32_t y;
+		enum {
+			EventStateReleased = 0,
+			EventStatePressed = 1,
+			EventStateRepeated = 2
+		} state;
+	} event = { 0, 0, TouchEvent::EventStateReleased };
 
 	for (;;)
 	{
-		dbg2();
+		const uint32_t now = SystemTick::GetTickCount();
 
-		// 1. Check for input from the serial port and process it.
-		// This calls back into functions StartReceivedMessage, ProcessReceivedValue, EndReceivedMessage and ParserErrorEncountered
 		SerialIo::CheckInput();
-		dbg2();
 
-		// 2. if displaying the message log, update the times
+		// if displaying the message log, update the times
 		UI::Spin();
-		dbg2();
 
-		// 3. Check for a touch on the touch panel.
-		if (SystemTick::GetTickCount() - lastTouchTime >= ignoreTouchTime)
+		uint16_t x, y;
+		bool repeat;
+		bool touched = false;
+
+		// check for valid touch event
+		if (touch.read(x, y, repeat))
 		{
-			UI::OnButtonPressTimeout();
-
-			uint16_t x, y;
-			if (touch.read(x, y))
+			switch (event.state)
 			{
-#if 0
-				touchX->SetValue((int)x);	//debug
-				touchY->SetValue((int)y);	//debug
-#endif
-				if (isDimmed || screensaverActive)
+			case TouchEvent::EventStateReleased:
+				touched = true;
+				event.state = TouchEvent::EventStatePressed;
+				break;
+			case TouchEvent::EventStatePressed:
+				if (now - lastTouchTime >= normalTouchDelay)
 				{
-					RestoreBrightness();
-					DelayTouchLong();			// ignore further touches for a while
+					touched = true;
+					event.state = TouchEvent::EventStateRepeated;
+				}
+				break;
+			case TouchEvent::EventStateRepeated:
+				if (now - lastTouchTime >= repeatTouchDelay)
+				{
+					touched = true;
+				}
+				break;
+			}
+
+
+			if (touched)
+			{
+				dbg("delta %d state %d\n", now - lastTouchTime, event.state);
+
+				dbg("pressed\n");
+				lastTouchTime = SystemTick::GetTickCount();
+
+				event.x = x;
+				event.y = y;
+			}
+		} else if (event.state != TouchEvent::EventStateReleased && now - lastTouchTime >= normalTouchDelay) {
+			//dbg("released\n");
+			touched = true;
+			event.state = TouchEvent::EventStateReleased;
+		}
+
+		// check for new alert
+		if (currentAlert.AllFlagsSet() &&
+		    currentAlert.mode >= 0 &&
+		    currentAlert.seq != lastAlertSeq)
+		{
+			dbg("message updated last action time\n");
+			lastActionTime = SystemTick::GetTickCount();
+		}
+
+		// dim handling
+		if (UI::CanDimDisplay() &&
+		    SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout &&
+		    ((nvData.displayDimmerType == DisplayDimmerType::always) ||
+		     (nvData.displayDimmerType == DisplayDimmerType::onIdle &&
+		      (status == OM::PrinterStatus::idle ||
+		       status == OM::PrinterStatus::off))))
+		{
+			if (backlight->GetState() != BacklightStateDimmed)
+			{
+				dbg("dim brightness\n");
+				backlight->SetState(BacklightStateDimmed);
+			}
+		}
+		else
+		{
+			if (backlight->GetState() != BacklightStateNormal)
+			{
+				dbg("backlight state to normal\n");
+				backlight->SetState(BacklightStateNormal);
+			}
+		}
+
+		// screensaver handling
+		uint32_t screensaverTimeout = nvData.GetScreensaverTimeout();
+		if (screensaverTimeout > 0 && SystemTick::GetTickCount() - lastActionTime >= screensaverTimeout &&
+		    (status == OM::PrinterStatus::idle || status == OM::PrinterStatus::off))
+		{
+			ActivateScreensaver();
+		}
+		else
+		{
+			DeactivateScreensaver();
+		}
+
+		// touch event handling
+		if (touched)
+		{
+			ButtonPress bp = mgr.FindEvent(event.x, event.y);
+
+			// release button handling
+			switch (event.state)
+			{
+			case TouchEvent::EventStatePressed:
+			case TouchEvent::EventStateRepeated:
+				UI::OnButtonPressTimeout();
+
+				lastActionTime = SystemTick::GetTickCount();
+				backlight->SetState(BacklightStateNormal);
+
+				if (bp.IsValid())
+				{
+					UI::ProcessTouch(bp);
+					if (!initialized)		// Last button press was E-Stop
+					{
+						continue;
+					}
 				}
 				else
 				{
-					lastActionTime = SystemTick::GetTickCount();
-					ButtonPress bp = mgr.FindEvent(x, y);
+					bp = mgr.FindEventOutsidePopup(x, y);
 					if (bp.IsValid())
 					{
-						DelayTouchLong();		// by default, ignore further touches for a long time
-						if (bp.GetEvent() != evAdjustVolume)
-						{
-							TouchBeep();		// give audible feedback of the touch, unless adjusting the volume
-						}
-						UI::ProcessTouch(bp);
-						if (!initialized)		// Last button press was E-Stop
-						{
-							continue;
-						}
-					}
-					else
-					{
-						bp = mgr.FindEventOutsidePopup(x, y);
-						if (bp.IsValid())
-						{
-							UI::ProcessTouchOutsidePopup(bp);
-						}
+						UI::ProcessTouchOutsidePopup(bp);
 					}
 				}
-			}
-			else if (SystemTick::GetTickCount() - lastActionTime >= DimDisplayTimeout)
-			{
-				if (!isDimmed && UI::CanDimDisplay()){
-					DimBrightness();				// it might not actually dim the display, depending on various flags
-				}
-				uint32_t screensaverTimeout = GetScreensaverTimeout();
-				if (screensaverTimeout > 0 && SystemTick::GetTickCount() - lastActionTime >= screensaverTimeout)
-				{
-					ActivateScreensaver();
-				}
+				break;
+
+			case TouchEvent::EventStateReleased:
+				UI::ProcessRelease(bp);
+				break;
+
+			default:
+				break;
 			}
 		}
-		dbg2();
 
-		// 4. Refresh the display
+		// alert event handling
+		if (currentAlert.flags.IsBitSet(Alert::GotMode) && currentAlert.mode < 0)
+		{
+			UI::ClearAlert();
+		}
+		else if (currentAlert.AllFlagsSet() && currentAlert.seq != lastAlertSeq)
+		{
+			UI::ProcessAlert(currentAlert);
+			lastAlertSeq = currentAlert.seq;
+		}
+
+		// refresh the display
 		UpdateDebugInfo();
 		mgr.Refresh(false);
-		dbg2();
 
-		// 5. Generate a beep if asked to
+		// beep handling
 		if (beepFrequency != 0 && beepLength != 0)
 		{
 			if (beepFrequency >= 100 && beepFrequency <= 10000 && beepLength > 0)
@@ -2530,65 +2538,85 @@ int main(void)
 			}
 			beepFrequency = beepLength = 0;
 		}
-		dbg2();
 
-		// 6. If it is time, poll the printer status.
-		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
-		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
-		const uint32_t now = SystemTick::GetTickCount();
-		if ((UI::DoPolling()										// don't poll while we are in the Setup page
-		     && now - lastPollTime >= printerPollInterval			// if we haven't polled the printer too recently...
-		     && now - lastResponseTime >= printerResponseInterval)	// and we haven't had a response too recently
-		     || (!initialized && (now - lastPollTime > now - lastResponseTime))	// but if we are initializing do it as fast as possible where
-		   )
+		// printer communication handling
+		UpdatePollRate(screensaverActive);
+
+#if DEBUG
+		static enum ThumbnailState stateOld = ThumbnailState::Init;
+
+		if (stateOld != thumbnailContext.state)
 		{
-			if (now - lastPollTime > now - lastResponseTime)		// if we've had a response since the last poll
+			dbg("thumbnail state %d -> %d.\n",
+					stateOld, thumbnailContext.state);
+			stateOld = thumbnailContext.state;
+		}
+#endif
+
+
+		if (!UI::IsSetupTab())
+		{
+
+			if (now > lastResponseTime + 3 * (printerPollInterval + printerResponseTimeout))
 			{
-				currentReqSeq = GetNextSeq(currentReqSeq);
-				if (currentReqSeq != nullptr)
+				Reconnect();
+			}
+			else if (lastResponseTime >= lastPollTime &&
+			    (now > lastPollTime + printerPollInterval ||
+			     !initialized ||
+			     thumbnailContext.state == ThumbnailState::DataRequest))
+			{
+				if (thumbnailContext.state == ThumbnailState::DataRequest)
 				{
-					dbg("sending %s", currentReqSeq->key);
-					SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", currentReqSeq->key, currentReqSeq->flags);
+					SerialIo::Sendf("M36.1 P\"%s\" S%d\n",
+						thumbnailContext.filename.c_str(),
+						thumbnailContext.next);
+					lastPollTime = SystemTick::GetTickCount();
+					thumbnailContext.state = ThumbnailState::DataWait;
 				}
 				else
 				{
-					// Once we get here the first time we will have work all seqs once
-					if (!initialized)
+					currentReqSeq = GetNextSeq(currentReqSeq);
+					if (currentReqSeq != nullptr)
 					{
-						dbg("seqs init DONE");
-						UI::AllToolsSeen();
-						initialized = true;
+						dbg("requesting %s\n", currentReqSeq->key);
+						SerialIo::Sendf("M409 K\"%s\" F\"%s\"\n", currentReqSeq->key, currentReqSeq->flags);
+						lastPollTime = SystemTick::GetTickCount();
 					}
-
-					// First check for specific info we need to fetch
-					bool ok = OkToSend();
-					bool done = true;
-					if (ok)
+					else
 					{
-						done = FileManager::ProcessTimers();
-					}
+						// Once we get here the first time we will have work all seqs once
+						if (!initialized)
+						{
+							dbg("seqs init DONE\n");
+							UI::AllToolsSeen();
+							initialized = true;
+						}
 
-					// Otherwise just send a normal poll command
-					if (!ok && !done)
-					{
-						SerialIo::Sendf("M409 F\"d99f\"\n");
+						// check if specific info is needed
+						bool sent = false;
+						if (OkToSend())
+						{
+							sent = FileManager::ProcessTimers();
+						}
+
+						// if nothing was fetched do a status update
+						if (!sent)
+						{
+							SerialIo::Sendf("M409 F\"d99f\"\n");
+						}
+						lastPollTime = SystemTick::GetTickCount();
 					}
 				}
-				lastPollTime = SystemTick::GetTickCount();
 			}
-			else if (now - lastPollTime >= printerPollTimeout)	  // last response was most likely incomplete start over
+			else if (now > lastPollTime + printerPollInterval + printerResponseTimeout)	  // request timeout
 			{
+				dbg("request timeout\n");
 				SerialIo::Sendf("M409 F\"d99f\"\n");
 				lastPollTime = SystemTick::GetTickCount();
 			}
 		}
-		dbg2();
 	}
-}
-
-void PrintDebugText(const char *x)
-{
-	fwVersionField->SetValue(x);
 }
 
 // Pure virtual function call handler, to avoid pulling in large chunks of the standard library

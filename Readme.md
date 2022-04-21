@@ -1,22 +1,149 @@
 # PanelDueFirmware
 
-This firmware runs on PanelDue touchscreens available from Duet3D Ltd. and their resellers. It is used to check the status on and control a machine running primarily RepRapFirmware though since it simply sends GCodes over serial line it can be basically used with every controller that understands the sent commands.
+This firmware runs on PanelDue touchscreens available from Duet3D Ltd. and
+their resellers. It is used to check the status on and control a machine
+running primarily RepRapFirmware though since it simply sends GCodes over
+serial line it can be basically used with every controller that understands the
+sent commands.
+
+## Devices
+
+The following devices are supported:
+
+- v2-4.3
+- v2-5.0
+- v2-7.0
+- v2-7.0c
+- v3-4.3
+- v3-5.0
+- v3-7.0
+- v3-7.0c
+- 5.0i
+- 7.0i
 
 ## Download
-To get the latest release binaries go to:
+
+Download the latest firmware images at
 
 https://github.com/Duet3D/PanelDueFirmware/releases
 
-## Flashing instructions
-Instructions for flashing the firmware binary via USB are at:
+## Flashing
 
-https://duet3d.dozuki.com/Wiki/PanelDue_Firmware_update
+Detailed flashing instruction can be found at
 
-# Customization
-## Splash Screen
+https://docs.duet3d.com/en/User_manual/RepRapFirmware/Updating_PanelDue
+
+# Development
+
+## Build requirements
+
+- arm-none-eabi-gcc
+- cat
+- cmake
+- make
+- bossa
+
+### Ubuntu
+```sh
+$ apt install gcc-arm-none-eabi
+```
+
+### Arch
+```sh
+$ pacman -S arm-none-abi-gcc arm-none-eabi-newlib
+```
+
+### Mac OS
+```sh
+$ brew install gcc-arm-embedded
+```
+
+### Windows
+
+Download and install latest toolchain from https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+
+## Setup repository
+
+```sh
+$ git clone git@github.com:Duet3D/PanelDueFirmware.git
+$ cd PanelDueFirmware
+$ git submodule init
+$ git submodule update --recursive
+```
+
+## Setup build for specific device
+
+With the default build system
+
+```sh
+$ cmake -B build -DDEVICE="5.0i" .
+$ make -C build all -j12
+```
+
+Or with an explicit build system
+
+```sh
+$ cmake -B build -G "Unix Makefiles" -DDEVICE="5.0i" .
+$ make -C build all -j12
+```
+
+The default compiler can be easily overwritten by setting the cross compiler prefix.
+
+```sh
+$ cmake -B build -DDEVICE="5.0i" -DCROSS_COMPILE="/path/to/cross/compiler/arm-none-eabi-" .
+$ make -C build all -j12
+```
+
+Examples for windows users:
+
+When passing a path name use
+
+- slashes instead of backslashes to separate directories and
+- use backslashes to escape whitespaces.
+
+```sh
+$ cmake -B build -DDEVICE="5.0i" -DCROSS_COMPILE="C:/Program\ Files\ (x86)/GNU\ Tools\ ARM\ Embedded/8\ 2018-q4-major/bin/arm-none-eabi-" .
+```
+
+Create build system for Eclipse CDT which can be easily integrated
+
+```sh
+$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE="5.0i"
+```
+
+To switching the target device re-run cmake with another device setting
+
+```sh
+$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE="v3-5.0"
+```
+
+For further Eclipse CDT integration please visit
+
+https://cmake.org/cmake/help/latest/generator/Eclipse%20CDT4.html
+
+## Local Configuration
+
+It is possible to configure the local build system permamently instead of passing DEVICE and CROSS_COMPILE variable.
+
+- copy env.cmake.example to env.cmake
+- uncomment variables and adapt accordingly in env.cmake
+- re-run 'cmake -B build .'
+
+## Flash a firmware image to a device
+
+```sh
+$ bossac -e -w -v -b build/paneldue.bin -R -p /dev/ttyACM1
+```
+
+## Customization
+
+### Splash Screen
+
 Customising the splash screen (versions 1.20RC4 and later)
 
-If you wish to display a custom splash screen when PanelDue is powered up, you need to append a compressed version of the splash screen image to the -nologo version of the PanelDue firmware appropriate to your model of PanelDue and screen size.
+If you wish to display a custom splash screen when PanelDue is powered up, you
+need to append a compressed version of the splash screen image to the bare firmware
+version appropriate to your model's screen size.
 
 - First export the image you want to display in 24-bit bitmap (.bmp) format. The width and height in pixels must match exactly the resolution of the TFT panel (480x272 for the 4.3" panel, or 800x480 for the 5" and 7" panels)
 - The image must compress sufficiently well to fit in the available flash memory. Images containing large blocks of the same colour compress well.
@@ -25,8 +152,8 @@ If you wish to display a custom splash screen when PanelDue is powered up, you n
 There is a tool included in `Tools/gobmp2c/(linux|macos|win)` containing pre-compiled binaries for the three major operating systems.
 It's a command-line tool and can be used like follows:
 
-```
-$ ./bmp2c --help
+```sh
+$ Tools/gobmp2c/linux/bmp2c --help
 Usage of ./bmp2c:
   -binary
         Binary output
@@ -37,8 +164,8 @@ Usage of ./bmp2c:
 Use the `-binary` parameter to create splash screen and append it like this to the compiled firmware binary and provide the name of
 the input file as the last parameter e.g.
 
-```
-bmp2c -binary -outfile mysplashscreen.bin mysplashscreen.bmp
+```sh
+$ Tools/gobmp2c/linux/bmp2c -binary -outfile mysplashscreen.bin mysplashscreen.bmp
 ```
 
 *On Windows:*
@@ -73,8 +200,8 @@ converted into a paletted representation. The palette contains 12 different colo
 
 The tool can convert multiple input files into one output file. To convert icons into a paletted representation use
 
-```
-bmp2c -outfile Icons.hpp icon1.bmp [icon2.bmp ...]
+```sh
+$ Tools/gobmp2c/linux/bmp2c -outfile Icons.hpp icon1.bmp [icon2.bmp ...]
 ```
 
 It will append to the output file.

@@ -17,7 +17,7 @@ public:
 	UTouch(unsigned int tclk, unsigned int tcs, unsigned int tdin, unsigned int dout, unsigned int irq);
 
 	void	init(uint16_t xp, uint16_t yp, DisplayOrientation orientationAdjust = Default);
-	bool	read(uint16_t &x, uint16_t &y, uint16_t * null rawX = nullptr, uint16_t * null rawY = nullptr);
+	bool	read(uint16_t &x, uint16_t &y, bool &repeat, uint16_t * null rawX = nullptr, uint16_t * null rawY = nullptr);
 	void	calibrate(uint16_t xlow, uint16_t xhigh, uint16_t ylow, uint16_t yhigh, uint16_t margin);
 	void	adjustOrientation(DisplayOrientation a) { orientAdjust = (DisplayOrientation) (orientAdjust ^ a); }
 	DisplayOrientation getOrientation() const { return orientAdjust; }
@@ -28,6 +28,11 @@ private:
 	uint16_t disp_x_size, disp_y_size;
 	uint16_t scaleX, scaleY;
 	int16_t offsetX, offsetY;
+
+	enum {
+		released,
+		pressed
+	} state;
 
 	bool	getTouchData(bool wantY, uint16_t &rslt);
 	void	touch_WriteCommand(uint8_t command);

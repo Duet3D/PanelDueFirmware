@@ -1,0 +1,33 @@
+name: Bug Report
+description: File a bug report
+title: "ADD A MEANINGFUL TITLE FOR YOUR BUG REPORT"
+labels: [bug]
+body:
+- type: textarea
+  id: description
+  validations:
+    required: true
+  attributes:
+    label: Description
+    value: |
+      Before posting a bug report here, please check the forum and gitlab issue tracker if it was already reported.
+
+      - https://forum.duet3d.com/category/14/paneldue
+      - https://github.com/Duet3D/PanelDueFirmware/issues
+
+      If you need help configuring your device please visit the forum and post your questions there.
+
+      ## Description
+      Please add a brief description of your bug here.
+
+      ## Versions
+      Please add a list of products and software versions involved.
+
+      ## Process
+      Please add a step by step description on how to reproduce the bug.
+
+      ## Experienced Result
+      Please describe experienced result.
+
+      ## Expected Result
+      Please describe the expected result.

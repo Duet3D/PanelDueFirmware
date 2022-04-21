@@ -6,10 +6,36 @@
  */
 
 #include "ColourSchemes.hpp"
-#include "UserInterfaceConstants.hpp"
 #include <Icons/Icons.hpp>
 
-const ColourScheme colourSchemes[NumColourSchemes] =
+
+// Some common colours
+const Colour
+	grey = UTFT::fromRGB(128, 128, 128),
+	darkGrey = UTFT::fromRGB(60, 60, 60),
+	lightGrey = UTFT::fromRGB(100, 100, 100),
+	midGrey = UTFT::fromRGB(80, 80, 80),
+	veryDarkGrey = UTFT::fromRGB(40, 40, 40),
+	red = UTFT::fromRGB(255,0,0),
+	lightRed =  UTFT::fromRGB(255, 128, 128),
+	darkRed = UTFT::fromRGB(128, 0, 0),
+	yellow = UTFT::fromRGB(128,128,0),
+	lightYellow = UTFT::fromRGB(255, 255, 128),
+	darkYellow = UTFT::fromRGB(64, 64, 0),
+	lightOrange = UTFT::fromRGB(255, 224, 192),
+	orange = UTFT::fromRGB(255, 199, 89),
+	darkOrange = UTFT::fromRGB(128, 64, 0),
+	green = UTFT::fromRGB(0,255,0),
+	lightGreen = UTFT::fromRGB(192, 255, 192),
+	midGreen =  UTFT::fromRGB(0, 160, 0),
+	darkGreen = UTFT::fromRGB(0, 96, 0),
+	turquoise = UTFT::fromRGB(0,128,128),
+	blue = UTFT::fromRGB(0,0,255),
+	byzantine = UTFT::fromRGB(170,24,170),	// we need the 24 green to not wrap around with gradient
+	lightBlue = UTFT::fromRGB(224, 224, 255),
+	darkBlue = UTFT::fromRGB(0, 0, 64);
+
+const ColourScheme colourSchemes[] =
 {
 	// Light colour schema. As this one comes first, it is the default.
 	{
@@ -128,7 +154,7 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 		.errorTextColour = white,
 		.errorBackColour = veryDarkGrey,
 
-		.popupBorderColour = darkGrey,
+		.popupBorderColour = lightGrey,
 		.popupBackColour = darkGrey,
 		.popupTextColour = white,
 		.popupButtonTextColour = white,
@@ -160,4 +186,5 @@ const ColourScheme colourSchemes[NumColourSchemes] =
 	}
 };
 
+static_assert(NumColourSchemes == sizeof(colourSchemes) / sizeof(colourSchemes[0]), "number of colourSchemes don't match");
 // End

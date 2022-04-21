@@ -49,7 +49,7 @@ namespace OM
 		return GetOrCreate<AxisList, Axis>(axes, index, true);
 	}
 
-	bool IterateAxesWhile(stdext::inplace_function<bool(Axis*&, size_t)> func, const size_t startAt)
+	bool IterateAxesWhile(function_ref<bool(Axis*&, size_t)> func, const size_t startAt)
 	{
 		return axes.IterateWhile(func, startAt);
 	}

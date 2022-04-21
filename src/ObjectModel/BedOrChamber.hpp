@@ -11,7 +11,7 @@
 
 #include <cstdint>
 #include <General/FreelistManager.h>
-#include <General/inplace_function.h>
+#include <General/function_ref.h>
 
 namespace OM
 {
@@ -68,14 +68,14 @@ namespace OM
 	Bed* GetOrCreateBed(const size_t index);
 	Bed* GetFirstBed();
 	size_t GetBedCount();
-	bool IterateBedsWhile(stdext::inplace_function<bool(Bed*&, size_t)> func, const size_t startAt = 0);
+	bool IterateBedsWhile(function_ref<bool(Bed*&, size_t)> func, const size_t startAt = 0);
 	size_t RemoveBed(const size_t index, const bool allFollowing);
 
 	Chamber* GetChamber(const size_t index);
 	Chamber* GetOrCreateChamber(const size_t index);
 	Chamber* GetFirstChamber();
 	size_t GetChamberCount();
-	bool IterateChambersWhile(stdext::inplace_function<bool(Chamber*&, size_t)> func, const size_t startAt = 0);
+	bool IterateChambersWhile(function_ref<bool(Chamber*&, size_t)> func, const size_t startAt = 0);
 	size_t RemoveChamber(const size_t index, const bool allFollowing);
 }
 

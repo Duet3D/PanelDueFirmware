@@ -89,18 +89,26 @@ extern caddr_t _sbrk(int incr)
 	return (caddr_t) prev_heap;
 }
 
+#define UNUSED(x) (void)(x)
+
 extern int link(char *old, char *new)
 {
+	UNUSED(old);
+	UNUSED(new);
 	return -1;
 }
 
 extern int _close(int file)
 {
+	UNUSED(file);
+
 	return -1;
 }
 
 extern int _fstat(int file, struct stat *st)
 {
+	UNUSED(file);
+
 	st->st_mode = S_IFCHR;
 
 	return 0;
@@ -108,23 +116,33 @@ extern int _fstat(int file, struct stat *st)
 
 extern int _isatty(int file)
 {
+	UNUSED(file);
+
 	return 1;
 }
 
 extern int _lseek(int file, int ptr, int dir)
 {
+	UNUSED(file);
+	UNUSED(ptr);
+	UNUSED(dir);
+
 	return 0;
 }
 
 extern void _exit(int status)
 {
 //	printf("Exiting with status %d.\n", status);
+	UNUSED(status);
 
 	for (;;);
 }
 
 extern void _kill(int pid, int sig)
 {
+	UNUSED(pid);
+	UNUSED(sig);
+
 	return;
 }
 
@@ -135,11 +153,19 @@ extern int _getpid(void)
 
 extern int _read(int file, char *ptr, int len)
 {
-    return 0 ;
+	UNUSED(file);
+	UNUSED(ptr);
+	UNUSED(len);
+
+	return 0 ;
 }
 
 extern int _write( int file, char *ptr, int len )
 {
+	UNUSED(file);
+	UNUSED(ptr);
+	UNUSED(len);
+
 	return len;
 }
 

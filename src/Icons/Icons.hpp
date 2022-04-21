@@ -9,6 +9,8 @@
 #ifndef ICONS_H_
 #define ICONS_H_
 
+#include <stdint.h>
+
 extern const uint16_t IconPaletteLight[];
 extern const uint16_t IconPaletteDark[];
 

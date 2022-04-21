@@ -5,7 +5,6 @@
  *  Author: David
  */
 
-#include <UI/ColourSchemes.hpp>
 #include <UI/Display.hpp>
 #include "Icons/Icons.hpp"
 
@@ -14,6 +13,9 @@
 #undef array
 #undef result
 #include <algorithm>
+
+#define DEBUG 0
+#include "Debug.hpp"
 
 extern UTFT lcd;
 
@@ -179,6 +181,7 @@ Window::Window(Colour pb)
 // Prepend a field to the linked list of displayed fields
 void Window::AddField(DisplayField *d)
 {
+	d->parent = this;
 	d->next = root;
 	root = d;
 }
@@ -293,6 +296,19 @@ void Window::ClearPopup(bool redraw, PopupWindow *whichOne)
 		}
 	}
 }
+
+bool Window::IsPopupActive(const PopupWindow *popup)
+{
+	for (PopupWindow *pw = next; pw; pw = pw->next)
+	{
+		if (pw == popup)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 
 // Redraw the specified field
 void Window::Redraw(DisplayField *f)
@@ -625,7 +641,7 @@ void FloatField::PrintText() const
 	{
 		lcd.printf("%s", label);
 	}
-	lcd.printf("%.*f", numDecimals, val);
+	lcd.printf("%.*f", numDecimals, static_cast<double>(val));
 	if (units != nullptr)
 	{
 		lcd.printf("%s", units);
@@ -784,12 +800,12 @@ size_t TextButton::PrintText(size_t offset) const
 }
 
 TextButtonWithLabel::TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param, const char* _ecv_array null label)
-	: TextButton(py, px, pw, pt, e, param), label(label)
+	: TextButton(py - 2, px, pw, pt, e, param), label(label)
 {
 }
 
 TextButtonWithLabel::TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param, const char* _ecv_array null label)
-	: TextButton(py, px, pw, pt, e, param), label(label)
+	: TextButton(py - 2, px, pw, pt, e, param), label(label)
 {
 }
 
@@ -918,7 +934,7 @@ size_t IntegerButton::PrintText(size_t offset) const
 size_t FloatButton::PrintText(size_t offset) const
 {
 	UNUSED(offset);
-	size_t ret = lcd.printf("%.*f", numDecimals, val);
+	size_t ret = lcd.printf("%.*f", numDecimals, static_cast<double>(val));
 	if (units != nullptr)
 	{
 		ret += lcd.printf("%s", units);
@@ -1062,6 +1078,54 @@ void StaticImageField::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffs
 		lcd.drawCompressedBitmap(x + xOffset, y + yOffset, width, height, data);
 		changed = false;
 	}
+}
+
+void DrawDirect::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
+{
+	// nothing todo
+	UNUSED(full); UNUSED(xOffset); UNUSED(yOffset);
+
+	if (refreshNotify)
+		refreshNotify(full, changed);
+
+	changed = false;
+}
+
+void DrawDirect::DrawRect(PixelNumber widthRect, PixelNumber heightRect, unsigned int pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count)
+{
+	if (!IsVisible())
+	{
+		dbg("not visible.\n");
+		return;
+	}
+
+	if (widthRect > width || heightRect > height)
+	{
+		dbg("rect does not fit\n");
+		return;
+	}
+
+	PixelNumber xabs = x;
+	PixelNumber yabs = y;
+
+	if (parent)
+	{
+		xabs += parent->Xpos();
+		yabs += parent->Ypos();
+	}
+
+	if (widthRect < width)
+	{
+		xabs += (width - widthRect);
+	}
+
+	if (heightRect < height)
+	{
+		yabs += (height - heightRect) / 2;
+	}
+
+	lcd.drawBitmapRgbaStream(xabs, yabs, widthRect, heightRect, pixels_offset, reinterpret_cast<const uint32_t *>(pixels), pixels_count);
+	changed = false;
 }
 
 // End

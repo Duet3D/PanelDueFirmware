@@ -14,14 +14,24 @@
 #undef array
 #undef result
 #undef value
-#include <UI/UserInterfaceConstants.hpp>
+#include "UI/ColourSchemes.hpp"
+#include "ObjectModel/PrinterStatus.hpp"
 #include "Configuration.hpp"
 
 #define CSTRING const char * const _ecv_array
 #define Newline			"\n"
 #define DegreeSymbol	"\u00B0"
 
-constexpr unsigned int NumStatusStrings = 14;
+// Unicode strings for special characters in our font
+#define DECIMAL_POINT	"\xC2\xB7"		// Unicode middle-dot, code point B7
+#define DEGREE_SYMBOL	"\xC2\xB0"		// Unicode degree-symbol, code point B0
+#define THIN_SPACE		"\xC2\x80"		// Unicode control character, code point 0x80, we use it as thin space
+#define LEFT_ARROW		"\xC2\x81"		// Unicode control character, code point 0x81, we use it as up arrow
+#define UP_ARROW		"\xC2\x82"		// Unicode control character, code point 0x82, we use it as up arrow
+#define RIGHT_ARROW		"\xC2\x83"		// Unicode control character, code point 0x83, we use it as down arrow
+#define DOWN_ARROW		"\xC2\x84"		// Unicode control character, code point 0x84, we use it as down arrow
+#define MORE_ARROW		"\xC2\x85"
+#define LESS_ARROW		"\xC2\x86"
 
 struct StringTable
 {
@@ -43,7 +53,7 @@ struct StringTable
 	CSTRING macro;
 	CSTRING stop;
 
-	// Print page
+	// Status page
 	CSTRING extruderPercent;
 	CSTRING speed;
 	CSTRING fan;
@@ -144,7 +154,7 @@ struct StringTable
 	CSTRING simulate;
 
 	// Printer status strings
-	CSTRING statusValues[NumStatusStrings];
+	CSTRING statusValues[(unsigned int)OM::PrinterStatus::NumTypes];
 
 	// Colour theme names
 	CSTRING colourSchemeNames[NumColourSchemes];
@@ -267,13 +277,13 @@ const StringTable LanguageTables[] =
 		"Macros",
 		"Error ",						// note the space at the end
 		" accessing SD card",			// note the space at the start
-		"Filename: ",
+		"File: ",
 		"Size: ",
 		"Layer height: ",
 		"Object height: ",
 		"Filament needed: ",
 		"Sliced by: ",
-		"Last modified: ",
+		"Date: ",
 		"Estimated print time: ",
 		"Simulated print time: ",
 		"Simulate",
@@ -292,8 +302,8 @@ const StringTable LanguageTables[] =
 			"Firmware upload",
 			"Changing tool",
 			"Simulating",
-			"Standby",
-			"Initializing",
+			"Off",
+			"Cancelling",
 		},
 
 		// Theme names
@@ -327,8 +337,8 @@ const StringTable LanguageTables[] =
 		"Druck",
 		"Status",
 		"Konsole",
-		"Setup",
-		"Handsteuerung",
+		"Einstellung",
+		"Pendant",
 		"Istwert" THIN_SPACE DEGREE_SYMBOL "C",
 		"Aktiv" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
@@ -339,11 +349,11 @@ const StringTable LanguageTables[] =
 
 		// Print page
 		"Extruder" THIN_SPACE "%",
-		"Tempo ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
+		"Speed ",							// note space at end. Was "Geschwindigkeit " but that is too long to fit in the space available.
 		"Lüfter ",							// note space at end
 		"Restzeit: ",
-		"Datei ",							// note space at end
 		"Simul. ",							// note space at end
+		"Datei ",							// note space at end
 		"Filament ",						// note space at end
 		"Slicer ",							// note space at end
 		"n/v",
@@ -361,13 +371,13 @@ const StringTable LanguageTables[] =
 		"Anzeige spiegeln",
 		"Anzeige umkehren",
 		"Darstellung",
-		"Beleuchtung  -",
-		"Beleuchtung  +",
-		"Einstllgen sichern",
-		"Werks-Reset",
-		"Sichern & Reboot",
-		"Info timeout ",					// note space at end
-		"Screensaver ",						// note space at end
+		"Helligkeit  -",
+		"Helligkeit  +",
+		"Einstellungen sichern",
+		"Werksreset",
+		"Sichern & Neustarten",
+		"Info Timeout ",					// note space at end
+		"Bildschirmschoner ",					// note space at end
 		"Babystep ",						// note space at end
 		"Feedrate ",						// note space at end
 
@@ -426,15 +436,15 @@ const StringTable LanguageTables[] =
 		"Makros",
 		"Fehler ",						// note the space at the end
 		" beim Zugriff auf SD-Karte",	// note the space at the start
-		"Dateiname: ",
+		"Datei: ",
 		"Größe: ",
 		"Schichthöhe: ",
 		"Objekthöhe: ",
 		"Benötigtes Filament: ",
 		"Erzeugt mit: ",
-		"Letzte Änderung: ",
+		"Datum: ",
 		"Geschätzte Druckdauer: ",
-		"Errechnete Druckdauer: ",
+		"Simulierte Druckdauer: ",
 		"Simulieren",
 
 		// Printer status strings
@@ -451,15 +461,15 @@ const StringTable LanguageTables[] =
 			"Firmware-Upload",
 			"Wechsle Tool",
 			"Simuliert",
-			"Stand-by",
-			"Initialisieren"
+			"Aus",
+			"Abbrechen"
 		},
 
 		// Theme names
 		{
 			"Anzeige hell",
-			"Anzeige inv. 1",
-			"Anzeige inv. 2"
+			"Anzeige dunkel 1",
+			"Anzeige dunkel 2"
 		},
 
 		// Display dimming types
@@ -471,8 +481,8 @@ const StringTable LanguageTables[] =
 
 		// Heater combine types
 		{
-			"Heat's not comb.",
-			"Heaters comb.",
+			"Heat's nicht komb.",
+			"Heat's kombiniert"
 		}
 	},
 
@@ -486,7 +496,7 @@ const StringTable LanguageTables[] =
 		"Imprimer",
 		"Statut",
 		"Console",
-		"Installation",
+		"Configuration",
 		"Pendant",
 		"Actuel" THIN_SPACE DEGREE_SYMBOL "C",
 		"Actif" THIN_SPACE DEGREE_SYMBOL "C",
@@ -499,7 +509,7 @@ const StringTable LanguageTables[] =
 		// Print page
 		"Extrudeuse" THIN_SPACE "%",
 		"Vitesse ",								// note space at end
-		"Ventilo ",								// note space at end. "Ventilateur 0%" was too long to fit.
+		"Ventil. ",								// note space at end. "Ventilateur 0%" was too long to fit.
 		"Temps Restant: ",
 		"Simul. ",								// note space at end
 		"Fichier ",								// note space at end
@@ -510,23 +520,23 @@ const StringTable LanguageTables[] =
 		"Baby step",
 		"Reprise",
 		"Annuler",
-		"Print again",
-		"Simulate again",
+		"Réimprimer",
+		"Resimuler",
 		"Set",
 
 		// Setup page
 		"Volume ",								// note space at end
-		"Calibrer touch",
+		"Calibrer l'écran",
 		"Affichage en négatif",
 		"Inverser affichage",
-		"Théme",
+		"Thème",
 		"Luminosité -",
 		"Luminosité +",
 		"Sauver paramêtres",
-		"Effacer paramêtres",
+		"Réinitialisation",
 		"Sauvegarde & Redémarrage",
 		"Info timeout ",						// note space at end
-		"Screensaver ",							// note space at end
+		"Veille ecran ",							// note space at end
 		"Babystep ",							// note space at end
 		"Feedrate ",							// note space at end
 
@@ -564,54 +574,54 @@ const StringTable LanguageTables[] =
 		"Heat Control",
 
 		// Misc
-		"Confirmer le réinitialisation de l'imprimante",
-		"Confirm suppression fichier",
-		"Vous êtes sûre?",
+		"Confirmer la réinitialisation",
+		"Confirmer la suppression du fichier",
+		"Etes-vous sûre?",
 		"Appuyer sur le point",
-		"Mouvement de la  tête",
-		"Quantité de Matière extrudée (mm)",
+		"Mouvement de la tête",
+		"Quantité de matière extrudée (mm)",
 		"Vitesse (mm/s)",
 		"Extruder",
-		"Retracter",
+		"Rétracter",
 		"Baby stepping",
-		"décalage Z courant : ",
+		"Z offset actuel:  ",
 		"Message",
 		"Messages",
 		"Version du firmware du Panel Due ",	// note space at end
 		"Réponse",
 
 		// File popup
-		"Fichier sur carte ",					// note the space on the end
+		"Fichier sur la carte ",					// note the space on the end
 		"Macros",
 		"Erreur ",								// note the space at the end
-		" accés SD card en cours",				// note the space at the start
-		"Nom du fichier : ",
-		"Taille : ",
+		" accés à la carte SD en cours",				// note the space at the start
+		"Fichier: ",
+		"Taille: ",
 		"Hauteur de couche: ",
 		"Hauteur de l'objet: ",
 		"Filament requis: ",
-		"Sliced par: ",
-		"Dernière modification: ",
+		"Slicé par: ",
+		"Date: ",
 		"Temps d'impression estimé: ",
 		"Temps d'impression simulé: ",
 		"Simuler",
 
 		// Printer status strings
 		{
-			"Liaison en cours",					// "Connexion en cours" was too long
-			"Au repos",
+			"Conn. en cours",					// "Connexion en cours" was too long
+			"En attente",
 			"Impression",
-			"Arrêt",
+			"Arrêté",
 			"Démarrage",
 			"Pause",
 			"Occupé",
 			"Pause",
-			"Reprise",
-			"Flasher firmware",
-			"Changer outil",
-			"Simuler",
-			"En veille",
-			"Initialiser"
+			"Reprendre",
+			"Update en cours",
+			"Chgt d'outil",
+			"Simul. en cours",
+			"Off",
+			"Annulation..."
 		},
 
 		// Theme names
@@ -623,9 +633,9 @@ const StringTable LanguageTables[] =
 
 		// Display dimming types
 		{
-			"Jamais Dim",
-			"Idle Dim",
-			"Toujours Dim"
+			"Jamais tamiser",
+			"Tamiser si inactive",
+			"Toujours tamiser"
 		},
 
 		// Heater combine types
@@ -643,13 +653,13 @@ const StringTable LanguageTables[] =
 		// Main page strings
 		"Control",
 		"Imprimir",
-		"Estatus",
+		"Estado",
 		"Consola",
 		"Configuración",
 		"Pendant",
 		"Actual" THIN_SPACE DEGREE_SYMBOL "C",
 		"Activo" THIN_SPACE DEGREE_SYMBOL "C",
-		"Esperando" THIN_SPACE DEGREE_SYMBOL "C",
+		"Inactivo" THIN_SPACE DEGREE_SYMBOL "C",
 		"Mover",
 		"Extrusión",
 		"Macro",
@@ -663,14 +673,14 @@ const StringTable LanguageTables[] =
 		"simul. ",							// note space at end
 		"archivo ",							// note space at end
 		"filamento ",						// note space at end
-		"slicer ",							// note space at end
+		"laminador ",							// note space at end
 		"n/d",								// Not available / no disponible
 		"Pausa",
 		"Micro paso",						// Literal translation of baby step it's very odd in spanish...
-		"Resumir",
+		"Reanudar",
 		"Cancelar",
-		"Print again",
-		"Simulate again",
+		"Imprimir de nuevo",
+		"Simular de nuevo",
 		"Fijar",							// "Establecer" would be more correct, but it's longer.
 
 		// Setup page
@@ -685,9 +695,9 @@ const StringTable LanguageTables[] =
 		"Borrar parámetros",
 		"Guardar y Reiniciar",
 		"Info timeout ",					// note space at end
-		"Screensaver ",						// note space at end
-		"Babystep ",						// note space at end
-		"Feedrate ",						// note space at end
+		"Salvapantallas ",					// note space at end
+		"Micropaso ",						// note space at end
+		"Vel. avance",						// note space at end
 
 		// Pendant root
 		"Panel",
@@ -726,30 +736,30 @@ const StringTable LanguageTables[] =
 		"Confirma restablecimiento de fábrica",
 		"Confirma borrar archivo",
 		"Está seguro?",
-		"Tocar el punto",
+		"Toca el punto",
 		"Mover cabezal",
 		"Cantidad de extrusión (mm)",
 		"Velocidad (mm/s)",
 		"Extruir",
 		"Retraer",
-		"Micro paso",
+		"Micro pasos",
 		"Separación actual de Z: ",
 		"Mensaje",
 		"Mensajes",
-		"Panel Due versión de firmware ",	// note space at end
+		"Versión del Firmware del Panel Due ",	// note space at end
 		"Respuesta",
 
 		// File popup
-		"Archivos en la tarjeta ",			// note the space on the end
+		"Archivos SD ",			// note the space on the end
 		"Macros",
 		"Error ",							// note the space at the end
 		" accediendo a la tarjeta SD",		// note the space at the start
-		"Nombre de archivo: ",
+		"Nombre del archivo: ",
 		"Tamaño: ",
 		"Altura de capa: ",
 		"Altura de objeto: ",
 		"Filamento necesario: ",
-		"Procesado por: ",					// there is no translation in spanish for this meaning, so I proposed to use "processed by" which is understandable
+		"Laminado por: ",					// there is no translation in spanish for this meaning, so I proposed to use "processed by" which is understandable
 		"Última modificación: ",
 		"Tiempo estimado de impresión: ",
 		"Tiempo de impresión simulado: ",
@@ -757,19 +767,20 @@ const StringTable LanguageTables[] =
 
 		// Printer status strings
 		{
-			"conexión",
+			"conectando",
 			"en espera",					// it's more frequently use "en espera" than "ocioso", it makes more sense for a machine
 			"imprimiendo",
-			"detuvo",
+			"parado",
 			"empezando",
 			"pausado",
 			"ocupado",
 			"pausando",
 			"reanudando",
 			"carga del firmware",
-			"herramienta de cambio",
+			"cambio de herramienta",
 			"simulando",
-			"en espera"
+			"apagado",
+			"cancelando"
 		},
 
 		// Theme names
@@ -819,9 +830,9 @@ const StringTable LanguageTables[] =
 		"Vent. ",							// note space at end
 		"Čas do konce: ",
 		"simul. ",							// note space at end
-		"slicer ",							// note space at end
 		"soubor ",							// note space at end
-		"materiál ",						// note space at end
+		"materiál ",							// note space at end
+		"slicer ",						// note space at end
 		"n/a",
 		"Pozastavit",
 		"Baby step",
@@ -927,7 +938,8 @@ const StringTable LanguageTables[] =
 			"Nahrává firmware",
 			"Výměna nástroje",
 			"Simulace",
-			"Pohotovostní"
+			"Vypnuto",
+			"Ruší se"
 		},
 
 		// Theme names
@@ -961,8 +973,8 @@ const StringTable LanguageTables[] =
 		"Stampa",
 		"Status",
 		"Console",
-		"Pendant",
 		"Configura",
+		"Pendant",
 		"Corrente" THIN_SPACE DEGREE_SYMBOL "C",
 		"Attiva" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
@@ -1085,8 +1097,8 @@ const StringTable LanguageTables[] =
 			"Caricamento firmware",
 			"Cambiando tool",
 			"Simulando",
-			"Standby",
-			"Inizializzando",
+			"Off",
+			"Cancelling"
 		},
 
 		// Theme names
@@ -1108,7 +1120,167 @@ const StringTable LanguageTables[] =
 			"Heat's not comb.",
 			"Heaters comb.",
 		}
- 	},
+	},
+
+	// Polish
+	{
+		// ISO-639.3 language code
+		"pl",
+
+		// Main page strings
+		"Str.główna",
+		"Druk",
+		"Status",
+		"Konsola",
+		"Ustawienia",
+		"Pendant",
+		"Aktualna" THIN_SPACE DEGREE_SYMBOL "C",
+		"Żądana" THIN_SPACE DEGREE_SYMBOL "C",
+		"Czuwanie" THIN_SPACE DEGREE_SYMBOL "C",
+		"Ruch",
+		"Ekstruzja",
+		"Polecenie",
+		"STOP",
+
+		// Print page
+		"Ekstruzja" THIN_SPACE "%",
+		"Prędkość ",							// note space at end
+		"Nawiew ",								// note space at end
+		"Pozostało:: ",
+		"sim'd ",							// note space at end
+		"plik ",							// note space at end
+		"filament ",						// note space at end
+		"slicer ",							// note space at end
+		"N/A",
+		"Pauza",
+		"Mały krok",
+		"Wznów",
+		"Anuluj",
+		"Drukuj ponownie",
+		"Ponowna symulacja",
+		"Ustaw",
+
+		// Setup page
+		"Głośność ",							// note space at end
+		"Kalibracja",
+		"Wyśw.lustrzane",
+		"Wyśw.odbite",
+		"Motyw",
+		"Jasność -",
+		"Jasność +",
+		"Zapisz ust.",
+		"Wyczyść ust.",
+		"zapisz i uruch.ponow.",
+		"Czas powiad. ",					// note space at end
+		"Wygaszacz ",						// note space at end
+		"Mały krok ",						// note space at end
+		"Prędkość ",						// note space at end
+
+		// Pendant root
+		"Panel",
+		"Jog",
+		"Offset",
+		"Job",
+
+		// Pendant Jog tab
+		"Axis",
+		"Movement",
+		"Current",
+		"Homing",
+		"Measure Z",
+		"Confirm Measure Z",
+		"Tools",
+		"Probe",
+
+		// Pendant Offset tab
+		"Probe Workpiece",
+		"Find Center of Cavity",
+		"Touch-off Plate",
+		"Set Tool Offset",
+		"WCS Offsets",
+		"Edit",
+		"Axes Offsets",
+		"Select WCS",
+		"Set to current",
+
+		// Pendant Job tab
+		"No job running",
+		"Extrd. ",
+		"Spindle RPM ",
+		"Heat Control",
+
+		// Misc
+		"Potwierdź przywrócenie do ustawień fabrycznych.",
+		"Potwierdź usuń.pliku",
+		"Jesteś pewny?",
+		"Dotknij miejsce",
+		"Ruch głowicy",
+		"Ilość filamentu (mm)",
+		"Prędkość (mm/s)",
+		"Ekstruduj",
+		"Retrakuj",
+		"Małe kroki",
+		"Aktualny offset Z : ",
+		"Wiadomość",
+		"Wiadomości",
+		"Panel Due firmware wersja ",	// note space at end
+		"Odpowiedź",
+
+		// File popup
+		"Pliki na karcie ",				// note the space on the end
+		"Polecenia",
+		"Błąd ",						// note the space at the end
+		"Otczyt karty SD",			// note the space at the start
+		"Nazwa pliku: ",
+		"Rozmiar: ",
+		"Wysok.warstwy: ",
+		"Wysok.obiektu: ",
+		"Potrzebny filament: ",
+		"Pocięto przez: ",
+		"Ostatnio modyfikowany: ",
+		"Obliczon.czas druku: ",
+		"Przewidyw.czas druku: ",
+		"Symuluj",
+
+		// Printer status strings
+		{
+			"Łączenie",
+			"Bezczynny",
+			"Drukowanie",
+			"Rozpoczynanie",
+			"Uruchamianie",
+			"Pałza",
+			"Zajęty",
+			"Pauzowanie",
+			"Wznawianie",
+			"Przesyłanie firmware",
+			"Zmiana narzędzia",
+			"Symulacja",
+			"Off",
+			"Cancelling",
+		},
+
+		// Theme names
+		{
+			"Jasny motyw",
+			"Ciemny motyw 1",
+			"Ciemny motyw 2"
+		},
+
+		// Display dimming types
+		{
+			"Nie wygaszaj",
+			"Wygaszaj gdy bezczynny",
+			"Zawsze wygaszaj",
+		},
+
+		// Heater combine types
+		{
+			"Głowica prosta",
+			"Głowica inna",
+		}
+	},
+
 
 #if USE_CYRILLIC_CHARACTERS
 	// Ukrainian
@@ -1121,6 +1293,7 @@ const StringTable LanguageTables[] =
 		"Друк",
 		"Консоль",
 		"Налаштування",
+		"Pendant",
 		"Поточна" THIN_SPACE DEGREE_SYMBOL "C",
 		"Активна" THIN_SPACE DEGREE_SYMBOL "C",
 		"Очікувана" THIN_SPACE DEGREE_SYMBOL "C",
@@ -1162,6 +1335,39 @@ const StringTable LanguageTables[] =
 		"Заставка ",           // note space at end
 		"Мікрокрок ",            // note space at end
 		"Подача ",            // note space at end
+
+		// Pendant root
+		"Panel",
+		"Jog",
+		"Offset",
+		"Job",
+
+		// Pendant Jog tab
+		"Axis",
+		"Movement",
+		"Current",
+		"Homing",
+		"Measure Z",
+		"Confirm Measure Z",
+		"Tools",
+		"Probe",
+
+		// Pendant Offset tab
+		"Probe Workpiece",
+		"Find Center of Cavity",
+		"Touch-off Plate",
+		"Set Tool Offset",
+		"WCS Offsets",
+		"Edit",
+		"Axes Offsets",
+		"Select WCS",
+		"Set to current",
+
+		// Pendant Job tab
+		"No job running",
+		"Extrd. ",
+		"Spindle RPM ",
+		"Heat Control",
 
 		// Misc
 		"Підтвердіть скинення до заводських налаштуванб",
@@ -1243,32 +1449,33 @@ const StringTable LanguageTables[] =
 		"Печать",
 		"Статус",
 		"Консоль",
-		"Настройка",
-		"Текущий" THIN_SPACE DEGREE_SYMBOL "C",
-		"Активный" THIN_SPACE DEGREE_SYMBOL "C",
-		"Ожидание" THIN_SPACE DEGREE_SYMBOL "C",
-		"Движение",
+		"Настройки",
+		"Pendant",
+		"Текущая" THIN_SPACE DEGREE_SYMBOL "C",
+		"Заданная" THIN_SPACE DEGREE_SYMBOL "C",
+		"Преднагрев" THIN_SPACE DEGREE_SYMBOL "C",
+		"Движения",
 		"Экструзия",
 		"Макрос",
 		"СТОП",
 
 		// Print page
-		"Экструдер" THIN_SPACE "%",
+		"Экструзия" THIN_SPACE "%",
 		"Скорость ",             // note space at end
 		"обдув ",               // note space at end
 		"Оставшееся время: ",
 		"Файл ",              // note space at end
-		", филамент ",            // note space at end
-		", слой ",             // note space at end
+		", Файл ",            // note space at end
+		", Филамент ",             // note space at end
 		"Слайсер ",
 		"-",
 		"Пауза",
-		"мелкий шаг",
-		"Резюме",
-		"отмена",
-		"печать заново",
-		"снова смоделировать",
-		"установить",
+		"Высота слоя",
+		"Продолжить",
+		"Oтмена",
+		"Повтор печати",
+		"Повтор моделирования",
+		"Установить",
 
 		// Setup page
 		"Громкость ",              // note space at end
@@ -1279,27 +1486,60 @@ const StringTable LanguageTables[] =
 		"Яркость -",
 		"Яркость +",
 		"Сохранить настройки",
-		"Скинуть настройки",
+		"Сбросить настройки",
 		"Сохранить и перезапустить",
-		"Время ожидания информации ",          // note space at end
+		"Ожидание информации ",          // note space at end
 		"Заставка ",           // note space at end
 		"Мелкий шаг ",            // note space at end
 		"Скорость подачи ",            // note space at end
+
+		// Pendant root
+		"Panel",
+		"Jog",
+		"Offset",
+		"Job",
+
+		// Pendant Jog tab
+		"Axis",
+		"Movement",
+		"Current",
+		"Homing",
+		"Measure Z",
+		"Confirm Measure Z",
+		"Tools",
+		"Probe",
+
+		// Pendant Offset tab
+		"Probe Workpiece",
+		"Find Center of Cavity",
+		"Touch-off Plate",
+		"Set Tool Offset",
+		"WCS Offsets",
+		"Edit",
+		"Axes Offsets",
+		"Select WCS",
+		"Set to current",
+
+		// Pendant Job tab
+		"No job running",
+		"Extrd. ",
+		"Spindle RPM ",
+		"Heat Control",
 
 		// Misc
 		"Подтвердить сброс настроек",
 		"Подтвердить удаление файла",
 		"Вы уверены?",
 		"Дотронуться до точки",
-		"Двигать кареткой",
-		"Количество выдавливания (мм)",
+		"Двигать экструдером",
+		"Количество экструзии (мм)",
 		"Скорость (мм / с)",
 		"Экструдировать",
 		"Ретракт",
-		"Мелкий шаг",
+		"Высота слоя",
 		"Текущее смещение по оси Z: ",
 		"Сообщение",
-		"Сообщение",
+		"Сообщения",
 		"Версия прошивки Panel Due ",  // note space at end
 		"Ответ",
 
@@ -1312,8 +1552,8 @@ const StringTable LanguageTables[] =
 		"Размер: ",
 		"Высота слоя: ",
 		"Высота объекта: ",
-		"Нужен филамент: ",
-		"от слайсено: ",
+		"Нет филамента: ",
+		"Нарезано: ",
 		"Последнее изменение: ",
 		"Расчетное время печати: ",
 		"Время имитации печати: ",
@@ -1322,18 +1562,18 @@ const StringTable LanguageTables[] =
 		// Printer status strings
 		{
 			"Подключение",
-			"Бездействие",
+			"Ожидание",
 			"Печать",
 			"Остановлен",
 			"Запуск",
-			"Приостановлено",
+			"Пауза",
 			"Занятый",
 			"Пауза",
-			"Возобновление",
+			"Продолжить",
 			"Загрузка прошивки",
 			"Смена инструмента",
 			"Симуляция",
-			"Ожидать",
+			"Отмена",
 			"Инициализация",
 		},
 
@@ -1347,14 +1587,14 @@ const StringTable LanguageTables[] =
 		// Display dimming types
 		{
 			"Никогда не тускнеет",
-			"Уменьшить при простое",
+			"Уменьшить при ожидании",
 			"Всегда тусклый"
 		},
 
 		// Heater combine types
 		{
-			"Обогреватели не совмещенные",
-			"Обогреватели комбинированные",
+			"Нагреватели не комб.",
+			"Нагреватели комб.",
 		}
 	}
 #endif

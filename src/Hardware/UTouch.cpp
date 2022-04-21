@@ -20,6 +20,8 @@ void UTouch::init(uint16_t xp, uint16_t yp, DisplayOrientation orientationAdjust
 	scaleX					= (uint16_t)(((uint32_t)(disp_x_size - 1) << 16)/4095);
 	offsetY					= 0;
 	scaleY					= (uint16_t)(((uint32_t)(disp_y_size - 1) << 16)/4095);
+
+	state = UTouch::released;
 	
 	portCLK.setMode(OneBitPort::Output);
 	portCS.setMode(OneBitPort::Output);
@@ -33,9 +35,12 @@ void UTouch::init(uint16_t xp, uint16_t yp, DisplayOrientation orientationAdjust
 }
 
 // If the panel is touched, return the coordinates in x and y and return true; else return false
-bool UTouch::read(uint16_t &px, uint16_t &py, uint16_t * null rawX, uint16_t * null rawY)
+bool UTouch::read(uint16_t &px, uint16_t &py, bool &repeat, uint16_t * null rawX, uint16_t * null rawY)
 {
 	bool ret = false;
+
+	repeat = false;
+
 	if (!portIRQ.read())			// if screen is touched
 	{
 		portCS.setLow();
@@ -79,6 +84,15 @@ bool UTouch::read(uint16_t &px, uint16_t &py, uint16_t * null rawX, uint16_t * n
 		}
 		portCS.setHigh();
 	}
+
+
+	if (ret && state == UTouch::pressed)
+	{
+		repeat = true;
+	}
+
+	state = (ret == true) ? UTouch::pressed : UTouch::released;
+
 	return ret;
 }
 

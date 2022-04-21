@@ -6,7 +6,7 @@ ehthumbs.db
 Desktop.ini
 
 # Recycle Bin used on file shares
-$RECYCLE.BIN/
+$RECYCLE.BIN
 
 # Windows Installer files
 *.cab
@@ -51,14 +51,21 @@ Temporary Items
 .apdisk
 
 # Directories created during build
-/Release-*
-/OEM*
+build
+
+# Local configuration file
+env.cmake
 
 # Customer-specific folders
-/src/OEM
+src/OEM
 
 # Misc
 .settings/language.settings.xml
-/H-Series-Pendant-Firmware/
-/.vs
-/.vscode
+compile_commands.json
+
+# IDEs
+.vs
+.vscode
+
+# Eclipse
+H-Series-Pendant-Firmware

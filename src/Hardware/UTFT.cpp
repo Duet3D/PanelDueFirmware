@@ -54,6 +54,9 @@
 #include "memorysaver.h"
 #include <cstring>			// for strchr
 
+#define DEBUG 0
+#include "Debug.hpp"
+
 // Write the previous 16-bit data again the specified number of times.
 // Only supported in 9 and 16 bit modes. Used to speed up setting large blocks of pixels to the same colour.
 void UTFT::LCD_Write_Again(uint32_t num)
@@ -1585,6 +1588,14 @@ void UTFT::drawRect(int x1, int y1, int x2, int y2)
 	drawVLine(x2, y1, y2-y1+1);
 }
 
+void UTFT::drawRect(int x1, int y1, int x2, int y2, Colour colour)
+{
+	Colour save = fcolour;
+	fcolour = colour;
+	drawRect(x1, y1, x2, y2);
+	fcolour = save;
+}
+
 void UTFT::drawRoundRect(int x1, int y1, int x2, int y2)
 {
 	if (x1>x2)
@@ -2190,6 +2201,54 @@ void UTFT::drawBitmap16(int x, int y, int sx, int sy, const uint16_t * data, int
 			}
 			++curY;
 		}
+	}
+	removeCS();
+}
+
+// Draw a bitmap stream using rgba colors
+void UTFT::drawBitmapRgbaStream(int x, int y, int width, int height, int pixels_offset, const uint32_t *pixels, size_t pixels_count)
+{
+
+	if (x < 0 || y < 0 || width < 0 || height < 0 ||
+	    pixels_offset < 0 || pixels == nullptr ||
+	    (y + (pixels_offset + (int)pixels_count) / width) > (y + height))
+	{
+		dbg("invalid parameter\n");
+		return;
+	}
+
+	int xd = x + pixels_offset % width;
+	int yd = x + pixels_offset / width;
+
+	dbg("orient %d x %d y %d w %d h %d off %d cnt %d\n", orient, x, y, width, height, pixels_offset, pixels_count, pixels);
+	dbg("current x %d y %d\n", xd, yd);
+
+#if DEBUG
+	Colour fcoloursave = fcolour;
+	fcolour = UTFT::fromRGB(255, 0, 0),
+	drawHLine(x, y, width);
+	drawHLine(x, y + height, width);
+	drawVLine(x, y, height);
+	drawVLine(x + width, y, height);
+	fcolour = fcoloursave;
+#endif
+
+	assertCS();
+	for (size_t i = 0; i < pixels_count; i++)
+	{
+		const uint32_t pixel = pixels[i];
+#define UTFT_RED(v) ((v & (0xf8 << 0)) << (11 - 3))
+#define UTFT_GREEN(v) ((v & (0xfc << 8)) >> (8 + 2 - 5))
+#define UTFT_BLUE(v) ((v & (0xf8 << 16)) >> (16 + 3 - 0))
+#define UTFT_ALPHA(v) (v & 0x00)
+		const uint16_t col = UTFT_RED(pixel) | UTFT_GREEN(pixel) | UTFT_BLUE(pixel);
+
+		xd = x + (pixels_offset + i) % width;
+		yd = y + (pixels_offset + i) / width;
+
+		setXY(xd, yd, xd, yd);
+
+		LCD_Write_Repeated_DATA16(col, 1);
 	}
 	removeCS();
 }

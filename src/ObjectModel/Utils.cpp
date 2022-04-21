@@ -11,7 +11,7 @@
 #include "Spindle.hpp"
 #include "Tool.hpp"
 #include "ListHelpers.hpp"
-#include "PanelDue.hpp"
+#include "FlashData.hpp"
 
 namespace OM
 {
@@ -79,7 +79,7 @@ namespace OM
 				[&slots, &heaterIndex, &slotType](Tool*& tool, size_t) {
 					if (tool->slot < MaxSlots)
 					{
-						if (GetHeaterCombineType() == HeaterCombineType::notCombined)
+						if (nvData.GetHeaterCombineType() == HeaterCombineType::notCombined)
 						{
 							tool->IterateHeaters([&tool, &slots, &heaterIndex, &slotType](ToolHeater* th, size_t index) {
 								switch (slotType)

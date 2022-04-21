@@ -1,0 +1,49 @@
+#ifndef HARDWARE_BACKLIGHT_HPP
+#define HARDWARE_BACKLIGHT_HPP 1
+
+#include "asf.h"
+#include <cstdint>
+
+enum BacklightState {
+	BacklightStateNormal,
+	BacklightStateDimmed
+};
+
+class Backlight
+{
+public:
+	static const uint32_t MinBrightness = 0;
+	static const uint32_t MaxBrightness = 100;
+
+	static const uint32_t MaxDutyRange = 100;
+
+	Backlight(pwm_channel_t *pwm,
+		uint32_t pwmFrequency, uint32_t frequency,
+		uint32_t dimBrightness, uint32_t normalBrightness,
+		uint32_t minDuty, uint32_t maxDuty);
+
+	void SetDimBrightness(uint32_t p_dimBrightness) { dimBrightness = p_dimBrightness; UpdateBrightness(dimBrightness); }
+	void SetNormalBrightness(uint32_t p_normalBrightness) { normalBrightness = p_normalBrightness; UpdateBrightness(normalBrightness); }
+
+	void SetState(enum BacklightState state);
+	enum BacklightState GetState() { return state; }
+
+private:
+	pwm_channel_t *pwm;
+
+	uint32_t frequency;
+	uint32_t period;
+	uint32_t channel;
+
+	uint32_t dimBrightness;
+	uint32_t normalBrightness;
+
+	uint32_t minDuty;	// in per cent
+	uint32_t maxDuty;	// in per cent
+
+	enum BacklightState state;
+
+	void UpdateBrightness(uint32_t brightness);
+};
+
+#endif /* ifndef HARDWARE_BACKLIGHT_HPP */

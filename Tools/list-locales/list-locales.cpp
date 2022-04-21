@@ -1,9 +1,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <cstring>
 #include <string>
 
-const size_t NumColourSchemes = 3;
+#include "ObjectModel/PrinterStatus.hpp"
 
 enum class DisplayDimmerType : uint8_t
 {
@@ -29,8 +30,6 @@ static int print_index(size_t index);
 
 static int print_all(void)
 {
-	const StringTable *orig = &LanguageTables[0];
-
 	for (size_t i = 1; i < ARRAY_SIZE(LanguageTables); i++) {
 		print_index(i);
 	}
@@ -47,8 +46,11 @@ static int print_index(size_t index)
 
 	const StringTable *translation = &LanguageTables[index];
 
-#define PRINT_ENTRY(name) do { std::cout << "'" << orig->name << "'" << ", "; \
-			translation->name ? std::cout << "'" << translation->name << "'" << std::endl : std::cout << "MISSING" << std::endl; } while(0)
+#define STRINGIFY2(x) #x
+#define STRINGIFY(x) STRINGIFY2(x)
+#define PRINT_ENTRY(name) do { std::cout << STRINGIFY(orig->name) << ": '" << orig->name << "'" << ", "; \
+			translation->name ? std::cout << "'" << translation->name << "'" : std::cout << "MISSING"; \
+			translation->name ? std::cout << " l: " << std::strlen(orig->name) << "/" << std::strlen(translation->name) << std::endl : std::cout << std::endl; } while(0)
 
 	std::cout << "*****: " << translation->languageName << std::endl;
 	PRINT_ENTRY(languageName);
@@ -57,6 +59,7 @@ static int print_index(size_t index)
 	PRINT_ENTRY(status);
 	PRINT_ENTRY(console);
 	PRINT_ENTRY(setup);
+	PRINT_ENTRY(pendant);
 	PRINT_ENTRY(current);
 	PRINT_ENTRY(active);
 	PRINT_ENTRY(standby);
@@ -134,10 +137,18 @@ static int print_index(size_t index)
 
 
 	std::cout << "Status Values:" << std::endl;
-	for (size_t j = 0; j < ARRAY_SIZE(orig->statusValues); j++) {
-		PRINT_ENTRY(statusValues[j]);
-	}
-
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::connecting]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::idle]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::printing]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::stopped]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::configuring]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::paused]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::resuming]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::flashing]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::toolChange]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::simulating]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::off]);
+	PRINT_ENTRY(statusValues[(unsigned int)OM::PrinterStatus::cancelling]);
 
 	std::cout << "Colour Scheme Names:" << std::endl;
 	for (size_t j = 0; j < ARRAY_SIZE(orig->colourSchemeNames); j++) {
@@ -145,14 +156,13 @@ static int print_index(size_t index)
 	}
 
 	std::cout << "Display Dimming Names:" << std::endl;
-	for (size_t j = 0; j < ARRAY_SIZE(orig->displayDimmingNames); j++) {
-		PRINT_ENTRY(displayDimmingNames[j]);
-	}
+	PRINT_ENTRY(displayDimmingNames[(unsigned int)DisplayDimmerType::never]);
+	PRINT_ENTRY(displayDimmingNames[(unsigned int)DisplayDimmerType::always]);
+	PRINT_ENTRY(displayDimmingNames[(unsigned int)DisplayDimmerType::onIdle]);
 
 	std::cout << "Heater Combine Type Names:" << std::endl;
-	for (size_t j = 0; j < ARRAY_SIZE(orig->heaterCombineTypeNames); j++) {
-		PRINT_ENTRY(heaterCombineTypeNames[j]);
-	}
+	PRINT_ENTRY(heaterCombineTypeNames[(unsigned int)HeaterCombineType::notCombined]);
+	PRINT_ENTRY(heaterCombineTypeNames[(unsigned int)HeaterCombineType::combined]);
 	
 	return 0;
 
@@ -199,7 +209,7 @@ int main(int argc, char *argv[])
 			  << "help - print this help" << std::endl
 			  << "LANGUAGES_NAMES - pass a list of languages names to print languages' translations" << std::endl;
 	} else {
-		for (size_t i = 1; i < argc; i++) {
+		for (ssize_t i = 1; i < argc; i++) {
 			print_lang(argv[i]);
 		}
 

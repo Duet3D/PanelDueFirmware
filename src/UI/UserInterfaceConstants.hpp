@@ -11,8 +11,6 @@
 #include <UI/DisplaySize.hpp>
 #include <Configuration.hpp>
 
-const size_t NumColourSchemes = 3;
-
 static const char* _ecv_array const axisNames[] = { "X", "Y", "Z", "U", "V", "W" };
 constexpr size_t MaxTotalAxes = 15;		// This needs to be kept in sync with the maximum in RRF for any build configuration
 constexpr size_t MaxHeatersPerTool = 8;
@@ -184,7 +182,7 @@ const PixelNumber tempPopupBarWidth = (3 * fullPopupWidth)/4;
 const PixelNumber tempPopupBarWidthEncoder = 150;
 const PixelNumber rpmPopupBarWidth = fullPopupWidth;
 const PixelNumber fileInfoPopupWidth = fullPopupWidth - (4 * margin),
-				  fileInfoPopupHeight = (10 * rowTextHeight) + buttonHeight + (2 * popupTopMargin);
+				  fileInfoPopupHeight = (10 * rowTextHeight) + buttonHeight + (2 * popupTopMargin) + 3;
 const PixelNumber areYouSurePopupWidth = DisplayX - 80,
 				  areYouSurePopupHeight = (3 * rowHeight) + (2 * popupTopMargin);
 const PixelNumber areYouSurePopupWidthP = DisplayXP - 80,
@@ -237,7 +235,8 @@ const PixelNumber minControlPageMacroButtonsWidth = (tempButtonWidth * 3)/2;
 const PixelNumber maxControlPageMacroButtonsWidth = DisplayX/2 - 2 * margin;
 
 const PixelNumber alertPopupWidth = fullPopupWidth - 6 * margin;
-const PixelNumber alertPopupHeight = 2 * popupTopMargin + 6 * rowTextHeight + 2 * buttonHeight + moveButtonRowSpacing;
+const PixelNumber alertPopupHeight = 2 * popupTopMargin + 6 * rowTextHeight + 3 * buttonHeight + 2 * moveButtonRowSpacing;
+
 const PixelNumber alertPopupWidthP = fullPopupWidthP - 2 * margin;
 const PixelNumber alertPopupHeightP = 2 * popupTopMargin + 8 * rowTextHeight + 3 * buttonHeight + 2* moveButtonRowSpacing;
 
