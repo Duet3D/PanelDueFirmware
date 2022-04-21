@@ -2988,6 +2988,7 @@ namespace UI
 		{
 			alertTicks = 0;
 			mgr.ClearPopup(true, alertPopup);
+			mgr.ClearPopup(true, alertPopupP);
 			CurrentAlertModeClear();
 			alertMode = -1;
 		}
@@ -3000,6 +3001,7 @@ namespace UI
 		{
 			alertTicks = 0;
 			mgr.ClearPopup(true, alertPopup);
+			mgr.ClearPopup(true, alertPopupP);
 			CurrentAlertModeClear();
 			alertMode = -1;
 			displayingResponse = false;
