@@ -1783,7 +1783,7 @@ namespace UI
 		}
 	}
 
-	static void CurrentButtonReleased()
+	void CurrentButtonReleased()
 	{
 		if (currentButton.IsValid())
 		{

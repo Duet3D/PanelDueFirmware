@@ -2478,7 +2478,6 @@ int main(void)
 			{
 			case TouchEvent::EventStatePressed:
 			case TouchEvent::EventStateRepeated:
-				UI::OnButtonPressTimeout();
 
 				lastActionTime = SystemTick::GetTickCount();
 				backlight->SetState(BacklightStateNormal);
@@ -2502,7 +2501,7 @@ int main(void)
 				break;
 
 			case TouchEvent::EventStateReleased:
-				UI::ProcessRelease(bp);
+				UI::CurrentButtonReleased();
 				break;
 
 			default:

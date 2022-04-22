@@ -50,6 +50,7 @@ namespace UI
 	extern bool IsSetupTab();
 	extern void Tick();
 	extern void Spin();
+	extern void CurrentButtonReleased();
 	extern void PrintStarted();
 	extern void PrintingFilenameChanged(const char data[]);
 	extern void LastJobFileNameAvailable(const bool available);
