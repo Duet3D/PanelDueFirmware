@@ -365,7 +365,7 @@ protected:
 	bool pressed;								// putting this here instead of in SingleButton saves 4 byes per button
 
 	ButtonBase(PixelNumber py, PixelNumber px, PixelNumber pw);
-	void DrawOutline(PixelNumber xOffset, PixelNumber yOffset, bool isPressed) const;
+	void DrawOutline(PixelNumber xOffset, PixelNumber yOffset) const;
 	void CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) override;
 
 	static PixelNumber textMargin;
@@ -392,8 +392,6 @@ class SingleButton : public ButtonBase
 
 protected:
 	SingleButton(PixelNumber py, PixelNumber px, PixelNumber pw);
-
-	void DrawOutline(PixelNumber xOffset, PixelNumber yOffset) const;
 
 public:
 	bool IsButton() const override final { return true; }
@@ -497,8 +495,8 @@ protected:
 	size_t PrintText(size_t offset) const override;
 
 public:
-	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param = 0);
-	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param);
+	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param = 0, bool isToggle = false);
+	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param, bool isToggle = false);
 
 	// Hide any text buttons with null text
 	bool IsVisible() const override { return text != nullptr && DisplayField::IsVisible(); }
@@ -542,10 +540,10 @@ class TextButtonForAxis : public TextButton
 private:
 	char axisLetter;
 public:
-	TextButtonForAxis(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param = 0)
-		: TextButton(py, px, pw, pt, e, param), axisLetter('\0') {}
-	TextButtonForAxis(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param)
-		: TextButton(py, px, pw, pt, e, param), axisLetter('\0') {}
+	TextButtonForAxis(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param = 0, bool isToggle = false)
+		: TextButton(py, px, pw, pt, e, param), axisLetter('\0') { toggle = isToggle; }
+	TextButtonForAxis(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param, bool isToggle = false)
+		: TextButton(py, px, pw, pt, e, param), axisLetter('\0') { toggle = isToggle; }
 
 	char GetAxisLetter() const { return this->axisLetter; }
 	void SetAxisLetter(char axisLetter) { this->axisLetter = axisLetter; }
@@ -673,8 +671,9 @@ protected:
 	size_t PrintText(size_t offset) const override;
 
 public:
-	FloatButton(PixelNumber py, PixelNumber px, PixelNumber pw, uint8_t pd, const char * _ecv_array pt = nullptr)
+	FloatButton(PixelNumber py, PixelNumber px, PixelNumber pw, uint8_t pd, const char * _ecv_array pt = nullptr, bool isToggle = 0)
 		: ButtonWithText(py, px, pw), units(pt), val(0.0), numDecimals(pd) {
+			toggle = isToggle;
 	}
 
 	float GetValue() const { return val; }

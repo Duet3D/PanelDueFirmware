@@ -701,12 +701,14 @@ void ButtonBase::Release(bool p, int index)
 PixelNumber ButtonBase::textMargin = 1;
 PixelNumber ButtonBase::iconMargin = 1;
 
-void ButtonBase::DrawOutline(PixelNumber xOffset, PixelNumber yOffset, bool isPressed) const
+void ButtonBase::DrawOutline(PixelNumber xOffset, PixelNumber yOffset) const
 {
-	lcd.setColor((isPressed) ? pressedBackColour : bcolour);
+	dbg("%08x toggle %d pressed %d\n", this, toggle, pressed);
+
+	lcd.setColor((pressed) ? pressedBackColour : bcolour);
 	// Note that we draw the filled rounded rectangle with the full width but 2 pixels less height than the border.
 	// This means that we start with the requested colour inside the border.
-	lcd.fillRoundRect(x + xOffset, y + yOffset + 1, x + xOffset + width - 1, y + yOffset + GetHeight() - 2, (isPressed) ? pressedGradColour : gradColour, buttonGradStep);
+	lcd.fillRoundRect(x + xOffset, y + yOffset + 1, x + xOffset + width - 1, y + yOffset + GetHeight() - 2, (pressed) ? pressedGradColour : gradColour, buttonGradStep);
 	lcd.setColor(borderColour);
 	lcd.drawRoundRect(x + xOffset, y + yOffset, x + xOffset + width - 1, y + yOffset + GetHeight() - 1);
 }
@@ -805,16 +807,18 @@ size_t CharButton::PrintText(size_t offset) const
 	return lcd.write((char)GetIParam(0));
 }
 
-TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param)
+TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param, bool isToggle)
 	: ButtonWithText(py, px, pw), text(pt)
 {
+	toggle = isToggle;
 	SetTextRows(pt);
 	SetEvent(e, param);
 }
 
-TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param)
+TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param, bool isToggle)
 	: ButtonWithText(py, px, pw), text(pt)
 {
+	toggle = isToggle;
 	SetEvent(e, param);
 }
 
@@ -996,8 +1000,10 @@ void ButtonRowWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOff
 	{
 		for (unsigned int i = 0; i < numButtons; ++i)
 		{
+			pressed = ((int)i == whichPressed);
+			dbg("%08x pressed %d\n", this, pressed);
 			const PixelNumber buttonXoffset = xOffset + i * step;
-			DrawOutline(buttonXoffset, yOffset, (int)i == whichPressed);
+			DrawOutline(buttonXoffset, yOffset);
 			lcd.setTransparentBackground(true);
 			lcd.setColor(fcolour);
 			lcd.setFont(font);
