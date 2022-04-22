@@ -382,7 +382,15 @@ void Window::Press(ButtonPress bp, bool v)
 {
 	if (bp.IsValid())
 	{
-		bp.GetButton()->Press(v, bp.GetIndex());
+		if (v)
+		{
+			bp.GetButton()->Press(v, bp.GetIndex());
+		}
+		else
+		{
+			bp.GetButton()->Release(v, bp.GetIndex());
+		}
+
 		if (bp.GetButton()->IsVisible())		// need to check this in case we are releasing the button and it has gone invisible since we pressed it
 		{
 			Redraw(bp.GetButton());
@@ -676,6 +684,20 @@ ButtonBase::ButtonBase(PixelNumber py, PixelNumber px, PixelNumber pw)
 {
 }
 
+
+void ButtonBase::Release(bool p, int index)
+{
+	UNUSED(p); UNUSED(index);
+
+	if (!toggle)
+	{
+		pressed = 0;
+	}
+
+	changed = true;
+	dbg("%08x toggle %d index %d pressed %d\n", this, toggle, index, p);
+}
+
 PixelNumber ButtonBase::textMargin = 1;
 PixelNumber ButtonBase::iconMargin = 1;
 
@@ -716,19 +738,25 @@ SingleButton::SingleButton(PixelNumber py, PixelNumber px, PixelNumber pw)
 	param.sParam = nullptr;
 }
 
-void SingleButton::DrawOutline(PixelNumber xOffset, PixelNumber yOffset) const
-{
-	ButtonBase::DrawOutline(xOffset, yOffset, pressed);
-}
-
 void SingleButton::Press(bool p, int index) /*override*/
 {
+	dbg("%08x toggle %d index %d pressed %d\n", this, toggle, index, p);
 	UNUSED(index);
+	if (toggle)
+	{
+		pressed = !pressed;
+		changed = true;
+
+		return;
+	}
+
 	if (p != pressed)
 	{
 		pressed = p;
 		changed = true;
 	}
+
+	return;
 }
 
 /*static*/ LcdFont ButtonWithText::font;

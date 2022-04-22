@@ -77,7 +77,8 @@ protected:
 			visible : 1,
 			underlined : 1,						// really belongs in class FieldWithText, but stored here to save space
 			border : 1,							// really belongs in class FieldWithText, but stored here to save space
-			textRows : 2;						// really belongs in class FieldWithText, but stored here to save space
+			textRows : 2,						// really belongs in class FieldWithText, but stored here to save space
+			toggle: 1;						// really belongs in class ButtonBase, but stored here to save space
 
 	static LcdFont defaultFont;
 	static Colour defaultFcolour, defaultBcolour;
@@ -376,6 +377,7 @@ public:
 	virtual int GetIParam(unsigned int index) const { UNUSED(index); return 0; }
 	virtual float GetFParam(unsigned int index) const { UNUSED(index); return 0.0f; }
 	virtual void Press(bool p, int index) { UNUSED(p); UNUSED(index); }
+	virtual void Release(bool p, int index);
 };
 
 class SingleButton : public ButtonBase
