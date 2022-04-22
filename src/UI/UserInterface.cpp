@@ -92,7 +92,7 @@ static FloatField *fpHeightField, *fpLayerHeightField, *babystepOffsetField;
 static TextButtonWithLabel *babystepMinusButton, *babystepPlusButton;
 static IntegerField *fpSizeField, *fpFilamentField, *filePopupTitleField;
 static ProgressBar *printProgressBar;
-static SingleButton *tabControl, *tabStatus, *tabMsg, *tabSetup;
+static SingleButton *tabControl, *tabStatus, *tabMsg, *tabSetup, *tabPortrait;
 static ButtonBase *filesButton, *pauseButton, *resumeButton, *cancelButton, *babystepButton, *reprintButton;
 static TextField *timeLeftField, *zProbe;
 static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
@@ -117,7 +117,8 @@ static PopupWindow *setTempPopupEncoder, *macrosPopupP, *areYouSurePopupP, *extr
 static FloatButton* wcsOffsetPos[ARRAY_SIZE(jogAxes)];
 static IconButton* wcsSetToCurrent[ARRAY_SIZE(jogAxes)];
 static StaticTextField *areYouSureTextFieldP, *areYouSureQueryFieldP;
-static DisplayField *pendantBaseRoot, *pendantJogRoot, *pendantOffsetRoot, *pendantJobRoot;static SingleButton *homeAllButtonP, *homeButtonsP[MaxTotalAxes], *measureZButton;
+static DisplayField *pendantBaseRoot, *pendantJogRoot, *pendantOffsetRoot, *pendantJobRoot;
+static SingleButton *homeAllButtonP, *homeButtonsP[MaxTotalAxes], *measureZButton;
 static FloatField *jogTabAxisPos[MaxDisplayableAxesP], *jobTabAxisPos[MaxDisplayableAxesP];
 static DisplayField *jogAxisButtons, *wcsSelectButtons, *wcsAdjustAmountButtons;
 static TextButton *activateWCSButton;
@@ -125,7 +126,7 @@ static IconButtonWithText *toolSelectButtonsPJog[MaxPendantTools], *toolButtonsP
 static FloatField *currentTempPJog;
 static FloatField *currentTempsPJob[MaxPendantTools];
 static ProgressBar *printProgressBarP;
-static SingleButton *tabPendant, *tabJog, *tabOffset, *tabJob;
+static SingleButton *tabJog, *tabOffset, *tabJob, *tabLandscape;
 static ButtonBase *resumeButtonP, *pauseButtonP, *resetButtonP;
 static StaticTextField *jobTextField;
 static IntegerButton *feedrateButtonP, *extruderPercentButtonP, *spindleRPMButtonP;
@@ -137,8 +138,6 @@ static IntegerField *currentToolField;
 static StaticTextField *currentWCSField;
 static AlertPopupP *alertPopupP;
 
-
-static ButtonBase *lastRegularTab = nullptr, *lastPendantTab = nullptr;
 
 static ButtonPress currentExtrudeRatePressP, currentExtrudeAmountPressP;
 static ButtonPress currentWCSPress, currentWCSAxisSelectPress, currentWCSAxisMovementAmountPress;
@@ -214,6 +213,15 @@ inline PixelNumber CalcXPos(unsigned int col, PixelNumber width, int offset = 0)
 }
 
 // Add a text button with a string parameter
+TextButton *AddTextToggleButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* _ecv_array text, Event evt, const char* param, PixelNumber displayWidth = DisplayX)
+{
+	PixelNumber width = CalcWidth(numCols, displayWidth);
+	PixelNumber xpos = CalcXPos(col, width);
+	TextButton *f = new TextButton(row - 2, xpos, width, text, evt, param, true);
+	mgr.AddField(f);
+	return f;
+}
+
 TextButton *AddTextButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* _ecv_array text, Event evt, const char* param, PixelNumber displayWidth = DisplayX)
 {
 	PixelNumber width = CalcWidth(numCols, displayWidth);
@@ -355,7 +363,7 @@ ButtonPress CreateFloatButtonRow(
 	ButtonPress bp;
 	for (int i = numButtons - 1; i >= 0; --i)
 	{
-		FloatButton *tp = new FloatButton(top, left + i * step, step - spacing, decimals, unit);
+		FloatButton *tp = new FloatButton(top, left + i * step, step - spacing, decimals, unit, true);
 		tp->SetEvent(evt, params[i]);
 		tp->SetValue(params[i]);
 		parentWindow->AddField(tp);
@@ -388,7 +396,8 @@ ButtonPress CreateStringButtonRowVertical(
 		Event evt,
 		int selected = -1,
 		bool textButtonForAxis = false,
-		DisplayField** firstButton = nullptr)
+		DisplayField** firstButton = nullptr,
+		bool isToggle = false)
 {
 	const PixelNumber step = (totalHeight + spacing)/numButtons;
 	ButtonPress bp;
@@ -396,8 +405,8 @@ ButtonPress CreateStringButtonRowVertical(
 	{
 		TextButton *tp =
 				textButtonForAxis
-				? new TextButtonForAxis(top + i * step, left, buttonWidth, text[i], evt, params[i])
-				: new TextButton(		top + i * step, left, buttonWidth, text[i], evt, params[i]);
+				? new TextButtonForAxis(top + i * step, left, buttonWidth, text[i], evt, params[i], isToggle)
+				: new TextButton(top + i * step, left, buttonWidth, text[i], evt, params[i], isToggle);
 		parentWindow->AddField(tp);
 		if ((int)i == selected)
 		{
@@ -428,13 +437,14 @@ ButtonPress CreateFloatButtonRowVertical(
 		const float params[],
 		Event evt,
 		int selected = -1,
-		DisplayField** firstButton = nullptr)
+		DisplayField** firstButton = nullptr,
+		bool isToggle = false)
 {
 	const PixelNumber step = (totalHeight + spacing)/numButtons;
 	ButtonPress bp;
 	for (int i = numButtons - 1; i >= 0; --i)
 	{
-		FloatButton *tp = new FloatButton(top + i * step, left, buttonWidth, decimals, unit);
+		FloatButton *tp = new FloatButton(top + i * step, left, buttonWidth, decimals, unit, isToggle);
 		tp->SetEvent(evt, params[i]);
 		tp->SetValue(params[i]);
 		parentWindow->AddField(tp);
@@ -724,7 +734,8 @@ void CreateExtrudePopupP(const ColourScheme& colours)
 			extrudeAmountValues,
 			extrudeAmountValues,
 			evExtrudeAmountP,
-			3);
+			3,
+			true);
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 	currentExtrudeRatePressP = CreateStringButtonRowVertical(
 			extrudePopupP,
@@ -737,7 +748,8 @@ void CreateExtrudePopupP(const ColourScheme& colours)
 			extrudeSpeedValues,
 			extrudeSpeedParams,
 			evExtrudeRateP,
-			5);
+			5,
+			true);
 	ypos += 2 * buttonHeight + extrudeButtonRowSpacing;
 	extrudePopupP->AddField(new TextButton(ypos, CalcXPos(2, colWidth, popupSideMargin), colWidth, strings->extrude, evExtrude));
 	ypos += buttonHeight + extrudeButtonRowSpacing;
@@ -766,7 +778,8 @@ static void CreateWCSOffsetsPopup(const ColourScheme& colours)
 			evWCSDisplaySelect,
 			0,
 			false,
-			&wcsSelectButtons);
+			&wcsSelectButtons,
+			true);
 
 	wcsOffsetsPopup->AddField(activateWCSButton = new TextButton(ypos, CalcXPos(1, width, popupSideMargin), width*3 + 2*fieldSpacing, strings->selectWCS, evActivateWCS, 0));
 
@@ -1373,6 +1386,7 @@ static void CreateMessageTabFields(const ColourScheme& colours)
 static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 {
 	mgr.SetRoot(baseRoot);
+
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
 	// The firmware version field doubles up as an area for displaying debug messages, so make it the full width of the display
 	mgr.AddField(fwVersionField = new TextField(row1, margin, DisplayX, TextAlignment::Left, strings->firmwareVersion, VERSION_TEXT));
@@ -1408,17 +1422,20 @@ static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
 	mgr.AddField(ipAddressField = new TextField(row9, margin, DisplayX/2 - margin, TextAlignment::Left, "IP: ", ipAddress.c_str()));
+
 	setupRoot = mgr.GetRoot();
 }
 
 static void CreateCommonPendantFields(const ColourScheme &colours)
 {
+	mgr.SetRoot(nullptr);
+
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour, colours.buttonBorderColour, colours.buttonGradColour,
 									colours.buttonPressedBackColour, colours.buttonPressedGradColour, colours.pal);
-	tabJog = AddTextButton(rowTabsP, 0, 4, strings->jog, evTabJog, nullptr, DisplayXP);
-	tabOffset = AddTextButton(rowTabsP, 1, 4, strings->offset, evTabOffset, nullptr, DisplayXP);
-	tabJob = AddTextButton(rowTabsP, 2, 4, strings->job, evTabJob, nullptr, DisplayXP);
-	AddTextButton(rowTabsP, 3, 4, strings->backToNormal, evDefaultRoot, nullptr, DisplayXP);
+	tabJog = AddTextToggleButton(rowTabsP, 0, 4, strings->jog, evTabJog, nullptr, DisplayXP);
+	tabOffset = AddTextToggleButton(rowTabsP, 1, 4, strings->offset, evTabOffset, nullptr, DisplayXP);
+	tabJob = AddTextToggleButton(rowTabsP, 2, 4, strings->job, evTabJob, nullptr, DisplayXP);
+	tabLandscape = AddTextToggleButton(rowTabsP, 3, 4, strings->backToNormal, evLandscape, nullptr, DisplayXP);
 
 	// Add title bar
 	DisplayField::SetDefaultColours(colours.titleBarTextColour, colours.titleBarBackColour);
@@ -1429,6 +1446,8 @@ static void CreateCommonPendantFields(const ColourScheme &colours)
 	// Add the emergency stop button
 	DisplayField::SetDefaultColours(colours.stopButtonTextColour, colours.stopButtonBackColour);
 	AddTextButton(row1P, 2, 3, strings->stop, evEmergencyStop, nullptr, DisplayXP);
+
+	pendantBaseRoot = mgr.GetRoot();		// save the root of fields that we usually display in pendant mode
 }
 
 static void CreatePendantJogTabFields(const ColourScheme& colours)
@@ -1476,7 +1495,9 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 			2,
 			jogAmountValues,
 			evPJogAmount,
-			2);
+			2,
+			nullptr,
+			true);
 
 	// Axis selection
 	currentJogAxis = CreateStringButtonRowVertical(
@@ -1492,7 +1513,8 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 			evPJogAxis,
 			0,
 			true,
-			&jogAxisButtons);
+			&jogAxisButtons,
+			true);
 
 	DisplayField* f = jogAxisButtons;
 	for (size_t i = 0; i < MaxDisplayableAxesP && f != nullptr; ++i)
@@ -1559,7 +1581,8 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 	pendantJogRoot = mgr.GetRoot();
 }
 
-static void CreatePendantOffsetTabFields(const ColourScheme& colours) {
+static void CreatePendantOffsetTabFields(const ColourScheme& colours)
+{
 	mgr.SetRoot(pendantBaseRoot);
 
 	DisplayField::SetDefaultColours(colours.titleBarTextColour, colours.titleBarBackColour);
@@ -1600,7 +1623,8 @@ static void CreatePendantOffsetTabFields(const ColourScheme& colours) {
 	pendantOffsetRoot = mgr.GetRoot();
 }
 
-void CreatePendantJobTabFields(const ColourScheme& colours) {
+void CreatePendantJobTabFields(const ColourScheme& colours)
+{
 	mgr.SetRoot(pendantBaseRoot);
 
 	const PixelNumber fullWidth = CalcWidth(1, DisplayXP);
@@ -1707,9 +1731,7 @@ void CreatePendantRoot(const ColourScheme& colours)
 {
 	PortraitDisplay(false);
 
-	mgr.SetRoot(nullptr);
 	CreateCommonPendantFields(colours);
-	pendantBaseRoot = mgr.GetRoot();		// save the root of fields that we usually display in pendant mode
 
 	CreatePendantJogTabFields(colours);
 	CreatePendantOffsetTabFields(colours);
@@ -1730,11 +1752,11 @@ static void CreateCommonFields(const ColourScheme& colours)
 {
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour, colours.buttonBorderColour, colours.buttonGradColour,
 									colours.buttonPressedBackColour, colours.buttonPressedGradColour, colours.pal);
-	tabControl = AddTextButton(rowTabs, 0, 5, strings->control, evTabControl, nullptr);
-	tabStatus = AddTextButton(rowTabs, 1, 5, strings->status, evTabStatus, nullptr);
-	tabMsg = AddTextButton(rowTabs, 2, 5, strings->console, evTabMsg, nullptr);
-	tabPendant = AddTextButton(rowTabs, 3, 5, strings->pendant, evPendantRoot, nullptr);
-	tabSetup = AddTextButton(rowTabs, 4, 5, strings->setup, evTabSetup, nullptr);
+	tabControl = AddTextToggleButton(rowTabs, 0, 5, strings->control, evTabControl, nullptr);
+	tabStatus = AddTextToggleButton(rowTabs, 1, 5, strings->status, evTabStatus, nullptr);
+	tabMsg = AddTextToggleButton(rowTabs, 2, 5, strings->console, evTabMsg, nullptr);
+	tabPortrait = AddTextToggleButton(rowTabs, 3, 5, strings->pendant, evPortrait, nullptr);
+	tabSetup = AddTextToggleButton(rowTabs, 4, 5, strings->setup, evTabSetup, nullptr);
 }
 
 static void CreateMainPages(uint32_t language, const ColourScheme& colours)
@@ -1744,8 +1766,10 @@ static void CreateMainPages(uint32_t language, const ColourScheme& colours)
 		language = 0;
 	}
 	emptyRoot = mgr.GetRoot();
+
 	strings = &LanguageTables[language];
 	CreateCommonFields(colours);
+
 	baseRoot = mgr.GetRoot();		// save the root of fields that we usually display
 
 	// Create the fields that are common to the Control and Print pages
@@ -1753,6 +1777,7 @@ static void CreateMainPages(uint32_t language, const ColourScheme& colours)
 	mgr.AddField(nameField = new StaticTextField(row1, 0, DisplayX - statusFieldWidth, TextAlignment::Centre, machineName.c_str()));
 	mgr.AddField(statusField = new StaticTextField(row1, DisplayX - statusFieldWidth, statusFieldWidth, TextAlignment::Right, nullptr));
 	CreateTemperatureGrid(colours);
+
 	commonRoot = mgr.GetRoot();		// save the root of fields that we display on more than one page
 
 	// Create the pages
@@ -1768,10 +1793,6 @@ namespace UI
 	static void Adjusting(ButtonPress bp)
 	{
 		fieldBeingAdjusted = bp;
-		if (bp == currentButton)
-		{
-			currentButton.Clear();		// to stop it being released
-		}
 	}
 
 	static void StopAdjusting()
@@ -1779,7 +1800,6 @@ namespace UI
 		if (fieldBeingAdjusted.IsValid())
 		{
 			mgr.Press(fieldBeingAdjusted, false);
-			fieldBeingAdjusted.Clear();
 		}
 	}
 
@@ -1788,7 +1808,6 @@ namespace UI
 		if (currentButton.IsValid())
 		{
 			mgr.Press(currentButton, false);
-			currentButton.Clear();
 		}
 	}
 
@@ -2332,31 +2351,37 @@ namespace UI
 
 	void ChangeRoot(ButtonBase *newRoot)
 	{
+		dbg("%08x -> %08x\n", currentTab, newRoot);
+
 		if (newRoot == currentTab)
 		{
-			mgr.ClearAllPopups();						// if already on the correct page, just clear popups
+			return;
 		}
-		else
+
+		switch (newRoot->GetEvent())
 		{
-			switch (newRoot->GetEvent())
-			{
-			case evDefaultRoot:
-				lastPendantTab = currentTab;
-				LandscapeDisplay();
-				isLandscape = true;
-				ChangePage(lastRegularTab != nullptr ? lastRegularTab : tabControl);
-				break;
-			case evPendantRoot:
-				lastRegularTab = currentTab;
-				PortraitDisplay();
-				isLandscape = false;
-				ChangePage(lastPendantTab != nullptr ? lastPendantTab : tabJog);
-				break;
-			}
+		case evLandscape:
+			LandscapeDisplay();
+			isLandscape = true;
+			tabLandscape->Press(true, 0);
+			tabControl->Press(true, 0);
+			ChangePage(tabControl);
+			break;
+		case evPortrait:
+			PortraitDisplay();
+			isLandscape = false;
+			tabPortrait->Press(true, 0);
+			tabJog->Press(true, 0);
+			ChangePage(tabJog);
+			break;
 		}
+
+		dbg("end current %08x isLandscape %d\n", currentTab, isLandscape);
 	}
 
 	void SwitchToTab(ButtonBase *newTab) {
+		dbg("%08x\n", newTab);
+
 		switch (newTab->GetEvent()) {
 		case evTabControl:
 			mgr.SetRoot(controlRoot);
@@ -2396,11 +2421,10 @@ namespace UI
 	// Change to the page indicated. Return true if the page has a permanently-visible button.
 	bool ChangePage(ButtonBase *newTab)
 	{
-		if (newTab == currentTab)
-		{
-			mgr.ClearAllPopups();						// if already on the correct page, just clear popups
-		}
-		else
+		dbg("%08x -> %08x\n", currentTab, newTab);
+
+		//mgr.ClearAllPopups();						// if already on the correct page, just clear popups
+		if (newTab != currentTab)
 		{
 			if (currentTab != nullptr)
 			{
@@ -2410,9 +2434,7 @@ namespace UI
 					SaveSettings();						// leaving the Control tab and we have changed settings, so save them
 				}
 			}
-			newTab->Press(true, 0);						// highlight the new tab
 			currentTab = newTab;
-			mgr.ClearAllPopups();
 			SwitchToTab(newTab);
 		}
 		return true;
@@ -2667,6 +2689,7 @@ namespace UI
 	{
 		PortraitDisplay();
 		isLandscape = false;
+		tabJog->Press(true, 0);
 		ChangePage(tabJog);
 	}
 
@@ -3248,16 +3271,14 @@ namespace UI
 			return;
 		}
 
+		dbg("event %d\n", bp.GetEvent());
+
 		ButtonBase *f = bp.GetButton();
 		Event ev = (Event)(f->GetEvent());
 
+		// TODO clean up those events
 		switch(ev)
 		{
-		case evTabControl:
-		case evTabStatus:
-		case evTabMsg:
-		case evTabSetup:
-
 		case evExtrudeAmount:
 		case evExtrudeRate:
 
@@ -3286,6 +3307,7 @@ namespace UI
 			mgr.Press(bp, true);
 			Event ev = (Event)(f->GetEvent());
 
+			dbg("event %d\n", ev);
 
 			if (bp.GetEvent() != evAdjustVolume)
 			{
@@ -3298,8 +3320,8 @@ namespace UI
 				DoEmergencyStop();
 				break;
 
-			case evDefaultRoot:
-			case evPendantRoot:
+			case evLandscape:
+			case evPortrait:
 				ChangeRoot(f);
 				break;
 
@@ -3310,24 +3332,27 @@ namespace UI
 			case evTabJog:
 			case evTabOffset:
 			case evTabJob:
-				if (ChangePage(f))
+				if (currentTab == f)
 				{
-					currentButton.Clear();						// keep the button highlighted after it is released
+					f->Press(true, 0);
 				}
+				ChangePage(f);
 				break;
 
 			case evPJogAxis:
-				mgr.Press(currentJogAxis, false);
-				mgr.Press(bp, true);
+				if (currentJogAxis.GetButton())
+				{
+					currentJogAxis.GetButton()->Press(true, 0);
+				}
 				currentJogAxis = bp;
-				currentButton.Clear();						// stop it being released by the timer
 				break;
 
 			case evPJogAmount:
-				mgr.Press(currentJogAmount, false);
-				mgr.Press(bp, true);
+				if (currentJogAmount.GetButton())
+				{
+					currentJogAmount.GetButton()->Press(true, 0);
+				}
 				currentJogAmount = bp;
-				currentButton.Clear();						// stop it being released by the timer
 				break;
 
 			case evMeasureZ:
@@ -3663,31 +3688,35 @@ namespace UI
 				break;
 
 			case evExtrudeAmount:
-				mgr.Press(currentExtrudeAmountPress, false);
-				mgr.Press(bp, true);
+				if (currentExtrudeAmountPress.GetButton())
+				{
+					currentExtrudeAmountPress.GetButton()->Press(true, 0);
+				}
 				currentExtrudeAmountPress = bp;
-				currentButton.Clear();						// stop it being released by the timer
 				break;
 
 			case evExtrudeRate:
-				mgr.Press(currentExtrudeRatePress, false);
-				mgr.Press(bp, true);
+				if (currentExtrudeRatePress.GetButton())
+				{
+					currentExtrudeRatePress.GetButton()->Press(true, 0);
+				}
 				currentExtrudeRatePress = bp;
-				currentButton.Clear();						// stop it being released by the timer
 				break;
 
 			case evExtrudeAmountP:
-				mgr.Press(currentExtrudeAmountPressP, false);
-				mgr.Press(bp, true);
+				if (currentExtrudeAmountPressP.GetButton())
+				{
+					currentExtrudeAmountPressP.GetButton()->Press(true, 0);
+				}
 				currentExtrudeAmountPressP = bp;
-				currentButton.Clear();						// stop it being released by the timer
 				break;
 
 			case evExtrudeRateP:
-				mgr.Press(currentExtrudeRatePressP, false);
-				mgr.Press(bp, true);
+				if (currentExtrudeRatePressP.GetButton())
+				{
+					currentExtrudeRatePressP.GetButton()->Press(true, 0);
+				}
 				currentExtrudeRatePressP = bp;
-				currentButton.Clear();						// stop it being released by the timer
 				break;
 
 			case evExtrude:
@@ -3711,10 +3740,11 @@ namespace UI
 
 			case evWCSDisplaySelect:
 				{
-					mgr.Press(currentWCSPress, false);
-					mgr.Press(bp, true);
+					if (currentWCSPress.GetButton())
+					{
+						currentWCSPress.GetButton()->Press(true, 0);
+					}
 					currentWCSPress = bp;
-					currentButton.Clear();						// stop it being released by the timer
 					const uint8_t wcsNumber = bp.GetSParam()[0] - 49;
 					UpdateWCSOffsetsPopupPositions(wcsNumber);
 					activateWCSButton->SetEvent(activateWCSButton->GetEvent(), wcsNumber);
@@ -3729,18 +3759,18 @@ namespace UI
 			case evSelectAxisForWCSFineControl:
 				{
 					const bool otherButtonPressed = currentWCSAxisSelectPress != bp;
-					mgr.Press(currentWCSAxisSelectPress, false);
-					mgr.Press(bp, otherButtonPressed);
 					if (otherButtonPressed)
 					{
+						if (currentWCSAxisSelectPress.GetButton())
+						{
+							currentWCSAxisSelectPress.GetButton()->Press(true, 0);
+						}
 						currentWCSAxisSelectPress = bp;
 					}
 					else
 					{
-						currentWCSAxisSelectPress.Clear();
 						SerialIo::Sendf("M500\n");
 					}
-					currentButton.Clear();						// stop it being released by the timer
 					DisplayField* f = wcsAdjustAmountButtons;
 					for (size_t i = 0; i < 5 && f != nullptr; ++i) {
 						mgr.Show(f, otherButtonPressed);
@@ -3750,10 +3780,11 @@ namespace UI
 				break;
 
 			case evSelectAmountForWCSFineControl:
-				mgr.Press(currentWCSAxisMovementAmountPress, false);
-				mgr.Press(bp, true);
+				if (currentWCSAxisMovementAmountPress.GetButton())
+				{
+					currentWCSAxisMovementAmountPress.GetButton()->Press(true, 0);
+				}
 				currentWCSAxisMovementAmountPress = bp;
-				currentButton.Clear();						// stop it being released by the timer
 				break;
 
 			case evSetAxesOffsetToCurrent:
@@ -4189,7 +4220,6 @@ namespace UI
 					}
 				}
 				keyboardShifted = !keyboardShifted;
-				currentButton.Clear();				// make the key sticky
 				break;
 
 			case evBackspace:
@@ -4306,12 +4336,12 @@ namespace UI
 		}
 		else
 		{
+			dbg("2\n");
+
 			switch(bp.GetEvent())
 			{
 			case evEmergencyStop:
-				mgr.Press(bp, true);
 				DoEmergencyStop();
-				mgr.Press(bp, false);
 				break;
 
 			case evTabControl:
@@ -4325,10 +4355,7 @@ namespace UI
 				TouchBeep();
 				{
 					ButtonBase *btn = bp.GetButton();
-					if (ChangePage(btn))
-					{
-						currentButton.Clear();						// keep the button highlighted after it is released
-					}
+					ChangePage(btn);
 				}
 				break;
 
@@ -4353,15 +4380,6 @@ namespace UI
 			default:
 				break;
 			}
-		}
-	}
-
-	// This is called when a button press times out
-	void OnButtonPressTimeout()
-	{
-		if (currentButton.IsValid())
-		{
-			CurrentButtonReleased();
 		}
 	}
 

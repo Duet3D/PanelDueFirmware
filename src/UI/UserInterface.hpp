@@ -85,7 +85,6 @@ namespace UI
 	extern void ProcessTouch(ButtonPress bp);
 	extern void ProcessTouchOutsidePopup(ButtonPress bp) pre(bp.IsValid());
 	extern void ProcessRelease(ButtonPress bp);
-	extern void OnButtonPressTimeout();
 	extern bool IsDisplayingFileInfo();
 	extern void AllToolsSeen();
 
