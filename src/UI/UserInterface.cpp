@@ -317,7 +317,8 @@ ButtonPress CreateStringButtonRow(
 		Event evt,
 		int selected = -1,
 		bool textButtonForAxis = false,
-		DisplayField** firstButton = nullptr)
+		DisplayField** firstButton = nullptr,
+		bool isToggle = false)
 {
 	const PixelNumber step = (totalWidth + spacing)/numButtons;
 	ButtonPress bp;
@@ -326,8 +327,8 @@ ButtonPress CreateStringButtonRow(
 	{
 		TextButton *tp =
 				textButtonForAxis
-				? new TextButtonForAxis(top, left + i * step, step - spacing, text[i], evt, params[i])
-				: new TextButton(		top, left + i * step, step - spacing, text[i], evt, params[i]);
+				? new TextButtonForAxis(top, left + i * step, step - spacing, text[i], evt, params[i], isToggle)
+				: new TextButton(		top, left + i * step, step - spacing, text[i], evt, params[i], isToggle);
 		parentWindow->AddField(tp);
 		if ((int)i == selected)
 		{
@@ -682,7 +683,20 @@ static void CreateExtrudePopup(const ColourScheme& colours)
 	extrudePopup = new StandardPopupWindow(extrudePopupHeight, extrudePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->extrusionAmount);
 	PixelNumber ypos = popupTopMargin + buttonHeight + extrudeButtonRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	currentExtrudeAmountPress = CreateStringButtonRow(extrudePopup, ypos, popupSideMargin, extrudePopupWidth - 2 * popupSideMargin, fieldSpacing, 6, extrudeAmountValues, extrudeAmountValues, evExtrudeAmount, 3);
+	currentExtrudeAmountPress = CreateStringButtonRow(
+			extrudePopup,
+			ypos,
+			popupSideMargin,
+			extrudePopupWidth - 2 * popupSideMargin,
+			fieldSpacing,
+			6,
+			extrudeAmountValues,
+			extrudeAmountValues,
+			evExtrudeAmount,
+			3,
+			false,
+			nullptr,
+			true);
 	ypos += buttonHeight + extrudeButtonRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
 	extrudePopup->AddField(new StaticTextField(ypos + labelRowAdjust, popupSideMargin, extrudePopupWidth - 2 * popupSideMargin, TextAlignment::Centre, strings->extrusionSpeed));
@@ -698,7 +712,10 @@ static void CreateExtrudePopup(const ColourScheme& colours)
 			extrudeSpeedValues,
 			extrudeSpeedParams,
 			evExtrudeRate,
-			ARRAY_SIZE(extrudeSpeedValues) / 2);
+			ARRAY_SIZE(extrudeSpeedValues) / 2,
+			false,
+			nullptr,
+			true);
 
 	ypos += buttonHeight + extrudeButtonRowSpacing;
 	extrudePopup->AddField(new TextButton(ypos, popupSideMargin, extrudePopupWidth/3 - 2 * popupSideMargin, strings->extrude, evExtrude));
