@@ -376,7 +376,8 @@ public:
 	virtual const char* null GetSParam(unsigned int index) const { UNUSED(index); return nullptr; }
 	virtual int GetIParam(unsigned int index) const { UNUSED(index); return 0; }
 	virtual float GetFParam(unsigned int index) const { UNUSED(index); return 0.0f; }
-	virtual void Press(bool p, int index) { UNUSED(p); UNUSED(index); }
+	virtual bool IsPressed() { return pressed; }
+	virtual void Press(bool p, int index);
 	virtual void Release(bool p, int index);
 };
 
@@ -405,8 +406,6 @@ public:
 	const char* null GetSParam(unsigned int index) const override { UNUSED(index); return param.sParam; }
 	int GetIParam(unsigned int index) const override { UNUSED(index); return param.iParam; }
 	float GetFParam(unsigned int index) const { UNUSED(index); return param.fParam; }
-
-	void Press(bool p, int index) override;
 
 	static void SetTextMargin(PixelNumber p) { textMargin = p; }
 	static void SetIconMargin(PixelNumber p) { iconMargin = p; }

@@ -684,6 +684,26 @@ ButtonBase::ButtonBase(PixelNumber py, PixelNumber px, PixelNumber pw)
 {
 }
 
+void ButtonBase::Press(bool p, int index)
+{
+	dbg("%08x toggle %d index %d pressed %d\n", this, toggle, index, p);
+	UNUSED(index);
+	if (toggle)
+	{
+		pressed = !pressed;
+		changed = true;
+
+		return;
+	}
+
+	if (p != pressed)
+	{
+		pressed = p;
+		changed = true;
+	}
+
+	return;
+}
 
 void ButtonBase::Release(bool p, int index)
 {
@@ -738,27 +758,6 @@ SingleButton::SingleButton(PixelNumber py, PixelNumber px, PixelNumber pw)
 	: ButtonBase(py, px, pw)
 {
 	param.sParam = nullptr;
-}
-
-void SingleButton::Press(bool p, int index) /*override*/
-{
-	dbg("%08x toggle %d index %d pressed %d\n", this, toggle, index, p);
-	UNUSED(index);
-	if (toggle)
-	{
-		pressed = !pressed;
-		changed = true;
-
-		return;
-	}
-
-	if (p != pressed)
-	{
-		pressed = p;
-		changed = true;
-	}
-
-	return;
 }
 
 /*static*/ LcdFont ButtonWithText::font;
