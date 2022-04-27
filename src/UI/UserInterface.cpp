@@ -2390,14 +2390,12 @@ namespace UI
 			LandscapeDisplay();
 			isLandscape = true;
 			tabLandscape->Press(true, 0);
-			tabControl->Press(true, 0);
 			ChangePage(tabControl);
 			break;
 		case evPortrait:
 			PortraitDisplay();
 			isLandscape = false;
 			tabPortrait->Press(true, 0);
-			tabJog->Press(true, 0);
 			ChangePage(tabJog);
 			break;
 		}
@@ -2450,19 +2448,30 @@ namespace UI
 		dbg("%08x -> %08x\n", currentTab, newTab);
 
 		//mgr.ClearAllPopups();						// if already on the correct page, just clear popups
-		if (newTab != currentTab)
+		if (!newTab->IsPressed())
 		{
-			if (currentTab != nullptr)
-			{
-				currentTab->Press(false, 0);			// remove highlighting from the old tab
-				if (currentTab->GetEvent() == evTabSetup && nvData.IsSaveNeeded())
-				{
-					SaveSettings();						// leaving the Control tab and we have changed settings, so save them
-				}
-			}
-			currentTab = newTab;
-			SwitchToTab(newTab);
+			newTab->Press(true, 0);
 		}
+
+		if (newTab == currentTab)
+		{
+			dbg("nothing to do\n");
+			return true;
+		}
+
+		if (currentTab)
+		{
+			currentTab->Press(false, 0);			// remove highlighting from the old tab
+			if (currentTab->GetEvent() == evTabSetup && nvData.IsSaveNeeded())
+			{
+				SaveSettings();						// leaving the Control tab and we have changed settings, so save them
+			}
+		}
+
+		currentTab = newTab;
+
+		SwitchToTab(newTab);
+
 		return true;
 	}
 
@@ -2715,7 +2724,6 @@ namespace UI
 	{
 		PortraitDisplay();
 		isLandscape = false;
-		tabJog->Press(true, 0);
 		ChangePage(tabJog);
 	}
 
@@ -3358,10 +3366,6 @@ namespace UI
 			case evTabJog:
 			case evTabOffset:
 			case evTabJob:
-				if (currentTab == f)
-				{
-					f->Press(true, 0);
-				}
 				ChangePage(f);
 				break;
 
