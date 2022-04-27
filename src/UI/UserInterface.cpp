@@ -213,11 +213,11 @@ inline PixelNumber CalcXPos(unsigned int col, PixelNumber width, int offset = 0)
 }
 
 // Add a text button with a string parameter
-TextButton *AddTextToggleButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* _ecv_array text, Event evt, const char* param, PixelNumber displayWidth = DisplayX)
+TextButton *AddTextToggleButton(PixelNumber row, unsigned int col, unsigned int numCols, const char* _ecv_array text, Event evt, const char* param, PixelNumber displayWidth = DisplayX, bool isToggle = true)
 {
 	PixelNumber width = CalcWidth(numCols, displayWidth);
 	PixelNumber xpos = CalcXPos(col, width);
-	TextButton *f = new TextButton(row - 2, xpos, width, text, evt, param, true);
+	TextButton *f = new TextButton(row - 2, xpos, width, text, evt, param, isToggle);
 	mgr.AddField(f);
 	return f;
 }
@@ -1458,7 +1458,7 @@ static void CreateCommonPendantFields(const ColourScheme &colours)
 	tabJog = AddTextToggleButton(rowTabsP, 0, 4, strings->jog, evTabJog, nullptr, DisplayXP);
 	tabOffset = AddTextToggleButton(rowTabsP, 1, 4, strings->offset, evTabOffset, nullptr, DisplayXP);
 	tabJob = AddTextToggleButton(rowTabsP, 2, 4, strings->job, evTabJob, nullptr, DisplayXP);
-	tabLandscape = AddTextToggleButton(rowTabsP, 3, 4, strings->backToNormal, evLandscape, nullptr, DisplayXP);
+	tabLandscape = AddTextToggleButton(rowTabsP, 3, 4, strings->backToNormal, evLandscape, nullptr, DisplayXP, false);
 
 	// Add title bar
 	DisplayField::SetDefaultColours(colours.titleBarTextColour, colours.titleBarBackColour);
@@ -1780,7 +1780,7 @@ static DisplayField *CreateCommonFields(const ColourScheme& colours)
 	tabControl = AddTextToggleButton(rowTabs, 0, 5, strings->control, evTabControl, nullptr);
 	tabStatus = AddTextToggleButton(rowTabs, 1, 5, strings->status, evTabStatus, nullptr);
 	tabMsg = AddTextToggleButton(rowTabs, 2, 5, strings->console, evTabMsg, nullptr);
-	tabPortrait = AddTextToggleButton(rowTabs, 3, 5, strings->pendant, evPortrait, nullptr);
+	tabPortrait = AddTextToggleButton(rowTabs, 3, 5, strings->pendant, evPortrait, nullptr, DisplayX, false);
 	tabSetup = AddTextToggleButton(rowTabs, 4, 5, strings->setup, evTabSetup, nullptr);
 
 	return mgr.GetRoot();		// save the root of fields that we usually display
@@ -2389,13 +2389,11 @@ namespace UI
 		case evLandscape:
 			LandscapeDisplay();
 			isLandscape = true;
-			tabLandscape->Press(true, 0);
 			ChangePage(tabControl);
 			break;
 		case evPortrait:
 			PortraitDisplay();
 			isLandscape = false;
-			tabPortrait->Press(true, 0);
 			ChangePage(tabJog);
 			break;
 		}
