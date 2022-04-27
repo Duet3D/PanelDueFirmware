@@ -60,6 +60,7 @@ elseif ("${DEVICE}" STREQUAL "v2-5.0")
 	)
 	set( DEVICE_FLAGS "${CPU_FLAGS_SAM3S4} -DSCREEN_50=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM3S4}" )
+	set( IMAGE_SPLASHSCREEN "SplashScreens/SplashScreen-Duet3D-480x272.bin" )
 elseif ("${DEVICE}" STREQUAL "v2-7.0")
 	target_sources( paneldue.elf PRIVATE
 		${SYSTEM_FILE_SAM3S4}
@@ -69,6 +70,7 @@ elseif ("${DEVICE}" STREQUAL "v2-7.0")
 	)
 	set( DEVICE_FLAGS "${CPU_FLAGS_SAM3S4} -DSCREEN_70=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM3S4}" )
+	set( IMAGE_SPLASHSCREEN "SplashScreens/SplashScreen-Duet3D-800x480.bin" )
 elseif ("${DEVICE}" STREQUAL "v2-7.0c")
 	target_sources( paneldue.elf PRIVATE
 		${SYSTEM_FILE_SAM3S4}
@@ -78,6 +80,7 @@ elseif ("${DEVICE}" STREQUAL "v2-7.0c")
 	)
 	set( DEVICE_FLAGS "${CPU_FLAGS_SAM3S4} -DSCREEN_70CPLD=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM3S4}" )
+	set( IMAGE_SPLASHSCREEN "SplashScreens/SplashScreen-Duet3D-800x480.bin" )
 elseif ("${DEVICE}" STREQUAL "v3-4.3")
 	target_sources( paneldue.elf PRIVATE
 		${SYSTEM_FILE_SAM4S4}
@@ -86,6 +89,7 @@ elseif ("${DEVICE}" STREQUAL "v3-4.3")
 	)
 	set( DEVICE_FLAGS "${CPU_FLAGS_SAM4S4} -DSCREEN_43=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
+	set( IMAGE_SPLASHSCREEN "SplashScreens/SplashScreen-Duet3D-480x272.bin" )
 elseif ("${DEVICE}" STREQUAL "v3-5.0")
 	target_sources( paneldue.elf PRIVATE
 		${SYSTEM_FILE_SAM4S4}
@@ -94,6 +98,7 @@ elseif ("${DEVICE}" STREQUAL "v3-5.0")
 	)
 	set( DEVICE_FLAGS "${CPU_FLAGS_SAM4S4} -DSCREEN_50=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
+	set( IMAGE_SPLASHSCREEN "SplashScreens/SplashScreen-Duet3D-800x480.bin" )
 elseif ("${DEVICE}" STREQUAL "v3-7.0")
 	target_sources( paneldue.elf PRIVATE
 		${SYSTEM_FILE_SAM4S4}
@@ -102,6 +107,7 @@ elseif ("${DEVICE}" STREQUAL "v3-7.0")
 	)
 	set( DEVICE_FLAGS "${CPU_FLAGS_SAM4S4} -DSCREEN_70=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
+	set( IMAGE_SPLASHSCREEN "SplashScreens/SplashScreen-Duet3D-800x480.bin" )
 elseif ("${DEVICE}" STREQUAL "v3-7.0c")
 	target_sources( paneldue.elf PRIVATE
 		${SYSTEM_FILE_SAM4S4}
@@ -110,6 +116,7 @@ elseif ("${DEVICE}" STREQUAL "v3-7.0c")
 	)
 	set( DEVICE_FLAGS "${CPU_FLAGS_SAM4S4} -DSCREEN_70CPLD=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
+	set( IMAGE_SPLASHSCREEN "SplashScreens/SplashScreen-Duet3D-800x480.bin" )
 elseif ("${DEVICE}" STREQUAL "5.0i")
 	target_sources( paneldue.elf PRIVATE
 		${SYSTEM_FILE_SAM4S4}
@@ -118,6 +125,7 @@ elseif ("${DEVICE}" STREQUAL "5.0i")
 	)
 	set( DEVICE_FLAGS "${CPU_FLAGS_SAM4S4} -DSCREEN_50E=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
+	set( IMAGE_SPLASHSCREEN "SplashScreens/SplashScreen-Duet3D-800x480.bin" )
 elseif ("${DEVICE}" STREQUAL "7.0i")
 	target_sources( paneldue.elf PRIVATE
 		${SYSTEM_FILE_SAM4S4}
@@ -126,6 +134,7 @@ elseif ("${DEVICE}" STREQUAL "7.0i")
 	)
 	set( DEVICE_FLAGS "${CPU_FLAGS_SAM4S4} -DSCREEN_70E=1" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
+	set( IMAGE_SPLASHSCREEN "SplashScreens/SplashScreen-Duet3D-800x480.bin" )
 elseif ("${DEVICE}" STREQUAL "h5")
 	target_sources( paneldue.elf PRIVATE
 		${SYSTEM_FILE_SAM4S4}
@@ -134,6 +143,7 @@ elseif ("${DEVICE}" STREQUAL "h5")
 	)
 	set( DEVICE_FLAGS "${CPU_FLAGS_SAM4S4} -DSCREEN_50E=1 -DSUPPORT_ENCODER" )
 	set( CMAKE_EXE_LINKER_FLAGS "${LD_FLAGS_SAM4S4}" )
+	set( IMAGE_SPLASHSCREEN "SplashScreens/SplashScreen-Diabase-800x480.bin" )
 else()
 	message(FATAL_ERROR "${DEVICE} is invalid. Please configure a device cmake -DDEVICE=v2-4.3|v2-5.0|v2-7.0|v2-7.0c|v3-4.3|v3-5.0|v3-7.0|v3-7.0c|5.0i|7.0i|h5")
 endif()
@@ -247,8 +257,8 @@ add_custom_command( OUTPUT paneldue.bin
 	COMMAND arm-none-eabi-objcopy -O binary paneldue.elf paneldue.bin
 )
 add_custom_command( OUTPUT paneldue-logo.bin
-	DEPENDS paneldue.bin ${PROJECT_SOURCE_DIR}/SplashScreens/SplashScreen-Duet3D-800x480.bin
-	COMMAND cat paneldue.bin ${PROJECT_SOURCE_DIR}/SplashScreens/SplashScreen-Duet3D-800x480.bin > paneldue-logo.bin
+	DEPENDS paneldue.bin ${PROJECT_SOURCE_DIR}/${IMAGE_SPLASHSCREEN}
+	COMMAND cat paneldue.bin ${PROJECT_SOURCE_DIR}/${IMAGE_SPLASHSCREEN} > paneldue-logo.bin
 )
 
 add_custom_target( bin ALL
