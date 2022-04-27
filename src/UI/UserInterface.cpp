@@ -998,16 +998,18 @@ static void CreateAreYouSurePopupPortrait(const ColourScheme& colours)
 	areYouSurePopupP->AddField(new IconButton(popupTopMargin + 2 * rowHeight, areYouSurePopupWidthP/2 + 10, areYouSurePopupWidthP/2 - 2 * popupSideMargin, IconCancel, evCancel));
 }
 
-static void CreateScreensaverPopup()
+static PopupWindow *CreateScreensaverPopup()
 {
-	screensaverPopup = new PopupWindow(max(DisplayX, DisplayY), max(DisplayX, DisplayY), black, black, false);
+	PopupWindow *screensaver = new PopupWindow(max(DisplayX, DisplayY), max(DisplayX, DisplayY), black, black, false);
 	DisplayField::SetDefaultColours(white, black);
 	static const char * text = "Touch to wake up";
 	screensaverTextWidth = DisplayField::GetTextWidth(text, DisplayX);
-	screensaverPopup->AddField(screensaverText = new StaticTextField(row1, margin, screensaverTextWidth, TextAlignment::Left, text));
+	screensaver->AddField(screensaverText = new StaticTextField(row1, margin, screensaverTextWidth, TextAlignment::Left, text));
 	PortraitDisplay(false);
-	screensaverPopup->AddField(screensaverTextP = new StaticTextField(row1, margin, screensaverTextWidth, TextAlignment::Left, text));
+	screensaver->AddField(screensaverTextP = new StaticTextField(row1, margin, screensaverTextWidth, TextAlignment::Left, text));
 	LandscapeDisplay(false);
+
+	return screensaver;
 }
 
 // Create the baud rate adjustment popup
@@ -1233,7 +1235,7 @@ static void CreateTemperatureGrid(const ColourScheme& colours)
 }
 
 // Create the extra fields for the Control tab
-static void CreateControlTabFields(const ColourScheme& colours)
+static DisplayField *CreateControlTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(commonRoot);
 
@@ -1287,11 +1289,11 @@ static void CreateControlTabFields(const ColourScheme& colours)
 		mgr.AddField(b);
 	}
 
-	controlRoot = mgr.GetRoot();
+	return mgr.GetRoot();
 }
 
 // Create the fields for the Printing tab
-static void CreatePrintingTabFields(const ColourScheme& colours)
+static DisplayField *CreatePrintingTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(commonRoot);
 
@@ -1378,11 +1380,11 @@ static void CreatePrintingTabFields(const ColourScheme& colours)
 	mgr.AddField(timeLeftField = new TextField(row9 + offset, margin, DisplayX - 2 * margin, TextAlignment::Left, strings->timeRemaining));
 	mgr.Show(timeLeftField, false);
 
-	printRoot = mgr.GetRoot();
+	return mgr.GetRoot();
 }
 
 // Create the fields for the Message tab
-static void CreateMessageTabFields(const ColourScheme& colours)
+static DisplayField *CreateMessageTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(baseRoot);
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
@@ -1400,11 +1402,11 @@ static void CreateMessageTabFields(const ColourScheme& colours)
 		messageTextFields[r] = t;
 		row += rowTextHeight;
 	}
-	messageRoot = mgr.GetRoot();
+	return mgr.GetRoot();
 }
 
 // Create the fields for the Setup tab
-static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
+static DisplayField *CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 {
 	mgr.SetRoot(baseRoot);
 
@@ -1444,7 +1446,7 @@ static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
 	mgr.AddField(ipAddressField = new TextField(row9, margin, DisplayX/2 - margin, TextAlignment::Left, "IP: ", ipAddress.c_str()));
 
-	setupRoot = mgr.GetRoot();
+	return mgr.GetRoot();
 }
 
 static void CreateCommonPendantFields(const ColourScheme &colours)
@@ -1769,8 +1771,10 @@ void CreatePendantRoot(const ColourScheme& colours)
 }
 
 // Create the fields that are displayed on all pages
-static void CreateCommonFields(const ColourScheme& colours)
+static DisplayField *CreateCommonFields(const ColourScheme& colours)
 {
+	mgr.SetRoot(emptyRoot);
+
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour, colours.buttonBorderColour, colours.buttonGradColour,
 									colours.buttonPressedBackColour, colours.buttonPressedGradColour, colours.pal);
 	tabControl = AddTextToggleButton(rowTabs, 0, 5, strings->control, evTabControl, nullptr);
@@ -1778,6 +1782,8 @@ static void CreateCommonFields(const ColourScheme& colours)
 	tabMsg = AddTextToggleButton(rowTabs, 2, 5, strings->console, evTabMsg, nullptr);
 	tabPortrait = AddTextToggleButton(rowTabs, 3, 5, strings->pendant, evPortrait, nullptr);
 	tabSetup = AddTextToggleButton(rowTabs, 4, 5, strings->setup, evTabSetup, nullptr);
+
+	return mgr.GetRoot();		// save the root of fields that we usually display
 }
 
 static void CreateMainPages(uint32_t language, const ColourScheme& colours)
@@ -1789,9 +1795,7 @@ static void CreateMainPages(uint32_t language, const ColourScheme& colours)
 	emptyRoot = mgr.GetRoot();
 
 	strings = &LanguageTables[language];
-	CreateCommonFields(colours);
-
-	baseRoot = mgr.GetRoot();		// save the root of fields that we usually display
+	baseRoot = CreateCommonFields(colours);
 
 	// Create the fields that are common to the Control and Print pages
 	DisplayField::SetDefaultColours(colours.titleBarTextColour, colours.titleBarBackColour);
@@ -1802,11 +1806,12 @@ static void CreateMainPages(uint32_t language, const ColourScheme& colours)
 	commonRoot = mgr.GetRoot();		// save the root of fields that we display on more than one page
 
 	// Create the pages
-	CreateControlTabFields(colours);
-	CreatePrintingTabFields(colours);
-	CreateMessageTabFields(colours);
-	CreateSetupTabFields(language, colours);
-	CreateScreensaverPopup();
+	controlRoot = CreateControlTabFields(colours);
+	printRoot = CreatePrintingTabFields(colours);
+	messageRoot = CreateMessageTabFields(colours);
+	setupRoot = CreateSetupTabFields(language, colours);
+
+	screensaverPopup = CreateScreensaverPopup();
 }
 
 namespace UI
