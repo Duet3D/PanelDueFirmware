@@ -3522,6 +3522,8 @@ namespace UI
 							{
 
 								// Find the slot for this button to determine which heater index it is
+
+								if (isLandscape)
 								{
 									size_t slot = GetButtonSlot(activeTemps, fieldBeingAdjusted.GetButton());
 									if (slot >= MaxSlots || (slot - tool->slot) >= MaxSlots)
@@ -3529,6 +3531,11 @@ namespace UI
 										break;
 									}
 									tool->UpdateTemp(slot - tool->slot, val, true);
+								}
+								else
+								{
+									// always take first slot in portrait mode
+									tool->UpdateTemp(0, val, true);
 								}
 
 								String<maxUserCommandLength> heaterTemps;
@@ -3559,6 +3566,7 @@ namespace UI
 							{
 
 								// Find the slot for this button to determine which heater index it is
+								if (isLandscape)
 								{
 									size_t slot = GetButtonSlot(standbyTemps, fieldBeingAdjusted.GetButton());
 									if (slot >= MaxSlots || (slot - tool->slot) >= MaxSlots)
@@ -3566,6 +3574,10 @@ namespace UI
 										break;
 									}
 									tool->UpdateTemp(slot - tool->slot, val, false);
+								}
+								else
+								{
+									tool->UpdateTemp(0, val, false);
 								}
 
 								String<maxUserCommandLength> heaterTemps;
