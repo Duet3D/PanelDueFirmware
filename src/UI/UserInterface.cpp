@@ -735,6 +735,8 @@ void CreateExtrudePopupP(const ColourScheme& colours)
 			extrudeAmountValues,
 			evExtrudeAmountP,
 			3,
+			true,
+			nullptr,
 			true);
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 	currentExtrudeRatePressP = CreateStringButtonColumn(
@@ -749,6 +751,8 @@ void CreateExtrudePopupP(const ColourScheme& colours)
 			extrudeSpeedParams,
 			evExtrudeRateP,
 			5,
+			true,
+			nullptr,
 			true);
 	ypos += 2 * buttonHeight + extrudeButtonRowSpacing;
 	extrudePopupP->AddField(new TextButton(ypos, CalcXPos(2, colWidth, popupSideMargin), colWidth, strings->extrude, evExtrude));
