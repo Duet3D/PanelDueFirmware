@@ -3993,7 +3993,6 @@ namespace UI
 					SerialIo::SendChar('\n');
 					PrintingFilenameChanged(currentFile);
 					currentFile = nullptr;							// allow the file list to be updated
-					CurrentButtonReleased();
 					PrintStarted();
 				}
 				break;
@@ -4003,7 +4002,6 @@ namespace UI
 				if (lastJobFileNameAvailable)
 				{
 					SerialIo::Sendf("%s{job.lastFileName}\n", (ev == evResimulate) ? "M37 P" : "M32 ");
-					CurrentButtonReleased();
 					PrintStarted();
 				}
 				break;
@@ -4011,13 +4009,11 @@ namespace UI
 			case evCancel:
 				eventToConfirm = evNull;
 				currentFile = nullptr;
-				CurrentButtonReleased();
 				PopupCancelled();
 				mgr.ClearPopup();
 				break;
 
 			case evDeleteFile:
-				CurrentButtonReleased();
 				PopupAreYouSure(ev, strings->confirmFileDelete);
 				break;
 
@@ -4072,7 +4068,6 @@ namespace UI
 					SetBaudRate(rate);
 					baudRateButton->SetValue(rate);
 				}
-				CurrentButtonReleased();
 				mgr.ClearPopup();
 				StopAdjusting();
 				break;
@@ -4202,7 +4197,6 @@ namespace UI
 				break;
 
 			case evYes:
-				CurrentButtonReleased();
 				mgr.ClearPopup();								// clear the yes/no popup
 				switch (eventToConfirm)
 				{
