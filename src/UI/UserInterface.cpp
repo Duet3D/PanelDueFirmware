@@ -383,7 +383,7 @@ ButtonPress CreateFloatButtonRow(
 // Create a row of text buttons.
 // Optionally, set one to 'pressed' and return that one.
 // Set the colours before calling this
-ButtonPress CreateStringButtonRowVertical(
+ButtonPress CreateStringButtonColumn(
 		Window * parentWindow,
 		PixelNumber top,
 		PixelNumber left,
@@ -424,7 +424,7 @@ ButtonPress CreateStringButtonRowVertical(
 // Create a row of text buttons.
 // Optionally, set one to 'pressed' and return that one.
 // Set the colours before calling this
-ButtonPress CreateFloatButtonRowVertical(
+ButtonPress CreateFloatButtonColumn(
 		Window * parentWindow,
 		PixelNumber top,
 		PixelNumber left,
@@ -723,7 +723,7 @@ void CreateExtrudePopupP(const ColourScheme& colours)
 
 	ypos += buttonHeight + extrudeButtonRowSpacing;
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	currentExtrudeAmountPressP = CreateStringButtonRowVertical(
+	currentExtrudeAmountPressP = CreateStringButtonColumn(
 			extrudePopupP,
 			ypos,
 			CalcXPos(0, colWidth, popupSideMargin),
@@ -737,7 +737,7 @@ void CreateExtrudePopupP(const ColourScheme& colours)
 			3,
 			true);
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	currentExtrudeRatePressP = CreateStringButtonRowVertical(
+	currentExtrudeRatePressP = CreateStringButtonColumn(
 			extrudePopupP,
 			ypos,
 			CalcXPos(1, colWidth, popupSideMargin),
@@ -765,7 +765,7 @@ static void CreateWCSOffsetsPopup(const ColourScheme& colours)
 
 	const PixelNumber width = CalcWidth(4, fullPopupWidthP - 2 * popupSideMargin);
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
-	currentWCSPress = CreateStringButtonRowVertical(
+	currentWCSPress = CreateStringButtonColumn(
 			wcsOffsetsPopup,
 			ypos,
 			popupSideMargin,
@@ -1483,7 +1483,7 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 	static const float jogAmountValues[] = { 0.01, 0.10, 1.00 /*, 5.00 */ };
 
 	// Distance per click
-	currentJogAmount = CreateFloatButtonRowVertical(
+	currentJogAmount = CreateFloatButtonColumn(
 			&mgr,
 			jogBlock + rowHeightP,
 			CalcXPos(movementCol, colWidth),
@@ -1500,7 +1500,7 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 			true);
 
 	// Axis selection
-	currentJogAxis = CreateStringButtonRowVertical(
+	currentJogAxis = CreateStringButtonColumn(
 			&mgr,
 			jogBlock + rowHeightP,
 			CalcXPos(axisCol, colWidth),
