@@ -2187,6 +2187,7 @@ namespace UI
 				// We rarely see updates of this value so update it here
 				if (hasSpindle)
 				{
+					currentTempPJog->SetValue(tool->spindle->current);
 					UpdateField(activeTempPJog, tool->spindle->active);
 					activeTempPJog->SetEvent(evAdjustActiveRPM, tool->spindle->index);
 					spindleRPMButtonP->SetEvent(evAdjustActiveRPM, tool->spindle->index);
@@ -4848,7 +4849,9 @@ namespace UI
 		{
 			return;
 		}
-		spindle->active = abs(activeRpm);
+
+		spindle->active = activeRpm;
+
 		if (!GetFirmwareFeatures().IsBitSet(m568TempAndRPM))
 		{
 			if (activeRpm == 0)
@@ -4892,7 +4895,9 @@ namespace UI
 		{
 			return;
 		}
+
 		spindle->current = current;
+
 		if (!GetFirmwareFeatures().IsBitSet(m568TempAndRPM))
 		{
 			if (current == 0)
