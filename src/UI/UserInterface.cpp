@@ -2158,7 +2158,7 @@ namespace UI
 
 		if (currentTool < 0)
 		{
-			currentTempPJog->SetValue(0);
+			currentTempPJog->SetValue(0.0);
 			currentTempPJog->SetColours(colours->infoTextColour, colours->defaultBackColour);
 			mgr.Show(currentTempPJog, false);
 			mgr.Show(activeTempPJog, false);
@@ -4879,13 +4879,7 @@ namespace UI
 		OM::IterateToolsWhile([spindle](OM::Tool*& tool, size_t) {
 			if (tool->slot < MaxSlots && tool->spindle == spindle)
 			{
-				const OM::SpindleState state = spindle->state;
-				currentTemps[tool->slot]->SetValue(
-						(state == OM::SpindleState::stopped)
-							? 0
-							: (state == OM::SpindleState::forward)
-							  	  ? spindle->current
-							  	  : -spindle->current);
+				currentTemps[tool->slot]->SetValue(spindle->current);
 			}
 			return tool->slot < MaxSlots;
 		});
@@ -4898,7 +4892,7 @@ namespace UI
 		{
 			return;
 		}
-		spindle->current = abs(current);
+		spindle->current = current;
 		if (!GetFirmwareFeatures().IsBitSet(m568TempAndRPM))
 		{
 			if (current == 0)
