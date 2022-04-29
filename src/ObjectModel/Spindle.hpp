@@ -42,7 +42,6 @@ namespace OM
 		int32_t current;
 		int32_t max;
 		int32_t min;
-		SpindleState state;
 
 		void Reset();
 	};

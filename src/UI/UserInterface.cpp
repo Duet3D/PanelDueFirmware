@@ -4894,24 +4894,15 @@ namespace UI
 			return;
 		}
 
+		const bool changed = spindle->current != current;
 		spindle->current = current;
 
-		if (!GetFirmwareFeatures().IsBitSet(m568TempAndRPM))
+		dbg("spindle %08x current %d\n", spindle, spindle->current);
+
+		if (changed)
 		{
-			if (current == 0)
-			{
-				spindle->state = OM::SpindleState::stopped;
-			}
-			else if (current > 0)
-			{
-				spindle->state = OM::SpindleState::forward;
-			}
-			else
-			{
-				spindle->state = OM::SpindleState::reverse;
-			}
+			UpdateSpindleCurrent(spindle);
 		}
-		UpdateSpindleCurrent(spindle);
 	}
 
 	void SetSpindleLimit(size_t spindleIndex, uint32_t value, bool max)
@@ -4937,12 +4928,27 @@ namespace UI
 		{
 			return;
 		}
-		const bool changed = spindle->state != state;
-		spindle->state = state;
-		if (changed)
+
+		dbg("spindle %08x state %d\n", spindle, state);
+
+		switch (state)
 		{
-			UpdateSpindleCurrent(spindle);
+		case OM::SpindleState::forward:
+			spindle->current = abs(spindle->current);
+			spindle->active = abs(spindle->active);
+			break;
+		case OM::SpindleState::reverse:
+			spindle->current = -1 * abs(spindle->current);
+			spindle->active = -1 * abs(spindle->active);
+			break;
+		case OM::SpindleState::stopped:
+			break;
+		default:
+			dbg("unhandled state %d\n", state);
+			break;
 		}
+
+		UpdateSpindleCurrent(spindle);
 	}
 
 	// This handles the old path where tools were assigned to spindles

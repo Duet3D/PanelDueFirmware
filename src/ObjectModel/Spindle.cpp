@@ -22,7 +22,6 @@ namespace OM
 		current = 0;
 		max = 10000;
 		min = 0;
-		state = OM::SpindleState::stopped;
 	}
 
 	Spindle* GetSpindle(const size_t index)
