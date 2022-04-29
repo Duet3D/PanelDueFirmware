@@ -4850,22 +4850,6 @@ namespace UI
 
 		spindle->active = activeRpm;
 
-		if (!GetFirmwareFeatures().IsBitSet(m568TempAndRPM))
-		{
-			if (activeRpm == 0)
-			{
-				spindle->state = OM::SpindleState::stopped;
-			}
-			else if (activeRpm > 0)
-			{
-				spindle->state = OM::SpindleState::forward;
-			}
-			else
-			{
-				spindle->state = OM::SpindleState::reverse;
-			}
-		}
-
 		OM::IterateToolsWhile([spindle](OM::Tool*& tool, size_t) {
 			if (tool->slot < MaxSlots && tool->spindle == spindle)
 			{
