@@ -4586,9 +4586,7 @@ namespace UI
 		mgr.Show(standbyTemps[slot], standbyEvent != evNull);
 
 		activeTemps[slot]->SetEvent(activeEvent, activeEventValue);
-		activeTemps[slot]->SetValue(0);
 		standbyTemps[slot]->SetEvent(standbyEvent, standbyEventValue);
-		standbyTemps[slot]->SetValue(0);
 	}
 
 	size_t AddBedOrChamber(OM::BedOrChamber *bedOrChamber, size_t &slot, size_t &slotPJob, const bool isBed = true) {
