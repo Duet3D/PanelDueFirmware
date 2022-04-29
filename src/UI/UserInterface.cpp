@@ -2156,6 +2156,8 @@ namespace UI
 		}
 		currentTool = ival;
 
+		currentToolField->SetValue(currentTool);
+
 		if (currentTool < 0)
 		{
 			currentTempPJog->SetValue(0.0);
@@ -2199,7 +2201,6 @@ namespace UI
 				}
 			}
 		}
-		currentToolField->SetValue(currentTool);
 	}
 
 	static int timesLeft[3];
