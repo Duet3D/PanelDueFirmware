@@ -3621,13 +3621,13 @@ namespace UI
 					case evAdjustActiveRPM:
 						{
 							auto spindle = OM::GetSpindle(fieldBeingAdjusted.GetIParam());
-							if (val == 0)
+							if (val)
 							{
-								SerialIo::Sendf("M5 P%d\n", spindle->index);
+								SerialIo::Sendf("%s P%d S%d\n", val >= 0 ? "M3" : "M4", spindle->index, abs(val));
 							}
 							else
 							{
-								SerialIo::Sendf("M%d P%d S%d\n", val < 0 ? 4 : 3, spindle->index, abs(val));
+								SerialIo::Sendf("M5 P%d\n", spindle->index);
 							}
 						}
 						break;
@@ -3887,7 +3887,7 @@ namespace UI
 					}
 					else
 					{
-						SerialIo::Sendf("M140 P%d S%d\n", bedIndex,	activeTemps[slot]->GetValue());
+						SerialIo::Sendf("M140 P%d S%d\n", bedIndex, activeTemps[slot]->GetValue());
 					}
 				}
 				break;
@@ -4894,15 +4894,11 @@ namespace UI
 			return;
 		}
 
-		const bool changed = spindle->current != current;
 		spindle->current = current;
 
 		dbg("spindle %08x current %d\n", spindle, spindle->current);
 
-		if (changed)
-		{
-			UpdateSpindleCurrent(spindle);
-		}
+		UpdateSpindleCurrent(spindle);
 	}
 
 	void SetSpindleLimit(size_t spindleIndex, uint32_t value, bool max)
