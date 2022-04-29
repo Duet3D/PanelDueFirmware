@@ -4869,6 +4869,15 @@ namespace UI
 			}
 			return tool->slot < MaxSlots;
 		});
+
+		auto tool= OM::GetTool(currentTool);
+
+		if (tool == nullptr || tool->spindle == nullptr)
+		{
+			return;
+		}
+
+		currentTempPJog->SetValue(tool->spindle->current);
 	}
 
 	void SetSpindleCurrent(size_t spindleIndex, int32_t current)
