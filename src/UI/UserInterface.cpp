@@ -4944,15 +4944,15 @@ namespace UI
 	// This handles the old path where tools were assigned to spindles
 	void SetSpindleTool(int8_t spindleNumber, int8_t toolIndex)
 	{
-		auto sp = OM::GetOrCreateSpindle(spindleNumber);
-		if (sp == nullptr)
+		auto spindle = OM::GetOrCreateSpindle(spindleNumber);
+		if (spindle == nullptr)
 		{
 			return;
 		}
 		if (toolIndex == -1)
 		{
-			OM::IterateToolsWhile([sp](OM::Tool*& tool, size_t) {
-				if (tool->spindle == sp)
+			OM::IterateToolsWhile([spindle](OM::Tool*& tool, size_t) {
+				if (tool->spindle == spindle)
 				{
 					tool->spindle = nullptr;
 				}
@@ -4964,7 +4964,7 @@ namespace UI
 			OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
 			if (tool != nullptr)
 			{
-				tool->spindle = sp;
+				tool->spindle = spindle;
 			}
 		}
 	}
