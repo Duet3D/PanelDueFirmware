@@ -2577,7 +2577,8 @@ namespace UI
 			if (fieldBeingAdjusted.IsValid())
 			{
 				IntegerButton *ib = static_cast<IntegerButton*>(fieldBeingAdjusted.GetButton());
-				int newValue = ib->GetValue() + change;
+				int newValue = ib->GetValue();
+
 				switch(fieldBeingAdjusted.GetEvent())
 				{
 				case evAdjustBedActiveTemp:
@@ -2586,29 +2587,34 @@ namespace UI
 				case evAdjustBedStandbyTemp:
 				case evAdjustChamberStandbyTemp:
 				case evAdjustToolStandbyTemp:
+					newValue += change;
 					newValue = constrain<int>(newValue, 0, 1600);		// some users want to print at high temperatures
 					break;
 
 				case evAdjustSpeed:
-					newValue = constrain<int>(newValue, 1, 1000);
+					newValue += change;
+					newValue = constrain<int>(newValue + change, 1, 1000);
 					break;
 
 				case evPAdjustExtrusionPercent:
+					newValue += change;
 					newValue = constrain<int>(newValue, 1, 1000);
 					break;
 
 				case evAdjustActiveRPM:
 					{
-						static const uint8_t spindleRpmMultiplier = 100;
+						const uint8_t spindleRpmMultiplier = 100;
 						auto spindle = OM::GetSpindle(fieldBeingAdjusted.GetIParam());
-						const int maxSpindleRpm = spindle->max;
-						newValue = constrain<int>((newValue - change) + (change * spindleRpmMultiplier), -maxSpindleRpm, maxSpindleRpm);
+
+						newValue += (change * spindleRpmMultiplier);
+						newValue = constrain<int>(newValue, spindle->min, spindle->max);
 					}
 					break;
 
 				default:
 					break;
 				}
+
 				ib->SetValue(newValue);
 			}
 			return;
