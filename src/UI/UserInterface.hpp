@@ -112,11 +112,7 @@ namespace UI
 
 	extern void SetBedOrChamberHeater(const uint8_t heaterIndex, const int8_t heaterNumber, bool bed = true);
 
-	extern void SetSpindleActive(size_t spindleIndex, int32_t activeRpm);
-	extern void SetSpindleCurrent(size_t spindleIndex, int32_t currentRpm);
-	extern void SetSpindleLimit(size_t spindleIndex, uint32_t value, bool max);
-	extern void SetSpindleState(size_t spindleIndex, OM::SpindleState state);
-	extern void SetSpindleTool(int8_t spindleNumber, int8_t toolIndex);
+	void UpdateSpindle(size_t index);
 }
 
 #endif /* SRC_UI_USERINTERFACE_HPP_ */

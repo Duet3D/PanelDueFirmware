@@ -36,6 +36,7 @@
 #include <UI/UserInterface.hpp>
 #include <ObjectModel/Axis.hpp>
 #include <ObjectModel/PrinterStatus.hpp>
+#include <ObjectModel/Spindle.hpp>
 #include "ControlCommands.hpp"
 #include "Library/Thumbnail.hpp"
 
@@ -1574,7 +1575,9 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 				{
 					firmwareFeatures.SetBit(m568TempAndRPM);
 				}
-				UI::SetSpindleActive(indices[0], active);
+
+				OM::Spindle::SetActive(indices[0], active);
+				UI::UpdateSpindle(indices[0]);
 			}
 
 			for (size_t i = lastSpindle + 1; i < indices[0]; ++i)
@@ -1594,13 +1597,15 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 				{
 					firmwareFeatures.SetBit(m568TempAndRPM);
 				}
-				UI::SetSpindleCurrent(indices[0], current);
+
+				OM::Spindle::SetCurrent(indices[0], current);
+				UI::UpdateSpindle(indices[0]);
 			}
 		}
 		break;
 
-	case rcvSpindlesMax:
 	case rcvSpindlesMin:
+	case rcvSpindlesMax:
 		// fans also has a field "result^:max"
 		if (currentResponseType != rcvOMKeySpindles)
 		{
@@ -1610,7 +1615,20 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 			uint32_t speedLimit;
 			if (GetUnsignedInteger(data, speedLimit))
 			{
-				UI::SetSpindleLimit(indices[0], speedLimit, rde == rcvSpindlesMax);
+				switch(rde)
+				{
+				case rcvSpindlesMax:
+					OM::Spindle::SetLimitMax(indices[0], speedLimit);
+					break;
+				case rcvSpindlesMin:
+					OM::Spindle::SetLimitMin(indices[0], speedLimit);
+					break;
+				default:
+					dbg("unhandled event %d\n", rde);
+					break;
+				}
+
+				UI::UpdateSpindle(indices[0]);
 			}
 		}
 		break;
@@ -1626,18 +1644,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 							sizeof(OM::SpindleStateMapEntry),
 							compare<OM::SpindleStateMapEntry>);
 			const OM::SpindleState state = (statusFromMap != nullptr) ? statusFromMap->val : OM::SpindleState::stopped;
-			UI::SetSpindleState(indices[0], state);
-		}
-		break;
-
-	case rcvSpindlesTool:
-		{
-			int32_t toolNumber;
-			if (GetInteger(data, toolNumber))
-			{
-				firmwareFeatures.ClearBit(m568TempAndRPM);
-				UI::SetSpindleTool(indices[0], toolNumber);
-			}
+			OM::Spindle::SetState(indices[0], state);
 		}
 		break;
 
@@ -2063,6 +2070,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	default:
+		dbg("unhandled event %d\n", rde);
 		break;
 	}
 }

@@ -44,11 +44,18 @@ namespace OM
 		int32_t min;
 
 		void Reset();
+
+		static void SetActive(size_t spindleIndex, int32_t activeRpm);
+		static void SetCurrent(size_t spindleIndex, int32_t current);
+		static void SetLimitMax(size_t spindleIndex, int32_t max);
+		static void SetLimitMin(size_t spindleIndex, int32_t min);
+		static void SetState(size_t spindleIndex, OM::SpindleState state);
 	};
 
 	Spindle* GetSpindle(const size_t index);
 	Spindle* GetOrCreateSpindle(const size_t index);
 	size_t RemoveSpindle(const size_t index, const bool allFollowing);
+
 }
 
 #endif /* SRC_OBJECTMODEL_SPINDLE_HPP_ */

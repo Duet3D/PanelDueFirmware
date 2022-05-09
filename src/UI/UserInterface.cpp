@@ -2577,7 +2577,8 @@ namespace UI
 			if (fieldBeingAdjusted.IsValid())
 			{
 				IntegerButton *ib = static_cast<IntegerButton*>(fieldBeingAdjusted.GetButton());
-				int newValue = ib->GetValue() + change;
+				int newValue = ib->GetValue();
+
 				switch(fieldBeingAdjusted.GetEvent())
 				{
 				case evAdjustBedActiveTemp:
@@ -2586,29 +2587,34 @@ namespace UI
 				case evAdjustBedStandbyTemp:
 				case evAdjustChamberStandbyTemp:
 				case evAdjustToolStandbyTemp:
+					newValue += change;
 					newValue = constrain<int>(newValue, 0, 1600);		// some users want to print at high temperatures
 					break;
 
 				case evAdjustSpeed:
-					newValue = constrain<int>(newValue, 1, 1000);
+					newValue += change;
+					newValue = constrain<int>(newValue + change, 1, 1000);
 					break;
 
 				case evPAdjustExtrusionPercent:
+					newValue += change;
 					newValue = constrain<int>(newValue, 1, 1000);
 					break;
 
 				case evAdjustActiveRPM:
 					{
-						static const uint8_t spindleRpmMultiplier = 100;
+						const uint8_t spindleRpmMultiplier = 100;
 						auto spindle = OM::GetSpindle(fieldBeingAdjusted.GetIParam());
-						const int maxSpindleRpm = spindle->max;
-						newValue = constrain<int>((newValue - change) + (change * spindleRpmMultiplier), -maxSpindleRpm, maxSpindleRpm);
+
+						newValue += (change * spindleRpmMultiplier);
+						newValue = constrain<int>(newValue, spindle->min, spindle->max);
 					}
 					break;
 
 				default:
 					break;
 				}
+
 				ib->SetValue(newValue);
 			}
 			return;
@@ -3664,7 +3670,7 @@ namespace UI
 				{
 					IntegerButton *ib = static_cast<IntegerButton*>(fieldBeingAdjusted.GetButton());
 					const int change = bp.GetIParam();
-					int newValue = ib->GetValue() + change;
+					int newValue = ib->GetValue();
 					switch(fieldBeingAdjusted.GetEvent())
 					{
 					case evAdjustToolActiveTemp:
@@ -3673,23 +3679,23 @@ namespace UI
 					case evAdjustBedStandbyTemp:
 					case evAdjustChamberActiveTemp:
 					case evAdjustChamberStandbyTemp:
+						newValue += change;
 						newValue = constrain<int>(newValue, 0, 1600);		// some users want to print at high temperatures
 						break;
 
 					case evAdjustFan:
+						newValue += change;
 						newValue = constrain<int>(newValue, 0, 100);
 						break;
 
 					case evAdjustActiveRPM:
 						{
 							auto spindle = OM::GetSpindle(fieldBeingAdjusted.GetIParam());
-							newValue = constrain<int>(newValue, -spindle->max, spindle->max);
 
-							// If a change will lead us below the min speed for spindle skip to the other side
-							if (newValue > (int)-spindle->min && newValue < (int)spindle->min)
-							{
-								newValue = (change < 0) ? -spindle->min : spindle->min;
-							}
+							newValue += change;
+							newValue = constrain<int>(newValue, spindle->min, spindle->max);
+
+							dbg("landscape evAdjustActiveRPM newValue %d current %d\n", newValue, spindle->current);
 						}
 						break;
 
@@ -4841,36 +4847,29 @@ namespace UI
 		AdjustControlPageMacroButtons();
 	}
 
-	void SetSpindleActive(size_t spindleIndex, int32_t activeRpm)
+	void UpdateSpindle(size_t index)
 	{
-		auto spindle = OM::GetOrCreateSpindle(spindleIndex);
+		auto spindle = OM::GetOrCreateSpindle(index);
+
 		if (spindle == nullptr)
 		{
 			return;
 		}
 
-		spindle->active = activeRpm;
-
-		OM::IterateToolsWhile([spindle](OM::Tool*& tool, size_t) {
-			if (tool->slot < MaxSlots && tool->spindle == spindle)
-			{
-				activeTemps[tool->slot]->SetValue(tool->spindle->active);
-			}
-			return tool->slot < MaxSlots;
-		});
-	}
-
-	void UpdateSpindleCurrent(OM::Spindle* spindle)
-	{
 		OM::IterateToolsWhile([spindle](OM::Tool*& tool, size_t) {
 			if (tool->slot < MaxSlots && tool->spindle == spindle)
 			{
 				currentTemps[tool->slot]->SetValue(spindle->current);
+
+				if (mgr.GetPopup() != setRPMPopup)
+				{
+					activeTemps[tool->slot]->SetValue(spindle->active);
+				}
 			}
 			return tool->slot < MaxSlots;
 		});
 
-		auto tool= OM::GetTool(currentTool);
+		auto tool = OM::GetTool(currentTool);
 
 		if (tool == nullptr || tool->spindle == nullptr)
 		{
@@ -4878,95 +4877,6 @@ namespace UI
 		}
 
 		currentTempPJog->SetValue(tool->spindle->current);
-	}
-
-	void SetSpindleCurrent(size_t spindleIndex, int32_t current)
-	{
-		auto spindle = OM::GetOrCreateSpindle(spindleIndex);
-		if (spindle == nullptr)
-		{
-			return;
-		}
-
-		spindle->current = current;
-
-		dbg("spindle %08x current %d\n", spindle, spindle->current);
-
-		UpdateSpindleCurrent(spindle);
-	}
-
-	void SetSpindleLimit(size_t spindleIndex, uint32_t value, bool max)
-	{
-		OM::Spindle *spindle = OM::GetOrCreateSpindle(spindleIndex);
-		if (spindle != nullptr)
-		{
-			if (max)
-			{
-				spindle->max = value;
-			}
-			else
-			{
-				spindle->min = value;
-			}
-		}
-	}
-
-	void SetSpindleState(size_t spindleIndex, OM::SpindleState state)
-	{
-		OM::Spindle* spindle = OM::GetOrCreateSpindle(spindleIndex);
-		if (spindle == nullptr)
-		{
-			return;
-		}
-
-		dbg("spindle %08x state %d\n", spindle, state);
-
-		switch (state)
-		{
-		case OM::SpindleState::forward:
-			spindle->current = abs(spindle->current);
-			spindle->active = abs(spindle->active);
-			break;
-		case OM::SpindleState::reverse:
-			spindle->current = -1 * abs(spindle->current);
-			spindle->active = -1 * abs(spindle->active);
-			break;
-		case OM::SpindleState::stopped:
-			break;
-		default:
-			dbg("unhandled state %d\n", state);
-			break;
-		}
-
-		UpdateSpindleCurrent(spindle);
-	}
-
-	// This handles the old path where tools were assigned to spindles
-	void SetSpindleTool(int8_t spindleNumber, int8_t toolIndex)
-	{
-		auto sp = OM::GetOrCreateSpindle(spindleNumber);
-		if (sp == nullptr)
-		{
-			return;
-		}
-		if (toolIndex == -1)
-		{
-			OM::IterateToolsWhile([sp](OM::Tool*& tool, size_t) {
-				if (tool->spindle == sp)
-				{
-					tool->spindle = nullptr;
-				}
-				return true;
-			});
-		}
-		else
-		{
-			OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
-			if (tool != nullptr)
-			{
-				tool->spindle = sp;
-			}
-		}
 	}
 
 	void UpdateToolStatus(size_t toolIndex, OM::ToolStatus status)
