@@ -20,7 +20,6 @@
 
 #include "Icons/Icons.hpp"
 #include "Library/Misc.hpp"
-#include "ObjectModel/PrinterStatus.hpp"
 #include "PanelDue.hpp"
 #include "Version.hpp"
 
@@ -30,6 +29,7 @@
 #include <General/StringFunctions.h>
 
 #include <ObjectModel/Axis.hpp>
+#include <ObjectModel/Spindle.hpp>
 #include <ObjectModel/Utils.hpp>
 
 #include <UI/MessageLog.hpp>

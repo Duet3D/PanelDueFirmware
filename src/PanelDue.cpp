@@ -35,6 +35,7 @@
 #include <UI/Events.hpp>
 #include <UI/UserInterface.hpp>
 #include <ObjectModel/Axis.hpp>
+#include <ObjectModel/BedOrChamber.hpp>
 #include <ObjectModel/PrinterStatus.hpp>
 #include <ObjectModel/Spindle.hpp>
 #include "ControlCommands.hpp"
