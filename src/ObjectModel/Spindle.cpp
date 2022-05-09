@@ -20,8 +20,8 @@ namespace OM
 		index = 0;
 		active = 0;
 		current = 0;
-		max = 10000;
-		min = 0;
+		max = 16000;
+		min = -16000;
 	}
 
 	Spindle* GetSpindle(const size_t index)
