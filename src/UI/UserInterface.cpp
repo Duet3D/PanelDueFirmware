@@ -20,7 +20,6 @@
 
 #include "Icons/Icons.hpp"
 #include "Library/Misc.hpp"
-#include "ObjectModel/PrinterStatus.hpp"
 #include "PanelDue.hpp"
 #include "Version.hpp"
 
@@ -30,6 +29,7 @@
 #include <General/StringFunctions.h>
 
 #include <ObjectModel/Axis.hpp>
+#include <ObjectModel/Spindle.hpp>
 #include <ObjectModel/Utils.hpp>
 
 #include <UI/MessageLog.hpp>
@@ -132,6 +132,7 @@ static StaticTextField *jobTextField;
 static IntegerButton *feedrateButtonP, *extruderPercentButtonP, *spindleRPMButtonP;
 static StaticTextField *screensaverTextP;
 static StaticTextField *nameFieldP, *statusFieldP;
+static StaticTextField *standbyTempTextPJog;
 static IntegerButton *activeTempPJog, *standbyTempPJog;
 static IntegerButton *activeTempsPJob[MaxPendantTools], *standbyTempsPJob[MaxPendantTools];
 static IntegerField *currentToolField;
@@ -571,7 +572,7 @@ static void ChangeDisplayDimmerType()
 	nvData.SetDisplayDimmerType(newType);
 }
 
-// Cyce through available heater combine types and repaint
+// Cycle through available heater combine types and repaint
 static void ChangeHeaterCombineType()
 {
 	HeaterCombineType newType = (HeaterCombineType) ((uint8_t)nvData.GetHeaterCombineType() + 1);
@@ -1499,7 +1500,8 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 //	mgr.AddField(new StaticTextField(secondBlock, CalcXPos(extrudeCol, labelWidth),	 labelWidth, TextAlignment::Centre, strings->extrusion));
 	mgr.AddField(new StaticTextField(secondBlock, CalcXPos(extrudeCol, colWidth),	colWidth, TextAlignment::Right, strings->current));
 	mgr.AddField(new StaticTextField(secondBlock + 2 * rowHeightP, CalcXPos(extrudeCol, colWidth), colWidth, TextAlignment::Right, strings->active));
-	mgr.AddField(new StaticTextField(secondBlock + 4 * rowHeightP, CalcXPos(extrudeCol, colWidth), colWidth, TextAlignment::Right, strings->standby));
+	standbyTempTextPJog = new StaticTextField(secondBlock + 4 * rowHeightP, CalcXPos(extrudeCol, colWidth), colWidth, TextAlignment::Right, strings->standby);
+	mgr.AddField(standbyTempTextPJog);
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 
@@ -2164,6 +2166,7 @@ namespace UI
 			currentTempPJog->SetColours(colours->infoTextColour, colours->defaultBackColour);
 			mgr.Show(currentTempPJog, false);
 			mgr.Show(activeTempPJog, false);
+			mgr.Show(standbyTempTextPJog, false);
 			mgr.Show(standbyTempPJog, false);
 			mgr.Show(extruderPercentButtonP, false);
 			mgr.Show(spindleRPMButtonP, false);
@@ -2181,6 +2184,7 @@ namespace UI
 				const bool hasSpindle = tool->spindle != nullptr;
 				mgr.Show(currentTempPJog, hasHeater || hasSpindle);
 				mgr.Show(activeTempPJog, hasHeater || hasSpindle);
+				mgr.Show(standbyTempTextPJog, hasHeater);
 				mgr.Show(standbyTempPJog, hasHeater);
 				mgr.Show(extruderPercentButtonP, hasExtruder);
 				mgr.Show(spindleRPMButtonP, hasSpindle);
@@ -3398,6 +3402,7 @@ namespace UI
 			case evToolSelect:
 			{
 				const int head = bp.GetIParam();
+
 				if (currentTool == head)					// if tool is selected
 				{
 					SerialIo::Sendf("T-1\n");
@@ -3694,8 +3699,6 @@ namespace UI
 
 							newValue += change;
 							newValue = constrain<int>(newValue, spindle->min, spindle->max);
-
-							dbg("landscape evAdjustActiveRPM newValue %d current %d\n", newValue, spindle->current);
 						}
 						break;
 
@@ -3917,7 +3920,8 @@ namespace UI
 			case evSelectHead:
 				{
 					int head = bp.GetIParam();
-					// pressing a evSeelctHead button in the middle of active printing is almost always accidental (and fatal to the print job)
+
+					// pressing a evSelectHead button in the middle of active printing is almost always accidental (and fatal to the print job)
 					if (GetStatus() != OM::PrinterStatus::printing && GetStatus() != OM::PrinterStatus::simulating)
 					{
 						if (head == currentTool)		// if head is active
@@ -4378,8 +4382,6 @@ namespace UI
 		}
 		else
 		{
-			dbg("2\n");
-
 			switch(bp.GetEvent())
 			{
 			case evEmergencyStop:
@@ -4530,7 +4532,8 @@ namespace UI
 		{
 			return (filesNotMacros) ? NumFileRows : NumMacroRows;
 		}
-		else {
+		else
+		{
 			return NumMacroRowsP;
 		}
 	}
@@ -4596,10 +4599,13 @@ namespace UI
 		standbyTemps[slot]->SetEvent(standbyEvent, standbyEventValue);
 	}
 
-	size_t AddBedOrChamber(OM::BedOrChamber *bedOrChamber, size_t &slot, size_t &slotPJob, const bool isBed = true) {
+	size_t AddBedOrChamber(OM::BedOrChamber *bedOrChamber, size_t &slot, size_t &slotPJob, const bool isBed = true)
+	{
 		const size_t count = (isBed ? OM::GetBedCount() : OM::GetChamberCount());
 		bedOrChamber->slot = MaxSlots;
-		if (slot < MaxSlots && bedOrChamber->heater > -1) {
+
+		if (slot < MaxSlots && bedOrChamber->heater > -1)
+		{
 			bedOrChamber->slot = slot;
 			mgr.Show(toolButtons[slot], true);
 			ManageCurrentActiveStandbyFields(
@@ -4618,6 +4624,7 @@ namespace UI
 
 			++slot;
 		}
+
 		bedOrChamber->slotPJog = MaxPendantTools;
 		bedOrChamber->slotPJob = MaxPendantTools;
 		if (slotPJob < MaxPendantTools && bedOrChamber->heater > -1)
@@ -4750,7 +4757,9 @@ namespace UI
 						if (tool->index == currentTool)
 						{
 							mgr.Show(activeTempPJog, hasHeater || hasSpindle);
+							mgr.Show(standbyTempTextPJog, hasHeater);
 							mgr.Show(standbyTempPJog, hasHeater);
+
 							if (hasSpindle)
 							{
 								activeTempPJog->SetEvent(evAdjustActiveRPM, tool->spindle->index);

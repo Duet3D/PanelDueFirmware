@@ -10,14 +10,16 @@
 
 #include "FirmwareFeatures.hpp"
 #include "Library/Thumbnail.hpp"
+
 #include <ObjectModel/BedOrChamber.hpp>
 #include <ObjectModel/PrinterStatus.hpp>
-#include <ObjectModel/Spindle.hpp>
 #include <ObjectModel/Tool.hpp>
+
 #include <UI/Alert.hpp>
 #include <UI/ColourSchemes.hpp>
 #include <UI/Display.hpp>
 #include <UI/Events.hpp>
+
 #include <General/String.h>
 #include <General/StringFunctions.h>
 
