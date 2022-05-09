@@ -132,6 +132,7 @@ static StaticTextField *jobTextField;
 static IntegerButton *feedrateButtonP, *extruderPercentButtonP, *spindleRPMButtonP;
 static StaticTextField *screensaverTextP;
 static StaticTextField *nameFieldP, *statusFieldP;
+static StaticTextField *standbyTempTextPJog;
 static IntegerButton *activeTempPJog, *standbyTempPJog;
 static IntegerButton *activeTempsPJob[MaxPendantTools], *standbyTempsPJob[MaxPendantTools];
 static IntegerField *currentToolField;
@@ -1499,7 +1500,8 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 //	mgr.AddField(new StaticTextField(secondBlock, CalcXPos(extrudeCol, labelWidth),	 labelWidth, TextAlignment::Centre, strings->extrusion));
 	mgr.AddField(new StaticTextField(secondBlock, CalcXPos(extrudeCol, colWidth),	colWidth, TextAlignment::Right, strings->current));
 	mgr.AddField(new StaticTextField(secondBlock + 2 * rowHeightP, CalcXPos(extrudeCol, colWidth), colWidth, TextAlignment::Right, strings->active));
-	mgr.AddField(new StaticTextField(secondBlock + 4 * rowHeightP, CalcXPos(extrudeCol, colWidth), colWidth, TextAlignment::Right, strings->standby));
+	standbyTempTextPJog = new StaticTextField(secondBlock + 4 * rowHeightP, CalcXPos(extrudeCol, colWidth), colWidth, TextAlignment::Right, strings->standby);
+	mgr.AddField(standbyTempTextPJog);
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 
@@ -2164,6 +2166,7 @@ namespace UI
 			currentTempPJog->SetColours(colours->infoTextColour, colours->defaultBackColour);
 			mgr.Show(currentTempPJog, false);
 			mgr.Show(activeTempPJog, false);
+			mgr.Show(standbyTempTextPJog, false);
 			mgr.Show(standbyTempPJog, false);
 			mgr.Show(extruderPercentButtonP, false);
 			mgr.Show(spindleRPMButtonP, false);
@@ -2181,6 +2184,7 @@ namespace UI
 				const bool hasSpindle = tool->spindle != nullptr;
 				mgr.Show(currentTempPJog, hasHeater || hasSpindle);
 				mgr.Show(activeTempPJog, hasHeater || hasSpindle);
+				mgr.Show(standbyTempTextPJog, hasHeater);
 				mgr.Show(standbyTempPJog, hasHeater);
 				mgr.Show(extruderPercentButtonP, hasExtruder);
 				mgr.Show(spindleRPMButtonP, hasSpindle);
@@ -4753,7 +4757,9 @@ namespace UI
 						if (tool->index == currentTool)
 						{
 							mgr.Show(activeTempPJog, hasHeater || hasSpindle);
+							mgr.Show(standbyTempTextPJog, hasHeater);
 							mgr.Show(standbyTempPJog, hasHeater);
+
 							if (hasSpindle)
 							{
 								activeTempPJog->SetEvent(evAdjustActiveRPM, tool->spindle->index);
