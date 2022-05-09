@@ -3670,7 +3670,7 @@ namespace UI
 				{
 					IntegerButton *ib = static_cast<IntegerButton*>(fieldBeingAdjusted.GetButton());
 					const int change = bp.GetIParam();
-					int newValue = ib->GetValue() + change;
+					int newValue = ib->GetValue();
 					switch(fieldBeingAdjusted.GetEvent())
 					{
 					case evAdjustToolActiveTemp:
@@ -3679,23 +3679,23 @@ namespace UI
 					case evAdjustBedStandbyTemp:
 					case evAdjustChamberActiveTemp:
 					case evAdjustChamberStandbyTemp:
+						newValue += change;
 						newValue = constrain<int>(newValue, 0, 1600);		// some users want to print at high temperatures
 						break;
 
 					case evAdjustFan:
+						newValue += change;
 						newValue = constrain<int>(newValue, 0, 100);
 						break;
 
 					case evAdjustActiveRPM:
 						{
 							auto spindle = OM::GetSpindle(fieldBeingAdjusted.GetIParam());
-							newValue = constrain<int>(newValue, -spindle->max, spindle->max);
 
-							// If a change will lead us below the min speed for spindle skip to the other side
-							if (newValue > (int)-spindle->min && newValue < (int)spindle->min)
-							{
-								newValue = (change < 0) ? -spindle->min : spindle->min;
-							}
+							newValue += change;
+							newValue = constrain<int>(newValue, spindle->min, spindle->max);
+
+							dbg("landscape evAdjustActiveRPM newValue %d current %d\n", newValue, spindle->current);
 						}
 						break;
 
