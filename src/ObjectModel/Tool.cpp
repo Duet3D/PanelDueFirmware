@@ -74,7 +74,7 @@ namespace OM
 		return -1;
 	}
 
-	void Tool::IterateHeaters(stdext::inplace_function<void(ToolHeater*, size_t)> func, const size_t startAt)
+	void Tool::IterateHeaters(function_ref<void(ToolHeater*, size_t)> func, const size_t startAt)
 	{
 		for (size_t i = startAt; i < MaxHeatersPerTool && heaters[i] != nullptr; ++i)
 		{
@@ -146,7 +146,7 @@ namespace OM
 		return GetOrCreate<ToolList, Tool>(tools, index, true);
 	}
 
-	bool IterateToolsWhile(stdext::inplace_function<bool(Tool*&, size_t)> func, const size_t startAt)
+	bool IterateToolsWhile(function_ref<bool(Tool*&, size_t)> func, const size_t startAt)
 	{
 		return tools.IterateWhile(func, startAt);
 	}

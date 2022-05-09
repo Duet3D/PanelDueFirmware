@@ -6,8 +6,10 @@
  */
 
 #include "SerialIo.hpp"
+#include "Hardware/SysTick.hpp"
 #include "asf.h"
 #include "PanelDue.hpp"
+#include <General/CRC16.h>
 #include <General/String.h>
 #include <General/SafeVsnprintf.h>
 
@@ -34,8 +36,19 @@ const size_t MaxArrayNesting = 4;
 namespace SerialIo
 {
 	static unsigned int lineNumber = 0;
+	uint16_t numChars = 0;
+	uint8_t checksum = 0;
+	CRC16 crc;
+
+	enum CheckType {
+		None,
+		Simple,
+		CRC16
+	} check;
+
 
 	static struct SerialIoCbs *cbs = nullptr;
+	static int serialIoErrors = 0;
 
 	// Translation tables for combining characters.
 	// The first character in each pair is the character that the combining mark is applied to.
@@ -64,6 +77,8 @@ namespace SerialIo
 	{
 		cbs = callbacks;
 
+		check = CheckType::CRC16;
+
 		uart_disable_interrupt(UARTn, 0xFFFFFFFF);
 #if SAM4S
 		pio_configure(PIOA, PIO_PERIPH_A, PIO_PA9 | PIO_PA10, 0);	// enable UART 0 pins
@@ -88,21 +103,39 @@ namespace SerialIo
 		Init(baudRate, cbs);
 	}
 
-
-	uint16_t numChars = 0;
-	uint8_t checksum = 0;
+	void SetCRC16(bool enable)
+	{
+		if (enable)
+		{
+			check = CheckType::CRC16;
+		}
+		else
+		{
+			check = CheckType::Simple;
+		}
+	}
 
 	// Send a character to the 3D printer.
 	// A typical command string is only about 12 characters long, which at 115200 baud takes just over 1ms to send.
 	// So there is no particular reason to use interrupts, and by so doing so we avoid having to handle buffer full situations.
-	void RawSendChar(char c)
+	static void RawSendChar(char c)
 	{
 		while(uart_write(UARTn, c) != 0) { }
 	}
 
-	void SendCharAndChecksum(char c)
+	static void SendCharAndChecksum(char c)
 	{
-		checksum ^= c;
+		switch (check)
+		{
+		case CheckType::None:
+			break;
+		case CheckType::Simple:
+			checksum ^= c;
+			break;
+		case CheckType::CRC16:
+			crc.Update(c);
+			break;
+		}
 		RawSendChar(c);
 		++numChars;
 	}
@@ -114,18 +147,39 @@ namespace SerialIo
 		{
 			if (numChars != 0)
 			{
-				// Send the checksum
-				RawSendChar('*');
-				char digit0 = checksum % 10 + '0';
-				checksum /= 10;
-				char digit1 = checksum % 10 + '0';
-				checksum /= 10;
-				if (checksum != 0)
+				switch (check)
 				{
-					RawSendChar(checksum + '0');
+				case CheckType::None:
+					break;
+				case CheckType::Simple:
+					{
+						// Send the checksum
+						RawSendChar('*');
+						char digit0 = checksum % 10 + '0';
+						checksum /= 10;
+						char digit1 = checksum % 10 + '0';
+						checksum /= 10;
+						if (checksum != 0)
+						{
+							RawSendChar(checksum + '0');
+						}
+						RawSendChar(digit1);
+						RawSendChar(digit0);
+					}
+					break;
+				case CheckType::CRC16:
+					{
+						uprintf([](char c) noexcept -> bool {
+								if (c != 0)
+								{
+								RawSendChar(c);
+								}
+								return true;
+							}, "*%05d", crc.Get());
+						crc.Reset(0);
+					}
+					break;
 				}
-				RawSendChar(digit1);
-				RawSendChar(digit0);
 			}
 			RawSendChar(c);
 			numChars = 0;
@@ -135,6 +189,7 @@ namespace SerialIo
 			if (numChars == 0)
 			{
 				checksum = 0;
+				crc.Reset(0);
 				// Send a dummy line number
 				SendCharAndChecksum('N');
 				Sendf("%d", lineNumber++);			// numChars is no longer zero, so only recurses once
@@ -148,13 +203,42 @@ namespace SerialIo
 	{
 		va_list vargs;
 		va_start(vargs, fmt);
-		return vuprintf([](char c) noexcept -> bool {
+		int ret = vuprintf([](char c) noexcept -> bool {
 			if (c != 0)
 			{
 				SendChar(c);
 			}
 			return true;
 		}, fmt, vargs);
+		va_end(vargs);
+
+		return ret;
+	}
+
+	size_t Dbg(const char *fmt, ...)
+	{
+		char buffer[128];
+		int ret;
+		int ret2;
+		va_list vargs;
+
+		ret = SafeSnprintf(buffer, sizeof(buffer), ";dbg %4lu ", SystemTick::GetTickCount() / 1000);
+		if (ret < 0)
+			return 0;
+
+		va_start(vargs, fmt);
+		ret2 = SafeVsnprintf(&buffer[ret], sizeof(buffer) - ret, fmt, vargs);
+		va_end(vargs);
+		if (ret2 < 0)
+			return 0;
+
+		ret += ret2;
+		for (int i = 0; i < ret; i++) {
+			while(uart_write(UARTn, buffer[i]))
+				;;
+		}
+
+		return ret;
 	}
 
 	void SendFilename(const char * _ecv_array dir, const char * _ecv_array name)
@@ -206,7 +290,7 @@ namespace SerialIo
 
 	// fieldId is the name of the field being received. A '^' character indicates the position of an array index, and a ':' character indicates a field separator.
 	String<100> fieldId;
-	String<300> fieldVal;	// long enough for about 6 lines of message
+	String<1028> fieldVal;
 	size_t arrayIndices[MaxArrayNesting];
 	size_t arrayDepth = 0;
 
@@ -446,6 +530,8 @@ namespace SerialIo
 				RemoveLastId();
 				if (fieldId.strlen() == 0)
 				{
+					serialIoErrors = 0;
+
 					if (cbs && cbs->EndReceivedMessage)
 					{
 						cbs->EndReceivedMessage();
@@ -478,9 +564,12 @@ namespace SerialIo
 				{
 					dbg("ParserErrorEncountered");
 
+					serialIoErrors++;
+
 					if (cbs && cbs->ParserErrorEncountered)
 					{
-						cbs->ParserErrorEncountered(lastState, fieldId.c_str(), fieldVal.c_str(), arrayIndices); // Notify the consumer that we ran into an error
+						cbs->ParserErrorEncountered(lastState, fieldId.c_str(), serialIoErrors); // Notify the consumer that we ran into an error
+						lastState = jsBegin;
 					}
 				}
 				state = jsBegin;		// abandon current parse (if any) and start again
@@ -517,6 +606,8 @@ namespace SerialIo
 						RemoveLastId();
 						if (fieldId.strlen() == 0)
 						{
+							serialIoErrors = 0;
+
 							if (cbs && cbs->EndReceivedMessage)
 							{
 								cbs->EndReceivedMessage();

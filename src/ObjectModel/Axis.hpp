@@ -10,7 +10,7 @@
 
 #include <cstdint>
 #include <General/FreelistManager.h>
-#include <General/inplace_function.h>
+#include <General/function_ref.h>
 
 namespace OM
 {
@@ -47,7 +47,7 @@ namespace OM
 
 	Axis* GetAxis(const size_t index);
 	Axis* GetOrCreateAxis(const size_t index);
-	bool IterateAxesWhile(stdext::inplace_function<bool(Axis*&, size_t)> func, const size_t startAt = 0);
+	bool IterateAxesWhile(function_ref<bool(Axis*&, size_t)> func, const size_t startAt = 0);
 	size_t RemoveAxis(const size_t index, const bool allFollowing);
 }
 

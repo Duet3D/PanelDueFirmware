@@ -11,7 +11,7 @@
 #include "Spindle.hpp"
 #include "Tool.hpp"
 #include "ListHelpers.hpp"
-#include "PanelDue.hpp"
+#include "FlashData.hpp"
 
 namespace OM
 {
@@ -19,67 +19,15 @@ namespace OM
 			const size_t heaterIndex,
 			Slots& slots,
 			const SlotType slotType,
-			const bool addTools,
-			const bool addBeds,
-			const bool addChambers)
+			const bool addTools)
 	{
-		if (addBeds)
-		{
-			IterateBedsWhile(
-				[&slots, &heaterIndex, &slotType](Bed*& bed, size_t) {
-					if (bed->heater == (int)heaterIndex)
-					{
-						switch (slotType)
-						{
-						case SlotType::panel:
-							if (bed->slot < MaxSlots)
-							{
-								slots.Add(bed->slot);
-							}
-							break;
-						case SlotType::pJob:
-							if (bed->slotPJob < MaxPendantTools)
-							{
-								slots.Add(bed->slotPJob);
-							}
-							break;
-						}
-					}
-					return bed->slot < MaxSlots;
-				});
-		}
-		if (addChambers)
-		{
-			IterateChambersWhile(
-				[&slots, &heaterIndex, &slotType](Chamber*& chamber, size_t) {
-					if (chamber->heater == (int)heaterIndex)
-					{
-						switch (slotType)
-						{
-						case SlotType::panel:
-							if (chamber->slot < MaxSlots)
-							{
-								slots.Add(chamber->slot);
-							}
-								break;
-						case SlotType::pJob:
-							if (chamber->slotPJob < MaxPendantTools)
-							{
-								slots.Add(chamber->slotPJob);
-							}
-							break;
-						}
-					}
-					return chamber->slot < MaxSlots;
-				});
-		}
 		if (addTools)
 		{
 			IterateToolsWhile(
 				[&slots, &heaterIndex, &slotType](Tool*& tool, size_t) {
 					if (tool->slot < MaxSlots)
 					{
-						if (GetHeaterCombineType() == HeaterCombineType::notCombined)
+						if (nvData.GetHeaterCombineType() == HeaterCombineType::notCombined)
 						{
 							tool->IterateHeaters([&tool, &slots, &heaterIndex, &slotType](ToolHeater* th, size_t index) {
 								switch (slotType)

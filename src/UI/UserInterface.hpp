@@ -9,28 +9,32 @@
 #define SRC_UI_USERINTERFACE_HPP_
 
 #include "FirmwareFeatures.hpp"
+#include "Library/Thumbnail.hpp"
 #include <ObjectModel/BedOrChamber.hpp>
 #include <ObjectModel/PrinterStatus.hpp>
 #include <ObjectModel/Spindle.hpp>
 #include <ObjectModel/Tool.hpp>
+#include <UI/Alert.hpp>
 #include <UI/ColourSchemes.hpp>
 #include <UI/Display.hpp>
 #include <UI/Events.hpp>
+#include <General/String.h>
+#include <General/StringFunctions.h>
 
+extern MainWindow mgr;
 extern IntegerField *freeMem;
 extern StaticTextField *debugField;
 extern StaticTextField *touchCalibInstruction;
 extern StaticTextField *messageTextFields[], *messageTimeFields[];
 extern TextField *fwVersionField;
 
-class Alert;
-
 namespace UI
 {
 	extern unsigned int GetNumLanguages();
 	extern void CreateFields(uint32_t language, const ColourScheme& colours, uint32_t p_infoTimeout);
+	extern void InitColourScheme(const ColourScheme *scheme);
 	extern void ActivateScreensaver();
-	extern void DeactivateScreensaver();
+	extern bool DeactivateScreensaver();
 	extern void AnimateScreensaver();
 	extern void ShowAxis(size_t axis, bool b, const char* axisLetter = nullptr);
 	extern void ShowAxisP(size_t axis, bool b, const char* axisLetter = nullptr);
@@ -43,9 +47,10 @@ namespace UI
 	extern void UpdateWarmupDuration(uint32_t warmupDuration);
 	extern void SetSimulatedTime(uint32_t simulatedTime);
 	extern bool ChangePage(ButtonBase *newTab);
-	extern bool DoPolling();
+	extern bool IsSetupTab();
 	extern void Tick();
 	extern void Spin();
+	extern void CurrentButtonReleased();
 	extern void PrintStarted();
 	extern void PrintingFilenameChanged(const char data[]);
 	extern void LastJobFileNameAvailable(const bool available);
@@ -69,6 +74,7 @@ namespace UI
 	extern void UpdateFileLayerHeight(float f);
 	extern void UpdateFileSize(int size);
 	extern void UpdateFileFilament(int len);
+	extern bool UpdateFileThumbnailChunk(const struct Thumbnail &thumbnail, uint32_t pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count);
 	extern void UpdateFanPercent(size_t fanIndex, int rpm);
 	extern void UpdateActiveTemperature(size_t index, int ival);
 	extern void UpdateToolTemp(size_t toolIndex, size_t toolHeaterIndex, int32_t temp, bool active);
@@ -76,11 +82,9 @@ namespace UI
 	extern void UpdateExtrusionFactor(size_t index, int ival);
 	extern void UpdatePrintTimeText(uint32_t seconds, bool isSimulated);
 	extern void UpdateSpeedPercent(int ival);
-	extern void FirmwareFeaturesChanged(FirmwareFeatureMap newFeatures);
 	extern void ProcessTouch(ButtonPress bp);
-	extern void ProcessTouchOutsidePopup(ButtonPress bp)
-	pre(bp.IsValid());
-	extern void OnButtonPressTimeout();
+	extern void ProcessTouchOutsidePopup(ButtonPress bp) pre(bp.IsValid());
+	extern void ProcessRelease(ButtonPress bp);
 	extern bool IsDisplayingFileInfo();
 	extern void AllToolsSeen();
 

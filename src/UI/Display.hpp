@@ -29,17 +29,6 @@ typedef const uint8_t * _ecv_array LcdFont;
 // After that comes the icon data, 16 bits per pixel, one row at a time.
 typedef const uint8_t * _ecv_array Icon;
 
-// Unicode strings for special characters in our font
-#define DECIMAL_POINT	"\xC2\xB7"		// Unicode middle-dot, code point B7
-#define DEGREE_SYMBOL	"\xC2\xB0"		// Unicode degree-symbol, code point B0
-#define THIN_SPACE		"\xC2\x80"		// Unicode control character, code point 0x80, we use it as thin space
-#define LEFT_ARROW		"\xC2\x81"		// Unicode control character, code point 0x81, we use it as up arrow
-#define UP_ARROW		"\xC2\x82"		// Unicode control character, code point 0x82, we use it as up arrow
-#define RIGHT_ARROW		"\xC2\x83"		// Unicode control character, code point 0x83, we use it as down arrow
-#define DOWN_ARROW		"\xC2\x84"		// Unicode control character, code point 0x84, we use it as down arrow
-#define MORE_ARROW		"\xC2\x85"
-#define LESS_ARROW		"\xC2\x86"
-
 const uint8_t buttonGradStep = 12;
 const PixelNumber AutoPlace = 0xFFFF;
 constexpr float epsilon = 0.001f;
@@ -50,6 +39,7 @@ const event_t nullEvent = 0;
 enum class TextAlignment : uint8_t { Left, Centre, Right };
 
 class ButtonBase;
+class Window;
 
 // Small by-value class to identify what button has been pressed
 class ButtonPress
@@ -87,7 +77,8 @@ protected:
 			visible : 1,
 			underlined : 1,						// really belongs in class FieldWithText, but stored here to save space
 			border : 1,							// really belongs in class FieldWithText, but stored here to save space
-			textRows : 2;						// really belongs in class FieldWithText, but stored here to save space
+			textRows : 2,						// really belongs in class FieldWithText, but stored here to save space
+			toggle: 1;						// really belongs in class ButtonBase, but stored here to save space
 
 	static LcdFont defaultFont;
 	static Colour defaultFcolour, defaultBcolour;
@@ -102,6 +93,7 @@ protected:
 	virtual void CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) { UNUSED(x); UNUSED(y); UNUSED(bestError); UNUSED(best); }
 
 public:
+	Window * null parent;
 	DisplayField * null next;					// link to next field in list
 
 	virtual bool IsButton() const { return false; }
@@ -160,7 +152,8 @@ public:
 	void SetPopupP(PopupWindow * p, PixelNumber px = 0, PixelNumber py = 0, bool redraw = true) { SetPopup(p, px, py, redraw, DisplayXP, DisplayYP); }
 	PopupWindow * null GetPopup() const { return next; }
 	void ClearPopup(bool redraw = true, PopupWindow *whichOne = nullptr);
-	inline bool IsPopupActive() const { return GetPopup() != nullptr; }
+	inline bool IsPopupActive() const { return GetPopup() == nullptr; }
+	bool IsPopupActive(const PopupWindow *popup);
 	bool ObscuredByPopup(const DisplayField *p) const;
 	bool Visible(const DisplayField *p) const;
 	virtual bool Contains(PixelNumber xmin, PixelNumber ymin, PixelNumber xmax, PixelNumber ymax) const = 0;
@@ -372,7 +365,7 @@ protected:
 	bool pressed;								// putting this here instead of in SingleButton saves 4 byes per button
 
 	ButtonBase(PixelNumber py, PixelNumber px, PixelNumber pw);
-	void DrawOutline(PixelNumber xOffset, PixelNumber yOffset, bool isPressed) const;
+	void DrawOutline(PixelNumber xOffset, PixelNumber yOffset) const;
 	void CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) override;
 
 	static PixelNumber textMargin;
@@ -383,7 +376,9 @@ public:
 	virtual const char* null GetSParam(unsigned int index) const { UNUSED(index); return nullptr; }
 	virtual int GetIParam(unsigned int index) const { UNUSED(index); return 0; }
 	virtual float GetFParam(unsigned int index) const { UNUSED(index); return 0.0f; }
-	virtual void Press(bool p, int index) { UNUSED(p); UNUSED(index); }
+	virtual bool IsPressed() { return pressed; }
+	virtual void Press(bool p, int index);
+	virtual void Release(bool p, int index);
 };
 
 class SingleButton : public ButtonBase
@@ -399,8 +394,6 @@ class SingleButton : public ButtonBase
 protected:
 	SingleButton(PixelNumber py, PixelNumber px, PixelNumber pw);
 
-	void DrawOutline(PixelNumber xOffset, PixelNumber yOffset) const;
-
 public:
 	bool IsButton() const override final { return true; }
 
@@ -413,8 +406,6 @@ public:
 	const char* null GetSParam(unsigned int index) const override { UNUSED(index); return param.sParam; }
 	int GetIParam(unsigned int index) const override { UNUSED(index); return param.iParam; }
 	float GetFParam(unsigned int index) const { UNUSED(index); return param.fParam; }
-
-	void Press(bool p, int index) override;
 
 	static void SetTextMargin(PixelNumber p) { textMargin = p; }
 	static void SetIconMargin(PixelNumber p) { iconMargin = p; }
@@ -503,8 +494,8 @@ protected:
 	size_t PrintText(size_t offset) const override;
 
 public:
-	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param = 0);
-	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param);
+	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param = 0, bool isToggle = false);
+	TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param, bool isToggle = false);
 
 	// Hide any text buttons with null text
 	bool IsVisible() const override { return text != nullptr && DisplayField::IsVisible(); }
@@ -548,10 +539,10 @@ class TextButtonForAxis : public TextButton
 private:
 	char axisLetter;
 public:
-	TextButtonForAxis(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param = 0)
-		: TextButton(py, px, pw, pt, e, param), axisLetter('\0') {}
-	TextButtonForAxis(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param)
-		: TextButton(py, px, pw, pt, e, param), axisLetter('\0') {}
+	TextButtonForAxis(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param = 0, bool isToggle = false)
+		: TextButton(py, px, pw, pt, e, param), axisLetter('\0') { toggle = isToggle; }
+	TextButtonForAxis(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param, bool isToggle = false)
+		: TextButton(py, px, pw, pt, e, param), axisLetter('\0') { toggle = isToggle; }
 
 	char GetAxisLetter() const { return this->axisLetter; }
 	void SetAxisLetter(char axisLetter) { this->axisLetter = axisLetter; }
@@ -679,8 +670,9 @@ protected:
 	size_t PrintText(size_t offset) const override;
 
 public:
-	FloatButton(PixelNumber py, PixelNumber px, PixelNumber pw, uint8_t pd, const char * _ecv_array pt = nullptr)
+	FloatButton(PixelNumber py, PixelNumber px, PixelNumber pw, uint8_t pd, const char * _ecv_array pt = nullptr, bool isToggle = 0)
 		: ButtonWithText(py, px, pw), units(pt), val(0.0), numDecimals(pd) {
+			toggle = isToggle;
 	}
 
 	float GetValue() const { return val; }
@@ -743,6 +735,31 @@ public:
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override;
 
 	PixelNumber GetHeight() const override { return height; }
+};
+
+#include "qoi.h"
+
+class DrawDirect: public DisplayField
+{
+	PixelNumber height;
+
+	typedef void (*RefreshNotify)(bool full, bool changed);
+
+	RefreshNotify refreshNotify;
+
+public:
+	DrawDirect(PixelNumber py, PixelNumber px, PixelNumber ph, PixelNumber pw, RefreshNotify pRefreshNotify)
+		: DisplayField(py, px, pw), height(ph)
+	{
+		refreshNotify = pRefreshNotify;
+	}
+
+	PixelNumber GetHeight() const { return height; }
+	PixelNumber GetWidth() const { return width; }
+
+	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override;
+
+	void DrawRect(PixelNumber widthRect, PixelNumber heightRect, unsigned int pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count);
 };
 
 #endif /* DISPLAY_H_ */

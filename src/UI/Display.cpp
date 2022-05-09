@@ -5,7 +5,6 @@
  *  Author: David
  */
 
-#include <UI/ColourSchemes.hpp>
 #include <UI/Display.hpp>
 #include "Icons/Icons.hpp"
 
@@ -14,6 +13,9 @@
 #undef array
 #undef result
 #include <algorithm>
+
+#define DEBUG 0
+#include "Debug.hpp"
 
 extern UTFT lcd;
 
@@ -179,6 +181,7 @@ Window::Window(Colour pb)
 // Prepend a field to the linked list of displayed fields
 void Window::AddField(DisplayField *d)
 {
+	d->parent = this;
 	d->next = root;
 	root = d;
 }
@@ -294,6 +297,19 @@ void Window::ClearPopup(bool redraw, PopupWindow *whichOne)
 	}
 }
 
+bool Window::IsPopupActive(const PopupWindow *popup)
+{
+	for (PopupWindow *pw = next; pw; pw = pw->next)
+	{
+		if (pw == popup)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+
 // Redraw the specified field
 void Window::Redraw(DisplayField *f)
 {
@@ -366,7 +382,15 @@ void Window::Press(ButtonPress bp, bool v)
 {
 	if (bp.IsValid())
 	{
-		bp.GetButton()->Press(v, bp.GetIndex());
+		if (v)
+		{
+			bp.GetButton()->Press(v, bp.GetIndex());
+		}
+		else
+		{
+			bp.GetButton()->Release(v, bp.GetIndex());
+		}
+
 		if (bp.GetButton()->IsVisible())		// need to check this in case we are releasing the button and it has gone invisible since we pressed it
 		{
 			Redraw(bp.GetButton());
@@ -625,7 +649,7 @@ void FloatField::PrintText() const
 	{
 		lcd.printf("%s", label);
 	}
-	lcd.printf("%.*f", numDecimals, val);
+	lcd.printf("%.*f", numDecimals, static_cast<double>(val));
 	if (units != nullptr)
 	{
 		lcd.printf("%s", units);
@@ -660,15 +684,51 @@ ButtonBase::ButtonBase(PixelNumber py, PixelNumber px, PixelNumber pw)
 {
 }
 
+void ButtonBase::Press(bool p, int index)
+{
+	dbg("%08x toggle %d index %d pressed %d\n", this, toggle, index, p);
+	UNUSED(index);
+	if (toggle)
+	{
+		pressed = !pressed;
+		changed = true;
+
+		return;
+	}
+
+	if (p != pressed)
+	{
+		pressed = p;
+		changed = true;
+	}
+
+	return;
+}
+
+void ButtonBase::Release(bool p, int index)
+{
+	UNUSED(p); UNUSED(index);
+
+	if (!toggle)
+	{
+		pressed = 0;
+	}
+
+	changed = true;
+	dbg("%08x toggle %d index %d pressed %d\n", this, toggle, index, p);
+}
+
 PixelNumber ButtonBase::textMargin = 1;
 PixelNumber ButtonBase::iconMargin = 1;
 
-void ButtonBase::DrawOutline(PixelNumber xOffset, PixelNumber yOffset, bool isPressed) const
+void ButtonBase::DrawOutline(PixelNumber xOffset, PixelNumber yOffset) const
 {
-	lcd.setColor((isPressed) ? pressedBackColour : bcolour);
+	dbg("%08x toggle %d pressed %d\n", this, toggle, pressed);
+
+	lcd.setColor((pressed) ? pressedBackColour : bcolour);
 	// Note that we draw the filled rounded rectangle with the full width but 2 pixels less height than the border.
 	// This means that we start with the requested colour inside the border.
-	lcd.fillRoundRect(x + xOffset, y + yOffset + 1, x + xOffset + width - 1, y + yOffset + GetHeight() - 2, (isPressed) ? pressedGradColour : gradColour, buttonGradStep);
+	lcd.fillRoundRect(x + xOffset, y + yOffset + 1, x + xOffset + width - 1, y + yOffset + GetHeight() - 2, (pressed) ? pressedGradColour : gradColour, buttonGradStep);
 	lcd.setColor(borderColour);
 	lcd.drawRoundRect(x + xOffset, y + yOffset, x + xOffset + width - 1, y + yOffset + GetHeight() - 1);
 }
@@ -698,21 +758,6 @@ SingleButton::SingleButton(PixelNumber py, PixelNumber px, PixelNumber pw)
 	: ButtonBase(py, px, pw)
 {
 	param.sParam = nullptr;
-}
-
-void SingleButton::DrawOutline(PixelNumber xOffset, PixelNumber yOffset) const
-{
-	ButtonBase::DrawOutline(xOffset, yOffset, pressed);
-}
-
-void SingleButton::Press(bool p, int index) /*override*/
-{
-	UNUSED(index);
-	if (p != pressed)
-	{
-		pressed = p;
-		changed = true;
-	}
 }
 
 /*static*/ LcdFont ButtonWithText::font;
@@ -761,16 +806,18 @@ size_t CharButton::PrintText(size_t offset) const
 	return lcd.write((char)GetIParam(0));
 }
 
-TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param)
+TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param, bool isToggle)
 	: ButtonWithText(py, px, pw), text(pt)
 {
+	toggle = isToggle;
 	SetTextRows(pt);
 	SetEvent(e, param);
 }
 
-TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param)
+TextButton::TextButton(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param, bool isToggle)
 	: ButtonWithText(py, px, pw), text(pt)
 {
+	toggle = isToggle;
 	SetEvent(e, param);
 }
 
@@ -784,12 +831,12 @@ size_t TextButton::PrintText(size_t offset) const
 }
 
 TextButtonWithLabel::TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, int param, const char* _ecv_array null label)
-	: TextButton(py, px, pw, pt, e, param), label(label)
+	: TextButton(py - 2, px, pw, pt, e, param), label(label)
 {
 }
 
 TextButtonWithLabel::TextButtonWithLabel(PixelNumber py, PixelNumber px, PixelNumber pw, const char * _ecv_array null pt, event_t e, const char * _ecv_array param, const char* _ecv_array null label)
-	: TextButton(py, px, pw, pt, e, param), label(label)
+	: TextButton(py - 2, px, pw, pt, e, param), label(label)
 {
 }
 
@@ -918,7 +965,7 @@ size_t IntegerButton::PrintText(size_t offset) const
 size_t FloatButton::PrintText(size_t offset) const
 {
 	UNUSED(offset);
-	size_t ret = lcd.printf("%.*f", numDecimals, val);
+	size_t ret = lcd.printf("%.*f", numDecimals, static_cast<double>(val));
 	if (units != nullptr)
 	{
 		ret += lcd.printf("%s", units);
@@ -952,8 +999,10 @@ void ButtonRowWithText::Refresh(bool full, PixelNumber xOffset, PixelNumber yOff
 	{
 		for (unsigned int i = 0; i < numButtons; ++i)
 		{
+			pressed = ((int)i == whichPressed);
+			dbg("%08x pressed %d\n", this, pressed);
 			const PixelNumber buttonXoffset = xOffset + i * step;
-			DrawOutline(buttonXoffset, yOffset, (int)i == whichPressed);
+			DrawOutline(buttonXoffset, yOffset);
 			lcd.setTransparentBackground(true);
 			lcd.setColor(fcolour);
 			lcd.setFont(font);
@@ -1062,6 +1111,54 @@ void StaticImageField::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffs
 		lcd.drawCompressedBitmap(x + xOffset, y + yOffset, width, height, data);
 		changed = false;
 	}
+}
+
+void DrawDirect::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
+{
+	// nothing todo
+	UNUSED(full); UNUSED(xOffset); UNUSED(yOffset);
+
+	if (refreshNotify)
+		refreshNotify(full, changed);
+
+	changed = false;
+}
+
+void DrawDirect::DrawRect(PixelNumber widthRect, PixelNumber heightRect, unsigned int pixels_offset, const qoi_rgba_t *pixels, size_t pixels_count)
+{
+	if (!IsVisible())
+	{
+		dbg("not visible.\n");
+		return;
+	}
+
+	if (widthRect > width || heightRect > height)
+	{
+		dbg("rect does not fit\n");
+		return;
+	}
+
+	PixelNumber xabs = x;
+	PixelNumber yabs = y;
+
+	if (parent)
+	{
+		xabs += parent->Xpos();
+		yabs += parent->Ypos();
+	}
+
+	if (widthRect < width)
+	{
+		xabs += (width - widthRect);
+	}
+
+	if (heightRect < height)
+	{
+		yabs += (height - heightRect) / 2;
+	}
+
+	lcd.drawBitmapRgbaStream(xabs, yabs, widthRect, heightRect, pixels_offset, reinterpret_cast<const uint32_t *>(pixels), pixels_count);
+	changed = false;
 }
 
 // End

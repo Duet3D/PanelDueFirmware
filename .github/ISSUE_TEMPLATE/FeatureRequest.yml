@@ -1,0 +1,29 @@
+name: Feature Request
+description: Suggest an idea for this project
+title: "ADD A MEANINGFUL TITLE FOR YOUR FEATURE REQUEST"
+labels: [enhancement]
+body:
+- type: textarea
+  id: description
+  validations:
+    required: true
+  attributes:
+    label: Description
+    value: |
+      The Duet forums have wishlist sections for feature requests if you'd like to check if your request already exists or to discuss your feature request there first.
+
+      https://forum.duet3d.com/category/9/hardware-wishlist
+      https://forum.duet3d.com/category/8/firmware-wishlist
+      https://forum.duet3d.com/category/11/duet-web-control-wishlist
+      https://forum.duet3d.com/category/14/paneldue
+
+      ## Description
+      Please add a detailed description of the feature.
+
+      ## What problem does this feature try to solve?
+      Please add a clear and concise description.
+
+      ## Proposed Solution
+      Please add a clear and concise description.
+
+      Please add any further or additional information like photos, sketches, mockups, etc.

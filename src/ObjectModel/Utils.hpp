@@ -25,9 +25,7 @@ namespace OM {
 			const size_t heaterIndex,
 			Slots& slots,
 			const SlotType slotType = SlotType::panel,
-			const bool addTools = true,
-			const bool addBeds = true,
-			const bool addChambers = true);
+			const bool addTools = true);
 }
 
 #endif /* SRC_OBJECTMODEL_UTILS_HPP_ */

@@ -13,7 +13,7 @@
 #include <General/Bitmap.h>
 #include <General/FreelistManager.h>
 #include <General/StringRef.h>
-#include <General/inplace_function.h>
+#include <General/function_ref.h>
 #include <UI/UserInterfaceConstants.hpp>
 
 namespace OM
@@ -76,7 +76,7 @@ namespace OM
 		ToolHeater* GetOrCreateHeater(const uint8_t toolHeaterIndex);
 		bool GetHeaterTemps(const StringRef& ref, const bool active);
 		int8_t HasHeater(const uint8_t heaterIndex) const;
-		void IterateHeaters(stdext::inplace_function<void(ToolHeater*, size_t)> func, const size_t startAt = 0);
+		void IterateHeaters(function_ref<void(ToolHeater*, size_t)> func, const size_t startAt = 0);
 		size_t RemoveHeatersFrom(const uint8_t toolHeaterIndex);
 		void UpdateTemp(const uint8_t toolHeaterIndex, const int32_t temp, const bool active);
 
@@ -85,7 +85,7 @@ namespace OM
 
 	Tool* GetTool(const size_t index);
 	Tool* GetOrCreateTool(const size_t index);
-	bool IterateToolsWhile(stdext::inplace_function<bool(Tool*&, size_t)> func, const size_t startAt = 0);
+	bool IterateToolsWhile(function_ref<bool(Tool*&, size_t)> func, const size_t startAt = 0);
 	size_t RemoveTool(const size_t index, const bool allFollowing);
 }
 

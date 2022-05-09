@@ -14,9 +14,8 @@ enum Event : uint8_t
 {
 	evNull = 0,						// value must match nullEvent declared in Display.hpp
 
-	evDefaultRoot, evScreensaverRoot,
-	
-	evPendantRoot,
+	evLandscape,
+	evPortrait,
 
 	// Page selection
 	evTabControl, evTabStatus, evTabMsg, evTabSetup,
@@ -48,6 +47,7 @@ enum Event : uint8_t
 	// Control functions
 	evMovePopup, evExtrudePopup, evFan, evListMacros,
 	evMoveAxis,
+	evMoveSelectAxis,
 	evExtrudeAmount, evExtrudeRate, evExtrude, evRetract,
 	evHomeAxis,
 	

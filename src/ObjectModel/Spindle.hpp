@@ -38,11 +38,10 @@ namespace OM
 
 		// Index within configured spindles
 		uint8_t index;
-		uint32_t active;
-		uint32_t current;
-		uint32_t max;
-		uint32_t min;
-		SpindleState state;
+		int32_t active;
+		int32_t current;
+		int32_t max;
+		int32_t min;
 
 		void Reset();
 	};
