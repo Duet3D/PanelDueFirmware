@@ -4847,36 +4847,29 @@ namespace UI
 		AdjustControlPageMacroButtons();
 	}
 
-	void SetSpindleActive(size_t spindleIndex, int32_t activeRpm)
+	void UpdateSpindle(size_t index)
 	{
-		auto spindle = OM::GetOrCreateSpindle(spindleIndex);
+		auto spindle = OM::GetOrCreateSpindle(index);
+
 		if (spindle == nullptr)
 		{
 			return;
 		}
 
-		spindle->active = activeRpm;
-
-		OM::IterateToolsWhile([spindle](OM::Tool*& tool, size_t) {
-			if (tool->slot < MaxSlots && tool->spindle == spindle)
-			{
-				activeTemps[tool->slot]->SetValue(tool->spindle->active);
-			}
-			return tool->slot < MaxSlots;
-		});
-	}
-
-	void UpdateSpindleCurrent(OM::Spindle* spindle)
-	{
 		OM::IterateToolsWhile([spindle](OM::Tool*& tool, size_t) {
 			if (tool->slot < MaxSlots && tool->spindle == spindle)
 			{
 				currentTemps[tool->slot]->SetValue(spindle->current);
+
+				if (mgr.GetPopup() != setRPMPopup)
+				{
+					activeTemps[tool->slot]->SetValue(spindle->active);
+				}
 			}
 			return tool->slot < MaxSlots;
 		});
 
-		auto tool= OM::GetTool(currentTool);
+		auto tool = OM::GetTool(currentTool);
 
 		if (tool == nullptr || tool->spindle == nullptr)
 		{
@@ -4884,95 +4877,6 @@ namespace UI
 		}
 
 		currentTempPJog->SetValue(tool->spindle->current);
-	}
-
-	void SetSpindleCurrent(size_t spindleIndex, int32_t current)
-	{
-		auto spindle = OM::GetOrCreateSpindle(spindleIndex);
-		if (spindle == nullptr)
-		{
-			return;
-		}
-
-		spindle->current = current;
-
-		dbg("spindle %08x current %d\n", spindle, spindle->current);
-
-		UpdateSpindleCurrent(spindle);
-	}
-
-	void SetSpindleLimit(size_t spindleIndex, uint32_t value, bool max)
-	{
-		OM::Spindle *spindle = OM::GetOrCreateSpindle(spindleIndex);
-		if (spindle != nullptr)
-		{
-			if (max)
-			{
-				spindle->max = value;
-			}
-			else
-			{
-				spindle->min = value;
-			}
-		}
-	}
-
-	void SetSpindleState(size_t spindleIndex, OM::SpindleState state)
-	{
-		OM::Spindle* spindle = OM::GetOrCreateSpindle(spindleIndex);
-		if (spindle == nullptr)
-		{
-			return;
-		}
-
-		dbg("spindle %08x state %d\n", spindle, state);
-
-		switch (state)
-		{
-		case OM::SpindleState::forward:
-			spindle->current = abs(spindle->current);
-			spindle->active = abs(spindle->active);
-			break;
-		case OM::SpindleState::reverse:
-			spindle->current = -1 * abs(spindle->current);
-			spindle->active = -1 * abs(spindle->active);
-			break;
-		case OM::SpindleState::stopped:
-			break;
-		default:
-			dbg("unhandled state %d\n", state);
-			break;
-		}
-
-		UpdateSpindleCurrent(spindle);
-	}
-
-	// This handles the old path where tools were assigned to spindles
-	void SetSpindleTool(int8_t spindleNumber, int8_t toolIndex)
-	{
-		auto spindle = OM::GetOrCreateSpindle(spindleNumber);
-		if (spindle == nullptr)
-		{
-			return;
-		}
-		if (toolIndex == -1)
-		{
-			OM::IterateToolsWhile([spindle](OM::Tool*& tool, size_t) {
-				if (tool->spindle == spindle)
-				{
-					tool->spindle = nullptr;
-				}
-				return true;
-			});
-		}
-		else
-		{
-			OM::Tool *tool = OM::GetOrCreateTool(toolIndex);
-			if (tool != nullptr)
-			{
-				tool->spindle = spindle;
-			}
-		}
 	}
 
 	void UpdateToolStatus(size_t toolIndex, OM::ToolStatus status)
