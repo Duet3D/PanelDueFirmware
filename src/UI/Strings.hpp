@@ -164,6 +164,11 @@ struct StringTable
 
 	CSTRING heaterCombineTypeNames[(unsigned int)HeaterCombineType::NumTypes];
 
+	struct {
+		CSTRING currentRpm;
+		CSTRING activeRpm;
+	} spindle;
+
 };
 
 const StringTable LanguageTables[] =
@@ -324,6 +329,12 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
+		},
+
+		// Spindle
+		{
+			"Current",
+			"Active"
 		}
  	},
 
@@ -483,6 +494,12 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's nicht komb.",
 			"Heat's kombiniert"
+		},
+
+		// Spindle
+		{
+			"Current",
+			"Active"
 		}
 	},
 
@@ -642,6 +659,12 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
+		},
+
+		// Spindle
+		{
+			"Current",
+			"Active"
 		}
 	},
 
@@ -801,6 +824,12 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
+		},
+
+		// Spindle
+		{
+			"Current",
+			"Active"
 		}
 	},
 
@@ -960,6 +989,12 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
+		},
+
+		// Spindle
+		{
+			"Current",
+			"Active"
 		}
 	},
 
@@ -1119,6 +1154,12 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
+		},
+
+		// Spindle
+		{
+			"Current",
+			"Active"
 		}
 	},
 
@@ -1278,6 +1319,12 @@ const StringTable LanguageTables[] =
 		{
 			"Głowica prosta",
 			"Głowica inna",
+		},
+
+		// Spindle
+		{
+			"Current",
+			"Active"
 		}
 	},
 
@@ -1438,6 +1485,12 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
+		},
+
+		// Spindle
+		{
+			"Current",
+			"Active"
 		}
 	},
 	// Russian
@@ -1595,6 +1648,12 @@ const StringTable LanguageTables[] =
 		{
 			"Нагреватели не комб.",
 			"Нагреватели комб.",
+		},
+
+		// Spindle
+		{
+			"Current",
+			"Active"
 		}
 	}
 #endif
