@@ -132,7 +132,7 @@ static StaticTextField *jobTextField;
 static IntegerButton *feedrateButtonP, *extruderPercentButtonP, *spindleRPMButtonP;
 static StaticTextField *screensaverTextP;
 static StaticTextField *nameFieldP, *statusFieldP;
-static StaticTextField *standbyTempTextPJog;
+static StaticTextField *currentTempTextPJog, *activeTempTextPJog, *standbyTempTextPJog;
 static IntegerButton *activeTempPJog, *standbyTempPJog;
 static IntegerButton *activeTempsPJob[MaxPendantTools], *standbyTempsPJob[MaxPendantTools];
 static IntegerField *currentToolField;
@@ -1498,10 +1498,9 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 	mgr.AddField(new StaticTextField(secondBlock, CalcXPos(homingCol, colWidth),	colWidth, TextAlignment::Centre, strings->homing));
 	mgr.AddField(new StaticTextField(secondBlock, CalcXPos(toolsCol, colWidth),		colWidth, TextAlignment::Centre, strings->tools));
 //	mgr.AddField(new StaticTextField(secondBlock, CalcXPos(extrudeCol, labelWidth),	 labelWidth, TextAlignment::Centre, strings->extrusion));
-	mgr.AddField(new StaticTextField(secondBlock, CalcXPos(extrudeCol, colWidth),	colWidth, TextAlignment::Right, strings->current));
-	mgr.AddField(new StaticTextField(secondBlock + 2 * rowHeightP, CalcXPos(extrudeCol, colWidth), colWidth, TextAlignment::Right, strings->active));
-	standbyTempTextPJog = new StaticTextField(secondBlock + 4 * rowHeightP, CalcXPos(extrudeCol, colWidth), colWidth, TextAlignment::Right, strings->standby);
-	mgr.AddField(standbyTempTextPJog);
+	mgr.AddField((currentTempTextPJog = new StaticTextField(secondBlock, CalcXPos(extrudeCol, colWidth),	colWidth, TextAlignment::Right, strings->current)));
+	mgr.AddField((activeTempTextPJog = new StaticTextField(secondBlock + 2 * rowHeightP, CalcXPos(extrudeCol, colWidth), colWidth, TextAlignment::Right, strings->active)));
+	mgr.AddField((standbyTempTextPJog = new StaticTextField(secondBlock + 4 * rowHeightP, CalcXPos(extrudeCol, colWidth), colWidth, TextAlignment::Right, strings->standby)));
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 
@@ -2182,6 +2181,10 @@ namespace UI
 				const bool hasHeater = tool->heaters[0] != nullptr;
 				const bool hasExtruder = tool->extruders.IsNonEmpty();
 				const bool hasSpindle = tool->spindle != nullptr;
+
+				currentTempTextPJog->SetValue(hasSpindle ? strings->spindle.currentRpm : strings->current, true);
+				activeTempTextPJog->SetValue(hasSpindle ? strings->spindle.activeRpm : strings->active, true);
+
 				mgr.Show(currentTempPJog, hasHeater || hasSpindle);
 				mgr.Show(activeTempPJog, hasHeater || hasSpindle);
 				mgr.Show(standbyTempTextPJog, hasHeater);
