@@ -4657,12 +4657,12 @@ namespace UI
 		size_t slotPJob = 0;
 
 		// Hard-code the probe in the first slot
-		auto probeTool = OM::GetTool(ProbeToolIndex);
+		auto probeTool = OM::GetTool(OM::GetProbeToolIndex());
 		if (probeTool != nullptr)
 		{
 			probeTool->slotPJog = slotPJog;
-			toolSelectButtonsPJog[slotPJog]->SetEvent(evSelectHead, ProbeToolIndex);
-			toolSelectButtonsPJog[slotPJog]->SetIntVal(ProbeToolIndex);
+			toolSelectButtonsPJog[slotPJog]->SetEvent(evSelectHead, OM::GetProbeToolIndex());
+			toolSelectButtonsPJog[slotPJog]->SetIntVal(OM::GetProbeToolIndex());
 			toolSelectButtonsPJog[slotPJog]->SetPrintText(true);
 			toolSelectButtonsPJog[slotPJog]->SetText(strings->probe);
 			toolSelectButtonsPJog[slotPJog]->SetIcon(IconDummy);
@@ -4740,11 +4740,11 @@ namespace UI
 				}
 			}
 
-			if (tool->index != ProbeToolIndex)
+			if (tool->index != OM::GetProbeToolIndex())
 			{
 				tool->slotPJog = MaxPendantTools;
 				tool->slotPJob = MaxPendantTools;
-				if (tool->index != ProbeToolIndex)
+				if (tool->index != OM::GetProbeToolIndex())
 				{
 					if (slotPJog < MaxPendantTools)
 					{

@@ -15,6 +15,18 @@ static ToolList tools;
 
 namespace OM
 {
+	static uint8_t probeToolIndex = 10;
+
+	void SetProbeToolIndex(uint8_t index)
+	{
+		probeToolIndex = index;
+	}
+
+	uint8_t GetProbeToolIndex()
+	{
+		return probeToolIndex;
+	}
+
 	void ToolHeater::Reset()
 	{
 		heaterIndex = 0;

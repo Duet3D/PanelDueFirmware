@@ -87,6 +87,9 @@ namespace OM
 	Tool* GetOrCreateTool(const size_t index);
 	bool IterateToolsWhile(function_ref<bool(Tool*&, size_t)> func, const size_t startAt = 0);
 	size_t RemoveTool(const size_t index, const bool allFollowing);
+
+	void SetProbeToolIndex(uint8_t index);
+	uint8_t GetProbeToolIndex();
 }
 
 #endif /* SRC_OBJECTMODEL_TOOL_HPP_ */

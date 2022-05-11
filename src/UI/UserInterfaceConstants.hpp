@@ -17,7 +17,6 @@ constexpr size_t MaxHeatersPerTool = 8;
 static const char* _ecv_array const jogAxes[]  = { "X", "Y", "Z", "A", "C" };
 static const char* _ecv_array const wcsNames[] = { "G54", "G55", "G56", "G57", "G58", "G59", "G59.1", "G59.2", "G59.3" };
 static const char* _ecv_array const wcsNamesSelected[] = { "G54*", "G55*", "G56*", "G57*", "G58*", "G59*", "G59.1*", "G59.2*", "G59.3*" };
-static const uint8_t ProbeToolIndex = 10;
 static const char* _ecv_array const babystepAmounts[] = { "0.01", "0.02", "0.05", "0.1" };
 static const float _ecv_array babystepAmountsF[] = { 0.01, 0.02, 0.05, 0.1 };
 constexpr int8_t NoTool = -1;
