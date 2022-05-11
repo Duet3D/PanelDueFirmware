@@ -113,6 +113,7 @@ UTouch touch(23, 24, 22, 21, 20);
 #define FETCH_BOARDS		(1)
 #define FETCH_DIRECTORIES	(0)
 #define FETCH_FANS			(0)
+#define FETCH_GLOBAL			(1)
 #define FETCH_HEAT			(1)
 #define FETCH_INPUTS		(0)
 #define FETCH_JOB			(1)
@@ -251,6 +252,7 @@ enum ReceivedDataEvent
 	rcvOMKeyBoards,
 	rcvOMKeyDirectories,
 	rcvOMKeyFans,
+	rcvOMKeyGlobal,
 	rcvOMKeyHeat,
 	rcvOMKeyInputs,
 	rcvOMKeyJob,
@@ -271,6 +273,9 @@ enum ReceivedDataEvent
 
 	// Keys for fans response
 	rcvFansRequestedValue,
+
+	// Keys for globals
+	rcvGlobalProbeToolIndex,
 
 	// Keys for heat response
 	rcvHeatBedHeaters,
@@ -317,6 +322,7 @@ enum ReceivedDataEvent
 	rcvSeqsBoards,
 	rcvSeqsDirectories,
 	rcvSeqsFans,
+	rcvSeqsGlobal,
 	rcvSeqsHeat,
 	rcvSeqsInputs,
 	rcvSeqsJob,
@@ -382,6 +388,8 @@ static FieldTableEntry fieldTable[] =
 	// M409 K"fans" response
 	{ rcvFansRequestedValue,			"fans^:requestedValue" },
 
+	{ rcvGlobalProbeToolIndex,			"global:zProbeToolNum" },
+
 	// M409 K"heat" response
 	{ rcvHeatBedHeaters,				"heat:bedHeaters^" },
 	{ rcvHeatChamberHeaters,			"heat:chamberHeaters^" },
@@ -426,6 +434,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvSeqsBoards,					"seqs:boards" },
 	{ rcvSeqsDirectories,				"seqs:directories" },
 	{ rcvSeqsFans,						"seqs:fans" },
+	{ rcvSeqsGlobal,					"seqs:global" },
 	{ rcvSeqsHeat,						"seqs:heat" },
 	{ rcvSeqsInputs,					"seqs:inputs" },
 	{ rcvSeqsJob,						"seqs:job" },
@@ -535,6 +544,9 @@ static struct Seq {
 #endif
 #if FETCH_MOVE
 	{ .event = rcvOMKeyMove, .seqid = rcvSeqsMove, .lastSeq = 0, .state = SeqStateInit, .key = "move", .flags = "v" },
+#endif
+#if FETCH_GLOBAL
+	{ .event = rcvOMKeyGlobal, .seqid = rcvSeqsGlobal, .lastSeq = 0, .state = SeqStateInit, .key = "global", .flags = "v" },
 #endif
 #if FETCH_HEAT
 	{ .event = rcvOMKeyHeat, .seqid = rcvSeqsHeat, .lastSeq = 0, .state = SeqStateInit, .key = "heat", .flags = "v" },
@@ -1230,6 +1242,17 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 			if (b && f >= 0.0 && f <= 1.0)
 			{
 				UI::UpdateFanPercent(indices[0], (int)((f * 100.0f) + 0.5f));
+			}
+		}
+		break;
+
+	case rcvGlobalProbeToolIndex:
+		{
+			int32_t index;
+			bool b = GetInteger(data, index);
+			if (b)
+			{
+				OM::SetProbeToolIndex(index);
 			}
 		}
 		break;
