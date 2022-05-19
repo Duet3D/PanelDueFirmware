@@ -333,7 +333,7 @@ PopupWindow *CreateIntPopupBar(const ColourScheme& colours, PixelNumber width, u
 	for (unsigned int i = 0; i < numEntries; ++i)
 	{
 		const int iParam = (params == nullptr) ? (int)i : params[i];
-		pf->AddField(new TextButton(popupSideMargin, popupSideMargin + i * step, step - popupFieldSpacing, text[i], (params[i] == 0) ? zeroEv : ev, iParam));
+		pf->AddField(new TextButton(popupSideMargin, popupSideMargin + i * step, step - popupFieldSpacing, text[i], (params && params[i] == 0) ? zeroEv : ev, iParam));
 	}
 	return pf;
 }
