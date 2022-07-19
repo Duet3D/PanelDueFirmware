@@ -984,8 +984,8 @@ const StringTable LanguageTables[] =
 			"Przesyłanie firmware",
 			"Zmiana narzędzia",
 			"Symulacja",
-			"Off",
-			"Cancelling",
+			"Wyłącz",
+			"Anuluj",
 		},
 
 		// Theme names
