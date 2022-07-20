@@ -1590,7 +1590,7 @@ namespace UI
 	}
 
 	// Change to the page indicated. Return true if the page has a permanently-visible button.
-	bool ChangePage(ButtonBase *newTab)
+	static bool ChangePage(ButtonBase *newTab)
 	{
 		if (newTab == currentTab)
 		{
