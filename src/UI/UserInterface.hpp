@@ -45,7 +45,6 @@ namespace UI
 	extern void UpdateDuration(uint32_t duration);
 	extern void UpdateWarmupDuration(uint32_t warmupDuration);
 	extern void SetSimulatedTime(uint32_t simulatedTime);
-	extern bool ChangePage(ButtonBase *newTab);
 	extern bool IsSetupTab();
 	extern void Tick();
 	extern void Spin();
