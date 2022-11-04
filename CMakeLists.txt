@@ -134,7 +134,7 @@ set( CMAKE_ASM_FLAGS "${BASIC_C_FLAGS} ${DEVICE_FLAGS} ${CMAKE_ASM_FLAGS}" )
 set( CMAKE_C_FLAGS "${BASIC_C_FLAGS} ${DEVICE_FLAGS} ${CMAKE_C_FLAGS}" )
 set( CMAKE_CXX_FLAGS "${BASIC_C_FLAGS} ${DEVICE_FLAGS} ${CMAKE_CXX_FLAGS}" )
 
-set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings" )
+set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static --specs=nano.specs -Wl,--gc-sections -Wl,--fatal-warnings -Wl,--no-warn-rwx-segments" )
 
 message( "Project Device: " ${DEVICE} )
 message( "Project C_FLAGS: " ${CMAKE_C_FLAGS} )
