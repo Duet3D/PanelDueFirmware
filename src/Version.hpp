@@ -8,10 +8,10 @@
 #ifndef SRC_VERSION_HPP_
 #define SRC_VERSION_HPP_
 
-#define VERSION_TEXT_MAIN		"3.4.1"
+#define VERSION_TEXT_MAIN		"3.4.2-pre1"
 
 #ifdef SUPPORT_ENCODER
-#define VERSION_TEXT	VERSION_TEXT_MAIN "+enc"
+#define VERSION_TEXT	VERSION_TEXT_MAIN "+provel"
 #else
 #define VERSION_TEXT	VERSION_TEXT_MAIN
 #endif
