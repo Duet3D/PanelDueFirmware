@@ -22,11 +22,8 @@
 #include <General/StringFunctions.h>
 
 extern MainWindow mgr;
-extern IntegerField *freeMem;
-extern StaticTextField *debugField;
 extern StaticTextField *touchCalibInstruction;
 extern StaticTextField *messageTextFields[], *messageTimeFields[];
-extern TextField *fwVersionField;
 
 namespace UI
 {

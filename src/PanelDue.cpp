@@ -44,18 +44,6 @@ extern uint16_t _esplash[];							// defined in linker script
 #define DEBUG	(0) // 0: off, 1: MessageLog, 2: Uart
 #include "Debug.hpp"
 
-#define DEBUG2	(0) // 0: off, 1: DebugField
-#if (DEBUG2)
-
-#define STRINGIFY(x)	#x
-#define TOSTRING(x)	STRINGIFY(x)
-#define dbg2(fmt, args...)		debugField->SetValue(TOSTRING(__LINE__)); debugField->Refresh(true, 0, 0)
-
-#else
-#define dbg2(fmt, args...)		do {} while(0)
-
-#endif
-
 // Controlling constants
 constexpr uint32_t defaultPrinterPollInterval = 500;	// poll interval in milliseconds
 constexpr uint32_t printerResponseTimeout = 2000;	// shortest time after a response that we send another poll (gives printer time to catch up)
@@ -2156,12 +2144,6 @@ static void ParserErrorEncountered(int currentState, const char*, int errors)
 	currentRespSeq->state = SeqStateError;
 }
 
-// Update those fields that display debug information
-void UpdateDebugInfo()
-{
-	freeMem->SetValue(GetFreeMemory());
-}
-
 #if 0
 void SelfTest()
 {
@@ -2340,8 +2322,6 @@ int main(void)
 
 	// Hide all tools and heater related columns initially
 	UI::AllToolsSeen();
-
-	debugField->Show(false);					// show the debug field only if debugging is enabled
 
 	// Display the Control tab. This also refreshes the display.
 	UI::ShowDefaultPage();
@@ -2522,7 +2502,6 @@ int main(void)
 		}
 
 		// refresh the display
-		UpdateDebugInfo();
 		mgr.Refresh(false);
 
 		// beep handling

@@ -43,11 +43,10 @@ MainWindow mgr;
 #include "Debug.hpp"
 
 // Public fields
-TextField *fwVersionField, *userCommandField, *ipAddressField;
-IntegerField *freeMem;
-StaticTextField *touchCalibInstruction, *debugField;
+StaticTextField *touchCalibInstruction;
 StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
 
+static TextField *fwVersionField, *userCommandField, *ipAddressField;
 static const ColourScheme *colours;
 
 // Private fields
@@ -832,7 +831,6 @@ static void CreateTemperatureGrid(const ColourScheme& colours)
 
 	// Add the labels and the debug field
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
-	mgr.AddField(debugField = new StaticTextField(row1 + labelRowAdjust, margin, bedColumn - fieldSpacing - margin, TextAlignment::Left, "debug"));
 	mgr.AddField(new StaticTextField(row3 + labelRowAdjust, margin, bedColumn - fieldSpacing - margin, TextAlignment::Right, strings->current));
 	mgr.AddField(new StaticTextField(row4 + labelRowAdjust, margin, bedColumn - fieldSpacing - margin, TextAlignment::Right, strings->active));
 	mgr.AddField(new StaticTextField(row5 + labelRowAdjust, margin, bedColumn - fieldSpacing - margin, TextAlignment::Right, strings->standby));
@@ -1054,7 +1052,6 @@ static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
 	// The firmware version field doubles up as an area for displaying debug messages, so make it the full width of the display
 	mgr.AddField(fwVersionField = new TextField(row1, margin, DisplayX, TextAlignment::Left, strings->firmwareVersion, VERSION_TEXT));
-	mgr.AddField(freeMem = new IntegerField(row2, margin, DisplayX/2 - margin, TextAlignment::Left, "Free RAM: "));
 	mgr.AddField(new ColourGradientField(ColourGradientTopPos, ColourGradientLeftPos, ColourGradientWidth, ColourGradientHeight));
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
