@@ -76,21 +76,21 @@ $ git submodule update --recursive
 With the default build system
 
 ```sh
-$ cmake -B build -DDEVICE="5.0i" .
+$ cmake -S . -B build -DDEVICE="5.0i" .
 $ make -C build all -j12
 ```
 
 Or with an explicit build system
 
 ```sh
-$ cmake -B build -G "Unix Makefiles" -DDEVICE="5.0i" .
+$ cmake -S . -B build -G "Unix Makefiles" -DDEVICE="5.0i" .
 $ make -C build all -j12
 ```
 
 The default compiler can be easily overwritten by setting the cross compiler prefix.
 
 ```sh
-$ cmake -B build -DDEVICE="5.0i" -DCROSS_COMPILE="/path/to/cross/compiler/arm-none-eabi-" .
+$ cmake -S . -B build -DDEVICE="5.0i" -DCROSS_COMPILE="/path/to/cross/compiler/arm-none-eabi-" .
 $ make -C build all -j12
 ```
 
@@ -102,19 +102,19 @@ When passing a path name use
 - use backslashes to escape whitespaces.
 
 ```sh
-$ cmake -B build -DDEVICE="5.0i" -DCROSS_COMPILE="C:/Program\ Files\ (x86)/GNU\ Tools\ ARM\ Embedded/8\ 2018-q4-major/bin/arm-none-eabi-" .
+$ cmake -S . -B build -DDEVICE="5.0i" -DCROSS_COMPILE="C:/Program\ Files\ (x86)/GNU\ Tools\ ARM\ Embedded/8\ 2018-q4-major/bin/arm-none-eabi-" .
 ```
 
 Create build system for Eclipse CDT which can be easily integrated
 
 ```sh
-$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE="5.0i"
+$ cmake -G "Eclipse CDT4 - Unix Makefiles" -S . -B . -DDEVICE="5.0i"
 ```
 
 To switching the target device re-run cmake with another device setting
 
 ```sh
-$ cmake -G "Eclipse CDT4 - Unix Makefiles" -B . -DDEVICE="v3-5.0"
+$ cmake -G "Eclipse CDT4 - Unix Makefiles" -S . -B . -DDEVICE="v3-5.0"
 ```
 
 For further Eclipse CDT integration please visit
@@ -127,7 +127,7 @@ It is possible to configure the local build system permamently instead of passin
 
 - copy env.cmake.example to env.cmake
 - uncomment variables and adapt accordingly in env.cmake
-- re-run 'cmake -B build .'
+- re-run 'cmake -S . -B build .'
 
 ## Flash a firmware image to a device
 
