@@ -948,6 +948,7 @@ ButtonRow::ButtonRow(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber
 ButtonRowWithText::ButtonRowWithText(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ps, unsigned int nb, event_t e)
 	: ButtonRow(py, px, pw, ps, nb, e)
 {
+	font = DisplayField::defaultFont;
 }
 
 PixelNumber ButtonRowWithText::GetHeight() const

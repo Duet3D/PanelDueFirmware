@@ -421,7 +421,9 @@ protected:
 
 public:
 	ButtonWithText(PixelNumber py, PixelNumber px, PixelNumber pw)
-		: SingleButton(py, px, pw) {}
+		: SingleButton(py, px, pw) {
+		font = DisplayField::defaultFont;
+	};
 
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override final;
 
