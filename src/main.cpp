@@ -7,72 +7,121 @@
 #define DEBUG 2
 #include "Debug.hpp"
 
+static Provel::Provel *ui;
+static Provel::ScreenSplash *splash;
+static Provel::ScreenHoming *home;
+
 int main_init()
 {
 	//UTFT lcd(DISPLAY_CONTROLLER, 15, 14, 0, 39);
-	Provel::Provel ui;
-	Provel::ScreenSplash splash;
-
-	dbg("STARTING\r\n");
-	dbg("splash init\r\n");
-
-	ui.Push(&splash);
-	ui.Update();
-
-	delay_ms(1000);
-	dbg("splash done\r\n");
 
 #if 1
-	Provel::ScreenHoming home;
-	ui.Push(&home);
+	ui = new Provel::Provel();
+	splash = new Provel::ScreenSplash();
+	home = new Provel::ScreenHoming();
+
+	dbg("STARTING\r\n");
+	dbg("splash\r\n");
+
+	ui->Push(splash);
+	ui->Update();
+
+	delay_ms(1000);
+
+	dbg("home\r\n");
+	ui->Push(home);
+	ui->Update();
+
+#if 0
+
+	delay_ms(1000);
+
+	dbg("splash reset\r\n");
+	ui.Reset(&splash);
+	ui.Update();
+#endif
+
+#else
+	Provel::ScreenFault fault;
+	Provel::ScreenFileLoaded fileLoaded;
+	Provel::ScreenHeating heating;
+	Provel::ScreenIdle idle;
+	Provel::ScreenLoading loading;
+	Provel::ScreenPrinter printer;
+	Provel::ScreenPrinting printing;
+	Provel::ScreenPurging purging;
+	Provel::ScreenWarning warning;
+	Provel::ScreenZCalibrate zCalibrate;
+
+	ui.Push(&fault);
+	ui.Update();
+
+	ui.Push(&fileLoaded);
+	ui.Update();
+
+	ui.Push(&heating);
+	ui.Update();
+
+	ui.Push(&idle);
+	ui.Update();
+
+	ui.Push(&loading);
+	ui.Update();
+
+	ui.Push(&printer);
+	ui.Update();
+
+	ui.Push(&printing);
+	ui.Update();
+
+	ui.Push(&warning);
+	ui.Update();
+
+	ui.Push(&zCalibrate);
 	ui.Update();
 #endif
 
 	return 0;
 }
 
-int main_run(UTouch &touch)
+struct TouchEvent {
+	uint32_t x;
+	uint32_t y;
+	enum Provel::TouchState state;
+};
+
+int main_touchUpdate(UTouch &touch, struct TouchEvent &event)
 {
-	const uint32_t normalTouchDelay = 250;				// how long we ignore new touches for after pressing Set
-	const uint32_t repeatTouchDelay = 100;				// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
+	const uint32_t normalTouchDelay = 250;	// how long we ignore new touches for after pressing Set
+	const uint32_t repeatTouchDelay = 100;	// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
 
 	const uint32_t now = SystemTick::GetTickCount();
 
 	static uint32_t lastTouchTime;
 
-	struct TouchEvent {
-		uint32_t x;
-		uint32_t y;
-		enum {
-			EventStateReleased = 0,
-			EventStatePressed = 1,
-			EventStateRepeated = 2
-		} state;
-	} event = { 0, 0, TouchEvent::EventStateReleased };
 	uint16_t x, y;
 	bool repeat;
-	bool touched = false;
+	int touched = 0;
 
 	// check for valid touch event
-	if (touch.read(x, y, repeat))
-	{
+	if (touch.read(x, y, repeat)) {
 		switch (event.state)
 		{
-			case TouchEvent::EventStateReleased:
-				touched = true;
-				event.state = TouchEvent::EventStatePressed;
+			case Provel::TouchState::Released:
+				touched = 1;
+				event.state = Provel::TouchState::Pressed;
 				break;
-			case TouchEvent::EventStatePressed:
+			case Provel::TouchState::Pressed:
 				if (now - lastTouchTime >= normalTouchDelay)
 				{
-					touched = true;
-					event.state = TouchEvent::EventStateRepeated;
+					touched = 1;
+					event.state = Provel::TouchState::Repeated;
 				}
 				break;
-			case TouchEvent::EventStateRepeated:
+			case Provel::TouchState::Repeated:
 				if (now - lastTouchTime >= repeatTouchDelay)
 				{
-					touched = true;
+					touched = 1;
 				}
 				break;
 		}
@@ -87,11 +136,44 @@ int main_run(UTouch &touch)
 			event.x = x;
 			event.y = y;
 		}
-	} else if (event.state != TouchEvent::EventStateReleased && now - lastTouchTime >= normalTouchDelay) {
+	} else if (event.state != Provel::TouchState::Released && now - lastTouchTime >= normalTouchDelay) {
 		//dbg("released\n");
-		touched = true;
-		event.state = TouchEvent::EventStateReleased;
+		touched = 1;
+		event.state = Provel::TouchState::Released;
 	}
+
+	return touched;
+}
+
+int main_run(UTouch &touch)
+{
+
+	static struct TouchEvent event = {
+		0,
+		0,
+		Provel::TouchState::Released
+	};
+	int touched;
+	int ret;
+
+	touched = main_touchUpdate(touch, event);
+	if (touched) {
+		dbg("\r\n");
+		ret = ui->ProcessTouch(event.x, event.y, event.state);
+		if (ret) {
+			dbg("failed to process touch event\r\n");
+			return ret;
+		}
+	}
+#if 1
+	//dbg("\r\n");
+	ret = ui->Update();
+	if (ret) {
+		dbg("failed to update ui\r\n");
+		return ret;
+	}
+#endif
+	//dbg("\r\n");
 
 	return 0;
 }
