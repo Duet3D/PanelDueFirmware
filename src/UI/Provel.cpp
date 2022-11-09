@@ -112,7 +112,7 @@ int Provel::Update()
 {
 	Screen *head = screens;
 
-	dbg("\r\n");
+	//dbg("%p\r\n", head);
 
 	if (!head)
 		return 0;
@@ -120,18 +120,24 @@ int Provel::Update()
 	return head->Update();
 }
 
-int Provel::FindTouch(int x, int y)
+int Provel::ProcessTouch(int x, int y, enum TouchState state)
 {
-	dbg("\r\n");
+	dbg("x %d y %d %d\r\n", x, y, state);
+	Screen *head;
+	Element *element;
 
-	return 0;
-}
+	if (!screens)
+		return 0;
 
-int Provel::ProcessTouch(ButtonPress &event)
-{
-	dbg("\r\n");
+	head = screens;
 
-	return 0;
+	element = head->Find(x, y);
+	if (!element)
+		return 0;
+
+	dbg("done\r\n");
+
+	return element->ProcessTouch(x, y, state);
 }
 
 Screen *Provel::Reset(Screen *screen)
@@ -154,16 +160,16 @@ int Screen::Init(const ColourScheme *colours)
 	dbg("\r\n");
 
 	root.Init(colours->defaultBackColour);
-	//root.Init(UTFT::fromRGB(128, 0, 0));
-	dbg("\r\n");
 	root.Refresh(true);
+
+	dbg("done\r\n");
 
 	return 0;
 }
 
 int Screen::Update()
 {
-	dbg("\r\n");
+	//dbg("\r\n");
 
 	root.Refresh(false);
 
@@ -172,16 +178,24 @@ int Screen::Update()
 
 int Screen::Shutdown()
 {
+	dbg("\r\n");
+
 	return 0;
 };
 
 int Screen::Add(Element *element)
 {
 	dbg("\r\n");
+	Element *tmp;
 
 	assert(element);
 
 	root.AddField(element->Get());
+	tmp = elements;
+
+	elements = element;
+
+	element->next = tmp;
 
 	return 0;
 }
@@ -190,12 +204,52 @@ int Screen::Delete(Element *element)
 {
 	assert(element);
 
+	Element *head = elements;
+
+	if (elements == element) {
+		elements = element->next;
+		element->next = nullptr;
+
+		return 0;
+	}
+
+	for (Element *elem = elements; elem; elem = elem->next) {
+		if (elem->next == element) {
+			elem->next = element->next;
+			element->next = nullptr;
+
+			return 0;
+		}
+	}
+
 	return 0;
+}
+
+Element *Screen::Find(int x, int y)
+{
+	ButtonPress event;
+	ButtonBase *button;
+
+	dbg("\r\n");
+
+	event = root.FindEvent(x, y);
+	button = event.GetButton();
+
+	if (!button)
+		return nullptr;
+
+	for (Element *elem = elements; elem; elem = elem->next) {
+		if (elem->Get() == button)
+			dbg("%p\r\n", elem);
+			return elem;
+	}
+
+	return nullptr;
 }
 
 
 Text::Text(PixelNumber x, PixelNumber y, PixelNumber width, PixelNumber height, const char *ptext) :
-	text(y, x, width, TextAlignment::Left, ptext, false)
+	text(y, x, width, TextAlignment::Right, ptext, false)
 {
 }
 
@@ -211,7 +265,7 @@ ScreenSplash::ScreenSplash()
 	dbg("\r\n");
 	timeout = 1000;
 	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: PROVEL");
-	version = new Text(100, 100, PROVEL_WIDTH, 100, "text: " VERSION_TEXT);
+	version = new Title(100, 100, PROVEL_WIDTH, 100, "text: " VERSION_TEXT);
 
 	Add(title);
 	Add(version);

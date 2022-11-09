@@ -12,8 +12,13 @@ namespace Provel {
 class Screen;
 class Element;
 
-// generic classes
+enum TouchState {
+	Released = 0,
+	Pressed = 1,
+	Repeated = 2
+};
 
+// generic classes
 class Provel {
 
 private:
@@ -32,8 +37,7 @@ public:
 
 	// event functions
 	int Update();
-	int FindTouch(int x, int y);
-	int ProcessTouch(ButtonPress &event);
+	int ProcessTouch(int x, int y, enum TouchState state);
 };
 
 class Screen {
@@ -47,6 +51,8 @@ public:
 	// add and delete ui elements from screen
 	int Add(Element *element);
 	int Delete(Element *element);
+
+	Element *Find(int x, int y);
 
 	// init or shutdown state machine
 	virtual int Init(const ColourScheme *colours);
@@ -62,12 +68,17 @@ public:
 };
 
 class Element {
-	Element *next;
 
 public:
+	Element *next;
+
 	virtual int Init() { return 0; };
 	virtual int Shutdown() { return 0; };
 
+	virtual int ProcessTouch(int x, int y, enum TouchState state) {
+		(void)x, (void)y, (void)state;
+		return 0;
+	};
 	virtual int Update() { return 0; };
 
 	virtual DisplayField *Get() { return nullptr; };
@@ -153,7 +164,7 @@ public:
 
 class ScreenSplash : public Screen {
 	Title *title;
-	Text *version;
+	Title *version;
 	int timeout; // in ms
 
 public:
