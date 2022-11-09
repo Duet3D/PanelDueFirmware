@@ -8,12 +8,17 @@
 #if (DEBUG == 1)
 #include <UI/MessageLog.hpp>
 
-#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
+#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __PRETTY_FUNCTION__, __LINE__, ##args); } while(0)
 
 #elif (DEBUG == 2)
 #include "Hardware/SerialIo.hpp"
 
-#define dbg(fmt, args...)		do { SerialIo::Dbg("%s(%d): " fmt, __FUNCTION__, __LINE__, ##args); } while(0)
+#define dbg(fmt, args...)		do { SerialIo::Dbg("%s(%d): " fmt, __func__, __LINE__, ##args); } while(0)
+
+#elif (DEBUG == 3)
+#include "Hardware/SerialIo.hpp"
+
+#define dbg(fmt, args...)		do { SerialIo::Dbg("%s(%d): " fmt, __PRETTY_FUNCTION__, __LINE__, ##args); } while(0)
 
 #else
 #define dbg(fmt, args...)		do {} while(0)
