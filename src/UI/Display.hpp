@@ -69,14 +69,14 @@ public:
 class DisplayField
 {
 protected:
-	PixelNumber y, x;							// Coordinates of top left pixel, counting from the top left corner
-	PixelNumber width;							// number of pixels wide
-	Colour fcolour, bcolour;					// foreground and background colours
+	PixelNumber y, x;		// Coordinates of top left pixel, counting from the top left corner
+	PixelNumber width;		// number of pixels wide
+	Colour fcolour, bcolour;	// foreground and background colours
 	uint16_t changed : 1,
 			visible : 1,
-			underlined : 1,						// really belongs in class FieldWithText, but stored here to save space
-			border : 1,							// really belongs in class FieldWithText, but stored here to save space
-			textRows : 2;						// really belongs in class FieldWithText, but stored here to save space
+			underlined : 1,	// really belongs in class FieldWithText, but stored here to save space
+			border : 1,	// really belongs in class FieldWithText, but stored here to save space
+			textRows : 2;	// really belongs in class FieldWithText, but stored here to save space
 
 	static LcdFont defaultFont;
 	static Colour defaultFcolour, defaultBcolour;
@@ -121,7 +121,7 @@ public:
 	static PixelNumber GetIconHeight(Icon ic) { return ic[1]; }
 	static const uint8_t * _ecv_array GetIconData(Icon ic) { return ic + 2; }
 
-	static PixelNumber GetTextWidth(const char* _ecv_array s, PixelNumber maxWidth);						// find out how much width we need to print this text
+	static PixelNumber GetTextWidth(const char* _ecv_array s, PixelNumber maxWidth);			// find out how much width we need to print this text
 	static PixelNumber GetTextWidth(const char* _ecv_array s, PixelNumber maxWidth, size_t maxChars);	// find out how much width we need to print this text
 };
 
@@ -487,8 +487,6 @@ public:
 // Standard button with text
 class TextButton : public ButtonWithText
 {
-	friend class ShadowTextButton;
-
 	const char * _ecv_array null text;
 
 protected:
