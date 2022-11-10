@@ -32,14 +32,14 @@ Colour DisplayField::defaultPressedGradColour = 0;
 Palette DisplayField::defaultIconPalette = IconPaletteLight;
 
 DisplayField::DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw)
-	: y(py), x(px), width(pw), height(0), fcolour(defaultFcolour), bcolour(defaultBcolour),
-		changed(true), visible(true), underlined(false), border(false), textRows(1), next(nullptr)
+	: DisplayField(py, px, pw, 0)
 {
 }
 
 DisplayField::DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ph)
 	: y(py), x(px), width(pw), height(ph), fcolour(defaultFcolour), bcolour(defaultBcolour),
-		changed(true), visible(true), underlined(false), border(false), textRows(1), next(nullptr)
+		changed(true), visible(true), underlined(false), border(false), textRows(1),
+		next(nullptr), children(nullptr)
 {
 }
 
@@ -132,6 +132,14 @@ ButtonPress DisplayField::FindEvent(PixelNumber x, PixelNumber y, DisplayField *
 	while (p != nullptr)
 	{
 		p->CheckEvent(x, y, bestError, best);
+
+		DisplayField *child = p->children;
+		while (child)
+		{
+			child->CheckEvent(x, y, bestError, best);
+			child = child->next;
+		}
+		dbg("ui element %p best %p\r\n", p, best.GetButton());
 		p = p->next;
 	}
 	return best;

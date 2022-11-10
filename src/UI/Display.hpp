@@ -97,6 +97,7 @@ protected:
 public:
 	Window * null parent;
 	DisplayField * null next;					// link to next field in list
+	DisplayField * null children;
 
 	virtual bool IsButton() const { return false; }
 	virtual bool IsVisible() const { return visible; }
@@ -121,6 +122,7 @@ public:
 	static void SetDefaultColours(Colour pf, Colour pb) { defaultFcolour = pf; defaultBcolour = pb; }
 	static void SetDefaultColours(Colour pf, Colour pb, Colour pbb, Colour pg, Colour pbp, Colour pgp, Palette pal);
 	static void SetDefaultFont(LcdFont pf) { defaultFont = pf; }
+
 	static ButtonPress FindEvent(PixelNumber x, PixelNumber y, DisplayField * null p);
 
 	// Icon management
