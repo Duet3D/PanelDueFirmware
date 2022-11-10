@@ -38,4 +38,14 @@ ScreenHoming::~ScreenHoming()
 {
 }
 
+
+ScreenFileLoaded::ScreenFileLoaded()
+{
+	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: FILE LOADED");
+	startOrClear = new ButtonDouble(100, 100, PROVEL_WIDTH, 100, "btn: START", "btn: CLEAR");
+
+	Add(title);
+	Add(startOrClear);
+}
+
 }

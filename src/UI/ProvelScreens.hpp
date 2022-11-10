@@ -36,7 +36,7 @@ public:
 
 class ScreenFileLoaded : public Screen {
 	Title *title;
-	Button *cancel;
+	ButtonDouble *startOrClear;
 
 public:
 	ScreenFileLoaded();
