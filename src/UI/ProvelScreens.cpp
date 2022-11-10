@@ -84,6 +84,31 @@ ScreenHeating::~ScreenHeating()
 {
 }
 
+ScreenIdle::ScreenIdle()
+{
+	Title *title;
+	Button *load;
+	Button *home;
+	Button *printer;
+	Button *purge;
+
+	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: IDLE");
+	load = new Button(100, 100, PROVEL_WIDTH, 100, "btn: LOAD", 0, 0);
+	home = new Button(100, 200, PROVEL_WIDTH, 100, "btn: HOME", 0, 0);
+	printer = new Button(100, 300, PROVEL_WIDTH, 100, "btn: PRINTER", 0, 0);
+	purge = new Button(100, 400, PROVEL_WIDTH, 100, "btn: PURGE", 0, 0);
+
+	Add(title);
+	Add(load);
+	Add(home);
+	Add(printer);
+	Add(purge);
+}
+
+ScreenIdle::~ScreenIdle()
+{
+}
+
 ScreenLoading::ScreenLoading()
 {
 	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: LOADING FILE");

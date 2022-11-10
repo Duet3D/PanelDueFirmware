@@ -45,7 +45,10 @@ public:
 
 class ScreenIdle : public Screen {
 	Title *title;
-	Button *cancel;
+	Button *load;
+	Button *home;
+	Button *printer;
+	Button *purge;
 
 public:
 	ScreenIdle();
