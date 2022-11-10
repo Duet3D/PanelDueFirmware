@@ -199,14 +199,9 @@ public:
 
 class ColourGradientField : public DisplayField
 {
-	PixelNumber height;
-
-protected:
-	PixelNumber GetHeight() const override { return height; }
-
 public:
 	ColourGradientField(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ph)
-		: DisplayField(py, px, pw), height(ph)
+		: DisplayField(py, px, pw, ph)
 	{
 	}
 
@@ -560,7 +555,10 @@ class IconButton : public SingleButton
 
 protected:
 	Icon icon;
-	PixelNumber GetHeight() const override { return GetIconHeight(icon) + 2 * iconMargin + 2; }
+	PixelNumber GetHeight() const override {
+		PixelNumber height = GetIconHeight(icon) + 2 * iconMargin + 2;
+		return height;
+	}
 
 public:
 	IconButton(PixelNumber py, PixelNumber px, PixelNumber pw, Icon ic, event_t e, int param = 0);
@@ -702,18 +700,15 @@ public:
 class ProgressBar : public DisplayField
 {
 	PixelNumber lastNumPixelsSet;
-	uint8_t height;
 	uint8_t percent;
 
 public:
 	ProgressBar(uint16_t py, uint16_t px, uint8_t ph, uint16_t pw)
-		: DisplayField(py, px, pw), lastNumPixelsSet(0), height(ph), percent(0)
+		: DisplayField(py, px, pw, ph), lastNumPixelsSet(0), percent(0)
 	{
 	}
 
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override;
-
-	PixelNumber GetHeight() const override { return height; }
 
 	void SetPercent(uint8_t pc)
 	{
@@ -729,38 +724,30 @@ public:
 class StaticImageField: public DisplayField
 {
 	const uint16_t * _ecv_array data;					// compressed bitmap
-	PixelNumber height;
 
 public:
 	StaticImageField(PixelNumber py, PixelNumber px, PixelNumber ph, PixelNumber pw, const uint16_t * _ecv_array imageData)
-		: DisplayField(py, px, pw), data(imageData), height(ph)
+		: DisplayField(py, px, pw, ph), data(imageData)
 	{
 	}
 
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override;
-
-	PixelNumber GetHeight() const override { return height; }
 };
 
 #include "qoi.h"
 
 class DrawDirect: public DisplayField
 {
-	PixelNumber height;
-
 	typedef void (*RefreshNotify)(bool full, bool changed);
 
 	RefreshNotify refreshNotify;
 
 public:
 	DrawDirect(PixelNumber py, PixelNumber px, PixelNumber ph, PixelNumber pw, RefreshNotify pRefreshNotify)
-		: DisplayField(py, px, pw), height(ph)
+		: DisplayField(py, px, pw, ph)
 	{
 		refreshNotify = pRefreshNotify;
 	}
-
-	PixelNumber GetHeight() const { return height; }
-	PixelNumber GetWidth() const { return width; }
 
 	void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) override;
 
