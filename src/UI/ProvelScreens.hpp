@@ -99,7 +99,8 @@ public:
 
 class ScreenFault : public Screen {
 	Title *title;
-	Button *cancel;
+	Button *clear;
+	Status *status;
 
 public:
 	ScreenFault();

@@ -26,7 +26,7 @@ ScreenSplash::~ScreenSplash()
 ScreenHoming::ScreenHoming()
 {
 	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: HOMING");
-	stop = new Button(100, 100, PROVEL_WIDTH, 100, "button: STOP", 0, 0);
+	stop = new Button(100, 100, PROVEL_WIDTH, 100, "btn: STOP", 0, 0);
 	status = new Status(100, 200, PROVEL_WIDTH, 100);
 
 	Add(title);
@@ -46,6 +46,25 @@ ScreenFileLoaded::ScreenFileLoaded()
 
 	Add(title);
 	Add(startOrClear);
+}
+
+ScreenFileLoaded::~ScreenFileLoaded()
+{
+}
+
+ScreenFault::ScreenFault()
+{
+	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: FAULT");
+	clear = new Button(100, 100, PROVEL_WIDTH, 100, "btn: CLEAR", 0, 0);
+	status = new Status(100, 200, PROVEL_WIDTH, 100);
+
+	Add(title);
+	Add(clear);
+	Add(status);
+}
+
+ScreenFault::~ScreenFault()
+{
 }
 
 }
