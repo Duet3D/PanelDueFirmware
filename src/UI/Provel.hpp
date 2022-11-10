@@ -18,6 +18,20 @@ enum TouchState {
 	Repeated = 2
 };
 
+class Touch {
+public:
+	uint16_t x;
+	uint16_t y;
+	enum State {
+		Released = 0,
+		Pressed = 1,
+		Repeated = 2
+	} state;
+
+	Touch(uint16_t x, uint16_t y, enum State state) :
+		x(x), y(y), state(state) {};
+};
+
 // generic classes
 class Provel {
 
@@ -37,7 +51,7 @@ public:
 
 	// event functions
 	int Update();
-	int ProcessTouch(int x, int y, enum TouchState state);
+	int ProcessTouch(Touch &event);
 };
 
 class Screen {
@@ -75,8 +89,8 @@ public:
 	virtual int Init() { return 0; };
 	virtual int Shutdown() { return 0; };
 
-	virtual int ProcessTouch(int x, int y, enum TouchState state) {
-		(void)x, (void)y, (void)state;
+	virtual int ProcessTouch(Touch &event) {
+		(void)event;
 		return 0;
 	};
 	virtual int Update() { return 0; };

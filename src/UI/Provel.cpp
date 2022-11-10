@@ -79,7 +79,7 @@ Screen *Provel::Push(Screen *screen)
 {
 	int ret;
 
-	dbg("\r\n");
+	dbg("screen %p\r\n", screen);
 
 	assert(screen);
 
@@ -96,7 +96,7 @@ Screen *Provel::Pop()
 {
 	Screen *head;
 
-	dbg("\r\n");
+	dbg("screen %p\r\n", screens);
 
 	assert(screens);
 
@@ -112,7 +112,7 @@ int Provel::Update()
 {
 	Screen *head = screens;
 
-	//dbg("%p\r\n", head);
+	//dbg("screen %p\r\n", head);
 
 	if (!head)
 		return 0;
@@ -120,29 +120,28 @@ int Provel::Update()
 	return head->Update();
 }
 
-int Provel::ProcessTouch(int x, int y, enum TouchState state)
+int Provel::ProcessTouch(Touch &event)
 {
-	dbg("x %d y %d %d\r\n", x, y, state);
 	Screen *head;
 	Element *element;
+
+	dbg("screen %p\r\n", screens);
+	dbg("x %d y %d %d\r\n", event.x, event.y, event.state);
 
 	if (!screens)
 		return 0;
 
 	head = screens;
-
-	element = head->Find(x, y);
+	element = head->Find(event.x, event.y);
 	if (!element)
 		return 0;
 
-	dbg("done\r\n");
-
-	return element->ProcessTouch(x, y, state);
+	return element->ProcessTouch(event);
 }
 
 Screen *Provel::Reset(Screen *screen)
 {
-	dbg("\r\n");
+	dbg("screen %p\r\n", screen);
 
 	for (Screen *head = screens; head; head = head->next) {
 		int ret = head->Shutdown();
@@ -185,12 +184,16 @@ int Screen::Shutdown()
 
 int Screen::Add(Element *element)
 {
-	dbg("\r\n");
 	Element *tmp;
+
+	dbg("screen %p element %p\r\n", this, element);
+	dbg("(x/y) %hu/%hu\r\n", element->Get()->GetMinX(), element->Get()->GetMaxY());
+	dbg("(w/h) %hu/%hu\r\n", element->Get()->GetWidth(), element->Get()->GetHeight());
 
 	assert(element);
 
 	root.AddField(element->Get());
+
 	tmp = elements;
 
 	elements = element;
@@ -202,9 +205,9 @@ int Screen::Add(Element *element)
 
 int Screen::Delete(Element *element)
 {
-	assert(element);
+	dbg("screen %p element %p\r\n", this, element);
 
-	Element *head = elements;
+	assert(element);
 
 	if (elements == element) {
 		elements = element->next;
@@ -230,7 +233,7 @@ Element *Screen::Find(int x, int y)
 	ButtonPress event;
 	ButtonBase *button;
 
-	dbg("\r\n");
+	dbg("screen %p (%hu/%hu) x %d y %d\r\n", this, root.Xpos(), root.Ypos(), x, y);
 
 	event = root.FindEvent(x, y);
 	button = event.GetButton();
@@ -239,9 +242,10 @@ Element *Screen::Find(int x, int y)
 		return nullptr;
 
 	for (Element *elem = elements; elem; elem = elem->next) {
-		if (elem->Get() == button)
-			dbg("%p\r\n", elem);
+		if (elem->Get() == button) {
+			dbg("element %p found\r\n", elem);
 			return elem;
+		}
 	}
 
 	return nullptr;
