@@ -11,6 +11,7 @@
 static Provel::Provel *ui;
 static Provel::ScreenSplash *splash;
 static Provel::ScreenHoming *home;
+static Provel::ScreenFileLoaded *fileLoaded;
 
 int main_init()
 {
@@ -20,6 +21,7 @@ int main_init()
 	ui = new Provel::Provel();
 	splash = new Provel::ScreenSplash();
 	home = new Provel::ScreenHoming();
+	fileLoaded = new Provel::ScreenFileLoaded();
 
 	dbg("STARTING\r\n");
 	dbg("splash\r\n");
@@ -31,8 +33,9 @@ int main_init()
 
 	dbg("home\r\n");
 	ui->Push(home);
-	ui->Update();
 
+	dbg("file loaded\r\n");
+	ui->Push(fileLoaded);
 #if 0
 
 	delay_ms(1000);
@@ -44,7 +47,6 @@ int main_init()
 
 #else
 	Provel::ScreenFault fault;
-	Provel::ScreenFileLoaded fileLoaded;
 	Provel::ScreenHeating heating;
 	Provel::ScreenIdle idle;
 	Provel::ScreenLoading loading;
