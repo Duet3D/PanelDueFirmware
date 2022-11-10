@@ -88,9 +88,6 @@ protected:
 	static Palette defaultIconPalette;
 
 protected:
-	DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw);
-	DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ph);
-
 	void SetTextRows(const char * _ecv_array t);
 	virtual void CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best);
 
@@ -99,10 +96,17 @@ public:
 	DisplayField * null next;					// link to next field in list
 	DisplayField * null children;
 
+	DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw);
+	DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ph);
+
+	void AddChild(DisplayField *child);
+	DisplayField *Find(DisplayField *field);
+	virtual void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset);
+
 	virtual bool IsButton() const { return false; }
 	virtual bool IsVisible() const { return visible; }
 	void Show(bool v);
-	virtual void Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset) = 0;
+
 	void SetColours(Colour pf, Colour pb);
 	void SetChanged() { changed = true; }
 	bool HasChanged() const { return changed; }

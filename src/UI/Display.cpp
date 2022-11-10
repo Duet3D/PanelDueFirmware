@@ -44,6 +44,43 @@ DisplayField::DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw, Pixel
 }
 
 
+void DisplayField::AddChild(DisplayField *child)
+{
+	DisplayField *head = children;
+
+	children = child;
+	child->next = head;
+}
+
+DisplayField *DisplayField::Find(DisplayField *field)
+{
+	dbg("field %p %p\r\n", this, field);
+	if (this == field) {
+		dbg("found %p %p\r\n", this, field);
+		return this;
+	}
+
+	for (DisplayField *head = children; head; head = head->next) {
+		DisplayField *found = head->Find(field);
+		if (found)
+			return found;
+	}
+
+	return nullptr;
+}
+
+
+void DisplayField::Refresh(bool full, PixelNumber xOffset, PixelNumber yOffset)
+{
+	DisplayField *child = children;
+
+	while (child)
+	{
+		child->Refresh(full, xOffset, yOffset);
+		child = child->next;
+	}
+}
+
 void DisplayField::CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best)
 {
 	dbg("%p %hu/%hu %hu/%hu\r\n", this, x, y, this->x, this->y);
