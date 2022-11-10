@@ -67,6 +67,22 @@ ScreenFault::~ScreenFault()
 {
 }
 
+ScreenHeating::ScreenHeating()
+{
+	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: HEATING");
+	text = new Text(100, 200, PROVEL_WIDTH, 100, "text: TEXT");
+	stop = new Button(100, 300, PROVEL_WIDTH, 100, "btn: STOP", 0, 0);
+	status = new Status(100, 400, PROVEL_WIDTH, 100);
+
+	Add(title);
+	Add(text);
+	Add(stop);
+	Add(status);
+}
+
+ScreenHeating::~ScreenHeating()
+{
+}
 
 ScreenLoading::ScreenLoading()
 {

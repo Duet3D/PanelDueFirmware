@@ -64,7 +64,9 @@ public:
 
 class ScreenHeating : public Screen {
 	Title *title;
-	Button *cancel;
+	Text *text;
+	Button *stop;
+	Status *status;
 
 public:
 	ScreenHeating();
