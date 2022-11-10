@@ -122,6 +122,28 @@ ScreenLoading::~ScreenLoading()
 {
 }
 
+
+ScreenPrinter::ScreenPrinter()
+{
+	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: PRINTER");
+	plusMinus = new ButtonDouble(100, 100, PROVEL_WIDTH, 100, "btn: PLUS", "btn: MINUS");
+	zCalibrate = new Button(100, 200, PROVEL_WIDTH, 100, "btn: ZCALIBRATE", 0, 0);
+	indexCup = new Button(100, 300, PROVEL_WIDTH, 100, "btn: INDEXCUP", 0, 0);
+	access = new Button(100, 400, PROVEL_WIDTH, 100, "btn: ACCESS", 0, 0);
+	enterExit = new ButtonDouble(100, 500, PROVEL_WIDTH, 100, "btn: ENTER", "btn: EXIT");
+
+	Add(title);
+	Add(plusMinus);
+	Add(zCalibrate);
+	Add(indexCup);
+	Add(access);
+	Add(enterExit);
+}
+
+ScreenPrinter::~ScreenPrinter()
+{
+}
+
 ScreenPrinting::ScreenPrinting()
 {
 	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: PRINTING");

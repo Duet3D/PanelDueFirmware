@@ -96,7 +96,12 @@ public:
 
 class ScreenPrinter : public Screen {
 	Title *title;
-	Button *cancel;
+	Text *temp;
+	ButtonDouble *plusMinus;
+	Button *zCalibrate;
+	Button *indexCup;
+	Button *access;
+	ButtonDouble *enterExit;
 
 public:
 	ScreenPrinter();
