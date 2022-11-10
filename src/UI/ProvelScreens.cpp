@@ -67,4 +67,33 @@ ScreenFault::~ScreenFault()
 {
 }
 
+
+ScreenLoading::ScreenLoading()
+{
+	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: LOADING FILE");
+	cancel = new Button(100, 100, PROVEL_WIDTH, 100, "btn: CANCEL", 0, 0);
+
+	Add(title);
+	Add(cancel);
+}
+
+ScreenLoading::~ScreenLoading()
+{
+}
+
+ScreenPrinting::ScreenPrinting()
+{
+	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: PRINTING");
+	text = new Text(100, 100, PROVEL_WIDTH, 100, "text: TEXT");
+	status = new Status(100, 200, PROVEL_WIDTH, 100);
+
+	Add(title);
+	Add(text);
+	Add(status);
+}
+
+ScreenPrinting::~ScreenPrinting()
+{
+}
+
 }

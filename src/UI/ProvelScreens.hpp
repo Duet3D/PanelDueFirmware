@@ -54,7 +54,8 @@ public:
 
 class ScreenPrinting : public Screen {
 	Title *title;
-	Button *cancel;
+	Text *text;
+	Status *status;
 
 public:
 	ScreenPrinting();
