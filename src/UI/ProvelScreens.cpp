@@ -181,4 +181,17 @@ ScreenPurging::~ScreenPurging()
 {
 }
 
+ScreenWarning::ScreenWarning()
+{
+	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: WARNING");
+	text = new Text(100, 100, PROVEL_WIDTH, 100, "text: TEXT");
+
+	Add(title);
+	Add(text);
+}
+
+ScreenWarning::~ScreenWarning()
+{
+}
+
 }

@@ -122,7 +122,7 @@ public:
 
 class ScreenWarning : public Screen {
 	Title *title;
-	Button *cancel;
+	Text *text;
 
 public:
 	ScreenWarning();
