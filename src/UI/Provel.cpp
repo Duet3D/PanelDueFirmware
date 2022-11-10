@@ -238,11 +238,17 @@ Element *Screen::Find(int x, int y)
 	event = root.FindEvent(x, y);
 	button = event.GetButton();
 
+	dbg("button %p\r\n", event.GetButton());
+
 	if (!button)
 		return nullptr;
 
 	for (Element *elem = elements; elem; elem = elem->next) {
-		if (elem->Get() == button) {
+		if (!elem->Get())
+			continue;
+
+		dbg("element %p %p\r\n", elem, elem->Get());
+		if (elem->Get()->Find(button)) {
 			dbg("element %p found\r\n", elem);
 			return elem;
 		}
@@ -250,6 +256,15 @@ Element *Screen::Find(int x, int y)
 
 	return nullptr;
 }
+
+
+int Element::ProcessTouch(Touch &event)
+{
+	dbg("element %p\r\n", this);
+
+	(void)event;
+	return 0;
+};
 
 
 Text::Text(PixelNumber x, PixelNumber y, PixelNumber width, PixelNumber height, const char *ptext) :
@@ -266,6 +281,32 @@ Title::Title(PixelNumber x, PixelNumber y, PixelNumber width, PixelNumber height
 int Button::ProcessTouch(Touch &event)
 {
 	button.Press(event.state == Touch::State::Pressed, 0);
+	return 0;
+}
+
+ButtonDouble::ButtonDouble(
+		PixelNumber x, PixelNumber y,
+		PixelNumber width, PixelNumber height,
+		const char *text_left, const char *text_right) :
+	group(y, x, width, height),
+	button_left(y, x, width / 2, text_left, nullEvent, 0),
+	button_right(y, x + width / 2, width / 2, text_right, nullEvent, 0)
+{
+	group.AddChild(&button_left);
+	group.AddChild(&button_right);
+}
+
+int ButtonDouble::ProcessTouch(Touch &event)
+{
+	dbg("\r\n");
+	ButtonPress press = group.FindEvent(event.x, event.y, &group);
+	ButtonBase *button = press.GetButton();
+
+	if (!button)
+		return 0;
+
+	button->Press(event.state == Touch::State::Pressed, 0);
+
 	return 0;
 }
 

@@ -67,7 +67,7 @@ public:
 	virtual int Update();
 	virtual int Shutdown();
 
-	Screen() {
+	Screen() : root() {
 		next = nullptr;
 		prev = nullptr;
 		elements = nullptr;
@@ -83,10 +83,7 @@ public:
 	virtual int Init() { return 0; };
 	virtual int Shutdown() { return 0; };
 
-	virtual int ProcessTouch(Touch &event) {
-		(void)event;
-		return 0;
-	};
+	virtual int ProcessTouch(Touch &event);
 	virtual int Update() { return 0; };
 
 	virtual DisplayField *Get() { return nullptr; };
@@ -114,15 +111,19 @@ public:
 };
 
 class ButtonDouble : public Element {
+	DisplayField group;
 	TextButton button_left;
 	TextButton button_right;
+
 public:
 	ButtonDouble(
 			PixelNumber x=0, PixelNumber y=0,
 			PixelNumber width=100, PixelNumber height=100,
 			const char *text_left="btn: LEFT", const char *text_right="btn: RIGHT"
-	) : button_left(x, y, width / 2, text_left, 0, 0),
-	    button_right(x + width / 2, y, width / 2, text_right, 0, 0) {};
+	);
+
+	DisplayField *Get() { return &group; };
+	int ProcessTouch(Touch &event);
 };
 
 class Text : public Element {
