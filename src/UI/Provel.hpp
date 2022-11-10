@@ -12,12 +12,6 @@ namespace Provel {
 class Screen;
 class Element;
 
-enum TouchState {
-	Released = 0,
-	Pressed = 1,
-	Repeated = 2
-};
-
 class Touch {
 public:
 	uint16_t x;
