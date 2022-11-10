@@ -32,9 +32,23 @@ Colour DisplayField::defaultPressedGradColour = 0;
 Palette DisplayField::defaultIconPalette = IconPaletteLight;
 
 DisplayField::DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw)
-	: y(py), x(px), width(pw), fcolour(defaultFcolour), bcolour(defaultBcolour),
+	: y(py), x(px), width(pw), height(0), fcolour(defaultFcolour), bcolour(defaultBcolour),
 		changed(true), visible(true), underlined(false), border(false), textRows(1), next(nullptr)
 {
+}
+
+DisplayField::DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ph)
+	: y(py), x(px), width(pw), height(ph), fcolour(defaultFcolour), bcolour(defaultBcolour),
+		changed(true), visible(true), underlined(false), border(false), textRows(1), next(nullptr)
+{
+}
+
+
+void DisplayField::CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best)
+{
+	dbg("%p %hu/%hu %hu/%hu\r\n", this, x, y, this->x, this->y);
+
+	UNUSED(x); UNUSED(y); UNUSED(bestError); UNUSED(best);
 }
 
 void DisplayField::SetTextRows(const char * _ecv_array null t)

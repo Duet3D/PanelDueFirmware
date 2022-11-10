@@ -38,8 +38,9 @@ const event_t nullEvent = 0;
 
 enum class TextAlignment : uint8_t { Left, Centre, Right };
 
-class ButtonBase;
 class Window;
+class DisplayField;
+class ButtonBase;
 
 // Small by-value class to identify what button has been pressed
 class ButtonPress
@@ -71,7 +72,10 @@ class DisplayField
 protected:
 	PixelNumber y, x;		// Coordinates of top left pixel, counting from the top left corner
 	PixelNumber width;		// number of pixels wide
+	PixelNumber height;		// number of pixels high
+
 	Colour fcolour, bcolour;	// foreground and background colours
+
 	uint16_t changed : 1,
 			visible : 1,
 			underlined : 1,	// really belongs in class FieldWithText, but stored here to save space
@@ -85,10 +89,10 @@ protected:
 
 protected:
 	DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw);
+	DisplayField(PixelNumber py, PixelNumber px, PixelNumber pw, PixelNumber ph);
 
 	void SetTextRows(const char * _ecv_array t);
-	virtual PixelNumber GetHeight() const = 0;
-	virtual void CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) { UNUSED(x); UNUSED(y); UNUSED(bestError); UNUSED(best); }
+	virtual void CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best);
 
 public:
 	Window * null parent;
@@ -105,6 +109,9 @@ public:
 	PixelNumber GetMaxX() const { return x + width - 1; }
 	PixelNumber GetMinY() const { return y; }
 	PixelNumber GetMaxY() const { return y + GetHeight() - 1; }
+
+	virtual PixelNumber GetHeight() const { return height; }
+	virtual PixelNumber GetWidth() const { return width; }
 
 	void SetPositionAndWidth(PixelNumber newX, PixelNumber newWidth);
 	void SetPosition(PixelNumber x, PixelNumber y);
