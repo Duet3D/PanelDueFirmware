@@ -102,16 +102,27 @@ class Button : public Element {
 	TextButton button;
 
 public:
-	Button(PixelNumber x, PixelNumber y, PixelNumber width, PixelNumber height, const char *text, event_t e, int param) :
-		button(x, y, width, text, e, param) {};
+	Button(
+		PixelNumber x, PixelNumber y,
+		PixelNumber width, PixelNumber height,
+		const char *text, event_t e, int param
+	) : button(x, y, width, text, e, param) {};
 	~Button() {};
 
 	DisplayField *Get() { return &button; };
+	int ProcessTouch(Touch &event);
 };
 
 class ButtonDouble : public Element {
 	TextButton button_left;
 	TextButton button_right;
+public:
+	ButtonDouble(
+			PixelNumber x=0, PixelNumber y=0,
+			PixelNumber width=100, PixelNumber height=100,
+			const char *text_left="btn: LEFT", const char *text_right="btn: RIGHT"
+	) : button_left(x, y, width / 2, text_left, 0, 0),
+	    button_right(x + width / 2, y, width / 2, text_right, 0, 0) {};
 };
 
 class Text : public Element {
@@ -168,6 +179,7 @@ public:
 
 	virtual int Update() { return 0; };
 };
+
 }
 
 #endif

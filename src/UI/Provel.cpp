@@ -261,4 +261,12 @@ Title::Title(PixelNumber x, PixelNumber y, PixelNumber width, PixelNumber height
 	text(y, x, width, TextAlignment::Left, title, false)
 {
 }
+
+
+int Button::ProcessTouch(Touch &event)
+{
+	button.Press(event.state == Touch::State::Pressed, 0);
+	return 0;
+}
+
 }
