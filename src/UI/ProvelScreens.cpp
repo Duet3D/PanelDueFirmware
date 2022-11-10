@@ -159,4 +159,26 @@ ScreenPrinting::~ScreenPrinting()
 {
 }
 
+ScreenPurging::ScreenPurging()
+{
+	Title *title;
+	Text *text;
+	Button *stop;
+	Status *status;
+
+	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: PURGING");
+	text = new Text(100, 100, PROVEL_WIDTH, 100, "text: TEXT");
+	stop = new Button(100, 200, PROVEL_WIDTH, 100, "btn: STOP", 0, 0);
+	status = new Status(100, 300, PROVEL_WIDTH, 100);
+
+	Add(title);
+	Add(text);
+	Add(stop);
+	Add(status);
+}
+
+ScreenPurging::~ScreenPurging()
+{
+}
+
 }
