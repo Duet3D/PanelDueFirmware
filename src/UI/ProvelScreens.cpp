@@ -194,4 +194,21 @@ ScreenWarning::~ScreenWarning()
 {
 }
 
+ScreenZCalibrate::ScreenZCalibrate()
+{
+	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: ZCALIBRATE");
+	offset = new Text(100, 100, PROVEL_WIDTH, 100, "text: OFFSET");
+	plusMinus = new ButtonDouble(100, 200, PROVEL_WIDTH, 100, "btn: PLUS", "btn: MINUS");
+	enterExit = new ButtonDouble(100, 300, PROVEL_WIDTH, 100, "btn: ENTER", "btn: EXIT");
+
+	Add(title);
+	Add(offset);
+	Add(plusMinus);
+	Add(enterExit);
+}
+
+ScreenZCalibrate::~ScreenZCalibrate()
+{
+}
+
 }

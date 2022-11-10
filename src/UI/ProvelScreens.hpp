@@ -78,7 +78,9 @@ public:
 
 class ScreenZCalibrate : public Screen {
 	Title *title;
-	Button *cancel;
+	Text *offset;
+	ButtonDouble *plusMinus;
+	ButtonDouble *enterExit;
 
 public:
 	ScreenZCalibrate();
