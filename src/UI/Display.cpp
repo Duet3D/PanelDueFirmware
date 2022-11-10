@@ -213,9 +213,10 @@ bool Window::Visible(const DisplayField *p) const
 // Get the field that has been touched, or nullptr if we can't find one
 ButtonPress Window::FindEvent(PixelNumber x, PixelNumber y)
 {
-	return (next != nullptr) ? next->FindEvent(x, y)
-			: (x < Xpos() || y < Ypos()) ? ButtonPress()
-				: DisplayField::FindEvent(x - Xpos(), y - Ypos(), root);
+	dbg("x %u y %u root %p next %p\r\n", x, y, root, next);
+	return (next != nullptr) ?
+		next->FindEvent(x, y) : (x < Xpos() || y < Ypos()) ?
+			ButtonPress() : DisplayField::FindEvent(x - Xpos(), y - Ypos(), root);
 }
 
 // Get the field that has been touched, but search only outside the popup
@@ -389,13 +390,13 @@ void Window::Show(DisplayField * null f, bool v)
 // Show the button as pressed or not
 void Window::Press(ButtonPress bp, bool v)
 {
-	if (bp.IsValid())
+	if (!bp.IsValid())
+		return;
+
+	bp.GetButton()->Press(v, bp.GetIndex());
+	if (bp.GetButton()->IsVisible())		// need to check this in case we are releasing the button and it has gone invisible since we pressed it
 	{
-		bp.GetButton()->Press(v, bp.GetIndex());
-		if (bp.GetButton()->IsVisible())		// need to check this in case we are releasing the button and it has gone invisible since we pressed it
-		{
-			Redraw(bp.GetButton());
-		}
+		Redraw(bp.GetButton());
 	}
 }
 
@@ -700,7 +701,9 @@ void ButtonBase::DrawOutline(PixelNumber xOffset, PixelNumber yOffset, bool isPr
 
 void ButtonBase::CheckEvent(PixelNumber x, PixelNumber y, int& bestError, ButtonPress& best) /*override*/
 {
-	if (IsVisible() && GetEvent() != nullEvent)
+	dbg("%p (x/y) %hu/%hu %hu/%hu\r\n", this, x, y, this->x, this->y);
+
+	if (IsVisible())
 	{
 		const int xError = (x < GetMinX()) ? GetMinX() - x
 								: (x > GetMaxX()) ? x - GetMaxX()
