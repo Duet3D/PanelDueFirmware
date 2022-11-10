@@ -174,27 +174,6 @@ public:
 
 	virtual int Update() { return 0; };
 };
-
-
-class ScreenSplash : public Screen {
-	Title *title;
-	Title *version;
-	int timeout; // in ms
-
-public:
-	ScreenSplash();
-	~ScreenSplash();
-};
-
-class ScreenHoming : public Screen {
-	Title *title;
-	Button *stop;
-	Status *status;
-
-public:
-	ScreenHoming();
-	~ScreenHoming();
-};
 }
 
 #endif

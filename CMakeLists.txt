@@ -193,6 +193,7 @@ target_sources( paneldue.elf PRIVATE
 	src/UI/MessageLog.cpp
 	src/UI/Popup.cpp
 	src/UI/Provel.cpp
+	src/UI/ProvelScreens.cpp
 	src/UI/UserInterface.cpp
 	src/main.cpp
 	lib/base64/base64.c
