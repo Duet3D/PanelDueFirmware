@@ -1,6 +1,7 @@
 #include "main.hpp"
 
 #include "UI/Provel.hpp"
+#include "UI/ProvelScreens.hpp"
 
 #include "Hardware/SysTick.hpp"
 
@@ -84,13 +85,7 @@ int main_init()
 	return 0;
 }
 
-struct TouchEvent {
-	uint32_t x;
-	uint32_t y;
-	enum Provel::TouchState state;
-};
-
-int main_touchUpdate(UTouch &touch, struct TouchEvent &event)
+static int main_touchUpdate(UTouch &touch, Provel::Touch &event)
 {
 	const uint32_t normalTouchDelay = 250;	// how long we ignore new touches for after pressing Set
 	const uint32_t repeatTouchDelay = 100;	// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
@@ -105,20 +100,22 @@ int main_touchUpdate(UTouch &touch, struct TouchEvent &event)
 
 	// check for valid touch event
 	if (touch.read(x, y, repeat)) {
+		dbg("x %u y %u s %d\r\n", x, y, repeat);
+
 		switch (event.state)
 		{
-			case Provel::TouchState::Released:
+			case Provel::Touch::State::Released:
 				touched = 1;
-				event.state = Provel::TouchState::Pressed;
+				event.state = Provel::Touch::State::Pressed;
 				break;
-			case Provel::TouchState::Pressed:
+			case Provel::Touch::State::Pressed:
 				if (now - lastTouchTime >= normalTouchDelay)
 				{
 					touched = 1;
-					event.state = Provel::TouchState::Repeated;
+					event.state = Provel::Touch::State::Repeated;
 				}
 				break;
-			case Provel::TouchState::Repeated:
+			case Provel::Touch::State::Repeated:
 				if (now - lastTouchTime >= repeatTouchDelay)
 				{
 					touched = 1;
@@ -136,10 +133,10 @@ int main_touchUpdate(UTouch &touch, struct TouchEvent &event)
 			event.x = x;
 			event.y = y;
 		}
-	} else if (event.state != Provel::TouchState::Released && now - lastTouchTime >= normalTouchDelay) {
+	} else if (event.state != Provel::Touch::State::Released && now - lastTouchTime >= normalTouchDelay) {
 		//dbg("released\n");
 		touched = 1;
-		event.state = Provel::TouchState::Released;
+		event.state = Provel::Touch::State::Released;
 	}
 
 	return touched;
@@ -148,18 +145,14 @@ int main_touchUpdate(UTouch &touch, struct TouchEvent &event)
 int main_run(UTouch &touch)
 {
 
-	static struct TouchEvent event = {
-		0,
-		0,
-		Provel::TouchState::Released
-	};
+	static Provel::Touch event = Provel::Touch(0, 0, Provel::Touch::State::Repeated);
 	int touched;
 	int ret;
 
 	touched = main_touchUpdate(touch, event);
 	if (touched) {
 		dbg("\r\n");
-		ret = ui->ProcessTouch(event.x, event.y, event.state);
+		ret = ui->ProcessTouch(event);
 		if (ret) {
 			dbg("failed to process touch event\r\n");
 			return ret;
