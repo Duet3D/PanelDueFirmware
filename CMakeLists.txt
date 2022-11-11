@@ -245,11 +245,6 @@ add_custom_command( OUTPUT paneldue-logo.bin
 )
 
 add_custom_target( bin ALL
-	DEPENDS paneldue.bin paneldue-logo.bin
-)
-
-add_custom_target( print-device ALL
-	DEPENDS paneldue.bin paneldue-logo.bin
+	DEPENDS paneldue.bin paneldue.elf paneldue-logo.bin
 	COMMAND echo "*** Build for PanelDueFirmware ${DEVICE} successfully finished ***"
 )
-
