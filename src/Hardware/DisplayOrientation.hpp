@@ -18,7 +18,9 @@ enum DisplayOrientation : uint8_t {
 	ReverseX = 0x02,
 	ReverseY = 0x04,
 	InvertText = ReverseY,
-	InvertBitmap = ReverseX
+	InvertBitmap = ReverseX,
+	Landscape = Default,
+	Portrait = (SwapXY | ReverseX | InvertBitmap)
 };
 
 #endif /* DISPLAYORIENTATION_H_ */
