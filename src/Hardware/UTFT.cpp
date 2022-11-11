@@ -53,6 +53,7 @@
 #include "Configuration.hpp"
 #include "memorysaver.h"
 #include <cstring>			// for strchr
+#include <General/SafeVsnprintf.h>
 
 #define DEBUG 0
 #include "Debug.hpp"

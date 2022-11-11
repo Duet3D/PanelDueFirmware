@@ -1,18 +1,24 @@
-#include "ProvelScreens.hpp"
+#include "UI/ProvelScreens.hpp"
 
-#define PROVEL_WIDTH 500
+#include "UI/DisplaySize.hpp"
 
 #define DEBUG 2
 #include "Debug.hpp"
 
 namespace Provel {
 
+#define PROVEL_SCREENS_LINE_NUM (8)
+#define PROVEL_SCREENS_LINE_WIDTH (DISPLAY_X)
+#define PROVEL_SCREENS_LINE_HEIGHT (DISPLAY_Y / PROVEL_SCREENS_LINE_NUM)
+#define PROVEL_SCREENS_LINE_ROW(num) (num * PROVEL_SCREENS_LINE_WIDTH)
+#define PROVEL_SCREENS_LINE_COL(num) (num * PROVEL_SCREENS_LINE_HEIGHT)
+
 ScreenSplash::ScreenSplash()
 {
 	dbg("\r\n");
 	timeout = 1000;
-	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: PROVEL");
-	version = new Title(100, 100, PROVEL_WIDTH, 100, "text: " VERSION_TEXT);
+	title = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "title: PROVEL");
+	version = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "text: " VERSION_TEXT);
 
 	Add(title);
 	Add(version);
@@ -25,9 +31,9 @@ ScreenSplash::~ScreenSplash()
 
 ScreenHoming::ScreenHoming()
 {
-	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: HOMING");
-	stop = new Button(100, 100, PROVEL_WIDTH, 100, "btn: STOP", 0, 0);
-	status = new Status(100, 200, PROVEL_WIDTH, 100);
+	title = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "title: HOMING");
+	stop = new Button(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: STOP", 0, 0);
+	status = new Status(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT);
 
 	Add(title);
 	Add(stop);
@@ -41,8 +47,8 @@ ScreenHoming::~ScreenHoming()
 
 ScreenFileLoaded::ScreenFileLoaded()
 {
-	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: FILE LOADED");
-	startOrClear = new ButtonDouble(100, 100, PROVEL_WIDTH, 100, "btn: START", "btn: CLEAR");
+	title = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "title: FILE LOADED");
+	startOrClear = new ButtonDouble(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: START", "btn: CLEAR");
 
 	Add(title);
 	Add(startOrClear);
@@ -54,9 +60,9 @@ ScreenFileLoaded::~ScreenFileLoaded()
 
 ScreenFault::ScreenFault()
 {
-	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: FAULT");
-	clear = new Button(100, 100, PROVEL_WIDTH, 100, "btn: CLEAR", 0, 0);
-	status = new Status(100, 200, PROVEL_WIDTH, 100);
+	title = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "title: FAULT");
+	clear = new Button(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: CLEAR", 0, 0);
+	status = new Status(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT);
 
 	Add(title);
 	Add(clear);
@@ -69,10 +75,10 @@ ScreenFault::~ScreenFault()
 
 ScreenHeating::ScreenHeating()
 {
-	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: HEATING");
-	text = new Text(100, 200, PROVEL_WIDTH, 100, "text: TEXT");
-	stop = new Button(100, 300, PROVEL_WIDTH, 100, "btn: STOP", 0, 0);
-	status = new Status(100, 400, PROVEL_WIDTH, 100);
+	title = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "title: HEATING");
+	text = new Text(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "text: TEXT");
+	stop = new Button(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: STOP", 0, 0);
+	status = new Status(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT);
 
 	Add(title);
 	Add(text);
@@ -92,11 +98,11 @@ ScreenIdle::ScreenIdle()
 	Button *printer;
 	Button *purge;
 
-	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: IDLE");
-	load = new Button(100, 100, PROVEL_WIDTH, 100, "btn: LOAD", 0, 0);
-	home = new Button(100, 200, PROVEL_WIDTH, 100, "btn: HOME", 0, 0);
-	printer = new Button(100, 300, PROVEL_WIDTH, 100, "btn: PRINTER", 0, 0);
-	purge = new Button(100, 400, PROVEL_WIDTH, 100, "btn: PURGE", 0, 0);
+	title = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "title: IDLE");
+	load = new Button(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: LOAD", 0, 0);
+	home = new Button(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: HOME", 0, 0);
+	printer = new Button(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: PRINTER", 0, 0);
+	purge = new Button(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: PURGE", 0, 0);
 
 	Add(title);
 	Add(load);
@@ -111,8 +117,8 @@ ScreenIdle::~ScreenIdle()
 
 ScreenLoading::ScreenLoading()
 {
-	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: LOADING FILE");
-	cancel = new Button(100, 100, PROVEL_WIDTH, 100, "btn: CANCEL", 0, 0);
+	title = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "title: LOADING FILE");
+	cancel = new Button(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: CANCEL", 0, 0);
 
 	Add(title);
 	Add(cancel);
@@ -125,12 +131,12 @@ ScreenLoading::~ScreenLoading()
 
 ScreenPrinter::ScreenPrinter()
 {
-	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: PRINTER");
-	plusMinus = new ButtonDouble(100, 100, PROVEL_WIDTH, 100, "btn: PLUS", "btn: MINUS");
-	zCalibrate = new Button(100, 200, PROVEL_WIDTH, 100, "btn: ZCALIBRATE", 0, 0);
-	indexCup = new Button(100, 300, PROVEL_WIDTH, 100, "btn: INDEXCUP", 0, 0);
-	access = new Button(100, 400, PROVEL_WIDTH, 100, "btn: ACCESS", 0, 0);
-	enterExit = new ButtonDouble(100, 500, PROVEL_WIDTH, 100, "btn: ENTER", "btn: EXIT");
+	title = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "title: PRINTER");
+	plusMinus = new ButtonDouble(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: PLUS", "btn: MINUS");
+	zCalibrate = new Button(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: ZCALIBRATE", 0, 0);
+	indexCup = new Button(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: INDEXCUP", 0, 0);
+	access = new Button(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: ACCESS", 0, 0);
+	enterExit = new ButtonDouble(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: ENTER", "btn: EXIT");
 
 	Add(title);
 	Add(plusMinus);
@@ -146,9 +152,9 @@ ScreenPrinter::~ScreenPrinter()
 
 ScreenPrinting::ScreenPrinting()
 {
-	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: PRINTING");
-	text = new Text(100, 100, PROVEL_WIDTH, 100, "text: TEXT");
-	status = new Status(100, 200, PROVEL_WIDTH, 100);
+	title = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "title: PRINTING");
+	text = new Text(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "text: TEXT");
+	status = new Status(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT);
 
 	Add(title);
 	Add(text);
@@ -166,10 +172,10 @@ ScreenPurging::ScreenPurging()
 	Button *stop;
 	Status *status;
 
-	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: PURGING");
-	text = new Text(100, 100, PROVEL_WIDTH, 100, "text: TEXT");
-	stop = new Button(100, 200, PROVEL_WIDTH, 100, "btn: STOP", 0, 0);
-	status = new Status(100, 300, PROVEL_WIDTH, 100);
+	title = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "title: PURGING");
+	text = new Text(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "text: TEXT");
+	stop = new Button(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: STOP", 0, 0);
+	status = new Status(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT);
 
 	Add(title);
 	Add(text);
@@ -183,8 +189,8 @@ ScreenPurging::~ScreenPurging()
 
 ScreenWarning::ScreenWarning()
 {
-	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: WARNING");
-	text = new Text(100, 100, PROVEL_WIDTH, 100, "text: TEXT");
+	title = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "title: WARNING");
+	text = new Text(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "text: TEXT");
 
 	Add(title);
 	Add(text);
@@ -196,10 +202,10 @@ ScreenWarning::~ScreenWarning()
 
 ScreenZCalibrate::ScreenZCalibrate()
 {
-	title = new Title(100, 0, PROVEL_WIDTH, 100, "title: ZCALIBRATE");
-	offset = new Text(100, 100, PROVEL_WIDTH, 100, "text: OFFSET");
-	plusMinus = new ButtonDouble(100, 200, PROVEL_WIDTH, 100, "btn: PLUS", "btn: MINUS");
-	enterExit = new ButtonDouble(100, 300, PROVEL_WIDTH, 100, "btn: ENTER", "btn: EXIT");
+	title = new Title(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "title: ZCALIBRATE");
+	offset = new Text(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "text: OFFSET");
+	plusMinus = new ButtonDouble(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: PLUS", "btn: MINUS");
+	enterExit = new ButtonDouble(PROVEL_SCREENS_LINE_ROW(0), PROVEL_SCREENS_LINE_COL(0), PROVEL_SCREENS_LINE_WIDTH, PROVEL_SCREENS_LINE_HEIGHT, "btn: ENTER", "btn: EXIT");
 
 	Add(title);
 	Add(offset);
