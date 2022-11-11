@@ -12,77 +12,84 @@ static Provel::Provel *ui;
 static Provel::ScreenSplash *splash;
 static Provel::ScreenHoming *home;
 static Provel::ScreenFileLoaded *fileLoaded;
+static Provel::ScreenFault *fault;
+static Provel::ScreenHeating *heating;
+static Provel::ScreenIdle *idle;
+static Provel::ScreenLoading *loading;
+static Provel::ScreenPrinter *printer;
+static Provel::ScreenPrinting *printing;
+static Provel::ScreenPurging *purging;
+static Provel::ScreenWarning *warning;
+static Provel::ScreenZCalibrate *zCalibrate;
 
 int main_init()
 {
 	//UTFT lcd(DISPLAY_CONTROLLER, 15, 14, 0, 39);
 
-#if 1
 	ui = new Provel::Provel();
 	splash = new Provel::ScreenSplash();
 	home = new Provel::ScreenHoming();
 	fileLoaded = new Provel::ScreenFileLoaded();
+	fault = new Provel::ScreenFault();
+	heating = new Provel::ScreenHeating();
+	idle = new Provel::ScreenIdle();
+	loading = new Provel::ScreenLoading();
+	printer = new Provel::ScreenPrinter();
+	printing = new Provel::ScreenPrinting();
+	purging = new Provel::ScreenPurging();
+	warning = new Provel::ScreenWarning();
+	zCalibrate = new Provel::ScreenZCalibrate();
 
 	dbg("STARTING\r\n");
+
+#if 0
 	dbg("splash\r\n");
-
 	ui->Push(splash);
-	ui->Update();
-
 	delay_ms(1000);
 
 	dbg("home\r\n");
 	ui->Push(home);
+	delay_ms(1000);
 
 	dbg("file loaded\r\n");
 	ui->Push(fileLoaded);
-#if 0
-
 	delay_ms(1000);
 
-	dbg("splash reset\r\n");
-	ui.Reset(&splash);
-	ui.Update();
+	dbg("fault\r\n");
+	ui->Push(fault);
+	delay_ms(1000);
+
+	dbg("loading file\r\n");
+	ui->Push(loading);
+	delay_ms(1000);
+
+	dbg("printing\r\n");
+	ui->Push(printing);
+	delay_ms(1000);
+
+	dbg("heating\r\n");
+	ui->Push(heating);
+	delay_ms(1000);
+
+	dbg("idle\r\n");
+	ui->Push(idle);
+	delay_ms(1000);
+
+	dbg("printer\r\n");
+	ui->Push(printer);
+	delay_ms(1000);
+
+	dbg("purging\r\n");
+	ui->Push(purging);
+	delay_ms(1000);
+
+	dbg("warning\r\n");
+	ui->Push(warning);
+	delay_ms(1000);
 #endif
-
-#else
-	Provel::ScreenFault fault;
-	Provel::ScreenHeating heating;
-	Provel::ScreenIdle idle;
-	Provel::ScreenLoading loading;
-	Provel::ScreenPrinter printer;
-	Provel::ScreenPrinting printing;
-	Provel::ScreenPurging purging;
-	Provel::ScreenWarning warning;
-	Provel::ScreenZCalibrate zCalibrate;
-
-	ui.Push(&fault);
-	ui.Update();
-
-	ui.Push(&fileLoaded);
-	ui.Update();
-
-	ui.Push(&heating);
-	ui.Update();
-
-	ui.Push(&idle);
-	ui.Update();
-
-	ui.Push(&loading);
-	ui.Update();
-
-	ui.Push(&printer);
-	ui.Update();
-
-	ui.Push(&printing);
-	ui.Update();
-
-	ui.Push(&warning);
-	ui.Update();
-
-	ui.Push(&zCalibrate);
-	ui.Update();
-#endif
+	dbg("z calibrate\r\n");
+	ui->Push(zCalibrate);
+	delay_ms(1000);
 
 	return 0;
 }
