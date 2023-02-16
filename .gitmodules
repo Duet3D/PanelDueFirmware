@@ -6,4 +6,4 @@
 	url = https://github.com/Duet3D/qoi.git
 [submodule "lib/base64"]
 	path = lib/base64
-	url = git@github.com:Duet3D/base64.git
+	url = https://github.com/Duet3D/base64.git
