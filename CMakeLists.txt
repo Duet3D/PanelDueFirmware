@@ -130,6 +130,8 @@ else()
 	message(FATAL_ERROR "${DEVICE} is invalid. Please configure a device cmake -DDEVICE=v2-4.3|v2-5.0|v2-7.0|v2-7.0c|v3-4.3|v3-5.0|v3-7.0|v3-7.0c|5.0i|7.0i")
 endif()
 
+set( DEVICE_FLAGS "${DEVICE_FLAGS} -DDEVICE=${DEVICE}" )
+
 set( CMAKE_ASM_FLAGS "${BASIC_C_FLAGS} ${DEVICE_FLAGS} ${CMAKE_ASM_FLAGS}" )
 set( CMAKE_C_FLAGS "${BASIC_C_FLAGS} ${DEVICE_FLAGS} ${CMAKE_C_FLAGS}" )
 set( CMAKE_CXX_FLAGS "${BASIC_C_FLAGS} ${DEVICE_FLAGS} ${CMAKE_CXX_FLAGS}" )
