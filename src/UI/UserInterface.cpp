@@ -1388,8 +1388,8 @@ namespace UI
 		currentTool = ival;
 	}
 
-	static int timesLeft[3];
-	enum TimesLeft { file, filament, slicer };
+	enum TimesLeft { file, filament, slicer, max };
+	static int timesLeft[TimesLeft::max];
 	static uint32_t simulatedTime;
 	static uint32_t jobDuration;
 	static uint32_t jobWarmUpDuration;
@@ -1425,6 +1425,7 @@ namespace UI
 			{
 				// Starting a new print, so clear the times
 				timesLeft[0] = timesLeft[1] = timesLeft[2] = 0;
+				simulatedTime = 0;
 			}
 			SetLastFileSimulated(newStatus == OM::PrinterStatus::simulating);
 			if (oldStatus != newStatus)
