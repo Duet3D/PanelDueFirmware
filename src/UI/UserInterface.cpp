@@ -20,6 +20,7 @@
 
 #include "Icons/Icons.hpp"
 #include "Library/Misc.hpp"
+#include "ObjectModel/BedOrChamber.hpp"
 #include "ObjectModel/PrinterStatus.hpp"
 #include "PanelDue.hpp"
 #include "Version.hpp"
@@ -2341,30 +2342,18 @@ namespace UI
 					case evAdjustBedActiveTemp:
 					case evAdjustChamberActiveTemp:
 						{
-							int bedOrChamberIndex = bp.GetIParam();
+							int index = fieldBeingAdjusted.GetIParam();
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedActiveTemp;
-							const auto bedOrChamber = isBed ? OM::GetBed(bedOrChamberIndex) : OM::GetChamber(bedOrChamberIndex);
-							if (bedOrChamber == nullptr)
-							{
-								break;
-							}
-							const auto heaterIndex = bedOrChamber->index;
-							SerialIo::Sendf("M14%d P%d S%d\n", isBed ? 0 : 1, heaterIndex, val);
+							SerialIo::Sendf("%s P%d S%d\n", isBed ? "M140" : "M141", index, val);
 						}
 						break;
 
 					case evAdjustBedStandbyTemp:
 					case evAdjustChamberStandbyTemp:
 						{
-							int bedOrChamberIndex = bp.GetIParam();
+							int index = fieldBeingAdjusted.GetIParam();
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedStandbyTemp;
-							const auto bedOrChamber = isBed ? OM::GetBed(bedOrChamberIndex) : OM::GetChamber(bedOrChamberIndex);
-							if (bedOrChamber == nullptr)
-							{
-								break;
-							}
-							const auto heaterIndex = bedOrChamber->index;
-							SerialIo::Sendf("M14%d P%d R%d\n", isBed ? 0 : 1, heaterIndex, val);
+							SerialIo::Sendf("%s P%d R%d\n", isBed ? "M140" : "M141", index, val);
 						}
 						break;
 
@@ -2624,7 +2613,7 @@ namespace UI
 					}
 					else
 					{
-						SerialIo::Sendf("M140 P%d S%d\n", bedIndex,	activeTemps[slot]->GetValue());
+						SerialIo::Sendf("M140 P%d S%d\n", bedIndex, activeTemps[slot]->GetValue());
 					}
 				}
 				break;
@@ -3316,9 +3305,9 @@ namespace UI
 					slot,
 					true,
 					isBed ? evAdjustBedActiveTemp : evAdjustChamberActiveTemp,
-					bedOrChamber->heater,
+					bedOrChamber->index,
 					isBed ? evAdjustBedStandbyTemp : evAdjustChamberStandbyTemp,
-					bedOrChamber->heater
+					bedOrChamber->index
 					);
 			mgr.Show(extrusionFactors[slot], false);
 			toolButtons[slot]->SetEvent(isBed ? evSelectBed : evSelectChamber, bedOrChamber->index);
