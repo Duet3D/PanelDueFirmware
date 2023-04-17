@@ -2003,7 +2003,7 @@ namespace UI
 	{
 		if (isLandscape)
 		{
-			alertPopup->Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
+			alertPopup->Set(alert);
 			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
 		}
 		alertMode = alert.mode;
@@ -3039,6 +3039,11 @@ namespace UI
 
 			case evCloseAlert:
 				SerialIo::Sendf("%s\n", bp.GetSParam());
+				ClearAlertOrResponse();
+				break;
+
+			case evChoiceAlert:
+				SerialIo::Sendf("M292 R{%d}\n", bp.GetIParam());
 				ClearAlertOrResponse();
 				break;
 
