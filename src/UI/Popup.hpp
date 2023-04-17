@@ -73,6 +73,8 @@ private:
 
 	TextButton *selectionMap[10];
 
+	static_assert(ARRAY_SIZE(Alert::choices) == ARRAY_SIZE(selectionMap));
+
 	struct {
 		struct {
 			int32_t min;

@@ -40,18 +40,17 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 	text += splitPoint;
 	alertText3.copy(text);
 
-	closeButton->Show(mode == 1);
+	closeButton->Show(mode == Alert::Mode::InfoConfirm);
 
-	okButton->Show(mode >= 2);
-	cancelButton->Show(mode == 3);
-
-	dbg("1\n");
+	okButton->Show(mode >= 2 && mode != Alert::Mode::Choices);
+	cancelButton->Show(mode == Alert::Mode::ConfirmCancel);
 
 	// hide all buttons
 	for (size_t i = 0; i < ARRAY_SIZE(axisMap); i++)
 	{
 		axisMap[i]->Show(false);
 	}
+
 	for (size_t i = 0; i < ARRAY_SIZE(dirMap); i++)
 	{
 		dirMap[i].button->Show(false);
@@ -62,7 +61,6 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 		selectionMap[i]->Show(false);
 	}
 
-	dbg("2\n");
 	if (mode == Alert::Mode::InfoConfirm || mode == Alert::Mode::ConfirmCancel)
 	{
 		size_t axisIndex = 0;
@@ -95,8 +93,6 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 		}
 		driveLetterField->Show(controls ? true : false);
 
-		dbg("3\n");
-
 		// show jog buttons
 		for (size_t i = 0; i < ARRAY_SIZE(dirMap); i++)
 		{
@@ -106,9 +102,7 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 			dir->button->Show(controls ? true : false);
 		}
 	}
-	dbg("4\n");
 }
-
 
 void AlertPopup::Set(const Alert &alert)
 {
@@ -195,6 +189,8 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	constexpr PixelNumber buttonWidth = buttonWidthUnits * unitWidth;
 	constexpr PixelNumber buttonAxis = 72;
 	constexpr PixelNumber buttonAxisWidth = 52;
+	constexpr PixelNumber buttonChoice = 145;
+	constexpr PixelNumber buttonChoiceWidth = 125;
 	constexpr PixelNumber buttonStep = (buttonWidthUnits + buttonSpacingUnits) * unitWidth;
 	constexpr PixelNumber hOffset = popupSideMargin + (alertPopupWidth - 2 * popupSideMargin - totalUnits * unitWidth)/2;
 
@@ -219,11 +215,23 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 		axisMap[i] = button;
 	}
 
-	for (size_t i = 0; i < ARRAY_SIZE(selectionMap); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(selectionMap) / 2; i++)
 	{
 		TextButton *button = new TextButton(
 				popupTopMargin + 5 * rowTextHeight,
-				hOffset + i * buttonAxis, buttonAxisWidth,
+				hOffset + i * buttonChoice, buttonChoiceWidth,
+				"none", evChoiceAlert, i);
+		assert(button);
+
+		AddField(button);
+		selectionMap[i] = button;
+	}
+
+	for (size_t i = ARRAY_SIZE(selectionMap) / 2; i < ARRAY_SIZE(selectionMap); i++)
+	{
+		TextButton *button = new TextButton(
+				popupTopMargin + 6 * rowTextHeight + rowTextHeight / 2,
+				hOffset + (i - ARRAY_SIZE(selectionMap) / 2) * buttonChoice, buttonChoiceWidth,
 				"none", evChoiceAlert, i);
 		assert(button);
 
