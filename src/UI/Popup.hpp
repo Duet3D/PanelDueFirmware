@@ -43,6 +43,8 @@ private:
 	TextButton *okButton;
 	TextButton *cancelButton;
 
+	bool showCancelButton;
+
 	TextButton *axisMap[10] = {
 		nullptr,
 		nullptr,
@@ -72,28 +74,12 @@ private:
 	};
 
 	TextButton *selectionMap[10];
+	String<32> valueText;
+	TextButton *value;
 
 	static_assert(ARRAY_SIZE(Alert::choices) == ARRAY_SIZE(selectionMap));
 
-	struct {
-		struct {
-			int32_t min;
-			int32_t max;
-			int32_t valueDefault;
-		} numberInt;
-		struct {
-			float min;
-			float max;
-			float valueDefault;
-		} numberFloat;
-		struct {
-			int32_t min;
-			int32_t max;
-			String<32> valueDefault;
-		} text;
-	} limits;
-};
-
+	Alert::Limits limits;
 };
 
 #endif /* ifndef SRC_UI_POPUP_HPP_ */

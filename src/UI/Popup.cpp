@@ -42,8 +42,17 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 
 	closeButton->Show(mode == Alert::Mode::InfoConfirm);
 
-	okButton->Show(mode >= 2 && mode != Alert::Mode::Choices);
-	cancelButton->Show(mode == Alert::Mode::ConfirmCancel);
+	okButton->Show(mode == Alert::Mode::ConfirmCancel ||
+		       mode == Alert::Mode::NumberInt ||
+		       mode == Alert::Mode::NumberFloat ||
+		       mode == Alert::Mode::Text);
+
+	cancelButton->Show((mode == Alert::Mode::ConfirmCancel) ||
+			   (showCancelButton &&
+			   (mode == Alert::Mode::NumberInt ||
+			    mode == Alert::Mode::NumberFloat ||
+			    mode == Alert::Mode::Text
+			   )));
 
 	// hide all buttons
 	for (size_t i = 0; i < ARRAY_SIZE(axisMap); i++)
@@ -106,7 +115,11 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 
 void AlertPopup::Set(const Alert &alert)
 {
+	showCancelButton = alert.cancelButton;
+
 	Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
+
+	limits = alert.limits;
 
 	switch(alert.mode)
 	{
@@ -130,13 +143,20 @@ void AlertPopup::Set(const Alert &alert)
 #endif
 		break;
 	case Alert::Mode::NumberInt:
-		// TODO set limits
+		valueText.printf("%ld", limits.numberInt.valueDefault);
+		value->SetText(valueText.c_str());
+		value->Show(true);
+		dbg("showing int value\n");
 		break;
 	case Alert::Mode::NumberFloat:
-		// TODO set limits
+		valueText.printf("%f", (double)limits.numberFloat.valueDefault);
+		value->SetText(valueText.c_str());
+		value->Show(true);
 		break;
 	case Alert::Mode::Text:
-		// TODO set length limits and default text
+		valueText.copy(limits.text.valueDefault.c_str());
+		value->SetText(valueText.c_str());
+		value->Show(true);
 		break;
 	default:
 		dbg("invalid mode %d\n", alert.mode);
@@ -169,10 +189,11 @@ void AlertPopup::ChangeLetter(const size_t index)
 	
 }
 
-AlertPopup::AlertPopup(const ColourScheme& colours)
-	: StandardPopupWindow(
+AlertPopup::AlertPopup(const ColourScheme& colours) :
+	StandardPopupWindow(
 			alertPopupHeight, alertPopupWidth, colours.alertPopupBackColour, colours.popupBorderColour,
-			colours.alertPopupTextColour, colours.buttonImageBackColour, "", popupTopMargin)		// title is present, but empty for now
+			colours.alertPopupTextColour, colours.buttonImageBackColour, "", popupTopMargin),
+	showCancelButton(false)		// title is present, but empty for now
 {
 	DisplayField::SetDefaultColours(colours.alertPopupTextColour, colours.alertPopupBackColour);
 	titleField->SetValue(alertTitle.c_str(), true);
@@ -191,6 +212,7 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 	constexpr PixelNumber buttonAxisWidth = 52;
 	constexpr PixelNumber buttonChoice = 145;
 	constexpr PixelNumber buttonChoiceWidth = 125;
+	constexpr PixelNumber buttonValueWith = 220;
 	constexpr PixelNumber buttonStep = (buttonWidthUnits + buttonSpacingUnits) * unitWidth;
 	constexpr PixelNumber hOffset = popupSideMargin + (alertPopupWidth - 2 * popupSideMargin - totalUnits * unitWidth)/2;
 
@@ -266,6 +288,13 @@ AlertPopup::AlertPopup(const ColourScheme& colours)
 		AddField(button);
 		dir->button = button;
 	}
+
+	value = new TextButton(
+			popupTopMargin + 5 * rowTextHeight,
+			(alertPopupWidth - buttonValueWith) / 2, buttonValueWith,
+			"none", evEditAlert, 0);
+	assert(value);
+	AddField(value);
 
 	constexpr PixelNumber controlButtonWidth = buttonWidth + buttonStep;
 	constexpr PixelNumber hOkOffset = popupSideMargin + (alertPopupWidth - 3 * popupSideMargin - 2 * controlButtonWidth) / 2;

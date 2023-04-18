@@ -47,7 +47,7 @@ struct Alert
 	bool cancelButton;
 	String<32> choices[10];
 
-	struct {
+	struct Limits {
 		struct {
 			int32_t min;
 			int32_t max;
