@@ -33,7 +33,7 @@ endif()
 set( COMMON_FLAGS "--param max-inline-insns-single=500 -mlong-calls -ffunction-sections -fdata-sections -fno-exceptions -fsingle-precision-constant -Wall -Wextra -Wundef -Wdouble-promotion -Wno-expansion-to-defined")
 
 set( CMAKE_ASM_FLAGS "${COMMON_FLAGS}" )
-set( CMAKE_C_FLAGS "${COMMON_FLAGS} -std=gnu99" )
+set( CMAKE_C_FLAGS "${COMMON_FLAGS} -std=gnu17" )
 set( CMAKE_CXX_FLAGS "${COMMON_FLAGS} -std=gnu++17 -fno-threadsafe-statics -fno-rtti" )
 set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
 

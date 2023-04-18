@@ -110,6 +110,7 @@ static PopupWindow *babystepPopup;
 static AlertPopup *alertPopup;
 static CharButtonRow *keyboardRows[4];
 static const char* _ecv_array const * _ecv_array currentKeyboard;
+static void (*keyboardDataHandler)(const char *data) = nullptr;
 
 static ButtonBase * null currentTab = nullptr;
 
@@ -360,6 +361,19 @@ const char * _ecv_array StripPrefix(const char * _ecv_array dir)
 		}
 	}
 	return dir;
+}
+
+
+static void SendGcode(const char *data)
+{
+	SerialIo::Sendf("%s\n", data);
+}
+
+static void PopupEditData(const char *data)
+{
+	alertPopup->UpdateData(data);
+	dbg("received data %s\n", data);
+	mgr.ClearPopup(true, keyboardPopup);
 }
 
 // Adjust the brightness
@@ -807,6 +821,8 @@ static void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	keyboardPopup->AddField(new TextButton(row, popupSideMargin + wideKeyButtonWidth + keyButtonHSpace, 2 * wideKeyButtonWidth, "", evKey, (int)' '));
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.buttonImageBackColour);
 	keyboardPopup->AddField(new IconButton(row, popupSideMargin + 3 * wideKeyButtonWidth + 2 * keyButtonHSpace, wideKeyButtonWidth, IconEnter, evSendKeyboardCommand));
+
+	keyboardDataHandler = SendGcode;
 }
 
 // Create the babystep popup
@@ -1578,6 +1594,7 @@ namespace UI
 		case evTabMsg:
 			mgr.SetRoot(messageRoot);
 			if (keyboardIsDisplayed) {
+				keyboardDataHandler = SendGcode;
 				mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY, false);
 			}
 			break;
@@ -1657,6 +1674,7 @@ namespace UI
 	// Pop up the keyboard
 	void ShowKeyboard()
 	{
+		keyboardDataHandler = SendGcode;
 		mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY);
 		keyboardIsDisplayed = true;
 	}
@@ -2003,7 +2021,7 @@ namespace UI
 	{
 		if (isLandscape)
 		{
-			alertPopup->Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
+			alertPopup->Set(alert);
 			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
 		}
 		alertMode = alert.mode;
@@ -3023,7 +3041,10 @@ namespace UI
 			case evSendKeyboardCommand:
 				if (userCommandBuffers[currentUserCommandBuffer].strlen() != 0)
 				{
-					SerialIo::Sendf("%s\n", userCommandBuffers[currentUserCommandBuffer].c_str());
+					if (keyboardDataHandler)
+					{
+						keyboardDataHandler(userCommandBuffers[currentUserCommandBuffer].c_str());
+					}
 
 					// Add the command to the history if it was different frmo the previous command
 					size_t prevBuffer = (currentUserCommandBuffer + numUserCommandBuffers - 1) % numUserCommandBuffers;
@@ -3037,9 +3058,25 @@ namespace UI
 				}
 				break;
 
+			case evOkAlert:
+				alertPopup->ProcessOkButton();
+				ClearAlertOrResponse();
+				break;
+
 			case evCloseAlert:
 				SerialIo::Sendf("%s\n", bp.GetSParam());
 				ClearAlertOrResponse();
+				break;
+
+			case evChoiceAlert:
+				alertPopup->ProcessChoice(bp.GetIParam());
+				ClearAlertOrResponse();
+				break;
+
+			case evEditAlert:
+				keyboardDataHandler = PopupEditData;
+				mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY);
+				keyboardIsDisplayed = true;
 				break;
 
 			default:
