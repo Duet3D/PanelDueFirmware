@@ -198,6 +198,15 @@ void AlertPopup::ProcessOkButton()
 }
 
 
+void AlertPopup::ProcessChoice(uint32_t choice)
+{
+	if (mode != Alert::Mode::Choices)
+		return;
+
+	SerialIo::Sendf("M292 R{%lu} S%lu\n", choice, seq);
+}
+
+
 void AlertPopup::UpdateData(const char *data)
 {
 	bool valid = false;

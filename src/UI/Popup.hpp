@@ -33,6 +33,7 @@ public:
 
 	void UpdateData(const char *data);
 	void ProcessOkButton();
+	void ProcessChoice(uint32_t choice);
 
 	bool Validate(int value);
 	bool Validate(float value);

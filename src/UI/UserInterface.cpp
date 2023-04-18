@@ -3069,7 +3069,7 @@ namespace UI
 				break;
 
 			case evChoiceAlert:
-				SerialIo::Sendf("M292 R{%d}\n", bp.GetIParam());
+				alertPopup->ProcessChoice(bp.GetIParam());
 				ClearAlertOrResponse();
 				break;
 
