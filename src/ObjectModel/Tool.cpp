@@ -10,6 +10,9 @@
 #include <General/Vector.hpp>
 #include <UI/UserInterfaceConstants.hpp>
 
+#define DEBUG 0
+#include "Debug.hpp"
+
 typedef Vector<OM::Tool*, MaxSlots> ToolList;
 static ToolList tools;
 

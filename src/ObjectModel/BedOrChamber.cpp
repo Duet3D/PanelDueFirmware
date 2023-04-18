@@ -10,6 +10,9 @@
 #include <General/Vector.hpp>
 #include <UI/UserInterfaceConstants.hpp>
 
+#define DEBUG 0
+#include "Debug.hpp"
+
 typedef Vector<OM::Bed*, MaxSlots> BedList;
 typedef Vector<OM::Chamber*, MaxSlots> ChamberList;
 
