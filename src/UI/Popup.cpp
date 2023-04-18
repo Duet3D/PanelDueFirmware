@@ -1,7 +1,9 @@
 #include "UI/Popup.hpp"
-#include "ObjectModel/Axis.hpp"
 
+#include "General/SafeStrtod.h"
 #include "General/SimpleMath.h"
+#include "ObjectModel/Axis.hpp"
+#include "Hardware/SerialIo.hpp"
 
 #define DEBUG 0
 #include "Debug.hpp"
@@ -54,11 +56,15 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 			    mode == Alert::Mode::Text
 			   )));
 
+	warning->Show(false);
+	value->Show(false);
+
 	// hide all buttons
 	for (size_t i = 0; i < ARRAY_SIZE(axisMap); i++)
 	{
 		axisMap[i]->Show(false);
 	}
+	driveLetterField->Show(false);
 
 	for (size_t i = 0; i < ARRAY_SIZE(dirMap); i++)
 	{
@@ -119,9 +125,11 @@ void AlertPopup::Set(const Alert &alert)
 
 	Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
 
+	mode = alert.mode;
+	seq = alert.seq;
 	limits = alert.limits;
 
-	switch(alert.mode)
+	switch (mode)
 	{
 	case Alert::Mode::Info:
 	case Alert::Mode::InfoClose:
@@ -164,6 +172,121 @@ void AlertPopup::Set(const Alert &alert)
 	}
 }
 
+
+void AlertPopup::ProcessOkButton()
+{
+	dbg("\n");
+	switch (mode)
+	{
+	case Alert::Mode::Info:
+	case Alert::Mode::InfoClose:
+	case Alert::Mode::Choices:
+		break;
+	case Alert::Mode::InfoConfirm:
+	case Alert::Mode::ConfirmCancel:
+		SerialIo::Sendf("M292 P0 S%lu\n", seq);
+		break;
+	case Alert::Mode::NumberFloat:
+	case Alert::Mode::NumberInt:
+	case Alert::Mode::Text:
+		SerialIo::Sendf("M292 P0 R{%s} S%lu\n", valueText.c_str(), seq);
+		break;
+	default:
+		dbg("invalid mode %d\n", mode);
+		break;
+	}
+}
+
+
+void AlertPopup::UpdateData(const char *data)
+{
+	bool valid = false;
+
+	valueText.copy(data);
+	value->SetText(valueText.c_str());
+	value->Show(true);
+
+	switch (mode)
+	{
+	case Alert::Mode::NumberInt:
+		{
+			int valueInt = StrToI32(data);
+			valid = Validate(valueInt);
+
+			warningText.printf("out of range %ld <= value <= %ld",
+					limits.numberInt.min, limits.numberInt.max);
+		}
+		break;
+	case Alert::Mode::NumberFloat:
+		{
+			float valueFloat = SafeStrtof(data);
+			valid = Validate(valueFloat);
+			if (valid)
+				break;
+			warningText.printf("out of range %f <= value <= %f",
+					(double)limits.numberFloat.min, (double)limits.numberFloat.max);
+		}
+		break;
+	case Alert::Mode::Text:
+		{
+			valid = Validate(data);
+			if (valid)
+				break;
+			warningText.printf("invalid length %ld <= length <= %ld",
+					limits.text.min, limits.text.max);
+		}
+		break;
+	default:
+		{
+			dbg("Error: mode does not support data updates\n");
+			return;
+		}
+		break;
+	}
+
+	okButton->Show(valid);
+
+	if (!valid)
+	{
+		// TODO show warning
+		warning->SetValue(warningText.c_str(), true);
+		warning->Show(true);
+	}
+}
+
+bool AlertPopup::Validate(int value)
+{
+	if (value < limits.numberInt.min)
+		return false;
+
+	if (value > limits.numberInt.max)
+		return false;
+
+	return true;
+}
+
+bool AlertPopup::Validate(float value)
+{
+	if (value < limits.numberFloat.min)
+		return false;
+
+	if (value > limits.numberFloat.max)
+		return false;
+
+	return true;
+}
+
+bool AlertPopup::Validate(const char *value)
+{
+	if (strlen(value) < (size_t)limits.text.min)
+		return false;
+
+	if (strlen(value) > (size_t)limits.text.max)
+		return false;
+
+	return true;
+}
+
 void AlertPopup::ChangeLetter(const size_t index)
 {
 	if (index >= ARRAY_SIZE(axisMap))
@@ -193,13 +316,16 @@ AlertPopup::AlertPopup(const ColourScheme& colours) :
 	StandardPopupWindow(
 			alertPopupHeight, alertPopupWidth, colours.alertPopupBackColour, colours.popupBorderColour,
 			colours.alertPopupTextColour, colours.buttonImageBackColour, "", popupTopMargin),
-	showCancelButton(false)		// title is present, but empty for now
+	showCancelButton(false),
+	mode(Alert::Mode::None)
 {
 	DisplayField::SetDefaultColours(colours.alertPopupTextColour, colours.alertPopupBackColour);
 	titleField->SetValue(alertTitle.c_str(), true);
 	AddField(new StaticTextField(popupTopMargin + 2 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText1.c_str()));
 	AddField(new StaticTextField(popupTopMargin + 3 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText2.c_str()));
 	AddField(new StaticTextField(popupTopMargin + 4 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, alertText3.c_str()));
+	warning = new StaticTextField(popupTopMargin + 5 * rowTextHeight, popupSideMargin, GetWidth() - 2 * popupSideMargin, TextAlignment::Centre, "");
+	AddField(warning);
 
 	// Calculate the button positions
 	constexpr unsigned int numButtons = 7;
@@ -290,7 +416,7 @@ AlertPopup::AlertPopup(const ColourScheme& colours) :
 	}
 
 	value = new TextButton(
-			popupTopMargin + 5 * rowTextHeight,
+			popupTopMargin + 6 * rowTextHeight,
 			(alertPopupWidth - buttonValueWith) / 2, buttonValueWith,
 			"none", evEditAlert, 0);
 	assert(value);
@@ -300,7 +426,7 @@ AlertPopup::AlertPopup(const ColourScheme& colours) :
 	constexpr PixelNumber hOkOffset = popupSideMargin + (alertPopupWidth - 3 * popupSideMargin - 2 * controlButtonWidth) / 2;
 	constexpr PixelNumber hCancelOffset = hOkOffset + popupSideMargin + controlButtonWidth;
 
-	AddField(okButton =          new TextButton(popupTopMargin + 7 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOkOffset,     controlButtonWidth, "OK", evCloseAlert, "M292 P0"));
+	AddField(okButton =          new TextButton(popupTopMargin + 7 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOkOffset,     controlButtonWidth, "OK", evOkAlert, "M292 P0"));
 	AddField(cancelButton =      new TextButton(popupTopMargin + 7 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hCancelOffset, controlButtonWidth, "Cancel", evCloseAlert, "M292 P1"));
 }
 

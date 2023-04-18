@@ -31,9 +31,19 @@ public:
 	void Set(const Alert &alert);
 	void ChangeLetter(const size_t index);
 
+	void UpdateData(const char *data);
+	void ProcessOkButton();
+
+	bool Validate(int value);
+	bool Validate(float value);
+	bool Validate(const char *value);
+
 private:
 	String<alertTitleLength> alertTitle;
 	String<alertTextLength/3> alertText1, alertText2, alertText3;
+
+	String<alertTextLength/3> warningText;
+	StaticTextField *warning;
 
 	String<2> driveLetter;
 
@@ -79,6 +89,8 @@ private:
 
 	static_assert(ARRAY_SIZE(Alert::choices) == ARRAY_SIZE(selectionMap));
 
+	uint32_t seq;
+	Alert::Mode mode;
 	Alert::Limits limits;
 };
 
