@@ -1,1 +1,1 @@
-M291 P"test message mode 3" R"test title" S3
+M291 P"test message mode 3" R"test mode S3" S3
