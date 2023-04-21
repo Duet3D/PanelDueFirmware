@@ -42,7 +42,7 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 	text += splitPoint;
 	alertText3.copy(text);
 
-	closeButton->Show(mode == Alert::Mode::InfoConfirm);
+	closeButton->Show(mode == Alert::Mode::InfoClose);
 
 	okButton->Show(mode == Alert::Mode::ConfirmCancel ||
 		       mode == Alert::Mode::NumberInt ||
