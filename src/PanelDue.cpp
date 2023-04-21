@@ -1050,6 +1050,17 @@ static void EndReceivedMessage()
 	}
 	FileManager::EndReceivedMessage();
 
+	// alert event handling
+	if (currentAlert.flags.IsBitSet(Alert::GotMode) && currentAlert.mode == Alert::Mode::None)
+	{
+		UI::ClearAlert();
+	}
+	else if (currentAlert.mode != Alert::Mode::None && currentAlert.seq != lastAlertSeq)
+	{
+		UI::ProcessAlert(currentAlert);
+		lastAlertSeq = currentAlert.seq;
+	}
+
 	if (thumbnailContext.parseErr != 0 || thumbnailContext.err != 0)
 	{
 		dbg("thumbnail parseErr %d err %d.\n",
@@ -2560,17 +2571,6 @@ int main(void)
 			default:
 				break;
 			}
-		}
-
-		// alert event handling
-		if (currentAlert.flags.IsBitSet(Alert::GotMode) && currentAlert.mode == Alert::Mode::None)
-		{
-			UI::ClearAlert();
-		}
-		else if (currentAlert.mode > Alert::Mode::None && currentAlert.seq != lastAlertSeq)
-		{
-			UI::ProcessAlert(currentAlert);
-			lastAlertSeq = currentAlert.seq;
 		}
 
 		// refresh the display
