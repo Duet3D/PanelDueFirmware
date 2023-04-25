@@ -865,7 +865,7 @@ void SetBrightness(int percent)
 
 void CurrentAlertModeClear()
 {
-	currentAlert.mode = Alert::Mode::None;
+	currentAlert.Reset();
 }
 
 static void ActivateScreensaver()
@@ -1020,7 +1020,7 @@ static void StartReceivedMessage()
 	newMessageSeq = messageSeq;
 	MessageLog::BeginNewMessage();
 	FileManager::BeginNewMessage();
-	currentAlert.flags.Clear();
+	currentAlert.Reset();
 
 	if (thumbnailContext.state == ThumbnailState::Init)
 	{
@@ -1767,6 +1767,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 			break;
 		}
 		currentAlert.choices[indices[0]].copy(data);
+		currentAlert.choices_count = indices[0] + 1;
 		break;
 
 	case rcvStateStatus:

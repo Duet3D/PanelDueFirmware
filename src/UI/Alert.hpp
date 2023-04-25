@@ -2,7 +2,9 @@
 #define UI_ALERT_HPP 1
 
 #include <cstdint>
+#include <cstddef>
 #include "General/Bitmap.h"
+#include "General/SimpleMath.h"
 #include "General/String.h"
 #include "General/Vector.hpp"
 
@@ -46,6 +48,7 @@ struct Alert
 
 	bool cancelButton;
 	String<32> choices[10];
+	size_t choices_count;
 
 	struct Limits {
 		struct {
@@ -68,6 +71,15 @@ struct Alert
 	Alert() : mode(Mode::Info), seq(0), controls(0), timeout(0.0) { flags.Clear(); }
 
 	bool AllFlagsSet() const { return flags.GetRaw() == GotAll; }
+	void Reset()
+	{
+		mode = Mode::None;
+		flags.Clear();
+		for (size_t i = 0; i < ARRAY_SIZE(choices); i++)
+		{
+			choices[i].Clear();
+		}
+	}
 };
 
 #endif /* ifndef UI_ALERT_HPP */
