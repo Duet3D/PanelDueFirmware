@@ -74,7 +74,7 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 
 	for (size_t i = 0; i < ARRAY_SIZE(selectionMap); i++)
 	{
-		selectionMap[i]->Show(false);
+		selectionMap[i].button->Show(false);
 	}
 
 	if (mode == Alert::Mode::InfoConfirm || mode == Alert::Mode::ConfirmCancel)
@@ -138,18 +138,17 @@ void AlertPopup::Set(const Alert &alert)
 	case Alert::Mode::ConfirmCancel:
 		break;
 	case Alert::Mode::Choices:
-#if 1
-		for (size_t i = 0; i < ARRAY_SIZE(selectionMap); i++)
+		for (size_t i = 0; i < ARRAY_SIZE(selectionMap) && i < alert.choices_count; i++)
 		{
 			dbg("show choices %d size %d\n", i, ARRAY_SIZE(alert.choices));
 			if (i < ARRAY_SIZE(alert.choices))
 			{
 				dbg("show text %d %s\n", i, alert.choices[i].c_str());
-				selectionMap[i]->SetText(alert.choices[i].c_str());
-				selectionMap[i]->Show(true);
+				selectionMap[i].text.copy(alert.choices[i].c_str());
+				selectionMap[i].button->SetText(selectionMap[i].text.c_str());
+				selectionMap[i].button->Show(true);
 			}
 		}
-#endif
 		break;
 	case Alert::Mode::NumberInt:
 		valueText.printf("%ld", limits.numberInt.valueDefault);
@@ -382,7 +381,7 @@ AlertPopup::AlertPopup(const ColourScheme& colours) :
 		assert(button);
 
 		AddField(button);
-		selectionMap[i] = button;
+		selectionMap[i].button = button;
 	}
 
 	for (size_t i = ARRAY_SIZE(selectionMap) / 2; i < ARRAY_SIZE(selectionMap); i++)
@@ -394,7 +393,7 @@ AlertPopup::AlertPopup(const ColourScheme& colours) :
 		assert(button);
 
 		AddField(button);
-		selectionMap[i] = button;
+		selectionMap[i].button = button;
 	}
 
 	for (size_t i = 0; i < ARRAY_SIZE(dirMap) / 2; i++)

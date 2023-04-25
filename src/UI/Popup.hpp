@@ -3,6 +3,7 @@
 
 #include "FlashData.hpp"
 #include "Icons/Icons.hpp"
+#include "General/SimpleMath.h"
 #include "General/String.h"
 #include "UI/Alert.hpp"
 #include "UI/ColourSchemes.hpp"
@@ -84,7 +85,10 @@ private:
 		{ .text = MORE_ARROW "2.0", .param = "2.0", .button = nullptr },
 	};
 
-	TextButton *selectionMap[10];
+	struct {
+		TextButton *button;
+		String<32> text;
+	} selectionMap[10];
 	String<32> valueText;
 	TextButton *value;
 
