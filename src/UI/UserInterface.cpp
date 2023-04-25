@@ -2276,6 +2276,12 @@ namespace UI
 		case evAdjustColours:
 		case evAdjustLanguage:
 			break;
+		case evOkAlert:
+		case evCloseAlert:
+		case evChoiceAlert:
+			mgr.Press(bp, false);
+			ClearAlertOrResponse();
+			break;
 		default:
 			mgr.Press(bp, false);
 			break;
@@ -3060,17 +3066,14 @@ namespace UI
 
 			case evOkAlert:
 				alertPopup->ProcessOkButton();
-				ClearAlertOrResponse();
 				break;
 
 			case evCloseAlert:
 				SerialIo::Sendf("%s\n", bp.GetSParam());
-				ClearAlertOrResponse();
 				break;
 
 			case evChoiceAlert:
 				alertPopup->ProcessChoice(bp.GetIParam());
-				ClearAlertOrResponse();
 				break;
 
 			case evEditAlert:
