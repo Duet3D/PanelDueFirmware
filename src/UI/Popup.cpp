@@ -188,8 +188,10 @@ void AlertPopup::ProcessOkButton()
 		break;
 	case Alert::Mode::NumberFloat:
 	case Alert::Mode::NumberInt:
-	case Alert::Mode::Text:
 		SerialIo::Sendf("M292 P0 R{%s} S%lu\n", valueText.c_str(), seq);
+		break;
+	case Alert::Mode::Text:
+		SerialIo::Sendf("M292 P0 R{\"%s\"} S%lu\n", valueText.c_str(), seq);
 		break;
 	default:
 		dbg("invalid mode %d\n", mode);
