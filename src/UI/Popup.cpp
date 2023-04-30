@@ -436,7 +436,7 @@ AlertPopup::AlertPopup(const ColourScheme& colours) :
 	constexpr PixelNumber hOkOffset = popupSideMargin + (alertPopupWidth - 3 * popupSideMargin - 2 * controlButtonWidth) / 2;
 	constexpr PixelNumber hCancelOffset = hOkOffset + popupSideMargin + controlButtonWidth;
 
-	AddField(okButton =          new TextButton(popupTopMargin + 7 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOkOffset,     controlButtonWidth, "OK", evOkAlert, "M292 P0"));
-	AddField(cancelButton =      new TextButton(popupTopMargin + 7 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hCancelOffset, controlButtonWidth, "Cancel", evCloseAlert, "M292 P1"));
+	AddField(okButton = new TextButton(popupTopMargin + 7 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOkOffset,     controlButtonWidth, "OK", evOkAlert, "M292 P0"));
+	AddField(cancelButton = new TextButton(popupTopMargin + 7 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hCancelOffset, controlButtonWidth, "Cancel", evCloseAlert, "M292 P1"));
 }
 
