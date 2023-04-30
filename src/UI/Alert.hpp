@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <float.h>
 #include "General/Bitmap.h"
 #include "General/SimpleMath.h"
 #include "General/String.h"
@@ -68,7 +69,7 @@ struct Alert
 		} text;
 	} limits;
 
-	Alert() : mode(Mode::Info), seq(0), controls(0), timeout(0.0) { flags.Clear(); }
+	Alert() : mode(Mode::Info), seq(0), controls(0), timeout(0.0) { Reset(); }
 
 	bool AllFlagsSet() const { return flags.GetRaw() == GotAll; }
 	void Reset()
@@ -79,6 +80,12 @@ struct Alert
 		{
 			choices[i].Clear();
 		}
+		limits.numberInt.min = 0;
+		limits.numberInt.max = INT32_MAX;
+		limits.numberFloat.min = 0;
+		limits.numberFloat.max = FLT_MAX;
+		limits.text.min = 1;
+		limits.text.max = 10;
 	}
 };
 
