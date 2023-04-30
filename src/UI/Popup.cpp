@@ -4,6 +4,7 @@
 #include "General/SimpleMath.h"
 #include "ObjectModel/Axis.hpp"
 #include "Hardware/SerialIo.hpp"
+#include "UI/UserInterface.hpp"
 
 #define DEBUG 0
 #include "Debug.hpp"
@@ -224,7 +225,7 @@ void AlertPopup::UpdateData(const char *data)
 			int valueInt = StrToI32(data);
 			valid = Validate(valueInt);
 
-			warningText.printf("out of range %ld <= value <= %ld",
+			warningText.printf(strings->outOfRangeValueInt,
 					limits.numberInt.min, limits.numberInt.max);
 		}
 		break;
@@ -234,7 +235,7 @@ void AlertPopup::UpdateData(const char *data)
 			valid = Validate(valueFloat);
 			if (valid)
 				break;
-			warningText.printf("out of range %f <= value <= %f",
+			warningText.printf(strings->outOfRangeValueFloat,
 					(double)limits.numberFloat.min, (double)limits.numberFloat.max);
 		}
 		break;
@@ -243,7 +244,7 @@ void AlertPopup::UpdateData(const char *data)
 			valid = Validate(data);
 			if (valid)
 				break;
-			warningText.printf("invalid length %ld <= length <= %ld",
+			warningText.printf(strings->outOfRangeTextLength,
 					limits.text.min, limits.text.max);
 		}
 		break;
