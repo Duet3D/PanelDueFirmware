@@ -259,10 +259,9 @@ void AlertPopup::UpdateData(const char *data)
 
 	if (!valid)
 	{
-		// TODO show warning
 		warning->SetValue(warningText.c_str(), true);
-		warning->Show(true);
 	}
+	warning->Show(!valid);
 }
 
 bool AlertPopup::Validate(int value)
