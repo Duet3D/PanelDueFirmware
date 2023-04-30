@@ -16,6 +16,7 @@
 #undef value
 #include "UI/ColourSchemes.hpp"
 #include "ObjectModel/PrinterStatus.hpp"
+#include "FlashData.hpp"
 #include "Configuration.hpp"
 
 #define CSTRING const char * const _ecv_array
@@ -130,6 +131,9 @@ struct StringTable
 
 	CSTRING heaterCombineTypeNames[(unsigned int)HeaterCombineType::NumTypes];
 
+	CSTRING outOfRangeValueInt;
+	CSTRING outOfRangeValueFloat;
+	CSTRING outOfRangeTextLength;
 };
 
 const StringTable LanguageTables[] =
@@ -256,7 +260,11 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
-		}
+		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
  	},
 
 	// German
@@ -381,7 +389,11 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's nicht komb.",
 			"Heat's kombiniert"
-		}
+		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
 	},
 
 	// French
@@ -506,7 +518,11 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
-		}
+		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
 	},
 
 	// Spanish
@@ -631,7 +647,11 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
-		}
+		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
 	},
 
 	// Czech
@@ -756,7 +776,11 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
-		}
+		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
 	},
 
 	// Italian
@@ -881,7 +905,11 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
-		}
+		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
 	},
 
 	// Polish
@@ -1006,7 +1034,11 @@ const StringTable LanguageTables[] =
 		{
 			"Głowica prosta",
 			"Głowica inna",
-		}
+		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
 	},
 
 
@@ -1132,7 +1164,11 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
-		}
+		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
 	},
 	// Russian
 	{
@@ -1255,7 +1291,11 @@ const StringTable LanguageTables[] =
 		{
 			"Нагреватели не комб.",
 			"Нагреватели комб.",
-		}
+		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
 	}
 #endif
 };
