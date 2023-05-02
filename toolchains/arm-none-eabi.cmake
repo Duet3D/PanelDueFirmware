@@ -30,7 +30,7 @@ endif()
 # Set the common build flags
 
 # Common flags shared by asm, c and cpp
-set( COMMON_FLAGS "--param max-inline-insns-single=500 -mlong-calls -ffunction-sections -fdata-sections -fno-exceptions -fsingle-precision-constant -Wall -Wextra -Wundef -Wdouble-promotion -Wno-expansion-to-defined")
+set( COMMON_FLAGS "--param max-inline-insns-single=500 -mlong-calls -ffunction-sections -fdata-sections -fno-exceptions -fsingle-precision-constant -Wall -Wextra -Wundef -Wdouble-promotion -Wno-expansion-to-defined -fdiagnostics-color")
 
 set( CMAKE_ASM_FLAGS "${COMMON_FLAGS}" )
 set( CMAKE_C_FLAGS "${COMMON_FLAGS} -std=gnu17" )
