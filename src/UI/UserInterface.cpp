@@ -35,7 +35,6 @@
 
 #include <UI/MessageLog.hpp>
 #include <UI/Popup.hpp>
-#include <UI/Strings.hpp>
 #include <UI/UserInterfaceConstants.hpp>
 
 MainWindow mgr;

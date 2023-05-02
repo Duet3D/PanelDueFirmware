@@ -4,6 +4,7 @@
 #include "General/SimpleMath.h"
 #include "ObjectModel/Axis.hpp"
 #include "Hardware/SerialIo.hpp"
+#include "UI/UserInterface.hpp"
 
 #define DEBUG 0
 #include "Debug.hpp"
@@ -188,8 +189,10 @@ void AlertPopup::ProcessOkButton()
 		break;
 	case Alert::Mode::NumberFloat:
 	case Alert::Mode::NumberInt:
-	case Alert::Mode::Text:
 		SerialIo::Sendf("M292 P0 R{%s} S%lu\n", valueText.c_str(), seq);
+		break;
+	case Alert::Mode::Text:
+		SerialIo::Sendf("M292 P0 R{\"%s\"} S%lu\n", valueText.c_str(), seq);
 		break;
 	default:
 		dbg("invalid mode %d\n", mode);
@@ -222,7 +225,7 @@ void AlertPopup::UpdateData(const char *data)
 			int valueInt = StrToI32(data);
 			valid = Validate(valueInt);
 
-			warningText.printf("out of range %ld <= value <= %ld",
+			warningText.printf(strings->outOfRangeValueInt,
 					limits.numberInt.min, limits.numberInt.max);
 		}
 		break;
@@ -232,7 +235,7 @@ void AlertPopup::UpdateData(const char *data)
 			valid = Validate(valueFloat);
 			if (valid)
 				break;
-			warningText.printf("out of range %f <= value <= %f",
+			warningText.printf(strings->outOfRangeValueFloat,
 					(double)limits.numberFloat.min, (double)limits.numberFloat.max);
 		}
 		break;
@@ -241,7 +244,7 @@ void AlertPopup::UpdateData(const char *data)
 			valid = Validate(data);
 			if (valid)
 				break;
-			warningText.printf("invalid length %ld <= length <= %ld",
+			warningText.printf(strings->outOfRangeTextLength,
 					limits.text.min, limits.text.max);
 		}
 		break;
@@ -257,10 +260,9 @@ void AlertPopup::UpdateData(const char *data)
 
 	if (!valid)
 	{
-		// TODO show warning
 		warning->SetValue(warningText.c_str(), true);
-		warning->Show(true);
 	}
+	warning->Show(!valid);
 }
 
 bool AlertPopup::Validate(int value)
@@ -435,7 +437,7 @@ AlertPopup::AlertPopup(const ColourScheme& colours) :
 	constexpr PixelNumber hOkOffset = popupSideMargin + (alertPopupWidth - 3 * popupSideMargin - 2 * controlButtonWidth) / 2;
 	constexpr PixelNumber hCancelOffset = hOkOffset + popupSideMargin + controlButtonWidth;
 
-	AddField(okButton =          new TextButton(popupTopMargin + 7 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOkOffset,     controlButtonWidth, "OK", evOkAlert, "M292 P0"));
-	AddField(cancelButton =      new TextButton(popupTopMargin + 7 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hCancelOffset, controlButtonWidth, "Cancel", evCloseAlert, "M292 P1"));
+	AddField(okButton = new TextButton(popupTopMargin + 7 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hOkOffset,     controlButtonWidth, "OK", evOkAlert, "M292 P0"));
+	AddField(cancelButton = new TextButton(popupTopMargin + 7 * rowTextHeight + buttonHeight + moveButtonRowSpacing, hCancelOffset, controlButtonWidth, "Cancel", evCloseAlert, "M292 P1"));
 }
 
