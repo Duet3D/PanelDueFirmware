@@ -1004,6 +1004,7 @@ static bool GetBool(const char s[], bool &rslt)
 static void StartReceivedMessage();
 static void EndReceivedMessage();
 static void ProcessReceivedValue(StringRef id, const char data[], const size_t indices[]);
+static void ProcessArrayElementEnd(const char id[], const size_t index);
 static void ProcessArrayEnd(const char id[], const size_t indices[]);
 static void ParserErrorEncountered(int currentState, const char*, int errors);
 
@@ -1011,7 +1012,7 @@ static struct SerialIo::SerialIoCbs serial_cbs = {
 	.StartReceivedMessage = StartReceivedMessage,
 	.EndReceivedMessage = EndReceivedMessage,
 	.ProcessReceivedValue = ProcessReceivedValue,
-	.ProcessArrayElementEnd = nullptr,
+	.ProcessArrayElementEnd = ProcessArrayElementEnd,
 	.ProcessArrayEnd = ProcessArrayEnd,
 	.ParserErrorEncountered = ParserErrorEncountered
 };
@@ -1023,10 +1024,10 @@ static void StartReceivedMessage()
 	FileManager::BeginNewMessage();
 	currentAlert.Reset();
 
+	thumbnailNew.Init();
 	if (thumbnailCurrent.state == ThumbnailState::Init)
 	{
 		thumbnailCurrent.Init();
-		ThumbnailInit(thumbnailCurrent.thumbnail);
 		memset(&thumbnailData, 0, sizeof(thumbnailData));
 	}
 }
@@ -1069,12 +1070,12 @@ static void EndReceivedMessage()
 			thumbnailCurrent.err);
 		thumbnailCurrent.state = ThumbnailState::Init;
 	}
-#if 0 // && DEBUG
+#if DEBUG
 	if (thumbnailCurrent.thumbnail.imageFormat != Thumbnail::ImageFormat::Invalid)
 	{
 		dbg("filename %s offset %d size %d format %d width %d height %d\n",
-			thumbnailContext.filename.c_str(),
-			thumbnailContext.offset, thumbnailContext.size,
+			thumbnailCurrent.filename.c_str(),
+			thumbnailCurrent.offset, thumbnailCurrent.size,
 			thumbnailCurrent.thumbnail.imageFormat,
 			thumbnailCurrent.thumbnail.width, thumbnailCurrent.thumbnail.height);
 	}
@@ -1977,7 +1978,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		}
 		break;
 	case rcvM36Filename:
-		thumbnailCurrent.filename.copy(data);
+		thumbnailNew.filename.copy(data);
 		break;
 
 	case rcvM36GeneratedBy:
@@ -2030,26 +2031,26 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		break;
 
 	case rcvM36ThumbnailsFormat:
-		thumbnailCurrent.thumbnail.imageFormat = Thumbnail::ImageFormat::Invalid;
+		thumbnailNew.thumbnail.imageFormat = Thumbnail::ImageFormat::Invalid;
 		if (strcmp(data, "qoi") == 0)
 		{
-			thumbnailCurrent.thumbnail.imageFormat = Thumbnail::ImageFormat::Qoi;
+			thumbnailNew.thumbnail.imageFormat = Thumbnail::ImageFormat::Qoi;
 
-			thumbnailCurrent.state = ThumbnailState::Header;
+			thumbnailNew.state = ThumbnailState::Header;
 		}
 		break;
 	case rcvM36ThumbnailsHeight:
 		uint32_t height;
 		if (GetUnsignedInteger(data, height))
 		{
-			thumbnailCurrent.thumbnail.height = height;
+			thumbnailNew.thumbnail.height = height;
 		}
 		break;
 	case rcvM36ThumbnailsOffset:
 		uint32_t offset;
 		if (GetUnsignedInteger(data, offset))
 		{
-			thumbnailCurrent.next = offset;
+			thumbnailNew.next = offset;
 			dbg("receive initial offset %d.\n", offset);
 		}
 		break;
@@ -2057,14 +2058,14 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		uint32_t size;
 		if (GetUnsignedInteger(data, size))
 		{
-			thumbnailCurrent.size = size;
+			thumbnailNew.size = size;
 		}
 		break;
 	case rcvM36ThumbnailsWidth:
 		uint32_t width;
 		if (GetUnsignedInteger(data, width))
 		{
-			thumbnailCurrent.thumbnail.width = width;
+			thumbnailNew.thumbnail.width = width;
 		}
 		break;
 
@@ -2094,7 +2095,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		dbg("receive next offset %d.\n", thumbnailCurrent.next);
 		break;
 	case rcvM361ThumbnailOffset:
-		if (!GetUnsignedInteger(data, thumbnailCurrent.offset))
+		if (!GetUnsignedInteger(data, thumbnailNew.offset))
 		{
 			thumbnailCurrent.parseErr = -4;
 			break;
@@ -2131,6 +2132,26 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	default:
 		break;
 	}
+}
+
+static void ProcessArrayElementEnd(const char id[], const size_t index)
+{
+	//dbg("id %s index %lu\r\n", id, index);
+
+	// check if new thumbnail fits better
+	if (strcmp(id, "thumbnails^") == 0 &&
+	    ThumbnailIsValid(thumbnailNew.thumbnail) &&
+	    thumbnailCurrent.thumbnail.height < thumbnailNew.thumbnail.height &&
+	    thumbnailNew.thumbnail.height <= fpThumbnail->GetHeight() &&
+	    thumbnailCurrent.thumbnail.width < thumbnailNew.thumbnail.width &&
+	    thumbnailNew.thumbnail.width <= fpThumbnail->GetWidth())
+	{
+		dbg("setting new thumbnail %d/%d\r\n", fpThumbnail->GetWidth(), fpThumbnail->GetWidth());
+		thumbnailCurrent = thumbnailNew;
+		thumbnailNew.Init();
+	}
+
+	return;
 }
 
 // Public function called when the serial I/O module finishes receiving an array of values
