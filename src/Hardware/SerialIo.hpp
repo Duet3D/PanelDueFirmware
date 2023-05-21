@@ -24,6 +24,7 @@ namespace SerialIo
 		void (*StartReceivedMessage)(void);
 		void (*EndReceivedMessage)(void);
 		void (*ProcessReceivedValue)(StringRef id, const char val[], const size_t indices[]);
+		void (*ProcessArrayElementEnd)(const char id[], const size_t index);
 		void (*ProcessArrayEnd)(const char id[], const size_t indices[]);
 		void (*ParserErrorEncountered)(int currentState, const char* id, int errors);
 	};
