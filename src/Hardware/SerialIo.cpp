@@ -13,16 +13,8 @@
 #include <General/String.h>
 #include <General/SafeVsnprintf.h>
 
-#define DEBUG (0)
-
-#if DEBUG
-# include "UI/MessageLog.hpp"
-#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
-
-#else
-# define dbg(fmt, args...)		do {} while(0)
-
-#endif
+#define DEBUG 0
+#include "Debug.hpp"
 
 const size_t MaxArrayNesting = 4;
 
@@ -336,6 +328,16 @@ namespace SerialIo
 		fieldVal.Clear();
 	}
 
+	static void EndArrayElement(const char *id, size_t index)
+	{
+		dbg("id %s index %lu\r\n", id, index);
+
+		if (cbs && cbs->ProcessArrayElementEnd)
+		{
+			cbs->ProcessArrayElementEnd(id, index);
+		}
+	}
+
 	static void EndArray()
 	{
 		//dbg();
@@ -478,6 +480,8 @@ namespace SerialIo
 			}
 			if (InArray())
 			{
+				EndArrayElement(fieldId.c_str(), arrayIndices[arrayDepth - 1]);
+
 				++arrayIndices[arrayDepth - 1];
 				fieldVal.Clear();
 				state = jsVal;
@@ -496,6 +500,8 @@ namespace SerialIo
 				{
 					ProcessField();
 				}
+				EndArrayElement(fieldId.c_str(), arrayIndices[arrayDepth - 1]);
+
 				++arrayIndices[arrayDepth - 1];
 				EndArray();
 				state = jsEndVal;

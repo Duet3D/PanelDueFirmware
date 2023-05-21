@@ -28,6 +28,7 @@ extern StaticTextField *debugField;
 extern StaticTextField *touchCalibInstruction;
 extern StaticTextField *messageTextFields[], *messageTimeFields[];
 extern TextField *fwVersionField;
+extern DrawDirect *fpThumbnail;
 
 
 extern const StringTable *strings;
