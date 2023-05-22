@@ -2137,6 +2137,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 static void ProcessArrayElementEnd(const char id[], const size_t index)
 {
 	//dbg("id %s index %lu\r\n", id, index);
+	UNUSED(index);
 
 	// check if new thumbnail fits better
 	if (strcmp(id, "thumbnails^") == 0 &&

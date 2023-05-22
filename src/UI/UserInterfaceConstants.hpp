@@ -138,13 +138,14 @@ const PixelNumber ColourGradientLeftPos = DISPLAY_X - ColourGradientWidth - marg
 const PixelNumber ColourGradientTopPos = row2;
 const PixelNumber ColourGradientHeight = rowTextHeight;
 
-const PixelNumber speedColumn = margin;
-const PixelNumber fanColumn = DISPLAY_X/4 + 20;
+const PixelNumber stateColumnWdith = DISPLAY_X / 4;
 
-const PixelNumber pauseColumn = DISPLAY_X/2 + 10 + fieldSpacing;
-const PixelNumber resumeColumn = pauseColumn;
-const PixelNumber cancelColumn = pauseColumn + (DISPLAY_X - pauseColumn - fieldSpacing - margin)/2 + fieldSpacing;
-const PixelNumber babystepColumn = cancelColumn;
+const PixelNumber speedColumn = margin;
+const PixelNumber fanColumn = margin + stateColumnWdith;
+const PixelNumber babystepColumn = margin + stateColumnWdith * 2;
+const PixelNumber cancelColumn = margin + stateColumnWdith * 3;
+const PixelNumber resumeColumn = margin + stateColumnWdith * 3;
+const PixelNumber pauseColumn = margin + stateColumnWdith * 3;
 
 const PixelNumber fullPopupWidth = DisplayX - (2 * margin);
 const PixelNumber fullPopupHeight = DisplayY - (2 * margin);

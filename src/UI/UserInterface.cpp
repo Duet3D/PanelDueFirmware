@@ -974,29 +974,29 @@ static void CreatePrintingTabFields(const ColourScheme& colours)
 	}
 
 	// Speed button
-	mgr.AddField(spd = new IntegerButton(row7, speedColumn, fanColumn - speedColumn - fieldSpacing, strings->speed, "%"));
+	mgr.AddField(spd = new IntegerButton(row7, speedColumn, stateColumnWdith - fieldSpacing, strings->speed, "%"));
 	spd->SetValue(100);
 	spd->SetEvent(evAdjustSpeed, "M220 S");
 
 	// Fan button
-	mgr.AddField(fanSpeed = new IntegerButton(row7, fanColumn, pauseColumn - fanColumn - fieldSpacing, strings->fan, "%"));
+	mgr.AddField(fanSpeed = new IntegerButton(row7, fanColumn, stateColumnWdith - fieldSpacing, strings->fan, "%"));
 	fanSpeed->SetEvent(evAdjustFan, 0);
 	fanSpeed->SetValue(0);
 
-	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.pauseButtonBackColour);
-	pauseButton = new TextButton(row7, pauseColumn, babystepColumn - pauseColumn - fieldSpacing, strings->pause, evPausePrint, "M25");
-	mgr.AddField(pauseButton);
-
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	babystepButton = new TextButton(row7, babystepColumn, DisplayX - babystepColumn - margin, strings->babystep, evBabyStepPopup);
+	babystepButton = new TextButton(row7, babystepColumn, stateColumnWdith - fieldSpacing, strings->babystep, evBabyStepPopup);
 	mgr.AddField(babystepButton);
 
+	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.pauseButtonBackColour);
+	pauseButton = new TextButton(row7, pauseColumn, stateColumnWdith - (2 * margin), strings->pause, evPausePrint, "M25");
+	mgr.AddField(pauseButton);
+
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.resumeButtonBackColour);
-	resumeButton = new TextButton(row7, resumeColumn, cancelColumn - resumeColumn - fieldSpacing, strings->resume, evResumePrint, "M24");
+	resumeButton = new TextButton(row7, resumeColumn, stateColumnWdith - (2 * margin), strings->resume, evResumePrint, "M24");
 	mgr.AddField(resumeButton);
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.resetButtonBackColour);
-	cancelButton = new TextButton(row7, cancelColumn, DisplayX - cancelColumn - margin, strings->cancel, evReset, "M0");
+	cancelButton = new TextButton(row7, cancelColumn, stateColumnWdith - (2 * margin), strings->cancel, evReset, "M0");
 	mgr.AddField(cancelButton);
 
 #if DISPLAY_X == 800
@@ -1026,7 +1026,7 @@ static void CreatePrintingTabFields(const ColourScheme& colours)
 			row8
 #endif
 			;
-	reprintButton = new TextButton(reprintRow, speedColumn, pauseColumn - speedColumn - fieldSpacing, strings->reprint, evReprint);
+	reprintButton = new TextButton(reprintRow, speedColumn, 2 * stateColumnWdith - fieldSpacing, strings->reprint, evReprint);
 	reprintButton->Show(false);
 	mgr.AddField(reprintButton);
 
@@ -1241,7 +1241,7 @@ namespace UI
 		mgr.Show(cancelButton,		false);
 		mgr.Show(pauseButton,		false);
 		mgr.Show(printProgressBar,	false);
-		mgr.Show(babystepButton,	false);
+		mgr.Show(babystepButton,	true);
 
 		mgr.Show(reprintButton,		lastJobFileNameAvailable);
 		mgr.Show(filesButton,		true);
@@ -1268,10 +1268,10 @@ namespace UI
 		// First hide everything removed then show everything new
 		// otherwise remnants of the to-be-hidden might remain
 		mgr.Show(pauseButton,		false);
-		mgr.Show(babystepButton,	false);
 		mgr.Show(filesButton,		false);
 		mgr.Show(reprintButton,		false);
 
+		mgr.Show(babystepButton,	true);
 		mgr.Show(resumeButton,		true);
 		mgr.Show(cancelButton,		true);
 		mgr.Show(printProgressBar,	true);
