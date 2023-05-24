@@ -168,8 +168,8 @@ enum ThumbnailState {
 	Data
 };
 
+String<MaxFilnameLength> filenameCurrent;
 static struct ThumbnailContext {
-	String<MaxFilnameLength> filename;
 	enum ThumbnailState state;
 	struct Thumbnail thumbnail;
 	int16_t parseErr;
@@ -180,7 +180,6 @@ static struct ThumbnailContext {
 
 	void Init()
 	{
-		filename.Clear();
 		state = ThumbnailState::Init;
 		ThumbnailInit(thumbnail);
 		parseErr = 0;
@@ -189,7 +188,6 @@ static struct ThumbnailContext {
 		offset = 0;
 		next = 0;
 	};
-
 } thumbnailCurrent, thumbnailNew;
 
 static const ColourScheme *colours = &colourSchemes[0];
@@ -1027,6 +1025,7 @@ static void StartReceivedMessage()
 	thumbnailNew.Init();
 	if (thumbnailCurrent.state == ThumbnailState::Init)
 	{
+		filenameCurrent.Clear();
 		thumbnailCurrent.Init();
 		memset(&thumbnailData, 0, sizeof(thumbnailData));
 	}
@@ -1073,8 +1072,8 @@ static void EndReceivedMessage()
 #if DEBUG
 	if (thumbnailCurrent.thumbnail.imageFormat != Thumbnail::ImageFormat::Invalid)
 	{
-		dbg("filename %s offset %d size %d format %d width %d height %d\n",
-			thumbnailCurrent.filename.c_str(),
+		dbg("filename '%s' offset %d size %d format %d width %d height %d\n",
+			filenameCurrent.c_str(),
 			thumbnailCurrent.offset, thumbnailCurrent.size,
 			thumbnailCurrent.thumbnail.imageFormat,
 			thumbnailCurrent.thumbnail.width, thumbnailCurrent.thumbnail.height);
@@ -1978,7 +1977,8 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		}
 		break;
 	case rcvM36Filename:
-		thumbnailNew.filename.copy(data);
+		filenameCurrent.copy(data);
+		dbg("filename current '%s'\n", filenameCurrent.c_str());
 		break;
 
 	case rcvM36GeneratedBy:
@@ -2037,6 +2037,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 			thumbnailNew.thumbnail.imageFormat = Thumbnail::ImageFormat::Qoi;
 
 			thumbnailNew.state = ThumbnailState::Header;
+			dbg("thumbnail header.\n");
 		}
 		break;
 	case rcvM36ThumbnailsHeight:
@@ -2044,6 +2045,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		if (GetUnsignedInteger(data, height))
 		{
 			thumbnailNew.thumbnail.height = height;
+			dbg("thumbnail height %d '%s'.\n", height, data);
 		}
 		break;
 	case rcvM36ThumbnailsOffset:
@@ -2059,6 +2061,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		if (GetUnsignedInteger(data, size))
 		{
 			thumbnailNew.size = size;
+			dbg("thumbnail size %d.\n", size);
 		}
 		break;
 	case rcvM36ThumbnailsWidth:
@@ -2066,6 +2069,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		if (GetUnsignedInteger(data, width))
 		{
 			thumbnailNew.thumbnail.width = width;
+			dbg("thumbnail width %d '%s'.\n", width, data);
 		}
 		break;
 
@@ -2073,23 +2077,27 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		thumbnailData.size = std::min(strlen(data), sizeof(thumbnailData.buffer));
 		memcpy(thumbnailData.buffer, data, thumbnailData.size);
 		thumbnailCurrent.state = ThumbnailState::Data;
+		dbg("thumbnail data.\n");
 		break;
 	case rcvM361ThumbnailErr:
 		if (!GetInteger(data, thumbnailCurrent.err))
 		{
 			thumbnailCurrent.parseErr = -1;
+			dbg("thumbnail error.\n");
 		}
 		break;
 	case rcvM361ThumbnailFilename:
-		if (!thumbnailCurrent.filename.Equals(data))
+		if (!filenameCurrent.Equals(data))
 		{
 			thumbnailCurrent.parseErr = -2;
+			dbg("thumbnail error filename.\n");
 		}
 		break;
 	case rcvM361ThumbnailNext:
 		if (!GetUnsignedInteger(data, thumbnailCurrent.next))
 		{
 			thumbnailCurrent.parseErr = -3;
+			dbg("thumbnail error next.\n");
 			break;
 		}
 		dbg("receive next offset %d.\n", thumbnailCurrent.next);
@@ -2098,6 +2106,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 		if (!GetUnsignedInteger(data, thumbnailNew.offset))
 		{
 			thumbnailCurrent.parseErr = -4;
+			dbg("thumbnail error offset.\n");
 			break;
 		}
 		dbg("receive current offset %d.\n", thumbnailCurrent.offset);
@@ -2140,15 +2149,18 @@ static void ProcessArrayElementEnd(const char id[], const size_t index)
 	UNUSED(index);
 
 	// check if new thumbnail fits better
-	if (strcmp(id, "thumbnails^") == 0 &&
-	    ThumbnailIsValid(thumbnailNew.thumbnail) &&
-	    thumbnailCurrent.thumbnail.height < thumbnailNew.thumbnail.height &&
-	    thumbnailNew.thumbnail.height <= fpThumbnail->GetHeight() &&
-	    thumbnailCurrent.thumbnail.width < thumbnailNew.thumbnail.width &&
-	    thumbnailNew.thumbnail.width <= fpThumbnail->GetWidth())
+	if ((strcmp(id, "thumbnails^") == 0) && ThumbnailIsValid(thumbnailNew.thumbnail))
 	{
-		dbg("setting new thumbnail %d/%d\r\n", fpThumbnail->GetWidth(), fpThumbnail->GetWidth());
-		thumbnailCurrent = thumbnailNew;
+		if (thumbnailCurrent.thumbnail.height < thumbnailNew.thumbnail.height &&
+		    thumbnailNew.thumbnail.height <= fpThumbnail->GetHeight() &&
+		    thumbnailCurrent.thumbnail.width < thumbnailNew.thumbnail.width &&
+		    thumbnailNew.thumbnail.width <= fpThumbnail->GetWidth())
+		{
+			dbg("setting new thumbnail %d/%d\r\n", fpThumbnail->GetWidth(), fpThumbnail->GetWidth());
+			thumbnailCurrent = thumbnailNew;
+		} else {
+			dbg("error thumbnail invalid\r\n");
+		}
 		thumbnailNew.Init();
 	}
 
@@ -2645,7 +2657,7 @@ int main(void)
 				if (thumbnailCurrent.state == ThumbnailState::DataRequest)
 				{
 					SerialIo::Sendf("M36.1 P\"%s\" S%d\n",
-						thumbnailCurrent.filename.c_str(),
+						filenameCurrent.c_str(),
 						thumbnailCurrent.next);
 					lastPollTime = SystemTick::GetTickCount();
 					thumbnailCurrent.state = ThumbnailState::DataWait;
