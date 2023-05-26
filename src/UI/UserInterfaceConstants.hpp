@@ -143,7 +143,7 @@ const PixelNumber stateColumnWdith = DISPLAY_X / 4;
 const PixelNumber speedColumn = margin;
 const PixelNumber fanColumn = margin + stateColumnWdith;
 const PixelNumber babystepColumn = margin + stateColumnWdith * 2;
-const PixelNumber cancelColumn = margin + stateColumnWdith * 3;
+const PixelNumber cancelColumn = margin + stateColumnWdith * 2;
 const PixelNumber resumeColumn = margin + stateColumnWdith * 3;
 const PixelNumber pauseColumn = margin + stateColumnWdith * 3;
 
