@@ -2023,6 +2023,11 @@ size_t UTFT::writeNative(uint16_t c)
     {
     	c -= 641;				// Cyrillic characters are shifted down to save space
     }
+#elif USE_JAPANESE_CHARACTERS
+    else if (c >= 12352 && c <= 12543)//0x3040 - 0x309F : Hiragana(ja), 0x30A0 - 0x30FF : Katakana(ja)
+    {
+    	c -= 11968;				// Japanese characters are shifted down to save space
+    }
 #endif
 
 	uint8_t ySize = cfont.y_size;
