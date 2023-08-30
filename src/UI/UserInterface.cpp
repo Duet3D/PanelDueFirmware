@@ -68,6 +68,8 @@ struct FileListButtons
 	IntegerField *errorField;
 };
 
+static StaticTextField *fileListPopupNoFiles;
+
 static FileListButtons filesListButtons, macrosListButtons;
 static SingleButton *changeCardButton;
 
@@ -535,6 +537,8 @@ pre(fileButtons.lim == numRows * numCols)
 	if (filesNotMacros)
 	{
 		popup->AddField(filePopupTitleField = new IntegerField(popupTopMargin + labelRowAdjust, textPos, leftButtonPos - textPos, TextAlignment::Centre, strings->filesOnCard, nullptr));
+		popup->AddField(fileListPopupNoFiles = new StaticTextField(popupHeight / 2 - popupTopMargin, popupSideMargin, popupWidth, TextAlignment::Centre, strings->noFilesFound));
+		fileListPopupNoFiles->Show(false);
 	}
 	else
 	{
@@ -3197,6 +3201,11 @@ namespace UI
 
 		if (isLandscape)
 		{
+			for (size_t i = 0; i < ARRAY_SIZE(filenameButtons); i++)
+			{
+				filenameButtons[i]->Show(false);
+			}
+			fileListPopupNoFiles->Show(true);
 			mgr.SetPopup(fileListPopup, AutoPlace, AutoPlace);
 		}
 	}
@@ -3205,6 +3214,10 @@ namespace UI
 	{
 		if (isLandscape)
 		{
+			for (size_t i = 0; i < ARRAY_SIZE(filenameButtons); i++)
+			{
+				filenameButtons[i]->Show(false);
+			}
 			mgr.SetPopup(macrosPopup, AutoPlace, AutoPlace);
 		}
 	}
@@ -3234,7 +3247,12 @@ namespace UI
 	// Update the specified button in the file or macro buttons list. If 'text' is nullptr then hide the button, else display it.
 	void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * _ecv_array null text, const char * _ecv_array null param)
 	{
-		if (buttonIndex < ((filesNotMacros) ? NumDisplayedFiles : NumDisplayedMacros))
+		if (filesNotMacros && text)
+		{
+			mgr.Show(fileListPopupNoFiles, false);
+		}
+
+		if (text && buttonIndex < ((filesNotMacros) ? NumDisplayedFiles : NumDisplayedMacros))
 		{
 			TextButton * const f = ((filesNotMacros) ? filenameButtons : macroButtons)[buttonIndex];
 			f->SetText(text);

@@ -103,6 +103,7 @@ struct StringTable
 	CSTRING messages;
 	CSTRING firmwareVersion;
 	CSTRING response;
+	CSTRING noFilesFound;
 
 	// File popup
 	CSTRING filesOnCard;
@@ -207,6 +208,7 @@ const StringTable LanguageTables[] =
 		"Messages",
 		"Panel Due firmware version ",	// note space at end
 		"Response",
+		"No files found",
 
 		// File popup
 		"Files on card ",				// note the space on the end
@@ -336,6 +338,7 @@ const StringTable LanguageTables[] =
 		"Nachrichten",
 		"Panel Due Firmwareversion ",	// note space at end
 		"Antwort",
+		"Keine Dateien gefunden",
 
 		// File popup
 		"Dateien auf Karte ",			// note the space on the end
@@ -465,6 +468,7 @@ const StringTable LanguageTables[] =
 		"Messages",
 		"Version du firmware du Panel Due ",	// note space at end
 		"Réponse",
+		"No files found",
 
 		// File popup
 		"Fichier sur la carte ",					// note the space on the end
@@ -594,6 +598,7 @@ const StringTable LanguageTables[] =
 		"Mensajes",
 		"Versión del Firmware del Panel Due ",	// note space at end
 		"Respuesta",
+		"No files found",
 
 		// File popup
 		"Archivos SD ",			// note the space on the end
@@ -723,6 +728,7 @@ const StringTable LanguageTables[] =
 		"Zprávy",
 		"Verze firmware Panel Due ",	// note space at end
 		"Odpověď",
+		"No files found",
 
 		// File popup
 		"Soubory na kartě ",			// note the space on the end
@@ -852,6 +858,7 @@ const StringTable LanguageTables[] =
 		"Messaggi",
 		"Versione firmware Panel Due ",	// note space at end
 		"Risposta",
+		"No files found",
 
 		// File popup
 		"File su card ",				// note the space on the end
@@ -981,6 +988,7 @@ const StringTable LanguageTables[] =
 		"Wiadomości",
 		"Panel Due firmware wersja ",	// note space at end
 		"Odpowiedź",
+		"No files found",
 
 		// File popup
 		"Pliki na karcie ",				// note the space on the end
@@ -1111,6 +1119,7 @@ const StringTable LanguageTables[] =
 		"Повідомлення",
 		"Версія прошивки Panel Due ",  // note space at end
 		"Відповідь",
+		"No files found",
 
 		// File popup
 		"Файли на картці ",       // note the space on the end
@@ -1238,6 +1247,7 @@ const StringTable LanguageTables[] =
 		"Сообщения",
 		"Версия прошивки Panel Due ",  // note space at end
 		"Ответ",
+		"No files found",
 
 		// File popup
 		"Файлы на карте ",       // note the space on the end
