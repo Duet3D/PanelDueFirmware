@@ -64,7 +64,14 @@ namespace FileManager
 	void FileSet::Display()
 	{
 		FileListUpdated();
-		UI::DisplayFilesOrMacrosList(isFilesList, cardNumber, numVolumes);
+		if (isFilesList)
+		{
+			UI::DisplayFilesPopup(cardNumber, numVolumes);
+		}
+		else
+		{
+			UI::DisplayMacrosPopup();
+		}
 		SetPending();							// refresh the list of files
 	}
 
@@ -266,7 +273,7 @@ namespace FileManager
 		if (isFilesList && cardNum < numVolumes)
 		{
 			cardNumber = cardNum;
-			UI::DisplayFilesOrMacrosList(isFilesList, cardNumber, numVolumes);
+			UI::DisplayFilesPopup(cardNumber, numVolumes);
 			whichList = -1;
 			FileListUpdated();								// this hides the file list until we receive a new one
 

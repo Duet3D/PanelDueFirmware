@@ -3190,16 +3190,22 @@ namespace UI
 		}
 	}
 
-	void DisplayFilesOrMacrosList(bool filesNotMacros, int cardNumber, unsigned int numVolumes)
+	void DisplayFilesPopup(int cardNumber, unsigned int numVolumes)
 	{
-		if (filesNotMacros)
-		{
-			filePopupTitleField->SetValue(cardNumber);
-			mgr.Show(changeCardButton, numVolumes > 1);
-		}
+		filePopupTitleField->SetValue(cardNumber);
+		mgr.Show(changeCardButton, numVolumes > 1);
+
 		if (isLandscape)
 		{
-			mgr.SetPopup((filesNotMacros) ? fileListPopup : macrosPopup, AutoPlace, AutoPlace);
+			mgr.SetPopup(fileListPopup, AutoPlace, AutoPlace);
+		}
+	}
+
+	void DisplayMacrosPopup()
+	{
+		if (isLandscape)
+		{
+			mgr.SetPopup(macrosPopup, AutoPlace, AutoPlace);
 		}
 	}
 
