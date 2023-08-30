@@ -156,10 +156,13 @@ namespace FileManager
 		}
 		else
 		{
-			UI::EnableFileNavButtons(isFilesList, false, false, false);
-			for (size_t i = 0; i < numDisplayed; ++i)
+			if (isFilesList)
 			{
-				UI::UpdateFileButton(isFilesList, i, nullptr, nullptr);
+				UI::DisplayFilesPopup(cardNumber, numVolumes);
+			}
+			else
+			{
+				UI::DisplayMacrosPopup();
 			}
 		}
 	}
