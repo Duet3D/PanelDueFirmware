@@ -91,7 +91,9 @@ namespace UI
 	extern bool IsDisplayingFileInfo();
 	extern void AllToolsSeen();
 
-	extern void DisplayFilesOrMacrosList(bool filesNotMacros, int cardNumber, unsigned int numVolumes);
+	void DisplayFilesPopup(int cardNumber, unsigned int numVolumes);
+	void DisplayMacrosPopup();
+
 	extern void FileListLoaded(bool filesNotMacros, int errCode);
 	extern void EnableFileNavButtons(bool filesNotMacros, bool scrollEarlier, bool scrollLater, bool parentDir);
 	extern void UpdateFileButton(bool filesNotMacros, unsigned int buttonIndex, const char * _ecv_array null text, const char * _ecv_array null param);
