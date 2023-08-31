@@ -151,6 +151,10 @@ static int print_index(size_t index)
 	PRINT_ENTRY(heaterCombineTypeNames[(unsigned int)HeaterCombineType::notCombined]);
 	PRINT_ENTRY(heaterCombineTypeNames[(unsigned int)HeaterCombineType::combined]);
 	
+	PRINT_ENTRY(outOfRangeValueInt);
+	PRINT_ENTRY(outOfRangeValueFloat);
+	PRINT_ENTRY(outOfRangeTextLength);
+
 	return 0;
 
 }
