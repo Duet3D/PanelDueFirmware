@@ -767,6 +767,8 @@ static void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 #if USE_CYRILLIC_CHARACTERS
 			keysEN,	// Ukrainian
 			keysEN,	// Russian
+#elif USE_JAPANESE_CHARACTERS
+			keysEN, // Japanese
 #endif
 	};
 

@@ -1308,6 +1308,137 @@ const StringTable LanguageTables[] =
 		"text length is out of range: %ld <= length <= %ld",
 	}
 #endif
+#if USE_JAPANESE_CHARACTERS
+	//Japanese
+	{
+		// ISO-639.1 language code
+		"ja",
+
+		// Main page strings
+		"コントロール",
+		"いんさつ",
+		"ステータス",
+		"コンソール",
+		"セットアップ",
+		"Current" THIN_SPACE DEGREE_SYMBOL "C",
+		"Active" THIN_SPACE DEGREE_SYMBOL "C",
+		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
+		"いどう",
+		"おしだし",
+		"マクロ",
+		"ストップ",
+
+		// Print page
+		"Extruder" THIN_SPACE "%",
+		"スピード ",							// note space at end
+		"ファン ",								// note space at end
+		"のこりじかん: ",
+		"sim'd ",							// note space at end
+		"ファイル ",							// note space at end
+		"フィラメント ",						// note space at end
+		"スライサー ",							// note space at end
+		"n/a",
+		"ていし",
+		"Babystep",
+		"さいかい",
+		"キャンセル",
+		"プリント もういちど",
+		"シミュレーション もういちど",
+		"セット",
+
+		// Setup page
+		"おんりょう ",							// note space at end
+		"タッチほせい",
+		"ひょうじはんてん",
+		"ひょうじさかさ",
+		"テーマ",
+		"あかるさ -",
+		"あかるさ +",
+		"せっていほぞん",
+		"せっていしょきょ",
+		"セーブ & リスタート",
+		"Info Timeout ",					// note space at end
+		"Screensaver ",						// note space at end
+		"Babystep ",						// note space at end
+		"おくりそくど ",						// note space at end
+
+		// Misc
+		"ファクトリーリセット",
+		"ファイルさくじょ",
+		"ほんとうにいいですか?",
+		"スポットにタッチ",
+		"ヘッドいどう",
+		"おしだしりょう (mm)",
+		"スピード (mm/s)",
+		"おしだし",
+		"リトラクト",
+		"Babystep",
+		"Zのオフセット: ",
+		"メッセージ",
+		"メッセージ",
+		"Panel Dueファームウェア ",	// note space at end
+		"レスポンス",
+		"No files found",
+
+		// File popup
+		"カードのファイル ",				// note the space on the end
+		"マクロ",
+		"エラー ",						// note the space at the end
+		" SDカードアクセス",			// note the space at the start
+		"ファイル: ",
+		"サイズ: ",
+		"レイヤーたかさ: ",
+		"オブジェクトたかさ ",
+		"ひつようフィラメント: ",
+		"スライサー: ",
+		"Date: ",
+		"よそうプリントじかん: ",
+		"シミュレーションプリントじかん: ",
+		"シミュレーション",
+
+		// Printer status strings
+		{
+			"せつぞくちゅう",
+			"アイドル",
+			"プリントちゅう",
+			"ていしちゅう",
+			"スタートアップ",
+			"ストップ",
+			"ビジー",
+			"いちじていし",
+			"さいかい",
+			"ファームウェアアップロード",
+			"ツールこうかん",
+			"シミュレーション",
+			"オフ",
+			"キャンセルちゅう",
+		},
+
+		// Theme names
+		{
+			"ライトテーマ",
+			"ダークテーマ 1",
+			"ダークテーマ 2"
+		},
+
+		// Display dimming types
+		{
+			"くらくしない",
+			"アイドルじくらく",
+			"つねにくらくする"
+		},
+
+		// Heater combine types
+		{
+			"Heat's not comb.",
+			"Heaters comb.",
+		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
+	}
+#endif
 };
 
 constexpr unsigned int NumLanguages = sizeof(LanguageTables) / sizeof(LanguageTables[0]);
