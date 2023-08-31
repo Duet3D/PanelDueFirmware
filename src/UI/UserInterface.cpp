@@ -3210,6 +3210,11 @@ namespace UI
 		}
 	}
 
+	void FileListCardButtonUpdate(unsigned int numVolumes)
+	{
+		mgr.Show(changeCardButton, numVolumes > 1);
+	}
+
 	void DisplayMacrosPopup()
 	{
 		if (isLandscape)
