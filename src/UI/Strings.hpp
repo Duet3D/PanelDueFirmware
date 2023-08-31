@@ -1307,7 +1307,8 @@ const StringTable LanguageTables[] =
 		"value is out of range: %f <= value <= %f",
 		"text length is out of range: %ld <= length <= %ld",
 	}
-#elif USE_JAPANESE_CHARACTERS
+#endif
+#if USE_JAPANESE_CHARACTERS
 	//Japanese
 	{
 		// ISO-639.1 language code
@@ -1377,6 +1378,7 @@ const StringTable LanguageTables[] =
 		"メッセージ",
 		"Panel Dueファームウェア ",	// note space at end
 		"レスポンス",
+		"No files found",
 
 		// File popup
 		"カードのファイル ",				// note the space on the end
@@ -1430,8 +1432,12 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
-		}
- 	},
+		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
+	}
 #endif
 };
 
