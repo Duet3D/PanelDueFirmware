@@ -117,6 +117,7 @@ static int print_index(size_t index)
 	PRINT_ENTRY(messages);
 	PRINT_ENTRY(firmwareVersion);
 	PRINT_ENTRY(response);
+	PRINT_ENTRY(noFilesFound);
 
 	// File popup
 	PRINT_ENTRY(filesOnCard);
