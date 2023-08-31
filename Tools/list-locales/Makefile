@@ -26,12 +26,13 @@ DEPEND     = -E -MD -MP -MF
 CPP_STD    =
 
 
-INCLUDE    = -I./ -I../../src
+INCLUDE    = -I./ -I../../src -I../../lib/librrf/src -I../../lib/qoi
+DEFINES    = -DSCREEN_70E=1
 OPTIMIZE   =
 WARN       = -W -Wall -Wundef -Wextra
 
-CFLAGS     = -std=$(C_STD) $(OPTIMIZE) $(WARN) -Wstrict-prototypes $(INCLUDE) -g
-CPPFLAGS     = $(OPTIMIZE) $(WARN) $(INCLUDE) -g
+CFLAGS     = -std=$(C_STD) $(OPTIMIZE) $(WARN) -Wstrict-prototypes $(INCLUDE) $(DEFINES) -g
+CPPFLAGS     = $(OPTIMIZE) $(WARN) $(INCLUDE) $(DEFINES) -g
 LDFLAGS    =
 
 # MAKE SETTINGS =============================================================
