@@ -5,15 +5,8 @@
 
 extern int __flash_start__,	__flash_end__;
 
-//#define DEBUG 1
-#ifdef DEBUG
-#include "UI/MessageLog.hpp"
-#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
-
-#else
-#define dbg(fmt, args...)		do {} while(0)
-
-#endif
+#define DEBUG 0
+#include "Debug.hpp"
 
 #define FLASH_DEBUG(x) dbg(x)
 

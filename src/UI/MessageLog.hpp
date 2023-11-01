@@ -18,16 +18,23 @@
 
 namespace MessageLog
 {
+	enum LogLevel {
+		Normal,
+		Verbose
+	};
+
 	void Init();
+
+	void LogLevelSet(LogLevel logLevelNew);
 
 	// Update the messages on the message tab. If 'all' is true we do the times and the text, else we just do the times.
 	void UpdateMessages(bool all);
 
 	// Add a message to the end of the list immediately
-	void AppendMessage(const char* data);
+	void AppendMessage(LogLevel logLevel, const char* data);
 
 	// Add a message via printf to the end of the list immediately (mainly for debugging)
-	void AppendMessageF(const char* format, ...) __attribute__((format (printf, 1, 0)));
+	void AppendMessageF(LogLevel logLevel, const char *format, ...) __attribute__((format (printf, 2, 0)));
 
 	// Save a message for possible display later
 	void SaveMessage(const char* data);

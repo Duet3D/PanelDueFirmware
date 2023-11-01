@@ -1436,7 +1436,8 @@ namespace UI
 			const char *fromStatus = GetStatusString(oldStatus);
 			const char *toStatus = GetStatusString(newStatus);
 
-			MessageLog::AppendMessageF("Info: status changed from %s to %s.", fromStatus, toStatus);
+			MessageLog::AppendMessageF(MessageLog::LogLevel::Verbose,
+					"Info: status changed from %s to %s.", fromStatus, toStatus);
 		}
 
 		switch (newStatus)
