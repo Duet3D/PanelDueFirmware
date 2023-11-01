@@ -16,7 +16,7 @@
 #define DEBUG 0
 #include "Debug.hpp"
 
-const size_t MaxArrayNesting = 4;
+const size_t MaxArrayNesting = 6;
 
 #if SAM4S
 # define UARTn	UART0
@@ -275,7 +275,7 @@ namespace SerialIo
 	JsonState lastState = jsBegin;
 
 	// fieldId is the name of the field being received. A '^' character indicates the position of an _ecv_array index, and a ':' character indicates a field separator.
-	String<100> fieldId;
+	String<150> fieldId;
 	String<1028> fieldVal;
 	size_t arrayIndices[MaxArrayNesting];
 	size_t arrayDepth = 0;
