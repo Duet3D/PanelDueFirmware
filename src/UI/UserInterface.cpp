@@ -3221,9 +3221,9 @@ namespace UI
 	{
 		if (isLandscape)
 		{
-			for (size_t i = 0; i < ARRAY_SIZE(filenameButtons); i++)
+			for (size_t i = 0; i < ARRAY_SIZE(macroButtons); i++)
 			{
-				filenameButtons[i]->Show(false);
+				macroButtons[i]->Show(false);
 			}
 			mgr.SetPopup(macrosPopup, AutoPlace, AutoPlace);
 		}
