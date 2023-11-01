@@ -3205,6 +3205,7 @@ namespace UI
 		{
 			for (size_t i = 0; i < ARRAY_SIZE(filenameButtons); i++)
 			{
+				filenameButtons[i]->Press(false, 0);
 				filenameButtons[i]->Show(false);
 			}
 			fileListPopupNoFiles->Show(true);
@@ -3223,6 +3224,7 @@ namespace UI
 		{
 			for (size_t i = 0; i < ARRAY_SIZE(macroButtons); i++)
 			{
+				macroButtons[i]->Press(false, 0);
 				macroButtons[i]->Show(false);
 			}
 			mgr.SetPopup(macrosPopup, AutoPlace, AutoPlace);
