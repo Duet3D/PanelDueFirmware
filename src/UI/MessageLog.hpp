@@ -20,12 +20,14 @@ namespace MessageLog
 {
 	enum LogLevel {
 		Normal,
-		Verbose
+		Verbose,
+		NumTypes
 	};
 
 	void Init();
 
 	void LogLevelSet(LogLevel logLevelNew);
+	LogLevel LogLevelGet();
 
 	// Update the messages on the message tab. If 'all' is true we do the times and the text, else we just do the times.
 	void UpdateMessages(bool all);
