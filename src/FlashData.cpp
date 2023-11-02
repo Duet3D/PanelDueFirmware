@@ -44,7 +44,8 @@ bool FlashData::operator==(const FlashData& other)
 		&& screensaverTimeout == other.screensaverTimeout
 		&& babystepAmountIndex == other.babystepAmountIndex
 		&& feedrate == other.feedrate
-		&& heaterCombineType == other.heaterCombineType;
+		&& heaterCombineType == other.heaterCombineType
+		&& logLevel == other.logLevel;
 }
 
 void FlashData::SetDefaults()
@@ -66,6 +67,7 @@ void FlashData::SetDefaults()
 	babystepAmountIndex = DefaultBabystepAmountIndex;
 	feedrate = DefaultFeedrate;
 	heaterCombineType = HeaterCombineType::notCombined;
+	logLevel = MessageLog::LogLevel::Normal;
 	magic = magicVal;
 }
 

@@ -10,6 +10,7 @@
 #define MESSAGELOG_H_
 
 #include <cstddef>
+#include <cstdint>
 #include <UI/DisplaySize.hpp>
 #include "ecv.h"
 #undef array
@@ -18,7 +19,7 @@
 
 namespace MessageLog
 {
-	enum LogLevel {
+	enum class LogLevel : uint8_t {
 		Normal,
 		Verbose,
 		NumTypes

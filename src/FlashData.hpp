@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "Hardware/Backlight.hpp"
+#include "UI/MessageLog.hpp"
 #include "General/SimpleMath.h"
 #include "UI/Display.hpp"
 
@@ -31,7 +32,7 @@ struct FlashData
 {
 	// The magic value should be changed whenever the layout of the NVRAM changes
 	// We now use a different magic value for each display size, to force the "touch the spot" screen to be displayed when you change the display size
-	static const uint32_t magicVal = 0x3AB64A40 + DISPLAY_TYPE;
+	static const uint32_t magicVal = 0x3AB64A50 + DISPLAY_TYPE;
 	static const uint32_t muggleVal = 0xFFFFFFFF;
 
 	alignas(4) uint32_t magic;
@@ -52,6 +53,7 @@ struct FlashData
 	uint8_t babystepAmountIndex;
 	uint16_t feedrate;
 	HeaterCombineType heaterCombineType;
+	MessageLog::LogLevel logLevel;
 	alignas(4) char dummy;								// must be at a multiple of 4 bytes from the start because flash is read/written in whole dwords
 
 	FlashData() : magic(muggleVal) { SetDefaults(); }
@@ -86,6 +88,9 @@ struct FlashData
 
 	void SetHeaterCombineType(HeaterCombineType combine) { nvData.heaterCombineType = combine; }
 	HeaterCombineType GetHeaterCombineType() { return nvData.heaterCombineType; }
+
+	void SetLogLevel(MessageLog::LogLevel logLevel) { nvData.logLevel = logLevel; }
+	MessageLog::LogLevel GetLogLevel() { return nvData.logLevel; }
 
 	void SetBaudRate(uint32_t rate) { nvData.baudRate = rate; }
 	uint32_t GetBaudRate() { return nvData.baudRate; }
