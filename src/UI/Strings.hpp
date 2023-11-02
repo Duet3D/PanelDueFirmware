@@ -15,6 +15,7 @@
 #undef result
 #undef value
 #include "UI/ColourSchemes.hpp"
+#include "UI/MessageLog.hpp"
 #include "ObjectModel/PrinterStatus.hpp"
 #include "FlashData.hpp"
 #include "Configuration.hpp"
@@ -131,6 +132,7 @@ struct StringTable
 	CSTRING displayDimmingNames[(unsigned int)DisplayDimmerType::NumTypes];
 
 	CSTRING heaterCombineTypeNames[(unsigned int)HeaterCombineType::NumTypes];
+	CSTRING logLevelNames[(unsigned int)MessageLog::LogLevel::NumTypes];
 
 	CSTRING outOfRangeValueInt;
 	CSTRING outOfRangeValueFloat;
@@ -264,6 +266,12 @@ const StringTable LanguageTables[] =
 			"Heaters comb.",
 		},
 
+		// LogLevel names
+		{
+			"Normal",
+			"Verbose",
+		},
+
 		"value is out of range: %ld <= value <= %ld",
 		"value is out of range: %f <= value <= %f",
 		"text length is out of range: %ld <= length <= %ld",
@@ -392,6 +400,12 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's nicht komb.",
 			"Heat's kombiniert"
+		},
+
+		// LogLevel names
+		{
+			"Normal",
+			"Verbose",
 		},
 
 		"value is out of range: %ld <= value <= %ld",
@@ -524,6 +538,12 @@ const StringTable LanguageTables[] =
 			"Heaters comb.",
 		},
 
+		// LogLevel names
+		{
+			"Normal",
+			"Verbose",
+		},
+
 		"value is out of range: %ld <= value <= %ld",
 		"value is out of range: %f <= value <= %f",
 		"text length is out of range: %ld <= length <= %ld",
@@ -652,6 +672,12 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
+		},
+
+		// LogLevel names
+		{
+			"Normal",
+			"Verbose",
 		},
 
 		"value is out of range: %ld <= value <= %ld",
@@ -784,6 +810,12 @@ const StringTable LanguageTables[] =
 			"Heaters comb.",
 		},
 
+		// LogLevel names
+		{
+			"Normal",
+			"Verbose",
+		},
+
 		"value is out of range: %ld <= value <= %ld",
 		"value is out of range: %f <= value <= %f",
 		"text length is out of range: %ld <= length <= %ld",
@@ -914,6 +946,12 @@ const StringTable LanguageTables[] =
 			"Heaters comb.",
 		},
 
+		// LogLevel names
+		{
+			"Normal",
+			"Verbose",
+		},
+
 		"value is out of range: %ld <= value <= %ld",
 		"value is out of range: %f <= value <= %f",
 		"text length is out of range: %ld <= length <= %ld",
@@ -1042,6 +1080,12 @@ const StringTable LanguageTables[] =
 		{
 			"Głowica prosta",
 			"Głowica inna",
+		},
+
+		// LogLevel names
+		{
+			"Normal",
+			"Verbose",
 		},
 
 		"value is out of range: %ld <= value <= %ld",
@@ -1175,6 +1219,12 @@ const StringTable LanguageTables[] =
 			"Heaters comb.",
 		},
 
+		// LogLevel names
+		{
+			"Normal",
+			"Verbose",
+		},
+
 		"value is out of range: %ld <= value <= %ld",
 		"value is out of range: %f <= value <= %f",
 		"text length is out of range: %ld <= length <= %ld",
@@ -1301,6 +1351,12 @@ const StringTable LanguageTables[] =
 		{
 			"Нагреватели не комб.",
 			"Нагреватели комб.",
+		},
+
+		// LogLevel names
+		{
+			"Normal",
+			"Verbose",
 		},
 
 		"value is out of range: %ld <= value <= %ld",
@@ -1432,6 +1488,12 @@ const StringTable LanguageTables[] =
 		{
 			"Heat's not comb.",
 			"Heaters comb.",
+		},
+
+		// LogLevel names
+		{
+			"Normal",
+			"Verbose",
 		},
 
 		"value is out of range: %ld <= value <= %ld",
