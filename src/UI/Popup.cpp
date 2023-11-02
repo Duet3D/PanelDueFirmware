@@ -53,10 +53,11 @@ void AlertPopup::Set(const char *title, const char *text, int32_t mode, uint32_t
 
 	cancelButton->Show((mode == Alert::Mode::ConfirmCancel) ||
 			   (showCancelButton &&
-			   (mode == Alert::Mode::NumberInt ||
-			    mode == Alert::Mode::NumberFloat ||
-			    mode == Alert::Mode::Text
-			   )));
+			    (mode == Alert::Mode::Choices ||
+			     mode == Alert::Mode::NumberInt ||
+			     mode == Alert::Mode::NumberFloat ||
+			     mode == Alert::Mode::Text)
+			   ));
 
 	warning->Show(false);
 	value->Show(false);
