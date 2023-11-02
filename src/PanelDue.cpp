@@ -2357,6 +2357,8 @@ int main(void)
 
 	lastTouchTime = SystemTick::GetTickCount();
 
+	MessageLog::LogLevelSet(nvData.GetLogLevel());
+
 	firmwareFeatures = firmwareTypes[0].features;		// assume RepRapFirmware until we hear otherwise
 
 	// configure hardware for buzzer and backlight
