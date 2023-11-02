@@ -8,7 +8,7 @@
 #if (DEBUG == 1)
 #include <UI/MessageLog.hpp>
 
-#define dbg(fmt, args...)		do { MessageLog::AppendMessageF("%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
+#define dbg(fmt, args...)		do { MessageLog::AppendMessageF(MessageLog::LogLevel::Verbose, "%s(%d): " fmt , __FUNCTION__, __LINE__, ##args); } while(0)
 
 #elif (DEBUG == 2)
 #include "Hardware/SerialIo.hpp"

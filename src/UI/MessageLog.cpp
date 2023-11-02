@@ -15,6 +15,9 @@
 #include <General/String.h>
 #include <General/StringFunctions.h>
 
+#define DEBUG 0
+#include "Debug.hpp"
+
 namespace MessageLog
 {
 	const unsigned int MaxCharsPerRow = 80;
@@ -33,6 +36,7 @@ namespace MessageLog
 	static String<MaxCharsPerMessage> newMessage;		// buffer for receiving a new message into
 	static Message messages[numMessageRows];
 	static unsigned int messageStartRow = 0;			// the row number at the top
+	static LogLevel logLevel = LogLevel::Normal;
 
 	void Init()
 	{
@@ -44,6 +48,16 @@ namespace MessageLog
 		}
 		
 		UpdateMessages(true);
+	}
+
+	void LogLevelSet(LogLevel logLevelNew)
+	{
+		logLevel = logLevelNew;
+	}
+	
+	LogLevel LogLevelGet()
+	{
+		return logLevel;
 	}
 	
 	// Update the messages on the message tab. If 'all' is true we do the times and the text, else we just do the times.
@@ -107,8 +121,11 @@ namespace MessageLog
 
 	// Add a message to the end of the list
 	// Call this only with a non empty message having no leading whitespace
-	void AppendMessage(const char* _ecv_array data)
+	void AppendMessage(LogLevel level, const char* _ecv_array data)
 	{
+		if (level > logLevel)
+			return;
+
 		bool split;
 		unsigned int numLines = 0;
 		do
@@ -149,14 +166,15 @@ namespace MessageLog
 		UpdateMessages(true);
 	}
 
-	void AppendMessageF(const char* fmt, ...)
+	void AppendMessageF(LogLevel level, const char* fmt, ...)
 	{
 		String<256> formatString;
 		va_list vargs;
 		va_start(vargs, fmt);
 		formatString.vcatf(fmt, vargs);
 		va_end(vargs);
-		AppendMessage(formatString.c_str());
+
+		AppendMessage(level, formatString.c_str());
 	}
 
 	// Save a message for possible display later
@@ -180,7 +198,7 @@ namespace MessageLog
 			// Discard empty messages
 			if (*msg != 0)
 			{
-				AppendMessage(msg);
+				AppendMessage(LogLevel::Normal, msg);
 				UI::NewResponseReceived(msg);
 			}
 			newMessage.Clear();

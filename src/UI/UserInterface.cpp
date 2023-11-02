@@ -104,7 +104,7 @@ static StaticTextField *nameField, *statusField;
 static StaticTextField *screensaverText;
 static IntegerButton *activeTemps[MaxSlots], *standbyTemps[MaxSlots];
 static IntegerButton *spd, *extrusionFactors[MaxSlots], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton, *screensaverTimeoutButton, *feedrateAmountButton;
-static TextButton *languageButton, *coloursButton, *dimmingTypeButton, *heaterCombiningButton;
+static TextButton *languageButton, *coloursButton, *dimmingTypeButton, *heaterCombiningButton, *logLevelButton;
 static TextButtonWithLabel *babystepAmountButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
@@ -1105,6 +1105,7 @@ static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	feedrateAmountButton->SetValue(nvData.GetFeedrate());
 
 	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)nvData.GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
+	logLevelButton = AddTextButton(row8, 1, 3, strings->logLevelNames[(unsigned int)MessageLog::LogLevelGet()], evSetLogLevel, nullptr);
 
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
 	mgr.AddField(ipAddressField = new TextField(row9, margin, DisplayX/2 - margin, TextAlignment::Left, "IP: ", ipAddress.c_str()));
@@ -1436,7 +1437,8 @@ namespace UI
 			const char *fromStatus = GetStatusString(oldStatus);
 			const char *toStatus = GetStatusString(newStatus);
 
-			MessageLog::AppendMessageF("Info: status changed from %s to %s.", fromStatus, toStatus);
+			MessageLog::AppendMessageF(MessageLog::LogLevel::Verbose,
+					"Info: status changed from %s to %s.", fromStatus, toStatus);
 		}
 
 		switch (newStatus)
@@ -2957,6 +2959,20 @@ namespace UI
 			case evSetHeaterCombineType:
 				ChangeHeaterCombineType();
 				heaterCombiningButton->SetText(strings->heaterCombineTypeNames[(unsigned int)nvData.GetHeaterCombineType()]);
+				break;
+
+			case evSetLogLevel:
+				{
+					MessageLog::LogLevel logLevel = MessageLog::LogLevelGet();
+
+					logLevel = (MessageLog::LogLevel)(((int)logLevel + 1) % (int)MessageLog::LogLevel::NumTypes);
+
+					logLevelButton->SetText(strings->logLevelNames[(unsigned int)logLevel]);
+
+					nvData.SetLogLevel(logLevel);
+
+					MessageLog::LogLevelSet(logLevel);
+				}
 				break;
 
 			case evYes:

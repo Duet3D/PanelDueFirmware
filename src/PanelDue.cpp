@@ -1135,7 +1135,7 @@ void HandleOutOfBufferResponse()
 		pollIntervalMultiplier += 0.1;
 		UpdatePollRate(screensaverActive);
 		oobCounter = 0;
-		MessageLog::AppendMessage("Info: slowing down poll rate");
+		MessageLog::AppendMessage(MessageLog::LogLevel::Normal, "Info: slowing down poll rate");
 	}
 	lastOutOfBufferResponse = now;
 	outOfBuffers = true;
@@ -2246,7 +2246,7 @@ static void ParserErrorEncountered(int currentState, const char*, int errors)
 
 	if (errors > parserMinErrors)
 	{
-		MessageLog::AppendMessageF("Warning: received %d malformed responses.", errors);
+		MessageLog::AppendMessageF(MessageLog::LogLevel::Normal, "Warning: received %d malformed responses.", errors);
 	}
 	if (currentRespSeq == nullptr)
 	{
@@ -2357,6 +2357,8 @@ int main(void)
 
 	lastTouchTime = SystemTick::GetTickCount();
 
+	MessageLog::LogLevelSet(nvData.GetLogLevel());
+
 	firmwareFeatures = firmwareTypes[0].features;		// assume RepRapFirmware until we hear otherwise
 
 	// configure hardware for buzzer and backlight
@@ -2458,7 +2460,7 @@ int main(void)
 	dbg("basic init DONE\n");
 
 
-	MessageLog::AppendMessage("Info: successfully initialized.");
+	MessageLog::AppendMessage(MessageLog::LogLevel::Normal, "Info: successfully initialized.");
 
 	struct TouchEvent {
 		uint32_t x;

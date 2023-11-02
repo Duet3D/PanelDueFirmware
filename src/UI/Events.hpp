@@ -74,6 +74,7 @@ enum Event : uint8_t
 	evSetBabystepAmount, evAdjustBabystepAmount,
 	evSetFeedrate, evAdjustFeedrate,
 	evSetHeaterCombineType,
+	evSetLogLevel,
 
 	evEmergencyStop,
 
