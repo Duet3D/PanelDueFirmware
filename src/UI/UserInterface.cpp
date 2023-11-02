@@ -1105,7 +1105,7 @@ static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	feedrateAmountButton->SetValue(nvData.GetFeedrate());
 
 	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)nvData.GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
-	logLevelButton = AddTextButton(row8, 1, 3, strings->logLevelNames[(unsigned int)MessageLog::LogLevel::Normal], evSetLogLevel, nullptr);
+	logLevelButton = AddTextButton(row8, 1, 3, strings->logLevelNames[(unsigned int)MessageLog::LogLevelGet()], evSetLogLevel, nullptr);
 
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
 	mgr.AddField(ipAddressField = new TextField(row9, margin, DisplayX/2 - margin, TextAlignment::Left, "IP: ", ipAddress.c_str()));
@@ -2962,10 +2962,17 @@ namespace UI
 				break;
 
 			case evSetLogLevel:
-				MessageLog::LogLevelSet(
-					(MessageLog::LogLevel)(
-						((unsigned int)MessageLog::LogLevelGet() + 1) % (unsigned int)MessageLog::LogLevel::NumTypes));
-				logLevelButton->SetText(strings->logLevelNames[(unsigned int)MessageLog::LogLevelGet()]);
+				{
+					MessageLog::LogLevel logLevel = MessageLog::LogLevelGet();
+
+					logLevel = (MessageLog::LogLevel)(((int)logLevel + 1) % (int)MessageLog::LogLevel::NumTypes);
+
+					logLevelButton->SetText(strings->logLevelNames[(unsigned int)logLevel]);
+
+					nvData.SetLogLevel(logLevel);
+
+					MessageLog::LogLevelSet(logLevel);
+				}
 				break;
 
 			case evYes:
