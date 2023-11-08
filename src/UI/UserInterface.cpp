@@ -477,7 +477,6 @@ static void CreateMovePopup(const ColourScheme& colours)
 		DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupInfoBackColour);
 		FloatField *f = new FloatField(axisPosYpos, column, xyFieldWidth, TextAlignment::Left, 2, axisNames[i]);
 		movePopupAxisPos[i] = f;
-		f->SetValue(0.0);
 		movePopup->AddField(f);
 		f->Show(i < MIN_AXES);
 		column += xyFieldWidth + fieldSpacing;
@@ -875,7 +874,6 @@ static void CreateTemperatureGrid(const ColourScheme& colours)
 		// Add the current temperature field
 		DisplayField::SetDefaultColours(colours.infoTextColour, colours.defaultBackColour);
 		FloatField * const f = new FloatField(row3 + labelRowAdjust, column, tempButtonWidth, TextAlignment::Centre, 1);
-		f->SetValue(0.0);
 		f->Show(false);
 		currentTemps[i] = f;
 		mgr.AddField(f);
@@ -911,7 +909,6 @@ static void CreateControlTabFields(const ColourScheme& colours)
 	{
 		FloatField * const f = new FloatField(row6p3 + labelRowAdjust, column, xyFieldWidth, TextAlignment::Left, 2, axisNames[i]);
 		controlTabAxisPos[i] = f;
-		f->SetValue(0.0);
 		mgr.AddField(f);
 		f->Show(i < MIN_AXES);
 		column += xyFieldWidth + fieldSpacing;
@@ -1016,7 +1013,6 @@ static void CreatePrintingTabFields(const ColourScheme& colours)
 	{
 		FloatField * const f = new FloatField(row8 + labelRowAdjust - 4, column, xyFieldWidth, TextAlignment::Left, 2, axisNames[i]);
 		printTabAxisPos[i] = f;
-		f->SetValue(0.0);
 		mgr.AddField(f);
 		f->Show(i < MIN_AXES);
 		column += xyFieldWidth + fieldSpacing;
