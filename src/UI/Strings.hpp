@@ -1083,6 +1083,12 @@ const StringTable LanguageTables[] =
 			"Heat comb.",
 		},
 
+		// LogLevel names
+		{
+			"Normal",
+			"Verbose",
+		},
+
 		"value is out of range: %ld <= value <= %ld",
 		"value is out of range: %f <= value <= %f",
 		"text length is out of range: %ld <= length <= %ld",

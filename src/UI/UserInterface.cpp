@@ -475,9 +475,8 @@ static void CreateMovePopup(const ColourScheme& colours)
 		UI::ShowAxis(i, i < MIN_AXES, axisNames[i]);
 
 		DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupInfoBackColour);
-		FloatField *f = new FloatField(axisPosYpos, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
+		FloatField *f = new FloatField(axisPosYpos, column, xyFieldWidth, TextAlignment::Left, 2, axisNames[i]);
 		movePopupAxisPos[i] = f;
-		f->SetValue(0.0);
 		movePopup->AddField(f);
 		f->Show(i < MIN_AXES);
 		column += xyFieldWidth + fieldSpacing;
@@ -875,7 +874,6 @@ static void CreateTemperatureGrid(const ColourScheme& colours)
 		// Add the current temperature field
 		DisplayField::SetDefaultColours(colours.infoTextColour, colours.defaultBackColour);
 		FloatField * const f = new FloatField(row3 + labelRowAdjust, column, tempButtonWidth, TextAlignment::Centre, 1);
-		f->SetValue(0.0);
 		f->Show(false);
 		currentTemps[i] = f;
 		mgr.AddField(f);
@@ -909,9 +907,8 @@ static void CreateControlTabFields(const ColourScheme& colours)
 	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxDisplayableAxes * fieldSpacing))/(MaxDisplayableAxes + 1);
 	for (size_t i = 0; i < MaxDisplayableAxes; ++i)
 	{
-		FloatField * const f = new FloatField(row6p3 + labelRowAdjust, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
+		FloatField * const f = new FloatField(row6p3 + labelRowAdjust, column, xyFieldWidth, TextAlignment::Left, 2, axisNames[i]);
 		controlTabAxisPos[i] = f;
-		f->SetValue(0.0);
 		mgr.AddField(f);
 		f->Show(i < MIN_AXES);
 		column += xyFieldWidth + fieldSpacing;
@@ -1014,9 +1011,8 @@ static void CreatePrintingTabFields(const ColourScheme& colours)
 	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxDisplayableAxes * fieldSpacing))/(MaxDisplayableAxes + 1);
 	for (size_t i = 0; i < MaxDisplayableAxes; ++i)
 	{
-		FloatField * const f = new FloatField(row8 + labelRowAdjust - 4, column, xyFieldWidth, TextAlignment::Left, (i == 2) ? 2 : 1, axisNames[i]);
+		FloatField * const f = new FloatField(row8 + labelRowAdjust - 4, column, xyFieldWidth, TextAlignment::Left, 2, axisNames[i]);
 		printTabAxisPos[i] = f;
-		f->SetValue(0.0);
 		mgr.AddField(f);
 		f->Show(i < MIN_AXES);
 		column += xyFieldWidth + fieldSpacing;
