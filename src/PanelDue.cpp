@@ -294,6 +294,7 @@ enum ReceivedDataEvent
 	rcvMoveAxesHomed,
 	rcvMoveAxesLetter,
 	rcvMoveAxesMachinePosition,
+	rcvMoveAxesMax,
 	rcvMoveAxesUserPosition,
 	rcvMoveAxesVisible,
 	rcvMoveAxesWorkplaceOffsets,
@@ -409,6 +410,7 @@ static FieldTableEntry fieldTable[] =
 	{ rcvMoveAxesHomed,					"move:axes^:homed" },
 	{ rcvMoveAxesLetter,	 			"move:axes^:letter" },
 	{ rcvMoveAxesMachinePosition,		"move:axes^:machinePosition" },
+	{ rcvMoveAxesMax, 				"move:axes^:max" },
 	{ rcvMoveAxesUserPosition,			"move:axes^:userPosition" },
 	{ rcvMoveAxesVisible, 				"move:axes^:visible" },
 	{ rcvMoveAxesWorkplaceOffsets, 		"move:axes^:workplaceOffsets^" },
@@ -1458,6 +1460,16 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	case rcvMoveAxesLetter:
 		{
 			UI::SetAxisLetter(indices[0], data[0]);
+		}
+		break;
+
+	case rcvMoveAxesMax:
+		{
+			float val;
+			if (GetFloat(data, val))
+			{
+				UI::SetAxisMax(indices[0], val);
+			}
 		}
 		break;
 
