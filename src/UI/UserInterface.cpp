@@ -1340,6 +1340,16 @@ namespace UI
 			if (axis != nullptr && axis->slot < MaxDisplayableAxes)
 			{
 				size_t slot = axis->slot;
+
+				if (axisMaxVal > 1000)
+				{
+					controlTabAxisPos[slot]->SetNumDecimals(1);
+#if DISPLAY_X == 800
+					printTabAxisPos[slot]->SetNumDecimals(1);
+#endif
+					movePopupAxisPos[slot]->SetNumDecimals(1);
+				}
+
 				controlTabAxisPos[slot]->SetValue(fval);
 #if DISPLAY_X == 800
 				printTabAxisPos[slot]->SetValue(fval);
