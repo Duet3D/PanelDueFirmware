@@ -288,6 +288,16 @@ public:
 		changed = true;
 	}
 
+	void SetNumDecimals(uint8_t decimals)
+	{
+		if (numDecimals == decimals)
+		{
+			return;
+		}
+		numDecimals = decimals;
+		changed = true;
+	}
+
 	void SetLabel(const char* _ecv_array s)
 	{
 		if (strcmp(label, s) == 0)
