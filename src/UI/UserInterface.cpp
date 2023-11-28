@@ -84,6 +84,8 @@ static StaticTextField *areYouSureTextField, *areYouSureQueryField;
 static DisplayField *emptyRoot, *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
 static SingleButton *homeAllButton, *bedCompButton;
 static IconButtonWithText *homeButtons[MaxDisplayableAxes], *toolButtons[MaxSlots];
+
+static float axisMaxVal = 0.0;
 static FloatField *controlTabAxisPos[MaxDisplayableAxes];
 #if DISPLAY_X == 800
 static FloatField *printTabAxisPos[MaxDisplayableAxes];
@@ -387,6 +389,18 @@ static void ChangeBrightness(bool up)
 	}
 	SetBrightness(nvData.GetBrightness() + adjust);
 }
+
+
+void UI::SetAxisMax(size_t index, float val)
+{
+	if (index >= MaxTotalAxes)
+	{
+		return;
+	}
+
+	axisMaxVal = max(axisMaxVal, val);
+}
+
 
 // Cycle through available display dimmer types
 static void ChangeDisplayDimmerType()

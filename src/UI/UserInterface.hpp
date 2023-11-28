@@ -103,6 +103,7 @@ namespace UI
 
 	extern void SetBabystepOffset(size_t index, float f);
 	extern void SetAxisLetter(size_t index, char l);
+	extern void SetAxisMax(size_t index, float val);
 	extern void SetAxisVisible(size_t index, bool v);
 	extern void SetAxisWorkplaceOffset(size_t axisIndex, size_t workplaceIndex, float offset);
 	extern void SetCurrentWorkplaceNumber(uint8_t workplaceNumber);
