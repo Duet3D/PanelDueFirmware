@@ -1,5 +1,5 @@
 module github.com/Duet3D/PanelDueFirmware/Tools/gobmp2c
 
-go 1.14
+go 1.21
 
-require golang.org/x/image v0.0.0-20200430140353-33d19683fad8
+require golang.org/x/image v0.14.0

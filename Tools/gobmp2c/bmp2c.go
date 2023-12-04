@@ -81,17 +81,17 @@ func main() {
 			pixelCount := 0
 			_, variableName := filepath.Split(file)
 			variableName = strings.TrimSuffix(strings.TrimSuffix(variableName, "_21h.bmp"), "_30h.bmp")
-			buf.WriteString(fmt.Sprintf("extern const uint8_t %s[] =\n", variableName))
-			buf.WriteString(fmt.Sprintf("{\t%d, %d,\t// width, height\n\t", b.Bounds().Dx(), b.Bounds().Dy()))
+			fmt.Fprintf(buf, "extern const uint8_t %s[] =\n", variableName)
+			fmt.Fprintf(buf, "{\t%d, %d,\t// width, height\n\t", b.Bounds().Dx(), b.Bounds().Dy())
 			for x := b.Bounds().Min.X; x < b.Bounds().Max.X; x++ {
 				for y := b.Bounds().Min.Y; y < b.Bounds().Max.Y; y++ {
 					c := b.At(x, y)
 					if pixelCount%2 == 0 {
 						buf.WriteString("0x")
 					}
-					buf.WriteString(fmt.Sprintf("%d", getPaletteIndex(c.RGBA())))
+					fmt.Fprintf(buf, "%d", getPaletteIndex(c.RGBA()))
 					pixelCount++
-					if pixelCount%2 == 0 && !(x+1 == b.Bounds().Max.X && y+1 == b.Bounds().Max.Y) {
+					if pixelCount%2 == 0 && (x+1 != b.Bounds().Max.X || y+1 != b.Bounds().Max.Y) {
 						buf.WriteString(", ")
 						// wrap every 24 pixels
 						if pixelCount%24 == 0 {
