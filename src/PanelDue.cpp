@@ -2138,6 +2138,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 			switch (controlCommand)
 			{
 			case ControlCommand::eraseAndReset:
+				UI::ShowFirmwareUpdatePopup();
 				EraseAndReset();					// Does not return
 				break;
 			case ControlCommand::reset:

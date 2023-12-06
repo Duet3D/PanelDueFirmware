@@ -79,7 +79,7 @@ static TextButton *controlPageMacroButtons[NumControlPageMacroButtons];
 static String<controlPageMacroTextLength> controlPageMacroText[NumControlPageMacroButtons];
 
 static PopupWindow *setTempPopup, *setRPMPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup,
-		*volumePopup, *infoTimeoutPopup, *screensaverTimeoutPopup, *babystepAmountPopup, *feedrateAmountPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup, *screensaverPopup;
+		*volumePopup, *infoTimeoutPopup, *screensaverTimeoutPopup, *babystepAmountPopup, *feedrateAmountPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup, *screensaverPopup, *firmwareUpdatePopup;
 static StaticTextField *areYouSureTextField, *areYouSureQueryField;
 static DisplayField *emptyRoot, *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
 static SingleButton *homeAllButton, *bedCompButton;
@@ -685,6 +685,15 @@ static void CreateScreensaverPopup()
 	screensaverPopup->AddField(screensaverText = new StaticTextField(row1, margin, screensaverTextWidth, TextAlignment::Left, text));
 }
 
+static void CreateFirmwareUpdatePopup()
+{
+	firmwareUpdatePopup = new PopupWindow(max(DisplayX, DisplayY), max(DisplayX, DisplayY), black, black, false);
+	DisplayField::SetDefaultColours(white, black);
+	static const char * text = "Updating firmware";
+	const int textWidth = DisplayField::GetTextWidth(text, DisplayX);
+	firmwareUpdatePopup->AddField(new StaticTextField(DisplayY/2-rowHeight/2, DisplayX/2-textWidth/2, textWidth, TextAlignment::Left, text));
+}
+
 // Create the baud rate adjustment popup
 static void CreateBaudRatePopup(const ColourScheme& colours)
 {
@@ -1158,6 +1167,7 @@ static void CreateMainPages(uint32_t language, const ColourScheme& colours)
 	CreateMessageTabFields(colours);
 	CreateSetupTabFields(language, colours);
 	CreateScreensaverPopup();
+	CreateFirmwareUpdatePopup();
 }
 
 namespace UI
@@ -1659,6 +1669,11 @@ namespace UI
 			SwitchToTab(newTab);
 		}
 		return true;
+	}
+
+	void ShowFirmwareUpdatePopup()
+	{
+		mgr.SetPopup(firmwareUpdatePopup);
 	}
 
 	void ActivateScreensaver()

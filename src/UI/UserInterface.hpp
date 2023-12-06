@@ -41,6 +41,7 @@ namespace UI
 	extern void ActivateScreensaver();
 	extern bool DeactivateScreensaver();
 	extern void AnimateScreensaver();
+	extern void ShowFirmwareUpdatePopup();
 	extern void ShowAxis(size_t axis, bool b, const char* axisLetter = nullptr);
 	extern void UpdateAxisPosition(size_t axis, float fval);
 	extern void UpdateCurrentTemperature(size_t heater, float fval);
