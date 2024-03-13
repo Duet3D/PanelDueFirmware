@@ -3310,7 +3310,7 @@ namespace UI
 	{
 		if (filesNotMacros && text)
 		{
-			mgr.Show(fileListPopupNoFiles, false);
+			fileListPopupNoFiles->Show(false);
 		}
 
 		if (buttonIndex < ((filesNotMacros) ? NumDisplayedFiles : NumDisplayedMacros))
