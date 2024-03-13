@@ -3310,10 +3310,10 @@ namespace UI
 	{
 		if (filesNotMacros && text)
 		{
-			mgr.Show(fileListPopupNoFiles, false);
+			fileListPopupNoFiles->Show(false);
 		}
 
-		if (text && buttonIndex < ((filesNotMacros) ? NumDisplayedFiles : NumDisplayedMacros))
+		if (buttonIndex < ((filesNotMacros) ? NumDisplayedFiles : NumDisplayedMacros))
 		{
 			TextButton * const f = ((filesNotMacros) ? filenameButtons : macroButtons)[buttonIndex];
 			f->SetText(text);
