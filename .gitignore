@@ -67,8 +67,6 @@ compile_commands.json
 .vscode
 
 # Eclipse output folders
-/OEM5-5.0/
-/OEM5-7.0/
 /Release-4.3/
 /Release-5.0/
 /Release-5.0i-7.0i/
@@ -79,3 +77,7 @@ compile_commands.json
 /Release-v3-5.0/
 /Release-v3-7.0/
 /Release-v3-7.0CPLD/
+/Release-v2-4.3/
+/Release-v2-5.0/
+/Release-v2-7.0/
+/Release-v2-7.0CPLD/

@@ -30,17 +30,7 @@ bool ThumbnailIsValid(struct Thumbnail &thumbnail)
 
 bool ThumbnailDataIsValid(struct ThumbnailData &data)
 {
-	if (data.size == 0)
-	{
-		return false;
-	}
-
-	if (!data.buffer)
-	{
-		return false;
-	}
-
-	return true;
+	return data.size != 0;
 }
 
 int ThumbnailInit(struct Thumbnail &thumbnail)
