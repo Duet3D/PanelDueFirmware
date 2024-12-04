@@ -1035,7 +1035,6 @@ static void StartReceivedMessage()
 
 static void EndReceivedMessage()
 {
-
 	lastResponseTime = SystemTick::GetTickCount();
 
 	if (currentRespSeq != nullptr)
