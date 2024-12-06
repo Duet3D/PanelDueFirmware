@@ -853,7 +853,8 @@ namespace SerialIo
 					}
 
 					state = jsExpValFirstDigit;
-					// no break
+					// fall through
+					// no break (for Eclipse, the previous line is for gcc)
 				case jsExpValFirstDigit:
 					if (!(c >= '0' && c <= '9' && !fieldVal.cat(c)))
 					{
