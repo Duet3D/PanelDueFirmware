@@ -27,7 +27,7 @@ bool RequestTimer::Process()
 		}
 	}
 
-	if (timerState == ready)
+	if (timerState == ready && SerialIo::SerialLineQuiet())
 	{
 		SerialIo::Sendf(command);
 		if (extra != nullptr)

@@ -6,7 +6,7 @@
  */
 
 #include "SerialIo.hpp"
-#include "Hardware/SysTick.hpp"
+#include <Hardware/SysTick.hpp>
 #include "asf.h"
 #include "PanelDue.hpp"
 #include <General/CRC16.h>
@@ -31,6 +31,7 @@ namespace SerialIo
 	uint16_t numChars = 0;
 	uint8_t checksum = 0;
 	CRC16 crc;
+	volatile uint32_t timeLastCharacterReceived = 0;
 
 	enum CheckType {
 		None,
@@ -931,12 +932,22 @@ namespace SerialIo
 				nextIn = temp;
 			}
 		}
+		timeLastCharacterReceived = SystemTick::GetTickCount();
 	}
 
 	// Called by the ISR to signify an error. We wait for the next end of line.
 	void receiveError()
 	{
 		inError = true;
+	}
+
+	// Return true if the serial line has been quiet for sufficient time.
+	// The purpose of this is to prevent PanelDue from hanging on to RRF output buffers for all of the time, which prevents DWC from retrieving the object model.
+	// Call this and check the return before sending a request that has a long response to RRF
+	bool SerialLineQuiet()
+	{
+		const uint32_t loc_timeLastCharacterReceived = timeLastCharacterReceived;		// capture this before we call mills() in case of an interrupt
+		return SystemTick::GetTickCount() - loc_timeLastCharacterReceived >= MinimumLineQuietTime;
 	}
 }
 

@@ -68,6 +68,8 @@ const uint16_t DefaultFeedrate = 6000;					// default feedrate in mm/min
 
 const uint32_t MinimumEncoderCommandInterval = 100;		// minimum time in milliseconds between serial commands sent due to encoder movement
 
+constexpr uint32_t MinimumLineQuietTime = 200;			// the minimum time in milliseconds that we require the receive data line to be quiet before we transmit a non-command request
+
 const size_t MaxFilnameLength = 120;
 
 #endif /* CONFIGURATION_H_ */

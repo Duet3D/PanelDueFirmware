@@ -2663,10 +2663,13 @@ int main(void)
 			{
 				Reconnect();
 			}
-			else if (lastResponseTime >= lastPollTime &&
-			    (now > lastPollTime + printerPollInterval ||
-			     !initialized ||
-			     thumbnailCurrent.state == ThumbnailState::DataRequest))
+			else if (	lastResponseTime >= lastPollTime
+					 && SerialIo::SerialLineQuiet()
+					 && (  now > lastPollTime + printerPollInterval
+						 || !initialized
+						 || thumbnailCurrent.state == ThumbnailState::DataRequest
+						)
+					)
 			{
 				if (thumbnailCurrent.state == ThumbnailState::DataRequest)
 				{
