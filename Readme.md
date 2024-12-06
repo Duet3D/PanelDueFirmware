@@ -35,8 +35,27 @@ https://docs.duet3d.com/en/User_manual/RepRapFirmware/Updating_PanelDue
 
 # Development
 
-## Build requirements
+As at version 3.5.1 this project can be built under either Eclipse or using CMake.
 
+## Building using Eclipse
+
+### Requirements
+- Eclipse CDT
+- arm-none-eabi-gcc
+- Git (an easy way to get it is to install Git Desktop)
+
+### Windows
+- Create an Eclipse workspace
+- Clone this Git project (PanelDueFirmware) into it (you can do this in Git Desktop)
+- Open a command prompt at ```<your workspace name>\PanelDueFirmware``` and run command: ```git submodule update```
+- Open Eclipse, add the project to the workspace, select the build configuration you require and build
+
+### Ubuntu etc.
+- As for Windows, but you will need to change the post-build step ```cp``` commands in the Eclipse project to appropriate Linux ```cat``` commands
+  
+## Building using CMake
+
+### Requirements
 - arm-none-eabi-gcc
 - cat
 - cmake
@@ -60,7 +79,9 @@ $ brew install gcc-arm-embedded
 
 ### Windows
 
-Download and install latest toolchain from https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+- Download and install latest toolchain from https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+- Download and install a Linux-like build environment such as MSYS2
+- Download and install cmake
 
 ## Setup repository
 
