@@ -2708,7 +2708,7 @@ int main(void)
 						// if nothing was fetched do a status update
 						if (!sent)
 						{
-							SerialIo::Sendf("M409 F\"d99f\"\n");
+							SerialIo::Sendf("M409 F\"d99fp\"\n");
 						}
 						lastPollTime = SystemTick::GetTickCount();
 					}
@@ -2717,7 +2717,7 @@ int main(void)
 			else if (now > lastPollTime + printerPollInterval + printerResponseTimeout)	  // request timeout
 			{
 				dbg("request timeout\n");
-				SerialIo::Sendf("M409 F\"d99f\"\n");
+				SerialIo::Sendf("M409 F\"d99fp\"\n");
 				lastPollTime = SystemTick::GetTickCount();
 			}
 		}
