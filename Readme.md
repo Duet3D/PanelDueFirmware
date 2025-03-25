@@ -79,7 +79,7 @@ $ brew install gcc-arm-embedded
 
 ### Windows
 
-- Download and install latest toolchain from https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+- Download and install latest toolchain from [https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
 - Download and install a Linux-like build environment such as MSYS2
 - Download and install cmake
 
