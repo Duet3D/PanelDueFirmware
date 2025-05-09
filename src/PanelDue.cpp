@@ -1516,7 +1516,7 @@ static void ProcessReceivedValue(StringRef id, const char data[], const size_t i
 	case rcvMoveKinematicsName:
 		if (status != OM::PrinterStatus::configuring && status != OM::PrinterStatus::connecting)
 		{
-			isDelta = (strcasecmp(data, "delta") == 0);
+			isDelta = (strcasecmp(data, "delta") == 0 || strcasecmp(data, "linearDelta") == 0);
 			UI::UpdateGeometry(numAxes, isDelta);
 		}
 		break;
