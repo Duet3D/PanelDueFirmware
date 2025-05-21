@@ -511,12 +511,18 @@ public:
 
 	void SetText(const char* _ecv_array null pt)
 	{
-		if (strcmp(text, pt) == 0)
+		if (text == nullptr)
 		{
-			return;
+			if (pt != nullptr)
+			{
+				changed = true;
+			}
+		}
+		else if (pt == nullptr || strcmp(text, pt) != 0)
+		{
+			changed = true;
 		}
 		text = pt;
-		changed = true;
 	}
 };
 
@@ -532,14 +538,20 @@ public:
 	// Hide any text buttons with null text and null label
 	bool IsVisible() const override { return (label != nullptr && DisplayField::IsVisible()) || TextButton::IsVisible(); }
 
-	void SetLabel(const char* _ecv_array null label)
+	void SetLabel(const char* _ecv_array null newLabel)
 	{
-		if (strcmp(this->label, label) == 0)
+		if (label == nullptr)
 		{
-			return;
+			if (newLabel != nullptr)
+			{
+				changed = true;
+			}
 		}
-		this->label = label;
-		changed = true;
+		else if (newLabel == nullptr || strcmp(label, newLabel) != 0)
+		{
+			changed = true;
+		}
+		label = newLabel;
 	}
 };
 
@@ -602,14 +614,20 @@ public:
 		changed = true;
 	}
 
-	void SetText(const char * t)
+	void SetText(const char *_ecv_array null t)
 	{
-		if (strcmp(text, t) == 0)
+		if (text == nullptr)
 		{
-			return;
+			if (t != nullptr)
+			{
+				changed = true;
+			}
+		}
+		else if (t == nullptr || strcmp(text, t) != 0)
+		{
+			changed = true;
 		}
 		text = t;
-		changed = true;
 	}
 
 	void SetIntVal(int newVal)
